@@ -104,13 +104,12 @@ export type SystemAction = {
   pressed: boolean
   toString: string
 }
-
+export type InputBinding = `Key${string}` | `Digit${number}` | `Mouse${string}`
 export type SystemHoverAction = {
   action: string
-  inputBinding: string
+  inputBinding: InputBinding
   hoverText: string
 }
-
 export type SystemHoverEvent = {
   entered: boolean
   meshName: string

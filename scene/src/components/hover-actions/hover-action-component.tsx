@@ -1,15 +1,18 @@
 import { ReactEcs, ReactElement, UiEntity } from '@dcl/react-ecs'
 import useEffect = ReactEcs.useEffect
-import { SystemHoverAction, SystemHoverEvent } from '../../bevy-api/interface'
-import { engine, executeTask, PrimaryPointerInfo } from '@dcl/sdk/ecs'
+import {
+  InputBinding,
+  SystemHoverAction,
+  SystemHoverEvent
+} from '../../bevy-api/interface'
+import { engine, executeTask, PBUiText, PrimaryPointerInfo } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { getViewportHeight } from '../../service/canvas-ratio'
-import { Color4 } from '@dcl/sdk/math'
 import useState = ReactEcs.useState
 import { COLOR } from '../color-palette'
-import { Column, Row } from '../layout'
 import Icon from '../icon/Icon'
-import { PositionUnit } from '@dcl/sdk/react-ecs'
+import { UiTransformProps } from '@dcl/sdk/react-ecs'
+import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 
 export const HoverActionComponent = (): ReactElement | null => {
   const [hoverActions, setHoverActions] = useState<SystemHoverAction[]>([])
@@ -33,77 +36,110 @@ export const HoverActionComponent = (): ReactElement | null => {
   }, [])
   const pointerInfo = PrimaryPointerInfo.get(engine.RootEntity)
   if (!hoverActions?.length) return null
+  if (!pointerInfo.screenCoordinates) return null
+  const size = getViewportHeight() * 0.3
+  const bubbleHeight = getViewportHeight() * 0.05
+  const hoverTipTransforms: UiTransformProps[] = [
+    {
+      position: { left: '75%', top: size * 0.5 - bubbleHeight / 2 }
+    },
+    {
+      position: { right: '75%', top: size * 0.5 - bubbleHeight / 2 },
+      flexDirection: 'row-reverse'
+    },
+    {
+      justifyContent: 'center',
+      position: { top: -bubbleHeight / 3 }
+    },
+    { position: { left: '65%', top: size * 0.75 - bubbleHeight / 2 } },
+    {
+      position: { right: '65%', top: size * 0.75 - bubbleHeight / 2 },
+      flexDirection: 'row-reverse'
+    },
+    { position: { left: '65%', top: size * 0.25 - bubbleHeight / 2 } },
+    {
+      position: { right: '65%', top: size * 0.25 - bubbleHeight / 2 },
+      flexDirection: 'row-reverse'
+    }
+  ]
+
   return (
-    <Column
+    <UiEntity
       uiTransform={{
-        width: getViewportHeight() * 0.3,
+        width: size,
+        height: size,
         positionType: 'absolute',
+        justifyContent: 'center',
         position: {
-          top: pointerInfo.screenCoordinates?.y,
-          left: pointerInfo.screenCoordinates?.x
-        }
+          top: pointerInfo.screenCoordinates.y - size / 2,
+          left: pointerInfo.screenCoordinates.x - size / 2
+        },
+        flexGrow: 1,
+        flexShrink: 0,
+        borderColor: COLOR.RED,
+        borderWidth: 1,
+        borderRadius: 0
       }}
     >
       {hoverActions.map((hoverAction, index) => (
-        <RenderHoverAction hoverActions={hoverActions} index={index} />
+        <RenderHoverAction
+          uiTransform={{
+            height: bubbleHeight,
+            positionType: 'absolute',
+            ...hoverTipTransforms[index]
+          }}
+          hoverActions={hoverActions}
+          index={index}
+        />
       ))}
-    </Column>
+    </UiEntity>
   )
 }
 
 function RenderHoverAction({
   hoverActions,
-  index
+  index,
+  uiTransform
 }: {
   hoverActions: SystemHoverAction[]
   index: number
+  uiTransform: UiTransformProps
 }): ReactElement {
   const hoverAction = hoverActions[index]
-
   if (!hoverAction) return <UiEntity></UiEntity>
   return (
     <UiEntity
       uiTransform={{
-        height: getViewportHeight() * 0.05,
         padding: getViewportHeight() * 0.01,
-        margin: getViewportHeight() * 0.01,
         borderRadius: getViewportHeight() * 0.01,
         borderWidth: 0,
         borderColor: COLOR.BLACK_TRANSPARENT,
-        positionType: 'absolute',
-        position: {
-          top: hoverTipDisplacements[index].y,
-          left: hoverTipDisplacements[index].x
-        }
+        ...uiTransform
       }}
-      uiBackground={{ color: COLOR.BLACK }}
+      uiBackground={{ color: COLOR.DARK_OPACITY_7 }}
     >
       <KeyIcon inputBinding={hoverAction.inputBinding} />
       <UiEntity
         uiTransform={{ width: '100%' }}
         uiText={{
-          value: `${hoverAction.action} - ${hoverAction.hoverText} - ${hoverAction.inputBinding}`
+          value: `${hoverAction.hoverText ?? 'Interact'}`,
+          fontSize: getHudFontSize(getViewportHeight()).NORMAL,
+          textWrap: 'nowrap'
         }}
       />
     </UiEntity>
   )
 }
 
-const hoverTipDisplacements: { x: PositionUnit; y: PositionUnit }[] = [
-  { x: '50%', y: 0 },
-  { x: 0, y: -10 },
-  { x: 0, y: -10 },
-  { x: 0, y: -10 },
-  { x: '-150%', y: -10 },
-  { x: 0, y: -10 },
-  { x: 0, y: -10 }
-]
-
-function KeyIcon({ inputBinding }: { inputBinding: string }): ReactElement {
+export function KeyIcon({
+  inputBinding
+}: {
+  inputBinding: InputBinding
+}): ReactElement {
   const isKey = inputBinding.indexOf('Key') === 0
   const isDigit = inputBinding.indexOf('Digit') === 0
   const isMouse = inputBinding.indexOf('Mouse') === 0
-  const fontSize = getViewportHeight() * 0.02
+  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
   const KeyBorder = {
     width: fontSize * 2,
     height: fontSize * 2,
