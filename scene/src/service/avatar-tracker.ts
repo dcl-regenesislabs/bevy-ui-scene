@@ -31,8 +31,6 @@ export type PlayerCallback = (player: GetPlayerDataRes) => void
 export type UnListenFn = () => void
 export type AvatarTracker = {
   onClick: (fn: UserIdCallback) => UnListenFn
-  onMouseOver: (fn: UserIdCallback) => UnListenFn
-  onMouseLeave: (fn: UserIdCallback) => UnListenFn
   onEnterScene: (fn: PlayerCallback) => UnListenFn
   onLeaveScene: (fn: UserIdCallback) => UnListenFn
   dispose: () => void
@@ -46,8 +44,6 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
   const callbacks: Record<string, Array<PlayerCallback | UserIdCallback>> = {
     // TODO dont use record , specify type for each
     onClick: [],
-    onMouseOver: [],
-    onMouseLeave: [],
     onEnterScene: [],
     onLeaveScene: []
   }
@@ -129,8 +125,6 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
 
   avatarTracker = {
     onClick,
-    onMouseOver,
-    onMouseLeave,
     dispose,
     onEnterScene: (fn: PlayerCallback) => {
       callbacks.onEnterScene.push(fn)
@@ -161,20 +155,6 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
     }
   }
 
-  function onMouseOver(fn: (userId: string) => void): () => void {
-    callbacks.onMouseOver.push(fn)
-    return () => {
-      callbacks.onMouseOver = callbacks.onMouseOver.filter((f) => f !== fn)
-    }
-  }
-
-  function onMouseLeave(fn: (userId: string) => void): () => void {
-    callbacks.onMouseLeave.push(fn)
-    return () => {
-      callbacks.onMouseLeave = callbacks.onMouseLeave.filter((f) => f !== fn)
-    }
-  }
-
   function createAvatarProxy(
     userId: string,
     playerEntity: Entity,
@@ -190,28 +170,6 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
       },
       (event: PBPointerEventsResult) => {
         callbacks.onClick.forEach((fn) => {
-          ;(fn as UserIdCallback)(userId)
-        })
-      }
-    )
-
-    pointerEventsSystem.onPointerHoverEnter(
-      {
-        entity: playerEntity
-      },
-      (event: PBPointerEventsResult) => {
-        callbacks.onMouseOver.forEach((fn) => {
-          ;(fn as UserIdCallback)(userId)
-        })
-      }
-    )
-
-    pointerEventsSystem.onPointerHoverLeave(
-      {
-        entity: playerEntity
-      },
-      (event: PBPointerEventsResult) => {
-        callbacks.onMouseLeave.forEach((fn) => {
           ;(fn as UserIdCallback)(userId)
         })
       }

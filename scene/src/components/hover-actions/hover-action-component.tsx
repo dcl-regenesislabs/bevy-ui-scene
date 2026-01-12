@@ -118,7 +118,9 @@ function RenderHoverAction({
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_7 }}
     >
-      <KeyIcon inputBinding={hoverAction.inputBinding} />
+      {hoverAction.inputBinding && (
+        <KeyIcon inputBinding={hoverAction.inputBinding} />
+      )}
       <UiEntity
         uiTransform={{ width: '100%' }}
         uiText={{
@@ -136,7 +138,6 @@ export function KeyIcon({
 }: {
   inputBinding: InputBinding
 }): ReactElement {
-  const isKey = inputBinding.indexOf('Key') === 0
   const isDigit = inputBinding.indexOf('Digit') === 0
   const isMouse = inputBinding.indexOf('Mouse') === 0
   const fontSize = getHudFontSize(getViewportHeight()).NORMAL

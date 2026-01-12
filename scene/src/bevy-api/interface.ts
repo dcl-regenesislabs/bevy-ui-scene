@@ -113,6 +113,7 @@ export type SystemHoverAction = {
 export type SystemHoverEvent = {
   entered: boolean
   meshName: string
+  targetType: 'world' | 'ui' | 'avatar'
   distance: number
   actions: SystemHoverAction[]
 }
