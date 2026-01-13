@@ -1,21 +1,26 @@
 import { ReactEcs, ReactElement, UiEntity } from '@dcl/react-ecs'
-import useEffect = ReactEcs.useEffect
 import {
+  HoverTargetType,
   InputBinding,
   SystemHoverAction,
   SystemHoverEvent
 } from '../../bevy-api/interface'
-import { engine, executeTask, PBUiText, PrimaryPointerInfo } from '@dcl/sdk/ecs'
+import { engine, executeTask, PrimaryPointerInfo } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { getViewportHeight } from '../../service/canvas-ratio'
-import useState = ReactEcs.useState
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
 import { UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
+import { MAX_ZINDEX } from '../../utils/constants'
+import useEffect = ReactEcs.useEffect
+import useState = ReactEcs.useState
+import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
 
 export const HoverActionComponent = (): ReactElement | null => {
   const [hoverActions, setHoverActions] = useState<SystemHoverAction[]>([])
+  const [pressedButtons, setPressedButtons] = useState<string[]>([]) // TODO
+
   useEffect(() => {
     executeTask(async () => {
       listenStream(await BevyApi.getHoverStream()).catch(console.error)
@@ -24,8 +29,13 @@ export const HoverActionComponent = (): ReactElement | null => {
     async function listenStream(stream: SystemHoverEvent[]): Promise<void> {
       for await (const systemHoverEvent of stream) {
         console.log('systemHoverEvent', systemHoverEvent)
-        if (systemHoverEvent.entered) {
-          const _actions = systemHoverEvent.actions.slice(0, 7)
+        if (
+          systemHoverEvent.entered &&
+          systemHoverEvent.targetType !== HoverTargetType.UI
+        ) {
+          const _actions = systemHoverEvent.actions
+            .filter((a) => a.eventType === PointerEventType.PET_DOWN) // TODO if PET_DOWN is pressed it should show only PET_UP actions
+            .slice(0, 7)
           console.log('_actions', _actions.length)
           setHoverActions(_actions)
         } else {
@@ -78,7 +88,8 @@ export const HoverActionComponent = (): ReactElement | null => {
         flexShrink: 0,
         borderColor: COLOR.RED,
         borderWidth: 1,
-        borderRadius: 0
+        borderRadius: 0,
+        zIndex: MAX_ZINDEX - 1
       }}
     >
       {hoverActions.map((hoverAction, index) => (

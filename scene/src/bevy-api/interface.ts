@@ -11,6 +11,9 @@ import {
   type SetPermanentPermissionArgs,
   type SetSinglePermissionArgs
 } from './permission-definitions'
+import { InputAction } from '@dcl/sdk/ecs'
+import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
+import { urnWithTokenIdMemo } from '../utils/urn-utils'
 
 export type ExplorerSetting = {
   name: string
@@ -109,13 +112,20 @@ export type SystemHoverAction = {
   action: string
   inputBinding: InputBinding
   hoverText: string
+  eventType: PointerEventType // TODO review and verify
+}
+export enum HoverTargetType {
+  WORLD,
+  UI,
+  AVATAR
 }
 export type SystemHoverEvent = {
   entered: boolean
   meshName: string
-  targetType: 'world' | 'ui' | 'avatar'
+  targetType: HoverTargetType
   distance: number
   actions: SystemHoverAction[]
+  sceneHash: string | null
 }
 export type ShowUiRequestParams = {
   hash?: string | undefined
