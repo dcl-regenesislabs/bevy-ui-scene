@@ -109,7 +109,7 @@ export type SystemAction = {
 }
 export type InputBinding = `Key${string}` | `Digit${number}` | `Mouse${string}`
 export type SystemHoverAction = {
-  action: string
+  action: InputAction
   inputBinding: InputBinding
   hoverText: string
   eventType: PointerEventType // TODO review and verify
