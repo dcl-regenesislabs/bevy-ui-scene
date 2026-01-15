@@ -966,8 +966,10 @@ export function messageHasMentionToMe(message: string): boolean {
           getPlayer()?.userId ?? '___nothing___'
         )?.toLowerCase() ?? '___nothing___'
       ) ||
-    (composedUsersData.get(getPlayer()?.userId ?? '')?.profileData?.avatars[0]
-      .hasClaimedName &&
+    (composedUsersData.get(getPlayer()?.userId ?? '')?.profileData?.avatars
+      ?.length &&
+      composedUsersData.get(getPlayer()?.userId ?? '')?.profileData?.avatars[0]
+        .hasClaimedName &&
       message.toLowerCase().includes(getPlayer()?.name.toLowerCase() ?? '') &&
       message.toLowerCase()[
         message.toLowerCase().indexOf(getPlayer()?.name.toLowerCase() ?? '') +
