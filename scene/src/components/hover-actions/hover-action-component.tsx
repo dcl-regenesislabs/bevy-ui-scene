@@ -1,9 +1,9 @@
-import { ReactEcs, ReactElement, UiEntity } from '@dcl/react-ecs'
+import { ReactEcs, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import {
   HoverTargetType,
-  InputBinding,
-  SystemHoverAction,
-  SystemHoverEvent
+  type InputBinding,
+  type SystemHoverAction,
+  type SystemHoverEvent
 } from '../../bevy-api/interface'
 import {
   engine,
@@ -15,12 +15,12 @@ import { BevyApi } from '../../bevy-api'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
-import { UiTransformProps } from '@dcl/sdk/react-ecs'
+import { type Key, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 import { MAX_ZINDEX } from '../../utils/constants'
+import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
-import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
 
 export const HoverActionComponent = (): ReactElement | null => {
   const [allHoverActions, setAllHoverActions] = useState<SystemHoverAction[]>(
@@ -99,32 +99,31 @@ export const HoverActionComponent = (): ReactElement | null => {
         zIndex: MAX_ZINDEX - 1
       }}
     >
-      {hoverActions.map((hoverAction, index) => (
-        <RenderHoverAction
-          uiTransform={{
-            height: bubbleHeight,
-            positionType: 'absolute',
-            ...hoverTipTransforms[index]
-          }}
-          hoverActions={hoverActions}
-          index={index}
-        />
-      ))}
+      {hoverActions
+        .filter((i) => i)
+        .map((hoverAction, index) => (
+          <RenderHoverAction
+            key={index}
+            uiTransform={{
+              height: bubbleHeight,
+              positionType: 'absolute',
+              ...hoverTipTransforms[index]
+            }}
+            hoverAction={hoverAction}
+          />
+        ))}
     </UiEntity>
   )
 }
 
 function RenderHoverAction({
-  hoverActions,
-  index,
+  hoverAction,
   uiTransform
 }: {
-  hoverActions: SystemHoverAction[]
-  index: number
+  hoverAction: SystemHoverAction
   uiTransform: UiTransformProps
+  key?: Key
 }): ReactElement {
-  const hoverAction = hoverActions[index]
-  if (!hoverAction) return <UiEntity></UiEntity>
   return (
     <UiEntity
       uiTransform={{

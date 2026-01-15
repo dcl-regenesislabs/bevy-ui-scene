@@ -176,7 +176,7 @@ function SettingField({
   setting: ExplorerSetting
   uiTransform?: UiTransformProps
   onChange?: (value: number) => void
-  key?: any
+  key?: any // TODO look for all key?: any and replace with key?: Key
 }): ReactElement {
   const [refValue, setRefValue] = useState<string>(setting.value.toString())
   const [showTooltip, setShowTooltip] = useState(false)
