@@ -429,7 +429,7 @@ export default class MainHud {
             showHint={this.mapHint}
             iconSize={buttonIconSize}
           />
-          <ButtonIcon
+          {/*          <ButtonIcon
             uiTransform={buttonTransform}
             onMouseEnter={() => {
               this.exploreEnter()
@@ -446,7 +446,7 @@ export default class MainHud {
             hintText={'Explore'}
             showHint={this.exploreHint}
             iconSize={buttonIconSize}
-          />
+          />*/}
 
           <ButtonIcon
             uiTransform={buttonTransform}
