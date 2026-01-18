@@ -93,6 +93,7 @@ function ButtonIcon(props: {
           textAlign="middle-center"
           fontSize={getContentScaleRatio() * 20}
           uiTransform={{ width: '100%', height: '100%' }}
+          textWrap={'nowrap'}
         />
       </UiEntity>
       {props.showHint && props.hintText !== undefined && (
