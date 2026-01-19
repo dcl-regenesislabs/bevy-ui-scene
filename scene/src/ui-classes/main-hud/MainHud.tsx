@@ -2,10 +2,7 @@ import { engine, executeTask, UiCanvasInformation } from '@dcl/sdk/ecs'
 import { type Color4 } from '@dcl/sdk/math'
 import ReactEcs, { type Position, UiEntity } from '@dcl/sdk/react-ecs'
 import ButtonIcon from '../../components/button-icon/ButtonIcon'
-import {
-  getUiController,
-  type UIController
-} from '../../controllers/ui.controller'
+import { type UIController } from '../../controllers/ui.controller'
 import { openExternalUrl } from '~system/RestrictedActions'
 import { type AtlasIcon } from '../../utils/definitions'
 import { ALPHA_BLACK_PANEL, SELECTED_BUTTON_COLOR } from '../../utils/constants'
@@ -429,7 +426,7 @@ export default class MainHud {
             showHint={this.mapHint}
             iconSize={buttonIconSize}
           />
-          <ButtonIcon
+          {/*          <ButtonIcon
             uiTransform={buttonTransform}
             onMouseEnter={() => {
               this.exploreEnter()
@@ -446,7 +443,7 @@ export default class MainHud {
             hintText={'Explore'}
             showHint={this.exploreHint}
             iconSize={buttonIconSize}
-          />
+          /> */}
 
           <ButtonIcon
             uiTransform={buttonTransform}

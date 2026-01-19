@@ -4,7 +4,7 @@ import useEffect = ReactEcs.useEffect
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import useState = ReactEcs.useState
-import { executeTask } from '@dcl/sdk/ecs'
+import { CameraMode, CameraType, engine, executeTask } from '@dcl/sdk/ecs'
 import { type RGBAColor } from '../../bevy-api/interface'
 import { onNewMessage } from '../../ui-classes/main-hud/chat-and-logs/ChatsAndLogs'
 import { type ChatMessageRepresentation } from '../chat-message/ChatMessage.types'
@@ -42,7 +42,7 @@ export function getTagElement({
   }
 }
 
-function TagContent({ userId }: { userId: Address }): ReactElement {
+function TagContent({ userId }: { userId: Address }): ReactElement | null {
   const [playerName, setPlayerName] = useState<string>(
     getPlayer({ userId })?.name
       ? `<b>${getPlayer({ userId })?.name}</b>#${getPlayer({
@@ -60,8 +60,11 @@ function TagContent({ userId }: { userId: Address }): ReactElement {
     useState<ChatMessageRepresentation | null>(null)
   const [messageToHide, setMessageToHide] =
     useState<ChatMessageRepresentation | null>(null)
+  const [isVisible, setIsVisible] = useState<boolean>(true)
   const defaultFontSize = getHudFontSize(getViewportHeight()).NORMAL
   const messageMargin = defaultFontSize / 3
+  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+
   useEffect(() => {
     onNewMessage((message: ChatMessageRepresentation) => {
       if (message.player?.userId === userId) {
@@ -122,7 +125,20 @@ function TagContent({ userId }: { userId: Address }): ReactElement {
       }
     }
   }, [messageToHide])
-  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+
+  useEffect(() => {
+    if (
+      CameraMode.get(engine.CameraEntity).mode === CameraType.CT_FIRST_PERSON &&
+      userId === getPlayer()?.userId
+    ) {
+      setIsVisible(false)
+    } else {
+      setIsVisible(true)
+    }
+  }, [CameraMode.get(engine.CameraEntity)])
+
+  if (!isVisible) return null
+
   return (
     <Column
       uiTransform={{
