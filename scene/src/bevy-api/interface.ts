@@ -12,7 +12,7 @@ import {
   type SetSinglePermissionArgs
 } from './permission-definitions'
 import { type InputAction } from '@dcl/sdk/ecs'
-import { type PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
+import { PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
 
 export type ExplorerSetting = {
   name: string
@@ -101,29 +101,40 @@ export type HomeScene = {
   parcel: Vector2
 }
 
+export type InputBinding =
+  | `Key${string}`
+  | `Digit${string}`
+  | `Mouse${string}`
+  | `Gamepad${string}`
+  | `Arrow${string}`
+  | `Numpad${string}`
+  | `Shift${string}`
+  | 'Space'
+  | 'Tab'
+  | 'Enter'
+  | 'Escape'
+  | 'PageUp'
+  | 'PageDown'
+
 export type SystemAction = {
   action: string
   pressed: boolean
   toString: string
 }
-export type InputBinding = `Key${string}` | `Digit${number}` | `Mouse${string}`
-export type SystemHoverAction = {
-  action: InputAction
-  inputBinding: InputBinding
-  hoverText: string
-  eventType: PointerEventType
-}
+
 export enum HoverTargetType {
   WORLD,
   UI,
   AVATAR
 }
+
 export type SystemHoverEvent = {
   entered: boolean
   targetType: HoverTargetType
   distance: number
-  actions: SystemHoverAction[]
+  actions: PBPointerEvents_Entry[]
 }
+
 export type ShowUiRequestParams = {
   hash?: string | undefined
   show?: boolean | undefined
@@ -134,6 +145,13 @@ export type MicActivation = {
   active: boolean
 }
 
+export type Action = { Scene: string } | { System: string }
+
+export type Binding = [Action, InputBinding[]]
+
+export interface BindingsConfig {
+  bindings: Binding[]
+}
 export type BevyApiInterface = {
   setAvatar: (avatarData: SetAvatarData) => Promise<number>
   openSceneLogger: () => Promise<void>
@@ -161,6 +179,7 @@ export type BevyApiInterface = {
   getRealmProvider: () => Promise<string>
   getSystemActionStream: () => Promise<SystemAction[]>
   getHoverStream: () => Promise<SystemHoverEvent[]>
+  getInputBindings: () => Promise<BindingsConfig>
   getChatStream: () => Promise<ChatMessageDefinition[]>
   getVoiceStream: () => Promise<MicActivation[]>
   sendChat: (message: string, channel?: string) => void

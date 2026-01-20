@@ -2,30 +2,36 @@ import { ReactEcs, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import {
   HoverTargetType,
   type InputBinding,
-  type SystemHoverAction,
   type SystemHoverEvent
 } from '../../bevy-api/interface'
 import {
   engine,
   executeTask,
+  InputAction,
   inputSystem,
+  PBPointerEvents_Info,
   PrimaryPointerInfo
 } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
-import { type Key, type UiTransformProps } from '@dcl/sdk/react-ecs'
+import { type Key, Label, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 import { MAX_ZINDEX } from '../../utils/constants'
 import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
+import { PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
+import {
+  getInputBindings,
+  getSceneInputBindingsMap
+} from '../../service/input-bindings'
 
 export const HoverActionComponent = (): ReactElement | null => {
-  const [allHoverActions, setAllHoverActions] = useState<SystemHoverAction[]>(
-    []
-  )
+  const [allHoverActions, setAllHoverActions] = useState<
+    PBPointerEvents_Entry[]
+  >([])
 
   useEffect(() => {
     executeTask(async () => {
@@ -34,6 +40,7 @@ export const HoverActionComponent = (): ReactElement | null => {
 
     async function listenStream(stream: SystemHoverEvent[]): Promise<void> {
       for await (const systemHoverEvent of stream) {
+        console.log('systemHoverEvent', systemHoverEvent)
         if (
           systemHoverEvent.entered &&
           systemHoverEvent.targetType !== HoverTargetType.UI
@@ -48,7 +55,10 @@ export const HoverActionComponent = (): ReactElement | null => {
 
   const hoverActions = allHoverActions
     .filter((hoverAction) => {
-      if (inputSystem.isPressed(hoverAction.action)) {
+      if (
+        hoverAction.eventInfo?.button !== undefined &&
+        inputSystem.isPressed(hoverAction.eventInfo?.button)
+      ) {
         return hoverAction.eventType === PointerEventType.PET_UP
       }
       return hoverAction.eventType === PointerEventType.PET_DOWN
@@ -120,10 +130,11 @@ function RenderHoverAction({
   hoverAction,
   uiTransform
 }: {
-  hoverAction: SystemHoverAction
+  hoverAction: PBPointerEvents_Entry
   uiTransform: UiTransformProps
   key?: Key
 }): ReactElement {
+  const inputBindings = getSceneInputBindingsMap()
   return (
     <UiEntity
       uiTransform={{
@@ -135,13 +146,16 @@ function RenderHoverAction({
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_7 }}
     >
-      {hoverAction.inputBinding && (
-        <KeyIcon inputBinding={hoverAction.inputBinding} />
-      )}
+      {hoverAction.eventInfo?.button !== undefined &&
+        inputBindings &&
+        inputBindings[hoverAction.eventInfo.button] && (
+          <KeyIcon inputBinding={inputBindings[hoverAction.eventInfo.button]} />
+        )}
+
       <UiEntity
         uiTransform={{ width: '100%' }}
         uiText={{
-          value: `${hoverAction.hoverText ?? 'Interact'}`,
+          value: `${hoverAction.eventInfo?.hoverText ?? 'Interact'}`,
           fontSize: getHudFontSize(getViewportHeight()).NORMAL,
           textWrap: 'nowrap'
         }}
