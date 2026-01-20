@@ -23,15 +23,11 @@ import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentra
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 import { PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
-import {
-  getInputBindings,
-  getSceneInputBindingsMap
-} from '../../service/input-bindings'
+import { getSceneInputBindingsMap } from '../../service/input-bindings'
 
 export const HoverActionComponent = (): ReactElement | null => {
-  const [allHoverActions, setAllHoverActions] = useState<
-    PBPointerEvents_Entry[]
-  >([])
+  const [systemHoverEvent, setSystemHoverEvent] =
+    useState<SystemHoverEvent | null>(null)
 
   useEffect(() => {
     executeTask(async () => {
@@ -45,25 +41,27 @@ export const HoverActionComponent = (): ReactElement | null => {
           systemHoverEvent.entered &&
           systemHoverEvent.targetType !== HoverTargetType.UI
         ) {
-          setAllHoverActions(systemHoverEvent.actions)
+          setSystemHoverEvent(systemHoverEvent)
         } else {
-          setAllHoverActions([])
+          setSystemHoverEvent(null)
         }
       }
     }
   }, [])
 
-  const hoverActions = allHoverActions
-    .filter((hoverAction) => {
-      if (
-        hoverAction.eventInfo?.button !== undefined &&
-        inputSystem.isPressed(hoverAction.eventInfo?.button)
-      ) {
-        return hoverAction.eventType === PointerEventType.PET_UP
-      }
-      return hoverAction.eventType === PointerEventType.PET_DOWN
-    })
-    .slice(0, 7)
+  const hoverActions =
+    systemHoverEvent?.actions
+      .filter((hoverAction) => {
+        if (
+          hoverAction.eventInfo?.button !== undefined &&
+          inputSystem.isPressed(hoverAction.eventInfo?.button)
+        ) {
+          return hoverAction.eventType === PointerEventType.PET_UP
+        }
+        return hoverAction.eventType === PointerEventType.PET_DOWN
+      })
+      .filter((h) => h.eventInfo?.showFeedback !== false)
+      .slice(0, 7) ?? []
   const pointerInfo = PrimaryPointerInfo.get(engine.RootEntity)
   if (!hoverActions?.length) return null
   if (!pointerInfo.screenCoordinates) return null
@@ -109,19 +107,23 @@ export const HoverActionComponent = (): ReactElement | null => {
         zIndex: MAX_ZINDEX - 1
       }}
     >
-      {hoverActions
-        .filter((i) => i)
-        .map((hoverAction, index) => (
-          <RenderHoverAction
-            key={index}
-            uiTransform={{
-              height: bubbleHeight,
-              positionType: 'absolute',
-              ...hoverTipTransforms[index]
-            }}
-            hoverAction={hoverAction}
-          />
-        ))}
+      {systemHoverEvent &&
+        hoverActions
+          .filter((i) => i)
+          .map((hoverAction, index) => (
+            <RenderHoverAction
+              key={index}
+              uiTransform={{
+                height: bubbleHeight,
+                positionType: 'absolute',
+                opacity: isUnreachableAction(hoverAction, systemHoverEvent)
+                  ? 0.4
+                  : 1,
+                ...hoverTipTransforms[index]
+              }}
+              hoverAction={hoverAction}
+            />
+          ))}
     </UiEntity>
   )
 }
@@ -208,5 +210,15 @@ export function KeyIcon({
       uiTransform={{ ...KeyBorder }}
       uiText={{ value: `<b>${inputBinding.replace('Key', '')}</b>`, fontSize }}
     ></UiEntity>
+  )
+}
+
+function isUnreachableAction(
+  actionInfo: PBPointerEvents_Entry,
+  hoverEvent: SystemHoverEvent
+) {
+  return (
+    hoverEvent.outsideScene ||
+    !(hoverEvent.distance <= (actionInfo.eventInfo?.maxDistance ?? 0))
   )
 }

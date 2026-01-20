@@ -133,6 +133,7 @@ export type SystemHoverEvent = {
   targetType: HoverTargetType
   distance: number
   actions: PBPointerEvents_Entry[]
+  outsideScene: boolean
 }
 
 export type ShowUiRequestParams = {
