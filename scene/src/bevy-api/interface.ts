@@ -132,7 +132,7 @@ export type SystemHoverEvent = {
   entered: boolean
   targetType: HoverTargetType
   distance: number
-  actions: PBPointerEvents_Entry[]
+  actions: (PBPointerEvents_Entry & { tooFar: boolean })[]
   outsideScene: boolean
 }
 

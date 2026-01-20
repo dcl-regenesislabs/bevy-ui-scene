@@ -112,13 +112,12 @@ export const HoverActionComponent = (): ReactElement | null => {
           .filter((i) => i)
           .map((hoverAction, index) => (
             <RenderHoverAction
+              outsideScene={systemHoverEvent.outsideScene}
+              tooFar={hoverAction.tooFar}
               key={index}
               uiTransform={{
                 height: bubbleHeight,
                 positionType: 'absolute',
-                opacity: isUnreachableAction(hoverAction, systemHoverEvent)
-                  ? 0.4
-                  : 1,
                 ...hoverTipTransforms[index]
               }}
               hoverAction={hoverAction}
@@ -130,13 +129,19 @@ export const HoverActionComponent = (): ReactElement | null => {
 
 function RenderHoverAction({
   hoverAction,
-  uiTransform
+  uiTransform,
+  outsideScene,
+  tooFar
 }: {
   hoverAction: PBPointerEvents_Entry
   uiTransform: UiTransformProps
   key?: Key
+  outsideScene: boolean
+  tooFar: boolean
 }): ReactElement {
   const inputBindings = getSceneInputBindingsMap()
+  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+
   return (
     <UiEntity
       uiTransform={{
@@ -144,6 +149,7 @@ function RenderHoverAction({
         borderRadius: getViewportHeight() * 0.01,
         borderWidth: 0,
         borderColor: COLOR.BLACK_TRANSPARENT,
+        opacity: isUnreachable() ? 0.6 : 1,
         ...uiTransform
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_7 }}
@@ -157,13 +163,29 @@ function RenderHoverAction({
       <UiEntity
         uiTransform={{ width: '100%' }}
         uiText={{
-          value: `${hoverAction.eventInfo?.hoverText ?? 'Interact'}`,
+          value:
+            getUnreachableText() ??
+            `${hoverAction.eventInfo?.hoverText ?? 'Interact'}`,
           fontSize: getHudFontSize(getViewportHeight()).NORMAL,
           textWrap: 'nowrap'
         }}
       />
+      {isUnreachable() && (
+        <Icon
+          uiTransform={{ position: { top: '5%' } }}
+          icon={{ spriteName: 'WarningError', atlasName: 'icons' }}
+          iconSize={fontSize * 1.5}
+          iconColor={COLOR.WHITE}
+        />
+      )}
     </UiEntity>
   )
+  function isUnreachable(): boolean {
+    return outsideScene || tooFar
+  }
+  function getUnreachableText(): string | undefined {
+    return outsideScene ? 'Outside scene' : tooFar ? 'Too far' : undefined
+  }
 }
 
 export function KeyIcon({
@@ -210,15 +232,5 @@ export function KeyIcon({
       uiTransform={{ ...KeyBorder }}
       uiText={{ value: `<b>${inputBinding.replace('Key', '')}</b>`, fontSize }}
     ></UiEntity>
-  )
-}
-
-function isUnreachableAction(
-  actionInfo: PBPointerEvents_Entry,
-  hoverEvent: SystemHoverEvent
-) {
-  return (
-    hoverEvent.outsideScene ||
-    !(hoverEvent.distance <= (actionInfo.eventInfo?.maxDistance ?? 0))
   )
 }
