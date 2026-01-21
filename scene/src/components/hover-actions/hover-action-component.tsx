@@ -7,22 +7,20 @@ import {
 import {
   engine,
   executeTask,
-  InputAction,
   inputSystem,
-  PBPointerEvents_Info,
   PrimaryPointerInfo
 } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
-import { type Key, Label, type UiTransformProps } from '@dcl/sdk/react-ecs'
+import { type Key, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 import { MAX_ZINDEX } from '../../utils/constants'
 import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
-import { PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
+import { type PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
 import { getSceneInputBindingsMap } from '../../service/input-bindings'
 
 export const HoverActionComponent = (): ReactElement | null => {
@@ -155,8 +153,7 @@ function RenderHoverAction({
       uiBackground={{ color: COLOR.DARK_OPACITY_7 }}
     >
       {hoverAction.eventInfo?.button !== undefined &&
-        inputBindings &&
-        inputBindings[hoverAction.eventInfo.button] && (
+        inputBindings?.[hoverAction.eventInfo.button] && (
           <KeyIcon inputBinding={inputBindings[hoverAction.eventInfo.button]} />
         )}
 

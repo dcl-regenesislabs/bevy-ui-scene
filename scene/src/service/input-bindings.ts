@@ -1,13 +1,13 @@
 import { executeTask, InputAction } from '@dcl/sdk/ecs'
 import { BevyApi } from '../bevy-api'
-import { BindingsConfig, InputBinding } from '../bevy-api/interface'
+import { type BindingsConfig, type InputBinding } from '../bevy-api/interface'
 
 export type InputBindingsMap = Record<InputAction, InputBinding>
 
 let inputBindings: BindingsConfig | null = null
-let sceneInputBindingsMap: Record<InputAction, InputBinding> | null = null //TODO REVIEW IF REFACTOR to move to redux?
+let sceneInputBindingsMap: Record<InputAction, InputBinding> | null = null // TODO REVIEW IF REFACTOR to move to redux?
 
-export function initInputBindings() {
+export function initInputBindings(): void {
   executeTask(async () => {
     inputBindings = await BevyApi.getInputBindings()
     sceneInputBindingsMap = inputBindings.bindings
@@ -20,11 +20,14 @@ export function initInputBindings() {
   })
 }
 
-export function getInputBindings() {
+export function getInputBindings(): BindingsConfig | null {
   return inputBindings
 }
 
-export function getSceneInputBindingsMap() {
+export function getSceneInputBindingsMap(): Record<
+  InputAction,
+  InputBinding
+> | null {
   return sceneInputBindingsMap
 }
 

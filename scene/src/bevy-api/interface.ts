@@ -11,8 +11,7 @@ import {
   type SetPermanentPermissionArgs,
   type SetSinglePermissionArgs
 } from './permission-definitions'
-import { type InputAction } from '@dcl/sdk/ecs'
-import { PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
+import { type PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
 
 export type ExplorerSetting = {
   name: string
@@ -132,7 +131,7 @@ export type SystemHoverEvent = {
   entered: boolean
   targetType: HoverTargetType
   distance: number
-  actions: (PBPointerEvents_Entry & { tooFar: boolean })[]
+  actions: Array<PBPointerEvents_Entry & { tooFar: boolean }>
   outsideScene: boolean
 }
 
@@ -150,7 +149,7 @@ export type Action = { Scene: string } | { System: string }
 
 export type Binding = [Action, InputBinding[]]
 
-export interface BindingsConfig {
+export type BindingsConfig = {
   bindings: Binding[]
 }
 export type BevyApiInterface = {
