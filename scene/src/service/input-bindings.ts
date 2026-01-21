@@ -28,13 +28,23 @@ export function getSceneInputBindingsMap() {
   return sceneInputBindingsMap
 }
 
-const inputActionStrNum: { [key: string]: InputAction } = {
-  IaPointer: 0,
-  IaPrimary: 1,
-  IaSecondary: 2,
-  IaForward: 3,
-  IaRight: 4,
-  IaLeft: 5,
-  IaJump: 6,
-  IaWalk: 7
+const inputActionStrNum: Record<string, InputAction> = {
+  IaPointer: InputAction.IA_POINTER,
+  IaPrimary: InputAction.IA_PRIMARY,
+  IaSecondary: InputAction.IA_SECONDARY,
+
+  IaAny: InputAction.IA_ANY,
+
+  IaForward: InputAction.IA_FORWARD,
+  IaBackward: InputAction.IA_BACKWARD,
+  IaRight: InputAction.IA_RIGHT,
+  IaLeft: InputAction.IA_LEFT,
+
+  IaJump: InputAction.IA_JUMP,
+  IaWalk: InputAction.IA_WALK,
+
+  IaAction3: InputAction.IA_ACTION_3,
+  IaAction4: InputAction.IA_ACTION_4,
+  IaAction5: InputAction.IA_ACTION_5,
+  IaAction6: InputAction.IA_ACTION_6
 }
