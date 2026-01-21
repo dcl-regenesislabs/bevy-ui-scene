@@ -184,7 +184,11 @@ function RenderHoverAction({
     return outsideScene || tooFar
   }
   function getUnreachableText(): string | undefined {
-    return outsideScene ? 'Outside scene' : tooFar ? 'Too far' : undefined
+    return outsideScene
+      ? 'Outside scene, get closer'
+      : tooFar
+      ? 'Too far, get closer'
+      : undefined
   }
 }
 
