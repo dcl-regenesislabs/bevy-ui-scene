@@ -118,7 +118,6 @@ export type SceneLoadingWindow = {
   visible: boolean
   title: string
   pendingAssets: number | null
-  totalAssets: number | null
 }
 
 export type BevyApiInterface = {

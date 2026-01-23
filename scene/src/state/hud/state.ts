@@ -165,7 +165,6 @@ export const hudInitialState: HudState = {
   loadingScene: {
     visible: false,
     title: '',
-    pendingAssets: null,
-    totalAssets: null
+    pendingAssets: null
   }
 }
