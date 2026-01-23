@@ -114,6 +114,13 @@ export type MicActivation = {
   active: boolean
 }
 
+export type SceneLoadingWindow = {
+  visible: boolean
+  title: string
+  pendingAssets: number | null
+  totalAssets: number | null
+}
+
 export type BevyApiInterface = {
   setAvatar: (avatarData: SetAvatarData) => Promise<number>
   openSceneLogger: () => Promise<void>
@@ -142,6 +149,7 @@ export type BevyApiInterface = {
   getSystemActionStream: () => Promise<SystemAction[]>
   getChatStream: () => Promise<ChatMessageDefinition[]>
   getVoiceStream: () => Promise<MicActivation[]>
+  getSceneLoadingUIStream: () => Promise<SceneLoadingWindow[]>
   sendChat: (message: string, channel?: string) => void
   quit: () => void
   getPermissionRequestStream: () => Promise<PermissionRequest[]>
