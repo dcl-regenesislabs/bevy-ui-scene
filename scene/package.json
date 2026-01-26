@@ -6,7 +6,7 @@
     "start": "sdk-commands start",
     "deploy": "sdk-commands deploy",
     "build": "sdk-commands build",
-    "export-static": "sdk-commands export-static --destination static/ --realmName BevyUiScene --baseUrl https://dclexplorer.github.io/bevy-ui-scene/ --commsAdapter ws-room:ws-room-service.decentraland.org/rooms/bevy-ui-scene",
+    "export-static": "sdk-commands export-static --destination static/ --realmName BevyUiScene --baseUrl https://regenesislabs.github.io/bevy-ui-scene/ --commsAdapter ws-room:ws-room-service.decentraland.org/rooms/bevy-ui-scene",
     "lint": "eslint \"./src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint --fix \"./src/**/*.{ts,tsx}\"",
     "format": "prettier --config .prettierrc -c \"./src/**/*.{ts,tsx}\"",
