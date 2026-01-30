@@ -147,34 +147,41 @@ function RenderHoverAction({
         borderRadius: getViewportHeight() * 0.01,
         borderWidth: 0,
         borderColor: COLOR.BLACK_TRANSPARENT,
-        opacity: isUnreachable() ? 0.6 : 1,
         ...uiTransform
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_7 }}
     >
-      {hoverAction.eventInfo?.button !== undefined &&
-        inputBindings?.[hoverAction.eventInfo.button] && (
-          <KeyIcon inputBinding={inputBindings[hoverAction.eventInfo.button]} />
-        )}
-
       <UiEntity
-        uiTransform={{ width: '100%' }}
-        uiText={{
-          value:
-            getUnreachableText() ??
-            `${hoverAction.eventInfo?.hoverText ?? 'Interact'}`,
-          fontSize: getHudFontSize(getViewportHeight()).NORMAL,
-          textWrap: 'nowrap'
+        uiTransform={{
+          opacity: isUnreachable() ? 0.6 : 1
         }}
-      />
-      {isUnreachable() && (
-        <Icon
-          uiTransform={{ position: { top: '5%' } }}
-          icon={{ spriteName: 'WarningError', atlasName: 'icons' }}
-          iconSize={fontSize * 1.5}
-          iconColor={COLOR.WHITE}
+      >
+        {hoverAction.eventInfo?.button !== undefined &&
+          inputBindings?.[hoverAction.eventInfo.button] && (
+            <KeyIcon
+              inputBinding={inputBindings[hoverAction.eventInfo.button]}
+            />
+          )}
+
+        <UiEntity
+          uiTransform={{ width: '100%' }}
+          uiText={{
+            value:
+              getUnreachableText() ??
+              `${hoverAction.eventInfo?.hoverText ?? 'Interact'}`,
+            fontSize: getHudFontSize(getViewportHeight()).NORMAL,
+            textWrap: 'nowrap'
+          }}
         />
-      )}
+        {isUnreachable() && (
+          <Icon
+            uiTransform={{ position: { top: '5%' } }}
+            icon={{ spriteName: 'walking', atlasName: 'icons' }}
+            iconSize={fontSize * 1.5}
+            iconColor={COLOR.WHITE}
+          />
+        )}
+      </UiEntity>
     </UiEntity>
   )
   function isUnreachable(): boolean {
