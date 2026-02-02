@@ -110,8 +110,7 @@ export const HoverActionComponent = (): ReactElement | null => {
           .filter((i) => i)
           .map((hoverAction, index) => (
             <RenderHoverAction
-              outsideScene={systemHoverEvent.outsideScene}
-              tooFar={hoverAction.tooFar}
+              tooFar={!hoverAction.enabled}
               key={index}
               uiTransform={{
                 height: bubbleHeight,
@@ -128,13 +127,11 @@ export const HoverActionComponent = (): ReactElement | null => {
 function RenderHoverAction({
   hoverAction,
   uiTransform,
-  outsideScene,
   tooFar
 }: {
   hoverAction: PBPointerEvents_Entry
   uiTransform: UiTransformProps
   key?: Key
-  outsideScene: boolean
   tooFar: boolean
 }): ReactElement {
   const inputBindings = getSceneInputBindingsMap()
@@ -185,12 +182,10 @@ function RenderHoverAction({
     </UiEntity>
   )
   function isUnreachable(): boolean {
-    return outsideScene || tooFar
+    return tooFar
   }
   function getUnreachableText(): string | undefined {
-    return outsideScene
-      ? 'Outside scene, get closer'
-      : tooFar
+    return tooFar
       ? 'Too far, get closer'
       : undefined
   }

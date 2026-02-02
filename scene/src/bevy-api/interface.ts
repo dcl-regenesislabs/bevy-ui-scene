@@ -12,6 +12,7 @@ import {
   type SetSinglePermissionArgs
 } from './permission-definitions'
 import { type PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
+import { InputAction, PointerEventType } from '@dcl/ecs'
 
 export type ExplorerSetting = {
   name: string
@@ -130,9 +131,7 @@ export enum HoverTargetType {
 export type SystemHoverEvent = {
   entered: boolean
   targetType: HoverTargetType
-  distance: number
-  actions: Array<PBPointerEvents_Entry & { tooFar: boolean }>
-  outsideScene: boolean
+  actions: Array<PBPointerEvents_Entry & { enabled: boolean }>
 }
 
 export type ShowUiRequestParams = {
