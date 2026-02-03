@@ -12,7 +12,6 @@ import {
   type SetSinglePermissionArgs
 } from './permission-definitions'
 import { type PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
-import { InputAction, PointerEventType } from '@dcl/ecs'
 
 export type ExplorerSetting = {
   name: string
