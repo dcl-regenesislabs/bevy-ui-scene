@@ -34,7 +34,6 @@ export const HoverActionComponent = (): ReactElement | null => {
 
     async function listenStream(stream: SystemHoverEvent[]): Promise<void> {
       for await (const systemHoverEvent of stream) {
-        console.log('systemHoverEvent', systemHoverEvent)
         if (
           systemHoverEvent.entered &&
           systemHoverEvent.targetType !== HoverTargetType.UI
@@ -185,9 +184,7 @@ function RenderHoverAction({
     return tooFar
   }
   function getUnreachableText(): string | undefined {
-    return tooFar
-      ? 'Too far, get closer'
-      : undefined
+    return tooFar ? 'Too far, get closer' : undefined
   }
 }
 
