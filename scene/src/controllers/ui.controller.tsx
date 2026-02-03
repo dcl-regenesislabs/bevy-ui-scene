@@ -39,6 +39,7 @@ import useEffect = ReactEcs.useEffect
 import { engine, PointerLock, Transform } from '@dcl/sdk/ecs'
 import { getViewportWidth } from '../service/canvas-ratio'
 import { listenSystemAction } from '../service/system-actions-emitter'
+import { HoverActionComponent } from '../components/hover-actions/hover-action-component'
 import { SceneLoadingWindowComponent } from '../components/scene-loading-window'
 
 let loadingAndLogin: any = null
@@ -160,9 +161,9 @@ export class UIController {
         {store.getState().hud.mapModeActive && SceneCatalogPanel()}
 
         {this.sceneInfoCardVisible && this.sceneCard.mainUi()}
-
         {NotificationToastStack()}
         {PopupStack()}
+        {HoverActionComponent()}
         {SceneLoadingWindowComponent()}
       </Canvas>
     )

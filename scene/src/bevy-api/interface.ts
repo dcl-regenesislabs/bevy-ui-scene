@@ -11,6 +11,7 @@ import {
   type SetPermanentPermissionArgs,
   type SetSinglePermissionArgs
 } from './permission-definitions'
+import { type PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
 
 export type ExplorerSetting = {
   name: string
@@ -99,11 +100,39 @@ export type HomeScene = {
   parcel: Vector2
 }
 
+export type InputBinding =
+  | `Key${string}`
+  | `Digit${string}`
+  | `Mouse${string}`
+  | `Gamepad${string}`
+  | `Arrow${string}`
+  | `Numpad${string}`
+  | `Shift${string}`
+  | 'Space'
+  | 'Tab'
+  | 'Enter'
+  | 'Escape'
+  | 'PageUp'
+  | 'PageDown'
+
 export type SystemAction = {
   action: string
   pressed: boolean
   toString: string
 }
+
+export enum HoverTargetType {
+  WORLD,
+  UI,
+  AVATAR
+}
+
+export type SystemHoverEvent = {
+  entered: boolean
+  targetType: HoverTargetType
+  actions: Array<PBPointerEvents_Entry & { enabled: boolean }>
+}
+
 export type ShowUiRequestParams = {
   hash?: string | undefined
   show?: boolean | undefined
@@ -114,6 +143,13 @@ export type MicActivation = {
   active: boolean
 }
 
+export type Action = { Scene: string } | { System: string }
+
+export type Binding = [Action, InputBinding[]]
+
+export type BindingsConfig = {
+  bindings: Binding[]
+}
 export type SceneLoadingWindow = {
   visible: boolean
   title: string
@@ -146,6 +182,8 @@ export type BevyApiInterface = {
   setHomeScene: (home: HomeScene) => void
   getRealmProvider: () => Promise<string>
   getSystemActionStream: () => Promise<SystemAction[]>
+  getHoverStream: () => Promise<SystemHoverEvent[]>
+  getInputBindings: () => Promise<BindingsConfig>
   getChatStream: () => Promise<ChatMessageDefinition[]>
   getVoiceStream: () => Promise<MicActivation[]>
   getSceneLoadingUIStream: () => Promise<SceneLoadingWindow[]>
