@@ -40,6 +40,7 @@ import { engine, PointerLock, Transform } from '@dcl/sdk/ecs'
 import { getViewportWidth } from '../service/canvas-ratio'
 import { listenSystemAction } from '../service/system-actions-emitter'
 import { HoverActionComponent } from '../components/hover-actions/hover-action-component'
+import { SceneLoadingWindowComponent } from '../components/scene-loading-window'
 
 let loadingAndLogin: any = null
 
@@ -146,7 +147,9 @@ export class UIController {
 
         {!this.isMainMenuVisible && this.mainHud.mainUi()}
         {this.isMainMenuVisible && this.menu.mainUi()}
+
         {this.actionPopUpVisible && this.actionPopUp.mainUi()}
+
         {this.isPhotosVisible && this.photosPanel.mainUi()}
         {/* Loading & Login */}
         {this.loadingAndLogin?.mainUi()}
@@ -161,6 +164,7 @@ export class UIController {
         {NotificationToastStack()}
         {PopupStack()}
         {HoverActionComponent()}
+        {SceneLoadingWindowComponent()}
       </Canvas>
     )
   }

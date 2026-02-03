@@ -151,6 +151,12 @@ export type Binding = [Action, InputBinding[]]
 export type BindingsConfig = {
   bindings: Binding[]
 }
+export type SceneLoadingWindow = {
+  visible: boolean
+  title: string
+  pendingAssets: number | null
+}
+
 export type BevyApiInterface = {
   setAvatar: (avatarData: SetAvatarData) => Promise<number>
   openSceneLogger: () => Promise<void>
@@ -181,6 +187,7 @@ export type BevyApiInterface = {
   getInputBindings: () => Promise<BindingsConfig>
   getChatStream: () => Promise<ChatMessageDefinition[]>
   getVoiceStream: () => Promise<MicActivation[]>
+  getSceneLoadingUIStream: () => Promise<SceneLoadingWindow[]>
   sendChat: (message: string, channel?: string) => void
   quit: () => void
   getPermissionRequestStream: () => Promise<PermissionRequest[]>

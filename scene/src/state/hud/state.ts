@@ -2,6 +2,7 @@ import { cloneDeep } from '../../utils/function-utils'
 import { type NameDefinition } from '../../utils/passport-promise-utils'
 import { type Place } from '../../service/map-places'
 import { Vector3 } from '@dcl/sdk/math'
+import { type SceneLoadingWindow } from '../../bevy-api/interface'
 
 export const HUD_STORE_ID = 'hud'
 
@@ -95,6 +96,7 @@ export type HudState = {
   chatInputEmojiSuggestions: string[]
   playerVoiceStateMap: Record<string, boolean>
   micEnabled: boolean
+  loadingScene: SceneLoadingWindow
 }
 
 export type HudStateUpdateParams = {
@@ -127,6 +129,7 @@ export type HudStateUpdateParams = {
   chatInputEmojiSuggestions?: string[]
   playerVoiceStateMap?: Record<string, boolean>
   micEnabled?: boolean
+  loadingScene?: SceneLoadingWindow
 }
 
 export const hudInitialState: HudState = {
@@ -158,5 +161,10 @@ export const hudInitialState: HudState = {
   chatInputMentionSuggestions: [],
   chatInputEmojiSuggestions: [],
   playerVoiceStateMap: {},
-  micEnabled: false
+  micEnabled: false,
+  loadingScene: {
+    visible: false,
+    title: '',
+    pendingAssets: null
+  }
 }

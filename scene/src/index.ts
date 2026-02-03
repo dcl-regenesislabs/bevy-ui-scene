@@ -2,6 +2,7 @@ import { init } from './scenes/main'
 import { initRealmProviderChangeListener } from './service/realm-change'
 import { initAvatarTags } from './components/avatar-tags/avatar-name-tag-3d'
 import { initInputBindings } from './service/input-bindings'
+import { initSceneLoadingUi } from './components/scene-loading-window'
 
 export function main(): void {
   initRealmProviderChangeListener()
@@ -11,5 +12,6 @@ export function main(): void {
     console.error(e)
   })
   initAvatarTags().catch(console.error)
+  initSceneLoadingUi().catch(console.error)
   initInputBindings()
 }
