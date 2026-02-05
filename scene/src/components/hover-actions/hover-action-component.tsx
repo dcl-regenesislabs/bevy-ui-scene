@@ -197,13 +197,13 @@ export function KeyIcon({
   const isMouse = inputBinding.indexOf('Mouse') === 0
   const fontSize = getHudFontSize(getViewportHeight()).NORMAL
   const KeyBorder = {
-    width: fontSize * 2,
+    minWidth: fontSize * 2,
     height: fontSize * 2,
     borderColor: COLOR.WHITE,
     borderWidth: 2,
     borderRadius: fontSize * 0.6,
     flexShrink: 0,
-    flexGrow: 0,
+    flexGrow: 1,
     padding: { top: -fontSize * 0.1 }
   }
   if (isDigit)
@@ -212,7 +212,8 @@ export function KeyIcon({
         uiTransform={{ ...KeyBorder }}
         uiText={{
           value: `<b>${inputBinding.replace('Digit', '')}</b>`,
-          fontSize
+          fontSize,
+          textWrap: 'nowrap'
         }}
       ></UiEntity>
     )

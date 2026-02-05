@@ -6,7 +6,6 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { getContentHeight, getViewportHeight } from '../service/canvas-ratio'
 import { getBackgroundFromAtlas } from '../utils/ui-utils'
 import { getHudFontSize } from '../ui-classes/main-hud/scene-info/SceneInfo'
-import { COLOR } from './color-palette'
 import { SpinnerLoading } from './spinner-loading'
 
 export async function initSceneLoadingUi(): Promise<void> {
@@ -40,56 +39,45 @@ export function SceneLoadingWindowComponent(): ReactElement | null {
         height: '100%',
         positionType: 'absolute',
         position: 0,
-        pointerFilter: 'block'
+        pointerFilter: 'block',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column'
       }}
       uiBackground={{
-        color: COLOR.BLACK
+        textureMode: 'stretch',
+        texture: {
+          src: 'assets/images/login/gradient-background.png'
+        }
       }}
     >
       <UiEntity
         uiTransform={{
-          width: '100%',
-          height: '100%',
-          positionType: 'absolute',
-          position: 0,
-          pointerFilter: 'block',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'column'
+          width: getContentHeight() * 0.1,
+          height: getContentHeight() * 0.1
         }}
         uiBackground={{
           textureMode: 'stretch',
-          texture: {
-            src: 'assets/images/login/gradient-background.png'
-          }
+          ...getBackgroundFromAtlas({
+            spriteName: 'DdlIconColor',
+            atlasName: 'icons'
+          })
         }}
-      >
-        <UiEntity
-          uiTransform={{
-            width: getContentHeight() * 0.1,
-            height: getContentHeight() * 0.1
-          }}
-          uiBackground={{
-            textureMode: 'stretch',
-            ...getBackgroundFromAtlas({
-              spriteName: 'DdlIconColor',
-              atlasName: 'icons'
-            })
-          }}
-        />
-        <UiEntity
-          uiText={{
-            value: `${loadingScene.title}\n<b>Loading Scene Assets</b>`,
-            fontSize: getHudFontSize(getViewportHeight()).BIG
-          }}
-        />
-        <SpinnerLoading
-          uiTransform={{
-            width: getContentHeight() * 0.1,
-            height: getContentHeight() * 0.1
-          }}
-        />
-      </UiEntity>
+      />
+      <UiEntity
+        uiText={{
+          value: `<b>${loadingScene.title}</b>\nLoading Scene Assets ${
+            loadingScene.pendingAssets ? `(${loadingScene.pendingAssets})` : ''
+          }`,
+          fontSize: getHudFontSize(getViewportHeight()).BIG
+        }}
+      />
+      <SpinnerLoading
+        uiTransform={{
+          width: getContentHeight() * 0.1,
+          height: getContentHeight() * 0.1
+        }}
+      />
     </UiEntity>
   )
 }

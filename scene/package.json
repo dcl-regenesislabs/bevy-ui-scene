@@ -14,11 +14,11 @@
     "upgrade-sdk": "npm install @dcl/sdk@protocol-squad @dcl/js-runtime@protocol-squad @dcl/react-ecs@protocol-squad @dcl/sdk-commands@protocol-squad @dcl/ecs@protocol-squad --save-exact"
   },
   "devDependencies": {
-    "@dcl/ecs": "7.13.1-19516109426.commit-e1e79aa",
-    "@dcl/js-runtime": "7.13.1-19516109426.commit-e1e79aa",
-    "@dcl/react-ecs": "7.13.1-19516109426.commit-e1e79aa",
-    "@dcl/sdk": "7.13.1-19516109426.commit-e1e79aa",
-    "@dcl/sdk-commands": "7.13.1-19516109426.commit-e1e79aa",
+    "@dcl/ecs": "7.19.1-21670829283.commit-e132905",
+    "@dcl/js-runtime": "7.19.1-21670829283.commit-e132905",
+    "@dcl/react-ecs": "7.19.1-21670829283.commit-e132905",
+    "@dcl/sdk": "7.19.1-21670829283.commit-e132905",
+    "@dcl/sdk-commands": "7.19.1-21670829283.commit-e132905",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
     "eslint": "^8.53.0",
