@@ -6,7 +6,6 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { getContentHeight, getViewportHeight } from '../service/canvas-ratio'
 import { getBackgroundFromAtlas } from '../utils/ui-utils'
 import { getHudFontSize } from '../ui-classes/main-hud/scene-info/SceneInfo'
-import { COLOR } from './color-palette'
 import { SpinnerLoading } from './spinner-loading'
 
 export async function initSceneLoadingUi(): Promise<void> {
