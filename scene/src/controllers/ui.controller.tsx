@@ -145,7 +145,9 @@ export class UIController {
         <CameraPointer />
         {InteractableArea({ active: false })}
 
-        {!this.isMainMenuVisible && this.mainHud.mainUi()}
+        {!this.isMainMenuVisible &&
+          store.getState().hud.loggedIn &&
+          this.mainHud.mainUi()}
         {this.isMainMenuVisible && this.menu.mainUi()}
 
         {this.actionPopUpVisible && this.actionPopUp.mainUi()}
