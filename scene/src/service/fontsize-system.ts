@@ -1,12 +1,12 @@
 import { getViewportHeight } from './canvas-ratio'
 import { getContentScaleRatio } from './canvas-ratio'
 
-enum CONTEXT {
+export enum CONTEXT {
   SIDE,
   DIALOG
 }
 
-enum TYPOGRAPHY_TOKENS {
+export enum TYPOGRAPHY_TOKENS {
   TITLE_XL,
   TITLE_L,
   TITLE_M,
@@ -22,7 +22,7 @@ const TYPO_SCALE: Record<TYPOGRAPHY_TOKENS, number> = {
   [TYPOGRAPHY_TOKENS.TITLE_XL]: 2.4,
   [TYPOGRAPHY_TOKENS.TITLE_L]: 1.9,
   [TYPOGRAPHY_TOKENS.TITLE_M]: 1.4,
-  [TYPOGRAPHY_TOKENS.BODY]: 1.0,
+  [TYPOGRAPHY_TOKENS.BODY]: 1.2,
   [TYPOGRAPHY_TOKENS.BODY_S]: 0.9,
   [TYPOGRAPHY_TOKENS.LABEL]: 0.85,
   [TYPOGRAPHY_TOKENS.TAG]: 0.8,

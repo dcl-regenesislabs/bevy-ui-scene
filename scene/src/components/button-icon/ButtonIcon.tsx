@@ -14,6 +14,7 @@ import { ROUNDED_TEXTURE_BACKGROUND } from '../../utils/constants'
 import { type UiBackgroundProps } from '@dcl/react-ecs'
 import { COLOR } from '../color-palette'
 import { getContentScaleRatio } from '../../service/canvas-ratio'
+import { getFontSize } from '../../service/fontsize-system'
 
 function ButtonIcon(props: {
   // Events
@@ -37,7 +38,7 @@ function ButtonIcon(props: {
   const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
   if (canvasInfo === null) return null
 
-  const FONT_SIZE = Math.max(canvasInfo.height * 0.02, 12)
+  const DEFAULT_HINT_FONT_SIZE = getFontSize({})
 
   let position: Partial<Position> = { left: '100%' }
 
@@ -105,7 +106,7 @@ function ButtonIcon(props: {
             position
           }}
           text={props.hintText}
-          fontSize={props.hintFontSize ?? FONT_SIZE}
+          fontSize={props.hintFontSize ?? DEFAULT_HINT_FONT_SIZE}
           arrowSide={props.side ?? 'left'}
         />
       )}

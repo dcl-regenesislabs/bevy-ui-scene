@@ -19,6 +19,7 @@ import { type PBUiCanvasInformation } from '@dcl/ecs/dist/components/generated/p
 import { BevyApi } from '../../bevy-api'
 import { sleep } from '../../utils/dcl-utils'
 import { listenSystemAction } from '../../service/system-actions-emitter'
+import { getFontSize } from '../../service/fontsize-system'
 
 const ZERO_SIZE = {
   width: 0,
@@ -374,6 +375,7 @@ export default class MainHud {
             backgroundColor={this.walletBackground}
             icon={this.walletIcon}
             hintText={'Profile'}
+            hintFontSize={getFontSize({})}
             showHint={this.walletHint}
             iconSize={buttonIconSize}
           />
@@ -399,6 +401,7 @@ export default class MainHud {
             icon={this.bellIcon}
             hintText={'Notifications'}
             showHint={this.bellHint}
+            hintFontSize={getFontSize({})}
             iconSize={buttonIconSize}
             notifications={store.getState().hud.unreadNotifications}
           />
@@ -423,27 +426,10 @@ export default class MainHud {
             backgroundColor={this.mapBackground}
             icon={this.mapIcon}
             hintText={'Map'}
+            hintFontSize={getFontSize({})}
             showHint={this.mapHint}
             iconSize={buttonIconSize}
           />
-          {/*          <ButtonIcon
-            uiTransform={buttonTransform}
-            onMouseEnter={() => {
-              this.exploreEnter()
-            }}
-            onMouseLeave={() => {
-              this.updateButtons()
-            }}
-            onMouseDown={() => {
-              getUiController().menu?.show('map')
-              this.updateButtons()
-            }}
-            backgroundColor={this.exploreBackground}
-            icon={this.exploreIcon}
-            hintText={'Explore'}
-            showHint={this.exploreHint}
-            iconSize={buttonIconSize}
-          /> */}
 
           <ButtonIcon
             uiTransform={buttonTransform}
@@ -460,6 +446,7 @@ export default class MainHud {
             backgroundColor={this.backpackBackground}
             icon={this.backpackIcon}
             hintText={'Backpack'}
+            hintFontSize={getFontSize({})}
             showHint={this.backpackHint}
             iconSize={buttonIconSize}
           />
@@ -479,6 +466,7 @@ export default class MainHud {
             backgroundColor={this.settingsBackground}
             icon={this.settingsIcon}
             hintText={'Settings'}
+            hintFontSize={getFontSize({})}
             showHint={this.settingsHint}
             iconSize={buttonIconSize}
           />
@@ -505,6 +493,7 @@ export default class MainHud {
             backgroundColor={this.helpBackground}
             icon={this.helpIcon}
             hintText={'Help'}
+            hintFontSize={getFontSize({})}
             showHint={this.helpHint}
             iconSize={buttonIconSize}
           />
@@ -534,6 +523,7 @@ export default class MainHud {
             backgroundColor={this.voiceChatBackground}
             icon={this.voiceChatIcon}
             hintText={'Voice Chat (Click to toggle or hold <b>V</b> to talk)'}
+            hintFontSize={getFontSize({})}
             showHint={this.voiceChatHint}
             iconSize={buttonIconSize}
           />
@@ -560,6 +550,7 @@ export default class MainHud {
               store.getState().hud.chatOpen ? ChatIconActive : ChatIconInactive
             }
             hintText={'Chat'}
+            hintFontSize={getFontSize({})}
             showHint={state.hover === MENU_ELEMENT.CHAT}
             notifications={this.chatAndLogs.getUnreadMessages()}
             iconSize={buttonIconSize}
@@ -580,6 +571,7 @@ export default class MainHud {
             backgroundColor={this.emotesBackground}
             icon={this.emotesIcon}
             hintText={'Emotes (Alt or ⌥)'}
+            hintFontSize={getFontSize({})}
             showHint={this.emotesHint}
             iconSize={buttonIconSize}
           />
