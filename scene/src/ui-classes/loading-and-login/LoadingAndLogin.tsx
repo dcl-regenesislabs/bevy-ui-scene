@@ -17,6 +17,7 @@ import { getBackgroundFromAtlas } from '../../utils/ui-utils'
 import { noop } from '../../utils/function-utils'
 import { store } from '../../state/store'
 import { showErrorPopup } from '../../service/error-popup-service'
+import { createTween } from '../../service/tween'
 
 type StatusType =
   | 'loading'
@@ -47,6 +48,7 @@ export default class LoadingAndLogin {
   private codeText: string = ''
   private firstButtonText: string = ''
   private secondButtonText: string = ''
+  private opacity: number = 0
 
   private firstButtonAction: () => void = () => {}
   private secondButtonAction: () => void = () => {}
@@ -75,6 +77,15 @@ export default class LoadingAndLogin {
     this.status = 'loading'
     this.updateLayout()
     this.isVisible = true
+
+    const startTween = createTween({ startValue: 0, endValue: 1, time: 1 })
+    startTween.onUpdate((value) => {
+      this.opacity = value
+    })
+    startTween.onComplete(() => {
+      this.opacity = 1
+      startTween.cancel()
+    })
   }
 
   finishLoading(): void {
@@ -262,7 +273,8 @@ export default class LoadingAndLogin {
           width: '100%',
           height: '100%',
           positionType: 'absolute',
-          zIndex: 9999
+          zIndex: 9999,
+          opacity: this.opacity
         }}
         onMouseDown={noop}
       >
