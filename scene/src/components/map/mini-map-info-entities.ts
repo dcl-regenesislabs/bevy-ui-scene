@@ -96,7 +96,7 @@ export function renderVisiblePlaces(places: Place[]): void {
     engine.removeEntityWithChildren(placeEntity)
   })
   placeEntities.splice(0, placeEntities.length)
-  const symbolHeight = Transform.get(getMapInfoCamera()).position.y - 2
+  const symbolHeight = Transform.get(getMapInfoCamera()).position.y - 1
   places.forEach((place) => {
     const placeEntity = engine.addEntity()
     placeEntities.push(placeEntity)
