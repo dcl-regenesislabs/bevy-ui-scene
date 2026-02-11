@@ -29,6 +29,7 @@ import { COLOR } from '../../../components/color-palette'
 import { updateHudStateAction } from '../../../state/hud/actions'
 import Icon from '../../../components/icon/Icon'
 import { currentRealmProviderIsWorld } from '../../../service/realm-change'
+import { getFontSize } from '../../../service/fontsize-system'
 
 export default class SceneInfo {
   private readonly uiController: UIController
@@ -37,7 +38,7 @@ export default class SceneInfo {
   private realm: string | undefined
   private sceneCoords: Vector3 | undefined
   private place: PlaceFromApi | undefined
-  public fontSize: number = getHudFontSize(getViewportHeight()).NORMAL
+  public fontSize: number = getFontSize({})
   private isExpanded: boolean = false
   private isMenuOpen: boolean = false
   private isHome: boolean = false
@@ -319,14 +320,14 @@ export default class SceneInfo {
             >
               <Label
                 value={'Hide Scene UI'}
-                fontSize={this.fontSize * 0.8}
+                fontSize={this.fontSize}
                 color={this.sceneUiLabelColor}
                 uiTransform={{ margin: { left: this.fontSize / 3 } }}
               />
               <UiEntity
                 uiTransform={{
-                  width: (this.fontSize * 0.8 * 65) / 36,
-                  height: this.fontSize * 0.8,
+                  width: this.fontSize * 2,
+                  height: this.fontSize,
                   margin: this.fontSize * 0.5
                 }}
                 uiBackground={{
@@ -365,8 +366,8 @@ export default class SceneInfo {
             >
               <UiEntity
                 uiTransform={{
-                  width: this.fontSize * 0.8,
-                  height: this.fontSize * 0.8,
+                  width: this.fontSize,
+                  height: this.fontSize,
                   margin: this.fontSize * 0.5
                 }}
                 uiBackground={{
@@ -376,7 +377,7 @@ export default class SceneInfo {
               />
               <Label
                 value={this.isHome ? 'Unset as Home' : 'Set as Home'}
-                fontSize={this.fontSize * 0.8}
+                fontSize={this.fontSize}
                 color={this.setHomeLabelColor}
               />
             </UiEntity>
@@ -409,8 +410,8 @@ export default class SceneInfo {
             >
               <UiEntity
                 uiTransform={{
-                  width: this.fontSize * 0.8,
-                  height: this.fontSize * 0.8,
+                  width: this.fontSize,
+                  height: this.fontSize,
                   margin: this.fontSize * 0.5
                 }}
                 uiBackground={{
@@ -420,7 +421,7 @@ export default class SceneInfo {
               />
               <Label
                 value="Reload Scene"
-                fontSize={this.fontSize * 0.8}
+                fontSize={this.fontSize}
                 color={this.reloadLabelColor}
               />
             </UiEntity>
@@ -449,8 +450,8 @@ export default class SceneInfo {
               >
                 <UiEntity
                   uiTransform={{
-                    width: this.fontSize * 0.8,
-                    height: this.fontSize * 0.8,
+                    width: this.fontSize,
+                    height: this.fontSize,
                     margin: this.fontSize * 0.5
                   }}
                   uiBackground={{
@@ -460,7 +461,7 @@ export default class SceneInfo {
                 />
                 <Label
                   value="Scene Info"
-                  fontSize={this.fontSize * 0.8}
+                  fontSize={this.fontSize}
                   color={this.openInfoLabelColor}
                 />
               </UiEntity>
@@ -540,25 +541,6 @@ export default class SceneInfo {
             }}
           />
         </UiEntity>
-        {/* FOR DEBUG INFO OR MINIMAP */}
-        {/* <ButtonIcon
-              onMouseDown={() => {
-                this.setExpanded(!this.isExpanded).catch((reason)=>{console.error(reason)})
-              }}
-              onMouseEnter={() => {
-                this.expandBackgroundColor = SELECTED_BUTTON_COLOR
-              }}
-              onMouseLeave={() => {
-                this.expandBackgroundColor = undefined
-              }}
-              uiTransform={{
-                width: this.fontSize * 2,
-                height: this.fontSize * 2,
-                margin: { left: this.fontSize * 0.5 }
-              }}
-              backgroundColor={this.expandBackgroundColor}
-              icon={this.expandIcon}
-            /> */}
         <UiEntity
           uiTransform={{
             width: 'auto',
@@ -596,8 +578,8 @@ export default class SceneInfo {
           >
             <UiEntity
               uiTransform={{
-                width: this.fontSize * 0.875,
-                height: this.fontSize * 0.875
+                width: this.fontSize,
+                height: this.fontSize
               }}
               uiBackground={{
                 ...getBackgroundFromAtlas({
@@ -617,8 +599,8 @@ export default class SceneInfo {
               uiTransform={{
                 display:
                   this.liveSceneInfo?.sdkVersion === 'sdk6' ? 'flex' : 'none',
-                width: (this.fontSize * 0.875) / 0.41,
-                height: this.fontSize * 0.875,
+                width: this.fontSize / 0.41,
+                height: this.fontSize,
                 margin: { left: this.fontSize * 0.5 }
               }}
               uiBackground={{
