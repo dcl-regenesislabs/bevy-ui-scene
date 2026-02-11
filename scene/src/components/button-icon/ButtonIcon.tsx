@@ -13,8 +13,7 @@ import Icon from '../icon/Icon'
 import { ROUNDED_TEXTURE_BACKGROUND } from '../../utils/constants'
 import { type UiBackgroundProps } from '@dcl/react-ecs'
 import { COLOR } from '../color-palette'
-import { getContentScaleRatio } from '../../service/canvas-ratio'
-import { getFontSize } from '../../service/fontsize-system'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
 function ButtonIcon(props: {
   // Events
@@ -92,7 +91,7 @@ function ButtonIcon(props: {
         <Label
           value={props.notifications?.toString() ?? '0'}
           textAlign="middle-center"
-          fontSize={getContentScaleRatio() * 20}
+          fontSize={getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })}
           uiTransform={{ width: '100%', height: '100%' }}
           textWrap={'nowrap'}
         />

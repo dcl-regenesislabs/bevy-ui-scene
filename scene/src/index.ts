@@ -6,7 +6,10 @@ import { initSceneLoadingUi } from './components/scene-loading-window'
 
 export function main(): void {
   initRealmProviderChangeListener()
-
+  const _log = console.log
+  console.log = (...args) => {
+    return _log(`[System Scene]`, ...args)
+  }
   init(false).catch((e) => {
     console.error('Fatal error during init')
     console.error(e)
