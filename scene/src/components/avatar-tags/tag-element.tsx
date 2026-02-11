@@ -12,7 +12,6 @@ import { sleep } from '../../utils/dcl-utils'
 import { Column, Row } from '../layout'
 import { truncateWithoutBreakingWords } from '../../utils/ui-utils'
 import Icon from '../icon/Icon'
-import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 import { store } from '../../state/store'
 import { getPlayer } from '@dcl/sdk/players'
 import { isSingleEmoji } from '../chat-message/ChatMessage'
@@ -20,6 +19,7 @@ import {
   type Address,
   asyncHasClaimedName
 } from '../../ui-classes/main-hud/chat-and-logs/named-users-data-service'
+import { getFontSize } from '../../service/fontsize-system'
 
 const TIME_TO_HIDE_MESSAGE = 5000
 export function getTagElement({
@@ -61,9 +61,9 @@ function TagContent({ userId }: { userId: Address }): ReactElement | null {
   const [messageToHide, setMessageToHide] =
     useState<ChatMessageRepresentation | null>(null)
   const [isVisible, setIsVisible] = useState<boolean>(true)
-  const defaultFontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const defaultFontSize = getFontSize({})
   const messageMargin = defaultFontSize / 3
-  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const fontSize = defaultFontSize
 
   useEffect(() => {
     onNewMessage((message: ChatMessageRepresentation) => {
