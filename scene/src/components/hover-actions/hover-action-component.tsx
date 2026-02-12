@@ -15,13 +15,13 @@ import { getViewportHeight } from '../../service/canvas-ratio'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
 import { type Key, type UiTransformProps } from '@dcl/sdk/react-ecs'
-import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 import { MAX_ZINDEX } from '../../utils/constants'
 import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 import { type PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
 import { getSceneInputBindingsMap } from '../../service/input-bindings'
+import { getFontSize } from '../../service/fontsize-system'
 
 export const HoverActionComponent = (): ReactElement | null => {
   const [systemHoverEvent, setSystemHoverEvent] =
@@ -134,7 +134,7 @@ function RenderHoverAction({
   tooFar: boolean
 }): ReactElement {
   const inputBindings = getSceneInputBindingsMap()
-  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const fontSize = getFontSize({})
 
   return (
     <UiEntity
@@ -165,7 +165,7 @@ function RenderHoverAction({
             value:
               getUnreachableText() ??
               `${hoverAction.eventInfo?.hoverText ?? 'Interact'}`,
-            fontSize: getHudFontSize(getViewportHeight()).NORMAL,
+            fontSize,
             textWrap: 'nowrap'
           }}
         />
@@ -195,7 +195,7 @@ export function KeyIcon({
 }): ReactElement {
   const isDigit = inputBinding.indexOf('Digit') === 0
   const isMouse = inputBinding.indexOf('Mouse') === 0
-  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const fontSize = getFontSize({})
   const KeyBorder = {
     minWidth: fontSize * 2,
     height: fontSize * 2,
@@ -204,7 +204,8 @@ export function KeyIcon({
     borderRadius: fontSize * 0.6,
     flexShrink: 0,
     flexGrow: 1,
-    padding: { top: -fontSize * 0.1 }
+    padding: { top: -fontSize * 0.1 },
+    margin: { top: fontSize * -0.15 }
   }
   if (isDigit)
     return (
