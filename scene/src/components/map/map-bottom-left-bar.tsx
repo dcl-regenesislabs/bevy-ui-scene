@@ -2,7 +2,6 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
-import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 import { Column } from '../layout'
 import {
   orbitToTop,
@@ -14,8 +13,22 @@ import { engine, Transform } from '@dcl/sdk/ecs'
 import { getPlayerParcel } from '../../service/player-scenes'
 import { store } from '../../state/store'
 import { decoratePlaceRepresentation } from '../../ui-classes/main-hud/big-map/place-decoration'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
+import { UiTransformProps } from '@dcl/sdk/react-ecs'
 
+const getButtonTransform = (): UiTransformProps => ({
+  borderRadius: getFontSize({}) / 2,
+  width: getFontSize({}) * 2,
+  height: getFontSize({}) * 2,
+  margin: getFontSize({}) / 2,
+  borderColor: COLOR.WHITE,
+  borderWidth: 0,
+  alignItems: 'center',
+  justifyContent: 'center'
+})
 export function MapBottomLeftBar(): ReactElement {
+  const buttonWrapperTransform = getButtonTransform()
+  const buttonIconSize = getFontSize({}) * 2
   return (
     <Column
       uiTransform={{
@@ -27,20 +40,11 @@ export function MapBottomLeftBar(): ReactElement {
         padding: { bottom: '0.5%' }
       }}
       uiBackground={{
-        color: COLOR.DARK_OPACITY_5
+        color: COLOR.DARK_OPACITY_8
       }}
     >
       <Column
-        uiTransform={{
-          borderRadius: getHudFontSize(getViewportHeight()).SMALL,
-          borderColor: COLOR.WHITE,
-          borderWidth: 0,
-          width: getHudFontSize(getViewportHeight()).BIG * 2,
-          height: getHudFontSize(getViewportHeight()).BIG * 2,
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: getHudFontSize(getViewportHeight()).SMALL
-        }}
+        uiTransform={buttonWrapperTransform}
         uiBackground={{
           color: COLOR.WHITE
         }}
@@ -51,21 +55,12 @@ export function MapBottomLeftBar(): ReactElement {
             flexShrink: 0
           }}
           icon={{ spriteName: 'top-view', atlasName: 'icons' }}
-          iconSize={getHudFontSize(getViewportHeight()).BIG * 1.5}
+          iconSize={buttonIconSize}
           iconColor={COLOR.TEXT_COLOR}
         />
       </Column>
       <Column
-        uiTransform={{
-          borderRadius: getHudFontSize(getViewportHeight()).SMALL,
-          borderColor: COLOR.WHITE,
-          borderWidth: 0,
-          width: getHudFontSize(getViewportHeight()).BIG * 2,
-          height: getHudFontSize(getViewportHeight()).BIG * 2,
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: getHudFontSize(getViewportHeight()).SMALL
-        }}
+        uiTransform={buttonWrapperTransform}
         uiBackground={{
           color: COLOR.WHITE
         }}
@@ -76,22 +71,13 @@ export function MapBottomLeftBar(): ReactElement {
             flexShrink: 0
           }}
           icon={{ spriteName: 'bird-view', atlasName: 'icons' }}
-          iconSize={getHudFontSize(getViewportHeight()).BIG * 1.5}
+          iconSize={buttonIconSize}
           iconColor={COLOR.TEXT_COLOR}
         />
       </Column>
       {store.getState().hud.homePlace && (
         <Column
-          uiTransform={{
-            borderRadius: getHudFontSize(getViewportHeight()).SMALL,
-            borderColor: COLOR.WHITE,
-            borderWidth: 0,
-            width: getHudFontSize(getViewportHeight()).BIG * 2,
-            height: getHudFontSize(getViewportHeight()).BIG * 2,
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: getHudFontSize(getViewportHeight()).SMALL
-          }}
+          uiTransform={buttonWrapperTransform}
           uiBackground={{
             color: COLOR.WHITE
           }}
@@ -108,23 +94,14 @@ export function MapBottomLeftBar(): ReactElement {
               flexShrink: 0
             }}
             icon={{ spriteName: 'HomeSolid', atlasName: 'map2' }}
-            iconSize={getHudFontSize(getViewportHeight()).BIG * 1.5}
+            iconSize={buttonIconSize}
             iconColor={COLOR.TEXT_COLOR}
           />
         </Column>
       )}
 
       <Column
-        uiTransform={{
-          borderRadius: getHudFontSize(getViewportHeight()).SMALL,
-          borderColor: COLOR.WHITE,
-          borderWidth: 0,
-          width: getHudFontSize(getViewportHeight()).BIG * 2,
-          height: getHudFontSize(getViewportHeight()).BIG * 2,
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: getHudFontSize(getViewportHeight()).SMALL
-        }}
+        uiTransform={buttonWrapperTransform}
         uiBackground={{
           color: COLOR.WHITE
         }}
@@ -139,7 +116,7 @@ export function MapBottomLeftBar(): ReactElement {
             flexShrink: 0
           }}
           icon={{ spriteName: 'CenterPlayerIcn', atlasName: 'map2' }}
-          iconSize={getHudFontSize(getViewportHeight()).BIG * 1.5}
+          iconSize={buttonIconSize}
           iconColor={COLOR.TEXT_COLOR}
         />
       </Column>
@@ -148,14 +125,14 @@ export function MapBottomLeftBar(): ReactElement {
           width: '100%',
           positionType: 'absolute',
           position: {
-            bottom: -getHudFontSize(getViewportHeight()).SMALL * 0.15
+            bottom: -getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION_S_BOTTOM })
           }
         }}
         uiText={{
           value: `${getPlayerParcel().x},${getPlayerParcel().y}`,
           color: COLOR.WHITE,
           textWrap: 'nowrap',
-          fontSize: getHudFontSize(getViewportHeight()).SMALL * 1.2
+          fontSize: getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
         }}
       />
     </Column>

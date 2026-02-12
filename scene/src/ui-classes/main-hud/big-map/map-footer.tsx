@@ -7,11 +7,14 @@ import {
 import { COLOR } from '../../../components/color-palette'
 import { MapStatusBar } from './map-status-bar'
 import Icon from '../../../components/icon/Icon'
-import { getHudFontSize } from '../scene-info/SceneInfo'
 import { Row } from '../../../components/layout'
+import {
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 export function MapFooter(): ReactElement {
-  const fontSize = getHudFontSize(getViewportWidth()).SMALL * 0.9
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   return (
     <UiEntity
       uiTransform={{
