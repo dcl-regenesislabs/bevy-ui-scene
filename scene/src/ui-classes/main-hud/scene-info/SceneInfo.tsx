@@ -251,7 +251,7 @@ export default class SceneInfo {
     const sceneCoords = store.getState().scene.explorerPlayerParcelAction
     if (sceneCoords === undefined) return null
 
-    this.fontSize = getHudFontSize(getViewportHeight()).NORMAL
+    this.fontSize = getFontSize({})
 
     return (
       <UiEntity
@@ -890,15 +890,3 @@ export default class SceneInfo {
     )
   }
 }
-
-const _getHudFontSize = (
-  viewportHeight: number = getViewportHeight()
-): { NORMAL: number; SMALL: number; BIG: number } => {
-  const NORMAL = viewportHeight * 0.015
-  return {
-    NORMAL,
-    SMALL: NORMAL * 0.65,
-    BIG: NORMAL * 1.5
-  }
-}
-export const getHudFontSize = memoize(_getHudFontSize)
