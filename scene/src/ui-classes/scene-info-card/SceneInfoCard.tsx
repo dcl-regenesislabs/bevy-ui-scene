@@ -73,6 +73,7 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../service/fontsize-system'
+import { BottomBorder, TopBorder } from '../../components/bottom-border'
 
 export default class SceneInfoCard {
   public place: PlaceFromApi | undefined =
@@ -583,6 +584,7 @@ export default class SceneInfoCard {
               value={'PHOTOS (' + this.photosQuantityInPlace + ')'}
               color={BLACK_TEXT}
               fontSize={this.fontSize}
+              textWrap={'nowrap'}
             />
             <UiEntity
               uiTransform={{ width: '100%', height: 4 }}
@@ -952,12 +954,18 @@ export default class SceneInfoCard {
         }}
       >
         {title !== undefined && (
-          <Label
-            value={title}
-            fontSize={this.fontSize}
-            textAlign="middle-left"
-            uiTransform={{ width: '100%', height: this.fontSize }}
-            color={GRAY_TEXT}
+          <UiEntity
+            uiText={{
+              value: title,
+              fontSize: this.fontSize,
+              textAlign: 'middle-left',
+              color: GRAY_TEXT
+            }}
+            uiTransform={{
+              width: '100%',
+              height: this.fontSize,
+              margin: { top: this.fontSize }
+            }}
           />
         )}
         <UiEntity

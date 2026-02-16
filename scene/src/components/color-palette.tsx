@@ -97,7 +97,8 @@ export const COLOR = {
   NOTIFICATION_GIFT: Color4.fromHexString('#FF8648FF'),
   NOTIFICATION_EVENT: Color4.fromHexString('#4386EDFF'),
   NOTIFICATION_BADGE: Color4.fromHexString('#edcb43'),
-  CATALOG_SEARCH_BACKGROUND: Color4.fromHexString('#b6b6b6')
+  CATALOG_SEARCH_BACKGROUND: Color4.fromHexString('#b6b6b6'),
+  HR: Color4.fromHexString('#C6C6C6FF')
 }
 export const RARITY_HEX_COLORS: Record<RarityName, string> = {
   base: '#a09ba8',
