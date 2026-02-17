@@ -19,6 +19,7 @@ import Icon from '../icon/Icon'
 import { openExternalUrl } from '~system/RestrictedActions'
 import { store } from '../../state/store'
 import { updateSelectedCatalogURNAction } from '../../state/backpack/actions'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
 export type WearableCatalogGridProps = {
   items: CatalogWearableElement[] | CatalogEmoteElement[]
@@ -50,6 +51,7 @@ export function CatalogGrid({
   onUnequipItem = noop
 }: WearableCatalogGridProps): ReactElement {
   const canvasScaleRatio = getContentScaleRatio()
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   if (!items.length) {
     return (
       <UiEntity
@@ -68,7 +70,7 @@ export function CatalogGrid({
       >
         <Icon
           uiTransform={{ alignSelf: 'center' }}
-          iconSize={canvasScaleRatio * 100}
+          iconSize={canvasScaleRatio * 200}
           icon={{ atlasName: 'backpack', spriteName: 'empty-search-result' }}
         />
         <UiEntity
@@ -81,7 +83,7 @@ export function CatalogGrid({
 If you want you can find the ideal one for you in the <color=${Color4.toHexString(
               COLOR.LINK_COLOR
             )}><u>Marketplace.</u></color>`,
-            fontSize: canvasScaleRatio * 25
+            fontSize
           }}
         />
         <UiEntity

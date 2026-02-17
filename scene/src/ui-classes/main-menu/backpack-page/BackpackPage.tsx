@@ -55,8 +55,6 @@ import { showErrorPopup } from '../../../service/error-popup-service'
 let originalAvatarJSON: string
 
 export default class BackpackPage {
-  public fontSize: number = 16 * getContentScaleRatio() * 2
-
   render(): ReactEcs.JSX.Element | null {
     const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
     if (canvasInfo === null) return null

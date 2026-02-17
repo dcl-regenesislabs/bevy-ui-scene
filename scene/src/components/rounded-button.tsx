@@ -24,11 +24,12 @@ export function RoundedButton({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: fontSize / 2,
+        borderWidth: 0,
         ...uiTransform
       }}
       onMouseDown={onClick}
       uiBackground={{
-        ...ROUNDED_TEXTURE_BACKGROUND,
         color: isSecondary ? Color4.Black() : Color4.Red()
       }}
     >

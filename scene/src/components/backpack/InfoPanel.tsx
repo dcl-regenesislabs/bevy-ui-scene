@@ -18,6 +18,11 @@ import { BACKPACK_SECTION } from '../../state/backpack/state'
 import { store } from '../../state/store'
 import { getEmoteThumbnail } from '../../service/emotes'
 import { Tag } from '../color-tag'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../service/fontsize-system'
 
 export type InfoPanelProps = {
   canvasScaleRatio: number
@@ -34,7 +39,11 @@ export function InfoPanel({
   const data =
     (entityMetadata as WearableEntityMetadata)?.data ??
     (entityMetadata as EmoteEntityMetadata)?.emoteDataADR74
-
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const tagFontSize = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TAG
+  })
   return (
     <UiEntity
       uiTransform={{
@@ -97,7 +106,7 @@ export function InfoPanel({
                 }`,
                 atlasName: 'backpack'
               }}
-              iconSize={35 * canvasScaleRatio}
+              iconSize={fontSize}
             />
             <UiEntity
               uiTransform={{
@@ -105,7 +114,7 @@ export function InfoPanel({
               }}
               uiText={{
                 value: `<b>${entityMetadata?.name}</b>`,
-                fontSize: 35 * canvasScaleRatio,
+                fontSize,
                 textWrap: 'wrap',
                 textAlign: 'top-left'
               }}
@@ -125,7 +134,7 @@ export function InfoPanel({
             >
               <Label
                 value={`<b>DESCRIPTION</b>`}
-                fontSize={26 * canvasScaleRatio}
+                fontSize={fontSize}
                 uiTransform={{
                   alignSelf: 'flex-start',
                   margin: { top: 10 * canvasScaleRatio }
@@ -137,7 +146,7 @@ export function InfoPanel({
                 uiText={{
                   value: `${entityMetadata?.description}`,
                   textAlign: 'top-left',
-                  fontSize: 26 * canvasScaleRatio
+                  fontSize
                 }}
               />
             </UiEntity>
@@ -149,24 +158,25 @@ export function InfoPanel({
                 margin: { top: 30 * canvasScaleRatio }
               }}
             >
-              <UiEntity uiTransform={{ flexDirection: 'row' }}>
+              <UiEntity
+                uiTransform={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start'
+                }}
+              >
                 <Icon
                   uiTransform={{
-                    alignSelf: 'flex-start',
-                    justifyContent: 'flex-start',
                     flexShrink: 0,
-                    margin: { top: 20 * canvasScaleRatio },
-                    width: canvasScaleRatio * 40,
-                    height: canvasScaleRatio * 40
+                    position: { top: fontSize * 0.2 }
                   }}
-                  iconSize={canvasScaleRatio * 40}
+                  iconSize={fontSize}
                   icon={{ atlasName: 'backpack', spriteName: 'icon-hidden' }}
                 />
                 <Label
                   value={`<b>HIDES</b>`}
-                  fontSize={26 * canvasScaleRatio}
+                  fontSize={fontSize}
                   uiTransform={{
-                    alignSelf: 'flex-start',
                     margin: { top: 10 * canvasScaleRatio }
                   }}
                 />
@@ -190,9 +200,11 @@ export function InfoPanel({
                         flexDirection: 'row',
                         padding: {
                           top: '1%',
-                          left: '14%',
-                          right: '14%'
+                          left: fontSize / 4,
+                          right: fontSize / 4
                         },
+                        flexShrink: 0,
+                        flexGrow: 0,
                         alignContent: 'center',
                         justifyContent: 'center',
                         margin: {
@@ -206,11 +218,12 @@ export function InfoPanel({
                         hiddenCategory as WearableCategory
                       ] && (
                         <Icon
-                          iconSize={canvasScaleRatio * 40}
+                          iconSize={fontSize}
                           uiTransform={{
                             alignSelf: 'center',
                             position: { top: '-4%' },
-                            flexShrink: 0
+                            flexShrink: 0,
+                            flexGrow: 0
                           }}
                           icon={{
                             atlasName: 'backpack',
@@ -225,7 +238,7 @@ export function InfoPanel({
                           ]?.label.toUpperCase() ?? hiddenCategory.toUpperCase()
                         }</b>`}
                         textWrap={'nowrap'}
-                        fontSize={canvasScaleRatio * 20}
+                        fontSize={tagFontSize}
                       />
                     </UiEntity>
                   )
@@ -241,7 +254,7 @@ export function InfoPanel({
           }}
           uiText={{
             value: 'No item selected',
-            fontSize: 26 * canvasScaleRatio
+            fontSize
           }}
         />
       )}
