@@ -41,44 +41,47 @@ function DropdownStyled(props: {
       uiTransform={{
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         ...props.uiTransform
       }}
     >
       {/* TITLE AND ICON */}
-      <UiEntity
-        uiTransform={{
-          flexDirection: 'row',
-          justifyContent: 'flex-start',
-          alignItems: 'center',
-          margin: { bottom: props.fontSize * 0.3 }
-        }}
-      >
-        {/* Title */}
+      {props.title?.length && (
         <UiEntity
           uiTransform={{
-            width: 'auto',
-            height: props.fontSize
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            margin: { bottom: props.fontSize * 0.3 }
           }}
-          uiText={{
-            value: props.title,
-            fontSize: props.fontSize,
-            color: props.fontColor ?? ALMOST_WHITE
-          }}
-        />
-      </UiEntity>
+        >
+          {/* Title */}
+          <UiEntity
+            uiTransform={{
+              width: 'auto',
+              height: props.fontSize
+            }}
+            uiText={{
+              value: props.title,
+              fontSize: props.fontSize,
+              color: props.fontColor ?? ALMOST_WHITE
+            }}
+          />
+        </UiEntity>
+      )}
 
       {/* DROPDOWN */}
       <UiEntity
         uiTransform={{
           width: '100%',
+          height: '100%',
+          flexGrow: 1,
+          flexShrink: 0,
           padding: { right: props.fontSize * 0.3 },
           justifyContent: 'space-between',
           alignItems: 'center',
-          borderRadius: getContentScaleRatio() * 30,
-          borderWidth: 0,
-          borderColor: COLOR.BLACK_TRANSPARENT,
-          ...props.uiTransform
+          borderRadius: props.fontSize / 2,
+          borderWidth: 0
         }}
         uiBackground={{
           color: ALMOST_WHITE
