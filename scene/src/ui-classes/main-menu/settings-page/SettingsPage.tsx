@@ -241,7 +241,7 @@ function SettingField({
             })
           }}
           iconColor={COLOR.WHITE}
-          iconSize={getContentScaleRatio() * 32 * 1.2}
+          iconSize={fontSize}
         />
 
         {!(setting.namedVariants?.length > 0) && (
@@ -264,6 +264,7 @@ function SettingField({
       </Row>
       {setting.namedVariants?.length > 0 ? (
         <DropdownComponent
+          fontSize={fontSize}
           options={setting.namedVariants.map(({ name, description }) => ({
             label: name,
             value: name
