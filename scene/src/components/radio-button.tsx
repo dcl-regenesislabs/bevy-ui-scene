@@ -6,12 +6,13 @@ import { type InputOption } from '../utils/definitions'
 import { getContentScaleRatio } from '../service/canvas-ratio'
 import useState = ReactEcs.useState
 import { noop } from '../utils/function-utils'
+import { CONTEXT, getFontSize } from '../service/fontsize-system'
 
 export function RadioButton({
   uiTransform,
   options,
   value,
-  fontSize = getContentScaleRatio() * 48,
+  fontSize = getFontSize({ context: CONTEXT.DIALOG }),
   onChange = noop
 }: {
   uiTransform?: UiTransformProps
@@ -49,7 +50,7 @@ export function RadioButton({
 export function RadioCircle({
   active = false,
   uiTransform,
-  fontSize = getContentScaleRatio() * 48
+  fontSize = getFontSize({ context: CONTEXT.DIALOG })
 }: {
   active: boolean
   uiTransform?: UiTransformProps
