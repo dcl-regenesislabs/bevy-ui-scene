@@ -10,10 +10,20 @@ import Icon from '../../components/icon/Icon'
 import { Color4 } from '@dcl/sdk/math'
 import { openExternalUrl } from '~system/RestrictedActions'
 import { type Popup } from '../../components/popup-stack'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../service/fontsize-system'
 
 export const PopupUrl: Popup = ({ shownPopup }) => {
   const URL: string = shownPopup.data as string
   if (shownPopup?.type !== HUD_POPUP_TYPE.URL) return null
+  const fontSize_title = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.POPUP_TITLE
+  })
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
 
   return (
     <UiEntity
@@ -64,7 +74,7 @@ export const PopupUrl: Popup = ({ shownPopup }) => {
             value: `<b>Are you sure you want to follow this link?</b>\n\nContinuing will open the link in the browser. Make sure it's a website you trust before proceeding.\n\n<b><color=#22B3F6>${URL}</color></b>`,
             color: COLOR.WHITE,
             textWrap: 'wrap',
-            fontSize: getContentScaleRatio() * 42
+            fontSize: fontSize_title
           }}
           uiTransform={{
             margin: { top: '8%' },
@@ -93,7 +103,7 @@ export const PopupUrl: Popup = ({ shownPopup }) => {
             variant={'secondary'}
             uiBackground={{ color: COLOR.TEXT_COLOR }}
             color={Color4.White()}
-            fontSize={getContentScaleRatio() * 28}
+            fontSize={fontSize}
             onMouseDown={() => {
               closeDialog()
             }}
@@ -108,7 +118,7 @@ export const PopupUrl: Popup = ({ shownPopup }) => {
             }}
             value={'CONTINUE'}
             variant={'primary'}
-            fontSize={getContentScaleRatio() * 28}
+            fontSize={fontSize}
             onMouseUp={() => {
               closeDialog()
               openExternalUrl({ url: URL }).catch(console.error)
