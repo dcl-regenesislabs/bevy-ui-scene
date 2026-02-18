@@ -16,6 +16,11 @@ import useState = ReactEcs.useState
 import { fetchJsonOrTryFallback } from '../../utils/promise-utils'
 import { CATALYST_BASE_URL_FALLBACK } from '../../utils/constants'
 import { executeTask } from '@dcl/sdk/ecs'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../service/fontsize-system'
 
 const state = {
   rememberDomain: false
@@ -23,6 +28,7 @@ const state = {
 
 export const PopupTeleport: Popup = ({ shownPopup }): ReactElement | null => {
   const URL: string = shownPopup.data as string
+
   if (shownPopup?.type !== HUD_POPUP_TYPE.TELEPORT) return null
   const [x, y] = URL.replace(' ', '')
     .split(',')
@@ -57,6 +63,11 @@ function TeleportContent({
 }): ReactElement {
   const [sceneTitle, setSceneTitle] = useState<string>('')
   const [sceneThumbnail, setSceneThumbnail] = useState<string | null>(null)
+  const fontSize_title = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.POPUP_TITLE
+  })
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   useEffect(() => {
     executeTask(async () => {
       try {
@@ -116,7 +127,7 @@ function TeleportContent({
           value: `\nAre you sure you want to be teleported to <b>${worldCoordinates.x},${worldCoordinates.y}?</b>\n\n${sceneTitle}`,
           color: COLOR.WHITE,
           textWrap: 'wrap',
-          fontSize: getContentScaleRatio() * 42
+          fontSize: fontSize_title
         }}
         uiTransform={{
           margin: { top: '8%' },
@@ -157,13 +168,13 @@ function TeleportContent({
             borderWidth: 0,
             borderColor: Color4.White(),
             flexShrink: 0,
-            height: getContentScaleRatio() * 64
+            height: fontSize * 2
           }}
           value={'CANCEL'}
           variant={'secondary'}
           uiBackground={{ color: COLOR.TEXT_COLOR }}
           color={Color4.White()}
-          fontSize={getContentScaleRatio() * 28}
+          fontSize={fontSize}
           onMouseDown={() => {
             closeDialog()
           }}
@@ -176,11 +187,11 @@ function TeleportContent({
             borderWidth: 0,
             borderColor: Color4.White(),
             flexShrink: 0,
-            height: getContentScaleRatio() * 64
+            height: fontSize * 2
           }}
           value={'CONTINUE'}
           variant={'primary'}
-          fontSize={getContentScaleRatio() * 28}
+          fontSize={fontSize}
           onMouseUp={() => {
             state.rememberDomain = false
 
