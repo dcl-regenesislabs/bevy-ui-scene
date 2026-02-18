@@ -54,6 +54,7 @@ export type PlaceListResponse = {
 const state = {
   expanded: true
 }
+export const isSceneCatalogExpanded = () => state.expanded
 let recreatingInputWorkaround = false
 export function SceneCatalogPanel(): ReactElement[] {
   const width = getRightPanelWidth()
@@ -266,7 +267,8 @@ function SceneCatalogContent(): ReactElement {
                 color:
                   store.getState().hud.sceneCatalogOrder === orderKey
                     ? COLOR.WHITE
-                    : COLOR.TEXT_COLOR
+                    : COLOR.TEXT_COLOR,
+                textWrap: 'nowrap'
               }}
               onMouseDown={() => {
                 if (loading || store.getState().hud.movingMap) return
