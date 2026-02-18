@@ -3,19 +3,29 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { ROUNDED_TEXTURE_BACKGROUND } from '../utils/constants'
 import { Label, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { COLOR } from './color-palette'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../service/fontsize-system'
 
 export function Tag({
   text,
   canvasScaleRatio, // TODO canvasScaleRatio must not be here, other containers use other measures/responsiveness methods
   backgroundColor,
   uiTransform,
-  textColor = COLOR.WHITE
+  textColor = COLOR.WHITE,
+  fontSize = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TAG
+  })
 }: {
   text: string
   canvasScaleRatio: number
   backgroundColor: Color4
   uiTransform?: UiTransformProps
   textColor?: Color4
+  fontSize?: number
 }): ReactElement {
   return (
     <UiEntity
@@ -39,11 +49,7 @@ export function Tag({
           color: backgroundColor
         }}
       >
-        <Label
-          value={text}
-          color={textColor}
-          fontSize={26 * canvasScaleRatio}
-        />
+        <Label value={text} color={textColor} fontSize={fontSize} />
       </UiEntity>
     </UiEntity>
   )

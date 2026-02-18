@@ -14,6 +14,11 @@ import {
   type RarityName,
   type WearableEntityMetadata
 } from '../../../utils/item-definitions'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 export function PassportEquippedItem({
   thumbnailSize,
@@ -28,14 +33,17 @@ export function PassportEquippedItem({
   )
   const rarityColor =
     RARITY_COLORS[itemData?.rarity as RarityName] ?? RARITY_COLORS.base
-
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSize_S = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.BODY_S
+  })
   return (
     <UiEntity
       uiTransform={{
         width: thumbnailSize,
-        height: thumbnailSize * 1.4,
-        borderRadius: getContentScaleRatio() * 20,
-
+        height: thumbnailSize * 1.45,
+        borderRadius: fontSize / 2,
         borderColor: COLOR.TEXT_COLOR_WHITE,
         borderWidth: 0,
         margin: canvasScaleRatio * 14,
@@ -99,15 +107,14 @@ export function PassportEquippedItem({
             itemData?.name ?? itemData.i18n[0].text ?? '',
             13
           ),
-          fontSize: canvasScaleRatio * 32,
+          fontSize: fontSize_S,
           textWrap: 'nowrap'
         }}
       />
       <Tag
         uiTransform={{
           margin: {
-            left: canvasScaleRatio * 10,
-            top: canvasScaleRatio * -10
+            left: canvasScaleRatio * 10
           }
         }}
         text={`<b>${itemData?.rarity?.toUpperCase() ?? 'BASE'}</b>`}
