@@ -9,6 +9,11 @@ import Icon from '../../components/icon/Icon'
 import { Color4 } from '@dcl/sdk/math'
 import { type Popup } from '../../components/popup-stack'
 import { CopyButton } from '../../components/copy-button'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../service/fontsize-system'
 const { useState } = ReactEcs
 
 export const ErrorPopup: Popup = ({ shownPopup }) => {
@@ -54,7 +59,13 @@ function ErrorContent({
         : ''
     }`
   )
-
+  const fontSize_title = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.POPUP_TITLE
+  })
+  const fontSize = getFontSize({
+    context: CONTEXT.DIALOG
+  })
   return (
     <UiEntity
       uiTransform={{
@@ -78,7 +89,7 @@ function ErrorContent({
           position: { top: '4%' }
         }}
         icon={{ spriteName: 'BugIcon', atlasName: 'icons' }}
-        iconSize={getContentScaleRatio() * 96}
+        iconSize={fontSize * 2}
         iconColor={COLOR.RED}
       />
 
@@ -100,7 +111,7 @@ function ErrorContent({
             value: errorContent,
             color: COLOR.RED,
             textWrap: 'wrap',
-            fontSize: getContentScaleRatio() * 42
+            fontSize: fontSize_title
           }}
         />
       </UiEntity>
@@ -124,14 +135,14 @@ function ErrorContent({
           variant={'secondary'}
           uiBackground={{ color: COLOR.TEXT_COLOR }}
           color={Color4.White()}
-          fontSize={getContentScaleRatio() * 28}
+          fontSize={fontSize}
           onMouseDown={() => {
             closeDialog()
           }}
         />
 
         <CopyButton
-          fontSize={getContentScaleRatio() * 80}
+          fontSize={fontSize * 2}
           text={errorContent}
           elementId={'copy-error-details' + errorContent.length}
           variant={'dark'}
