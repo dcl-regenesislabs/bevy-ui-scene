@@ -41,6 +41,7 @@ import { showDeleteOutfitConfirmation } from './delete-outfit-dialog'
 import { NavButton } from '../../../components/nav-button/NavButton'
 import { COLOR } from '../../../components/color-palette'
 import { getPlayer } from '@dcl/sdk/src/players'
+import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 
 declare const localStorage: any
 
@@ -63,6 +64,7 @@ export const OutfitsCatalog = (): ReactElement => {
   const backpackState = store.getState().backpack
   const outfitsMetadata = backpackState.outfitsMetadata
   const viewSlots: Array<OutfitDefinition | null> = [...SLOTS]
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   outfitsMetadata?.outfits.forEach((outfitMetadata) => {
     viewSlots[outfitMetadata.slot] = outfitMetadata.outfit
   })
@@ -84,7 +86,7 @@ export const OutfitsCatalog = (): ReactElement => {
               height: canvasScaleRatio * 560,
               flexShrink: 0,
               margin: { left: '2%', bottom: '4%', right: '2%' },
-              borderRadius: BORDER_RADIUS_F
+              borderRadius: fontSize / 2
             }}
           >
             {state.selectedIndex === index && [
@@ -123,7 +125,7 @@ export const OutfitsCatalog = (): ReactElement => {
                     height: 60 * canvasScaleRatio,
                     alignSelf: 'flex-end'
                   }}
-                  fontSize={26 * canvasScaleRatio}
+                  fontSize={fontSize}
                   text={'EQUIP'}
                   isSecondary={false}
                   onClick={() => {
@@ -138,7 +140,7 @@ export const OutfitsCatalog = (): ReactElement => {
                 height: canvasScaleRatio * 560,
                 flexShrink: 0,
                 margin: { left: '2%', bottom: '4%', right: '2%' },
-                borderRadius: BORDER_RADIUS_F,
+                borderRadius: fontSize / 2,
                 pointerFilter: 'block'
               }}
               uiBackground={{
@@ -353,6 +355,7 @@ async function saveOutfitSlot(index: number): Promise<void> {
 
 function EmptySlot({ slotIndex }: { slotIndex: number }): ReactElement {
   const canvasScaleRatio = getContentScaleRatio()
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
@@ -376,7 +379,7 @@ function EmptySlot({ slotIndex }: { slotIndex: number }): ReactElement {
           state.hoveredIndex === slotIndex
             ? `\n\nSAVE OUTFIT`
             : `<b>Empty</b>\nSLOT`,
-        fontSize: canvasScaleRatio * 32
+        fontSize: fontSize
       }}
       onMouseDown={() => {
         saveOutfitSlot(slotIndex).catch(console.error)
@@ -405,6 +408,7 @@ function EmptySlot({ slotIndex }: { slotIndex: number }): ReactElement {
 
 function BuyNameSlot(): ReactElement {
   const canvasScaleRatio = getContentScaleRatio()
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
@@ -425,7 +429,7 @@ function BuyNameSlot(): ReactElement {
       <RoundedButton
         uiTransform={{ width: '100%', alignSelf: 'center' }}
         text={`BUY NAME`}
-        fontSize={canvasScaleRatio * 32}
+        fontSize={fontSize}
         onClick={() => {
           openExternalUrl({
             url: `https://decentraland.org/marketplace/names/claim`
