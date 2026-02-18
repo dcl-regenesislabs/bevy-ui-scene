@@ -46,7 +46,7 @@ function DropdownStyled(props: {
       }}
     >
       {/* TITLE AND ICON */}
-      {props.title?.length && (
+      {(props.title?.length && (
         <UiEntity
           uiTransform={{
             flexDirection: 'row',
@@ -68,7 +68,8 @@ function DropdownStyled(props: {
             }}
           />
         </UiEntity>
-      )}
+      )) ||
+        null}
 
       {/* DROPDOWN */}
       <UiEntity
