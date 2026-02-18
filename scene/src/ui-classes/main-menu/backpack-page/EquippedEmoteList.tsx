@@ -17,6 +17,7 @@ import { getEmoteName, getEmoteThumbnail } from '../../../service/emotes'
 import { catalystMetadataMap } from '../../../utils/catalyst-metadata-map'
 import Icon from '../../../components/icon/Icon'
 import type { UiTransformProps } from '@dcl/sdk/react-ecs'
+import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 const state: { hoveredIndex: number | null } = { hoveredIndex: null }
 export function EquippedEmoteList({
   equippedEmotes
@@ -30,6 +31,8 @@ export function EquippedEmoteList({
       {equippedEmotes.map((equippedEmoteURN: EquippedEmote, index: number) => {
         const isHovered = (): boolean => state.hoveredIndex === index
         const backpackState = store.getState().backpack
+        const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+
         return (
           <UiEntity
             uiTransform={{
@@ -95,7 +98,7 @@ export function EquippedEmoteList({
               uiText={{
                 textAlign: 'top-left',
                 value: getEmoteName(equippedEmoteURN),
-                fontSize: canvasScaleRatio * 30
+                fontSize
               }}
             />
             {isHovered() && index !== backpackState.selectedEmoteSlot && (
