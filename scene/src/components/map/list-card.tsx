@@ -53,7 +53,7 @@ export function ListCard({
           src={thumbnailSrc}
           uiTransform={{
             width: getViewportHeight() * 0.2 * 0.8,
-            height: getViewportHeight() * 0.1 * 0.8,
+            height: getViewportHeight() * 0.125 * 0.8,
             flexShrink: 0,
             ...ROUNDED_BORDER_PROPS
           }}

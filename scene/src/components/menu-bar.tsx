@@ -15,10 +15,6 @@ export const MenuBar = ({
   onClick: (index: number) => void
 }): ReactElement => (
   <Row uiTransform={{ justifyContent: 'center' }}>
-    <BottomBorder
-      uiTransform={{ height: getContentScaleRatio() * 2 }}
-      color={COLOR.TEXT_COLOR_GREY}
-    />
     {items.map((item, index) => (
       <UiEntity
         key={item}

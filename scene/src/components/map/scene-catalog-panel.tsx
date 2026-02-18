@@ -30,6 +30,7 @@ import { getMainMenuHeight } from '../../ui-classes/main-menu/MainMenu'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { MenuBar } from '../menu-bar'
 import { type PlaceRepresentation } from '../../ui-classes/main-hud/big-map/big-map-view'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
 const LIMIT = 20 // TODO maybe calculate how many fits in height? or not?
 export type FetchParams = {
@@ -43,8 +44,8 @@ export const ORDER_OPTIONS: Array<{
   label: string
 }> = [
   { orderKey: 'most_active', label: `MOST ACTIVE` },
-  { orderKey: 'like_score', label: `MOST LIKED` },
-  { orderKey: 'updated_at', label: `MOST FRESH` }
+  { orderKey: 'like_score', label: `BEST RATED` },
+  { orderKey: 'updated_at', label: `NEWEST` }
 ]
 export type PlaceListResponse = {
   total: number
@@ -56,6 +57,7 @@ const state = {
 let recreatingInputWorkaround = false
 export function SceneCatalogPanel(): ReactElement[] {
   const width = getRightPanelWidth()
+
   if (!state.expanded) {
     return [
       <Expander
@@ -180,26 +182,14 @@ function SceneCatalogContent(): ReactElement {
     store.getState().hud.placeType
   ])
 
-  const fontSize = getViewportHeight() * 0.015
-
+  const fontSize = getFontSize({})
+  const fontSize_s = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   return (
     <Column
       uiTransform={{
         width: '100%'
       }}
     >
-      <MenuBar
-        items={['GENESIS CITY', 'WORLDS']}
-        activeIndex={placeTypeActiveIndex}
-        onClick={(index) => {
-          setPlaceTypeActiveIndex(index)
-          store.dispatch(
-            updateHudStateAction({
-              placeType: PLACE_TYPES[index]
-            })
-          )
-        }}
-      />
       <Row
         uiTransform={{
           width: '100%',
@@ -246,6 +236,7 @@ function SceneCatalogContent(): ReactElement {
           />
         )}
       </Row>
+
       <Row
         uiTransform={{
           justifyContent: 'space-between',
@@ -260,17 +251,18 @@ function SceneCatalogContent(): ReactElement {
                 color:
                   store.getState().hud.sceneCatalogOrder === orderKey
                     ? COLOR.ACTIVE_BACKGROUND_COLOR
-                    : COLOR.NAV_BUTTON_INACTIVE_BACKGROUND
+                    : COLOR.INACTIVE
               }}
               uiTransform={{
                 margin: getViewportHeight() * 0.005,
                 borderWidth: 0,
                 borderColor: COLOR.BLACK_TRANSPARENT,
-                borderRadius: getViewportHeight() * 0.01
+                borderRadius: 9999,
+                padding: { left: fontSize_s, right: fontSize_s }
               }}
               uiText={{
-                fontSize: getViewportHeight() * 0.015,
-                value: `<b>${label}</b>`,
+                fontSize: fontSize,
+                value: `${label}`,
                 color:
                   store.getState().hud.sceneCatalogOrder === orderKey
                     ? COLOR.WHITE
@@ -288,6 +280,18 @@ function SceneCatalogContent(): ReactElement {
           )
         })}
       </Row>
+      <MenuBar
+        items={['GENESIS CITY', 'WORLDS']}
+        activeIndex={placeTypeActiveIndex}
+        onClick={(index) => {
+          setPlaceTypeActiveIndex(index)
+          store.dispatch(
+            updateHudStateAction({
+              placeType: PLACE_TYPES[index]
+            })
+          )
+        }}
+      />
       <Column
         uiTransform={{
           alignItems: 'flex-start',
@@ -344,10 +348,15 @@ function SceneCatalogContent(): ReactElement {
               >
                 <Column
                   uiTransform={{
-                    alignItems: 'flex-start'
+                    alignItems: 'flex-start',
+                    justifyContent: 'center'
                   }}
                 >
                   <UiEntity
+                    uiTransform={{
+                      height: fontSize,
+                      margin: { left: '3%' }
+                    }}
                     uiText={{
                       textWrap: 'wrap',
                       textAlign: 'top-left',
@@ -360,6 +369,10 @@ function SceneCatalogContent(): ReactElement {
                     }}
                   />
                   <UiEntity
+                    uiTransform={{
+                      height: fontSize,
+                      margin: { top: fontSize_s / 2, left: '4%' }
+                    }}
                     uiText={{
                       textAlign: 'top-left',
                       value: `Created by <b>${truncateWithoutBreakingWords(
@@ -367,12 +380,12 @@ function SceneCatalogContent(): ReactElement {
                         12
                       )}</b>`,
                       color: COLOR.TEXT_COLOR,
-                      fontSize
+                      fontSize: fontSize_s
                     }}
                   />
                   <Row
                     uiTransform={{
-                      margin: { left: '5%' }
+                      margin: { left: '8%', top: fontSize_s / 2 }
                     }}
                   >
                     <Icon
@@ -382,13 +395,14 @@ function SceneCatalogContent(): ReactElement {
                     />
                     <UiEntity
                       uiTransform={{
-                        width: 'auto'
+                        width: 'auto',
+                        margin: { left: -fontSize_s / 3 }
                       }}
                       uiText={{
                         textAlign: 'top-left',
-                        value: `${Math.floor(place.like_score * 100)}%`,
+                        value: `<b>${Math.floor(place.like_score * 100)}%</b>`,
                         color: COLOR.TEXT_COLOR,
-                        fontSize
+                        fontSize: fontSize_s
                       }}
                     />
                     <Icon
@@ -398,13 +412,14 @@ function SceneCatalogContent(): ReactElement {
                     />
                     <UiEntity
                       uiTransform={{
-                        width: 'auto'
+                        width: 'auto',
+                        margin: { left: -fontSize_s / 3 }
                       }}
                       uiText={{
                         textAlign: 'top-left',
-                        value: place.user_visits?.toString() ?? '0',
+                        value: `<b>${place.user_visits?.toString() ?? '0'}</b>`,
                         color: COLOR.TEXT_COLOR,
-                        fontSize
+                        fontSize: fontSize_s
                       }}
                     />
                   </Row>
