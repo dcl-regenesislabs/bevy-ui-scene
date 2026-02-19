@@ -67,7 +67,7 @@ export default class SettingsPage {
 
 function SettingsContent(): ReactElement {
   const [currentCategory, setCurrentCategory] =
-    useState<SettingCategory>(`Gameplay`)
+    useState<SettingCategory>(`Permissions`)
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState<ExplorerSetting[]>([])
   useEffect(() => {

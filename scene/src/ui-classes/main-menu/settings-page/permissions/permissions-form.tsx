@@ -23,10 +23,10 @@ import { PermissionRowField } from './permission-row-field'
 import { getRealm } from '~system/Runtime'
 import useEffect = ReactEcs.useEffect
 import { type InputOption } from '../../../../utils/definitions'
-
-const FONT_SMALL_UNIT = 30
-const FONT_MEDIUM_UNIT = 40
-const FONT_BIG_UNIT = 50
+import {
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../../service/fontsize-system'
 
 export const PermissionsForm = ({
   permissionDefinitions
@@ -40,9 +40,10 @@ export const PermissionsForm = ({
   const hoveredPermissionDefinition = hoveredPermission
     ? permissionDefinitions.find((p) => p.permissionType === hoveredPermission)
     : null
-  const FONTSIZE_SMALL = getContentScaleRatio() * FONT_SMALL_UNIT
-  const FONTSIZE_BIG = getContentScaleRatio() * FONT_BIG_UNIT
-  const FONTSIZE_MEDIUM = getContentScaleRatio() * FONT_MEDIUM_UNIT
+  const FONTSIZE_SMALL = getFontSize({})
+  const FONTSIZE_BIG = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_L })
+  const FONTSIZE_MEDIUM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
+
   const [sceneOptions, setSceneOptions] = useState<InputOption[]>([
     { label: '', value: null }
   ])

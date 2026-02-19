@@ -11,6 +11,7 @@ import { PermissionBox } from './permission-box'
 import { BottomBorder } from '../../../../components/bottom-border'
 import { COLOR } from '../../../../components/color-palette'
 import { BevyApi } from '../../../../bevy-api'
+import { getFontSize } from '../../../../service/fontsize-system'
 
 export function PermissionRowField({
   permissionDefinition,
@@ -56,6 +57,7 @@ export function PermissionRowField({
     })
     onChange()
   }
+  const fontSize = getFontSize({})
   return (
     <Row
       uiTransform={{
@@ -69,7 +71,7 @@ export function PermissionRowField({
         uiText={{
           value: permissionDefinition.label,
           textAlign: 'top-left',
-          fontSize: getContentScaleRatio() * 40
+          fontSize
         }}
         uiTransform={{ width: '100%' }}
       />
