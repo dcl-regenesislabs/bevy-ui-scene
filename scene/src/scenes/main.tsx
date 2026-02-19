@@ -15,7 +15,7 @@ export async function init(retry: boolean): Promise<void> {
 
   // BevyApi.loginGuest()
 
-  gameInstance.uiController.menu?.show('settings')
+  // gameInstance.uiController.menu?.show('settings')
 
   // gameInstance.uiController.loadingAndLogin.finishLoading()
   executeTask(async () => {
@@ -51,7 +51,7 @@ export async function init(retry: boolean): Promise<void> {
       pushPopupAction({
         type: HUD_POPUP_TYPE.ADD_LINK
       })
-    ) */
+    )
 
     /*store.dispatch(
       pushPopupAction({

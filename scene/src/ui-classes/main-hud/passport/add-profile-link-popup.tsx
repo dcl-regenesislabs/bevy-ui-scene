@@ -11,9 +11,13 @@ import {
 } from '../../../state/hud/actions'
 import { Input } from '@dcl/sdk/react-ecs'
 import useState = ReactEcs.useState
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 export const AddProfileLinkPopup: Popup = ({ shownPopup }) => {
-  const fontSize = getContentScaleRatio() * 40
   return (
     <UiEntity
       uiTransform={{
@@ -49,7 +53,7 @@ export const AddProfileLinkPopup: Popup = ({ shownPopup }) => {
           color: COLOR.URL_POPUP_BACKGROUND
         }}
       >
-        <AddProfileLinkContent fontSize={fontSize} />
+        <AddProfileLinkContent />
       </UiEntity>
     </UiEntity>
   )
@@ -59,14 +63,14 @@ export const AddProfileLinkPopup: Popup = ({ shownPopup }) => {
   }
 }
 
-function AddProfileLinkContent({
-  fontSize
-}: {
-  fontSize: number
-}): ReactElement {
+function AddProfileLinkContent(): ReactElement {
   const [title, setTitle] = useState<string>('')
   const [url, setUrl] = useState<string>('')
-
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSize_titleM = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_M
+  })
   return (
     <UiEntity
       uiTransform={{ width: '100%', flexShrink: 0, flexDirection: 'column' }}
@@ -74,13 +78,13 @@ function AddProfileLinkContent({
       <UiEntity
         uiText={{
           value: '<b>Add Link</b>',
-          fontSize: fontSize * 1.2
+          fontSize: fontSize_titleM
         }}
       />
       <Input
         fontSize={fontSize}
         uiTransform={{
-          height: getContentScaleRatio() * 100,
+          height: fontSize * 2.5,
           width: '90%',
           borderColor: COLOR.WHITE,
           borderWidth: 0,
@@ -103,7 +107,7 @@ function AddProfileLinkContent({
         }}
         fontSize={fontSize}
         uiTransform={{
-          height: getContentScaleRatio() * 100,
+          height: fontSize * 2.5,
           width: '90%',
           borderColor: COLOR.WHITE,
           borderWidth: 0,
@@ -134,8 +138,7 @@ function AddProfileLinkContent({
             borderColor: COLOR.BLACK_TRANSPARENT,
             borderWidth: 0,
             width: '40%',
-            margin: { right: '5%' },
-            height: fontSize * 2.5
+            margin: { right: '5%' }
           }}
           uiBackground={{
             color: COLOR.DARK_OPACITY_5
