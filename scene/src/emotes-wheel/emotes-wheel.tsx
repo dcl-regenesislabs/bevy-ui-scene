@@ -238,7 +238,10 @@ Press <b>[Alt + num]</b> to run emote`,
   )
 }
 
-function getLighterColorIfHovered(index: number, color: Color4): Color4 {
+function getLighterColorIfHovered(
+  index: number,
+  color: Color4 = COLOR.PANEL_BACKGROUND_LIGHT
+): Color4 {
   if (state.hoveredIndex === index) {
     return Color4.create(
       Math.min(color.r + 0.2, 1),
