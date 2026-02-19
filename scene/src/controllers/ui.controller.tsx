@@ -6,7 +6,6 @@ import { MainMenu } from '../ui-classes/main-menu'
 import { ExplorePage } from '../ui-classes/main-menu/explore-page'
 import { MapPage } from '../ui-classes/main-menu/map-page'
 import { LoadingAndLogin } from '../ui-classes/loading-and-login'
-import { PopUpAction } from '../ui-classes/main-hud/pop-up-action'
 import { PopUpWarning } from '../ui-classes/main-hud/pop-up-warning'
 import { SceneInfoCard } from '../ui-classes/scene-info-card'
 import Photos from 'src/ui-classes/photos/Photos'
@@ -59,8 +58,6 @@ const state = {
 export class UIController {
   public isPhotosVisible: boolean = false
   public isMainMenuVisible: boolean = false
-  public isFriendsVisible: boolean = false
-  public actionPopUpVisible: boolean = false
   public sceneInfoCardVisible: boolean = false
   public warningPopUpVisible: boolean = false
   public settingsPage: SettingsPage
@@ -71,7 +68,6 @@ export class UIController {
   gameController: GameController
   mainHud: MainHud
   menu: MainMenu
-  actionPopUp: PopUpAction
   sceneCard: SceneInfoCard
   warningPopUp: PopUpWarning
   photosPanel: Photos
@@ -92,7 +88,6 @@ export class UIController {
     this.backpackPage = new BackpackPage()
     this.mapPage = new MapPage()
     this.explorePage = new ExplorePage()
-    this.actionPopUp = new PopUpAction(this)
     this.sceneCard = new SceneInfoCard(this)
     this.warningPopUp = new PopUpWarning(this)
     this.photosPanel = new Photos(this)
@@ -150,12 +145,9 @@ export class UIController {
           this.mainHud.mainUi()}
         {this.isMainMenuVisible && this.menu.mainUi()}
 
-        {this.actionPopUpVisible && this.actionPopUp.mainUi()}
-
         {this.isPhotosVisible && this.photosPanel.mainUi()}
         {/* Loading & Login */}
         {this.loadingAndLogin?.mainUi()}
-        {this.actionPopUpVisible && this.actionPopUp.mainUi()}
         {this.warningPopUpVisible && this.warningPopUp.mainUi()}
         {!this.isMainMenuVisible && renderEmotesWheel()}
 
