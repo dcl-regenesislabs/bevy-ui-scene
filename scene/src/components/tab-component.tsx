@@ -16,7 +16,7 @@ export function TabComponent({
   onClickTab = noop
 }: {
   tabs: Tab[]
-  fontSize: number
+  fontSize?: number
   uiTransform?: UiTransformProps
   onClickTab?: (tabIndex: number) => void
 }): ReactElement {

@@ -68,6 +68,7 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
+import { waitFor } from '../../../utils/dcl-utils'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -91,6 +92,10 @@ const DEFAULT_RGB = { r: 1, g: 1, b: 1, a: 1 }
  * setupPassportPopup: executed one time when the explorer is initialized
  */
 export function setupPassportPopup(): void {
+  executeTask(async () => {
+    await waitFor(() => !!getPlayer()?.userId)
+    await fetchAndStoreOwnProfileData({ userId: getPlayer()?.userId ?? '' })
+  })
   // When passport is open, the avatar preview is initialized and/or updated & profile data loaded
   store.subscribe((action, previousState) => {
     if (
@@ -106,41 +111,44 @@ export function setupPassportPopup(): void {
       executeTask(async () => {
         const shownPopup = action.payload as HUDPopup
         const userId: string = shownPopup.data as string
-        const profileData = await fetchProfileData({ userId })
-        const player: GetPlayerDataRes = getPlayer({
-          userId
-        }) as GetPlayerDataRes
-        const [avatarData] = profileData?.avatars ?? [
-          {
-            ...EMPTY_PROFILE_DATA,
-            hasConnectedWeb3: true,
-            userId,
-            avatar: {
-              bodyShape: player.avatar?.bodyShapeUrn || BASE_FEMALE_URN,
-              wearables: player.wearables,
-              forceRender: player.forceRender ?? [],
-              emotes: player.emotes,
-              skin: { color: player.avatar?.skinColor ?? DEFAULT_RGB },
-              eyes: { color: player.avatar?.eyesColor ?? DEFAULT_RGB },
-              hair: { color: player.avatar?.hairColor ?? DEFAULT_RGB }
-            }
-          }
-        ]
-        const names = await fetchAllUserNames({ userId })
         state.editable = userId === getPlayer()?.userId
-
+        await fetchAndStoreOwnProfileData({ userId })
         // TODO REVIEW to refactor, profileData refers to passport profileData state, which can be own or other users, can lead to confussion and to be used as a own profile data always, refactor to useState
-        store.dispatch(
-          updateHudStateAction({
-            profileData: avatarData as ViewAvatarData,
-            names
-          })
-        )
 
         state.loadingProfile = false
       })
     }
   })
+
+  async function fetchAndStoreOwnProfileData({ userId }: { userId: string }) {
+    const profileData = await fetchProfileData({ userId })
+    const player: GetPlayerDataRes = getPlayer({
+      userId
+    }) as GetPlayerDataRes
+    const [avatarData] = profileData?.avatars ?? [
+      {
+        ...EMPTY_PROFILE_DATA,
+        hasConnectedWeb3: true,
+        userId,
+        avatar: {
+          bodyShape: player.avatar?.bodyShapeUrn || BASE_FEMALE_URN,
+          wearables: player.wearables,
+          forceRender: player.forceRender ?? [],
+          emotes: player.emotes,
+          skin: { color: player.avatar?.skinColor ?? DEFAULT_RGB },
+          eyes: { color: player.avatar?.eyesColor ?? DEFAULT_RGB },
+          hair: { color: player.avatar?.hairColor ?? DEFAULT_RGB }
+        }
+      }
+    ]
+    const names = await fetchAllUserNames({ userId })
+    store.dispatch(
+      updateHudStateAction({
+        profileData: avatarData as ViewAvatarData,
+        names
+      })
+    )
+  }
 }
 
 export const PassportPopup: Popup = ({ shownPopup }) => {

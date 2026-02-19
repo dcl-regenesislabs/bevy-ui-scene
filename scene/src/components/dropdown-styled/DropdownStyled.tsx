@@ -87,7 +87,7 @@ function DropdownStyled(props: {
           borderWidth: 0
         }}
         uiBackground={{
-          color: ALMOST_WHITE
+          color: COLOR.WHITE
         }}
         onMouseDown={props.onMouseDown}
       >
