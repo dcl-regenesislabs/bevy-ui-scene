@@ -17,10 +17,10 @@ export async function init(retry: boolean): Promise<void> {
 
   // gameInstance.uiController.menu?.show('settings')
 
-  gameInstance.uiController.loadingAndLogin.finishLoading()
+  // gameInstance.uiController.loadingAndLogin.finishLoading()
   executeTask(async () => {
     await sleep(100)
-    store.dispatch(updateHudStateAction({ loggedIn: true }))
+    // store.dispatch(updateHudStateAction({ loggedIn: true }))
     // gameInstance.uiController.menu?.show('backpack')
     // store.dispatch(updateHudStateAction({ realmURL: (await getRealm({})).realmInfo!.baseUrl}))
     /*    store.dispatch(
@@ -53,10 +53,15 @@ export async function init(retry: boolean): Promise<void> {
       })
     ) */
 
-    store.dispatch(
+    /*store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.NAME_EDIT,
         data: 'pablo'
+      })
+    )*/
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.NOTIFICATIONS_MENU
       })
     )
   })

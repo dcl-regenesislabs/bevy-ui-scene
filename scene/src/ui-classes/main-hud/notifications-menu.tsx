@@ -18,6 +18,7 @@ import { Color4 } from '@dcl/sdk/math'
 import { fetchNotifications } from '../../utils/notifications-promise-utils'
 import { sleep } from '../../utils/dcl-utils'
 import { getLoadingAlphaValue } from '../../service/loading-alpha-color'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 const { useEffect, useState } = ReactEcs
 const emptyMeta: SignedFetchMeta = {}
 const meta: string = JSON.stringify(emptyMeta)
@@ -111,16 +112,14 @@ function NotificationsContent(): ReactElement {
       }
     })
   }, [])
-
+  const fontSize = getFontSize({})
+  const fontSize_titleM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
   return (
     <UiEntity
       uiTransform={{
-        width:
-          notifications.length > 5
-            ? getContentScaleRatio() * 370 * 2.23
-            : getContentScaleRatio() * 370 * 2.1,
+        width: notifications.length > 5 ? fontSize * 23.5 : fontSize * 22,
         height: getContentScaleRatio() * 540 * 2.2,
-        borderRadius: getContentScaleRatio() * 20,
+        borderRadius: fontSize / 2,
         borderWidth: 0,
         borderColor: COLOR.BLACK_TRANSPARENT,
         alignItems: 'flex-start',
@@ -140,7 +139,7 @@ function NotificationsContent(): ReactElement {
         }}
         uiText={{
           value: '<b>NOTIFICATIONS</b>',
-          fontSize: getContentScaleRatio() * 38
+          fontSize: fontSize_titleM
         }}
       />
       <UiEntity
@@ -159,7 +158,7 @@ function NotificationsContent(): ReactElement {
       >
         {loadingNotifications && (
           <Label
-            fontSize={getContentScaleRatio() * 32}
+            fontSize={fontSize}
             value={'Loading notifications ...'}
             color={Color4.create(1, 1, 1, loadingAlpha)}
           />
