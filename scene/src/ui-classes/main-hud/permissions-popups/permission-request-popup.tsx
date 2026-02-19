@@ -25,6 +25,7 @@ import { BevyApi } from '../../../bevy-api'
 import useEffect = ReactEcs.useEffect
 import { executeTask } from '@dcl/sdk/ecs'
 import { getCompletePermissionsMatrix } from '../../main-menu/settings-page/permissions-map'
+import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 
 const ONCE = 'Once'
 const PERMISSION_REQUEST_OPTIONS = [ONCE, ...PERMISSION_LEVELS].map((i) => ({
@@ -89,6 +90,8 @@ function PermissionRequestContent({
       unsubscribe()
     }
   }, [])
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+
   return (
     <UiEntity
       uiTransform={{
@@ -127,14 +130,14 @@ function PermissionRequestContent({
             data.additional ?? '',
             300
           )}`,
-          fontSize: getContentScaleRatio() * 42,
+          fontSize,
           textWrap: 'wrap'
         }}
       />
       <RadioButton
         options={PERMISSION_REQUEST_OPTIONS}
         value={ONCE}
-        fontSize={getContentScaleRatio() * 42}
+        fontSize={fontSize}
         onChange={(value) => {
           setLevelOption(value)
         }}
@@ -148,12 +151,12 @@ function PermissionRequestContent({
       >
         <ButtonTextIcon
           icon={{ spriteName: 'Check', atlasName: 'icons' }}
-          iconSize={getContentScaleRatio() * 42}
+          iconSize={fontSize}
           uiTransform={{
             width: '30%'
           }}
           backgroundColor={COLOR.BUTTON_PRIMARY}
-          fontSize={getContentScaleRatio() * 42}
+          fontSize={fontSize}
           value={'Allow'}
           onMouseDown={() => {
             if (levelOption === ONCE) {
@@ -174,13 +177,13 @@ function PermissionRequestContent({
         />
         <ButtonTextIcon
           icon={{ spriteName: 'CloseIcon', atlasName: 'icons' }}
-          iconSize={getContentScaleRatio() * 42}
+          iconSize={fontSize}
           uiTransform={{
             width: '30%',
             margin: { left: '5%', right: '5%' }
           }}
           backgroundColor={COLOR.BUTTON_PRIMARY}
-          fontSize={getContentScaleRatio() * 42}
+          fontSize={fontSize}
           value={'Deny'}
           onMouseDown={() => {
             if (levelOption === ONCE) {
