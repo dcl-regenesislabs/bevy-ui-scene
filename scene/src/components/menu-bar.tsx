@@ -1,7 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { BottomBorder } from './bottom-border'
 import { COLOR } from './color-palette'
-import { getContentScaleRatio } from '../service/canvas-ratio'
 import { Row } from './layout'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../service/fontsize-system'
 

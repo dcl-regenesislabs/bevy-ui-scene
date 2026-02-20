@@ -54,7 +54,7 @@ export type PlaceListResponse = {
 const state = {
   expanded: true
 }
-export const isSceneCatalogExpanded = () => state.expanded
+export const isSceneCatalogExpanded = (): boolean => state.expanded
 let recreatingInputWorkaround = false
 export function SceneCatalogPanel(): ReactElement[] {
   const width = getRightPanelWidth()
@@ -184,7 +184,7 @@ function SceneCatalogContent(): ReactElement {
   ])
 
   const fontSize = getFontSize({})
-  const fontSize_s = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
+  const fontSizeS = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   return (
     <Column
       uiTransform={{
@@ -259,10 +259,10 @@ function SceneCatalogContent(): ReactElement {
                 borderWidth: 0,
                 borderColor: COLOR.BLACK_TRANSPARENT,
                 borderRadius: 9999,
-                padding: { left: fontSize_s, right: fontSize_s }
+                padding: { left: fontSizeS, right: fontSizeS }
               }}
               uiText={{
-                fontSize: fontSize,
+                fontSize,
                 value: `${label}`,
                 color:
                   store.getState().hud.sceneCatalogOrder === orderKey
@@ -373,7 +373,7 @@ function SceneCatalogContent(): ReactElement {
                   <UiEntity
                     uiTransform={{
                       height: fontSize,
-                      margin: { top: fontSize_s / 2, left: '4%' }
+                      margin: { top: fontSizeS / 2, left: '4%' }
                     }}
                     uiText={{
                       textAlign: 'top-left',
@@ -382,12 +382,12 @@ function SceneCatalogContent(): ReactElement {
                         12
                       )}</b>`,
                       color: COLOR.TEXT_COLOR,
-                      fontSize: fontSize_s
+                      fontSize: fontSizeS
                     }}
                   />
                   <Row
                     uiTransform={{
-                      margin: { left: '8%', top: fontSize_s / 2 }
+                      margin: { left: '8%', top: fontSizeS / 2 }
                     }}
                   >
                     <Icon
@@ -398,13 +398,13 @@ function SceneCatalogContent(): ReactElement {
                     <UiEntity
                       uiTransform={{
                         width: 'auto',
-                        margin: { left: -fontSize_s / 3 }
+                        margin: { left: -fontSizeS / 3 }
                       }}
                       uiText={{
                         textAlign: 'top-left',
                         value: `<b>${Math.floor(place.like_score * 100)}%</b>`,
                         color: COLOR.TEXT_COLOR,
-                        fontSize: fontSize_s
+                        fontSize: fontSizeS
                       }}
                     />
                     <Icon
@@ -415,13 +415,13 @@ function SceneCatalogContent(): ReactElement {
                     <UiEntity
                       uiTransform={{
                         width: 'auto',
-                        margin: { left: -fontSize_s / 3 }
+                        margin: { left: -fontSizeS / 3 }
                       }}
                       uiText={{
                         textAlign: 'top-left',
                         value: `<b>${place.user_visits?.toString() ?? '0'}</b>`,
                         color: COLOR.TEXT_COLOR,
-                        fontSize: fontSize_s
+                        fontSize: fontSizeS
                       }}
                     />
                   </Row>

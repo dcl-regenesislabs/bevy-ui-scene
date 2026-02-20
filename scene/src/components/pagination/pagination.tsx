@@ -1,7 +1,6 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { UiEntity, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { Color4 } from '@dcl/sdk/math'
-import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { ButtonIcon } from '../button-icon'
 import { NavButton } from '../nav-button/NavButton'
 import { getPaginationItems } from './pagination-util'

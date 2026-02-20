@@ -7,7 +7,6 @@ import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { noop } from '../../utils/function-utils'
 import { type Color4 } from '@dcl/sdk/math'
 import { ROUNDED_TEXTURE_BACKGROUND } from '../../utils/constants'
-import { getMainMenuHeight } from '../../ui-classes/main-menu/MainMenu'
 import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
 export type NavButtonProps = {

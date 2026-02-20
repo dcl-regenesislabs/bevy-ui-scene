@@ -119,7 +119,7 @@ const EditNameContent = (): ReactElement => {
     })
   }
 
-  const fontSize_title_L = getFontSize({
+  const fontSizeTitleL = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_L
   })
@@ -137,7 +137,7 @@ const EditNameContent = (): ReactElement => {
       <UiEntity
         uiText={{
           value: '<b>Edit Username</b>',
-          fontSize: fontSize_title_L
+          fontSize: fontSizeTitleL
         }}
       />
       <UiEntity
@@ -286,7 +286,7 @@ export const NameForm = ({
         uiText={{
           value: `#${(getPlayer()?.userId ?? '').slice(-4)}`,
           color: COLOR.TEXT_COLOR_GREY,
-          fontSize: fontSize,
+          fontSize,
           textAlign: 'top-right'
         }}
       />

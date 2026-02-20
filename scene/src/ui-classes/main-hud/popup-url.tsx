@@ -19,7 +19,7 @@ import {
 export const PopupUrl: Popup = ({ shownPopup }) => {
   const URL: string = shownPopup.data as string
   if (shownPopup?.type !== HUD_POPUP_TYPE.URL) return null
-  const fontSize_title = getFontSize({
+  const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.POPUP_TITLE
   })
@@ -74,7 +74,7 @@ export const PopupUrl: Popup = ({ shownPopup }) => {
             value: `<b>Are you sure you want to follow this link?</b>\n\nContinuing will open the link in the browser. Make sure it's a website you trust before proceeding.\n\n<b><color=#22B3F6>${URL}</color></b>`,
             color: COLOR.WHITE,
             textWrap: 'wrap',
-            fontSize: fontSize_title
+            fontSize: fontSizeTitle
           }}
           uiTransform={{
             margin: { top: '8%' },

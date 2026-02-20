@@ -113,7 +113,7 @@ function NotificationsContent(): ReactElement {
     })
   }, [])
   const fontSize = getFontSize({})
-  const fontSize_titleM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
+  const fontSizeTitleM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
   return (
     <UiEntity
       uiTransform={{
@@ -139,7 +139,7 @@ function NotificationsContent(): ReactElement {
         }}
         uiText={{
           value: '<b>NOTIFICATIONS</b>',
-          fontSize: fontSize_titleM
+          fontSize: fontSizeTitleM
         }}
       />
       <UiEntity

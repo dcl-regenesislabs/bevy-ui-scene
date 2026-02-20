@@ -185,11 +185,11 @@ function ProfileHeader({
   player: GetPlayerDataRes
 }): ReactElement[] {
   const hasClaimedName = !!(player.name?.length && player.name?.includes('#'))
-  const fontSize_titleL = getFontSize({
+  const fontSizeTitleL = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_L
   })
-  const fontSize_titleM = getFontSize({
+  const fontSizeTitleM = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_M
   })
@@ -217,7 +217,7 @@ function ProfileHeader({
         uiText={{
           value: `<b>${player.name}</b>`,
           color: getAddressColor(player.userId),
-          fontSize: fontSize_titleL
+          fontSize: fontSizeTitleL
         }}
       />
       {hasClaimedName && (
@@ -235,7 +235,7 @@ function ProfileHeader({
         />
       )}
       <CopyButton
-        fontSize={fontSize_titleL}
+        fontSize={fontSizeTitleL}
         text={player.name}
         elementId={'copy-profile-name-' + player.userId}
         uiTransform={{
@@ -256,11 +256,11 @@ function ProfileHeader({
               uiText={{
                 value: applyMiddleEllipsis(player.userId),
                 color: COLOR.TEXT_COLOR_LIGHT_GREY,
-                fontSize: fontSize_titleM
+                fontSize: fontSizeTitleM
               }}
             />
             <CopyButton
-              fontSize={fontSize_titleL}
+              fontSize={fontSizeTitleL}
               text={player.userId}
               elementId={'copy-profile-address-' + player.userId}
               uiTransform={{
@@ -280,7 +280,7 @@ function ProfileHeader({
             }}
             uiText={{
               value: 'VIEW PASSPORT',
-              fontSize: fontSize_titleL
+              fontSize: fontSizeTitleL
             }}
             onMouseDown={() => {
               closeDialog()
@@ -313,7 +313,7 @@ function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
         (await fetchProfileData({ userId: player.userId, useCache: true }))
     })
   }, [])
-  const fontSize_titleL = getFontSize({
+  const fontSizeTitleL = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_L
   })
@@ -341,7 +341,7 @@ function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
         atlasName: 'icons',
         spriteName: '@'
       }}
-      fontSize={fontSize_titleL}
+      fontSize={fontSizeTitleL}
     />
   )
 }

@@ -2,7 +2,6 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import Icon from '../icon/Icon'
 import {
   getRightPanelWidth,
-  getViewportHeight,
   getViewportWidth
 } from '../../service/canvas-ratio'
 import {

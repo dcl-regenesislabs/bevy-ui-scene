@@ -1,5 +1,5 @@
 import { DropdownStyled } from './dropdown-styled'
-import { getContentScaleRatio } from '../service/canvas-ratio'
+
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { noop } from '../utils/function-utils'

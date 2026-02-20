@@ -52,7 +52,7 @@ function ButtonText(props: {
         }}
         uiText={{
           value: props.value,
-          fontSize: fontSize,
+          fontSize,
           color: props.fontColor ?? Color4.White()
         }}
       >

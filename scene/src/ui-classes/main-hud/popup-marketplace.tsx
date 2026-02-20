@@ -19,7 +19,7 @@ import {
 export const PopupMarketplace: Popup = ({ shownPopup }) => {
   const URL: string = shownPopup.data as string
   if (shownPopup?.type !== HUD_POPUP_TYPE.MARKETPLACE) return null
-  const fontSize_title = getFontSize({
+  const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.POPUP_TITLE
   })
@@ -74,7 +74,7 @@ export const PopupMarketplace: Popup = ({ shownPopup }) => {
             value: `<b>Are you sure you want to follow this link?</b>\n\nContinuing will open the <b>Marketplace</b> in the browser.\n\n<b><color=#22B3F6>${URL}</color></b>`,
             color: COLOR.WHITE,
             textWrap: 'wrap',
-            fontSize: fontSize_title
+            fontSize: fontSizeTitle
           }}
           uiTransform={{
             margin: { top: '8%' },

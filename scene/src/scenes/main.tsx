@@ -25,13 +25,13 @@ export async function init(retry: boolean): Promise<void> {
         type: HUD_POPUP_TYPE.URL,
         data: 'https://google.es'
       })
-    )*/
+    ) */
     /*   store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.ERROR,
         data: '0,0'
       })
-    )*/
+    ) */
     /*    store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.NOTIFICATIONS_MENU
@@ -49,28 +49,28 @@ export async function init(retry: boolean): Promise<void> {
         data: getPlayer()?.userId
       })
     ) */
-    /*store.dispatch(
+    /* store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.PASSPORT,
         data: `0x598f8af1565003AE7456DaC280a18ee826Df7a2c` // 0x4b538e1e044922aec2f428ec7e17a99f44205ff9 , 0x598f8af1565003AE7456DaC280a18ee826Df7a2c , 0x235ec1cc12dbda96f014896de38f74f6e60239c0
       })
-    )*/
-    /*store.dispatch(
+    ) */
+    /* store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.ADD_LINK
       })
-    )*/
-    /*store.dispatch(
+    ) */
+    /* store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.NAME_EDIT,
         data: 'pablo'
       })
-    )*/
+    ) */
     /* store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.NOTIFICATIONS_MENU
       })
-    )*/
+    ) */
   })
 
   const { description, url } = await BevyApi.checkForUpdate()

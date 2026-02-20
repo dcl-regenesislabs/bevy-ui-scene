@@ -506,7 +506,7 @@ export default class Photos {
 
   person(person: VisiblePerson, index: number): ReactEcs.JSX.Element {
     const fontSize = getFontSize({})
-    const fontSize_M = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
+    const fontSizeM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
     return (
       <UiEntity
         uiTransform={{ width: '100%', height: 'auto', flexDirection: 'column' }}
@@ -534,7 +534,7 @@ export default class Photos {
 
             <Label
               value={person.userName}
-              fontSize={fontSize_M}
+              fontSize={fontSizeM}
               uiTransform={{ width: 'auto', height: 'auto' }}
             />
           </UiEntity>
@@ -590,7 +590,7 @@ export default class Photos {
     )
     if (wearableData === undefined) return null
     const fontSize = getFontSize({})
-    const fontSize_M = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
+    const fontSizeM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
     return (
       <UiEntity
         uiTransform={{
@@ -621,7 +621,7 @@ export default class Photos {
           })}
           <Label
             value={wearableData.name}
-            fontSize={fontSize_M}
+            fontSize={fontSizeM}
             // value={wearableData.urn}
             // fontSize={fontSize * 0.5}
             textAlign="middle-left"
@@ -636,7 +636,7 @@ export default class Photos {
             }
           }}
           value={'BUY'}
-          fontSize={fontSize_M}
+          fontSize={fontSizeM}
           backgroundColor={RUBY}
           uiTransform={{
             width: 'auto',

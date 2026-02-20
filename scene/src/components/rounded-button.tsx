@@ -1,7 +1,6 @@
 import { noop } from '../utils/function-utils'
 import { Label, UiEntity, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
-import { ROUNDED_TEXTURE_BACKGROUND } from '../utils/constants'
 import { Color4 } from '@dcl/sdk/math'
 import { CONTEXT, getFontSize } from '../service/fontsize-system'
 

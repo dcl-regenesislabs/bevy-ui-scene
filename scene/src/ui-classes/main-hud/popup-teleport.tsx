@@ -63,7 +63,7 @@ function TeleportContent({
 }): ReactElement {
   const [sceneTitle, setSceneTitle] = useState<string>('')
   const [sceneThumbnail, setSceneThumbnail] = useState<string | null>(null)
-  const fontSize_title = getFontSize({
+  const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.POPUP_TITLE
   })
@@ -127,7 +127,7 @@ function TeleportContent({
           value: `\nAre you sure you want to be teleported to <b>${worldCoordinates.x},${worldCoordinates.y}?</b>\n\n${sceneTitle}`,
           color: COLOR.WHITE,
           textWrap: 'wrap',
-          fontSize: fontSize_title
+          fontSize: fontSizeTitle
         }}
         uiTransform={{
           margin: { top: '8%' },

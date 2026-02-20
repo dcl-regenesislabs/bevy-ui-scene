@@ -1,5 +1,4 @@
-import { getViewportHeight } from './canvas-ratio'
-import { getContentScaleRatio } from './canvas-ratio'
+import { getViewportHeight, getContentScaleRatio } from './canvas-ratio'
 
 export enum CONTEXT {
   SIDE,

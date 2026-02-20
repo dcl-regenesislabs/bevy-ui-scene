@@ -1,9 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
-import {
-  BORDER_RADIUS_F,
-  getBackgroundFromAtlas
-} from '../../../utils/ui-utils'
+import { getBackgroundFromAtlas } from '../../../utils/ui-utils'
 import { store } from '../../../state/store'
 import {
   type OutfitDefinition,
@@ -379,7 +376,7 @@ function EmptySlot({ slotIndex }: { slotIndex: number }): ReactElement {
           state.hoveredIndex === slotIndex
             ? `\n\nSAVE OUTFIT`
             : `<b>Empty</b>\nSLOT`,
-        fontSize: fontSize
+        fontSize
       }}
       onMouseDown={() => {
         saveOutfitSlot(slotIndex).catch(console.error)

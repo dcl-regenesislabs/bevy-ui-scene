@@ -6,7 +6,6 @@ import type {
 import type { PermissionResult } from '../permissions-map'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { Row } from '../../../../components/layout'
-import { getContentScaleRatio } from '../../../../service/canvas-ratio'
 import { PermissionBox } from './permission-box'
 import { BottomBorder } from '../../../../components/bottom-border'
 import { COLOR } from '../../../../components/color-palette'

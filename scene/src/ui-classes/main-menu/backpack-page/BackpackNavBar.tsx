@@ -24,7 +24,7 @@ import {
 import { fetchEmotesPage } from '../../../utils/emotes-promise-utils'
 import { WEARABLE_CATEGORY_DEFINITIONS } from '../../../service/categories'
 import { Checkbox } from '../../../components/checkbox'
-import { Input, UiTransformProps } from '@dcl/sdk/react-ecs'
+import { Input, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { Color4 } from '@dcl/sdk/math'
 import { debounce } from '../../../utils/dcl-utils'

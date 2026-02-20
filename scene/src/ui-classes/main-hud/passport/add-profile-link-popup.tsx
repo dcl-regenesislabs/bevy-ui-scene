@@ -67,7 +67,7 @@ function AddProfileLinkContent(): ReactElement {
   const [title, setTitle] = useState<string>('')
   const [url, setUrl] = useState<string>('')
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const fontSize_titleM = getFontSize({
+  const fontSizeTitleM = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_M
   })
@@ -78,7 +78,7 @@ function AddProfileLinkContent(): ReactElement {
       <UiEntity
         uiText={{
           value: '<b>Add Link</b>',
-          fontSize: fontSize_titleM
+          fontSize: fontSizeTitleM
         }}
       />
       <Input

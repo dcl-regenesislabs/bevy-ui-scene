@@ -68,12 +68,7 @@ import { type PlaceRepresentation } from '../main-hud/big-map/big-map-view'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { Row } from '../../components/layout'
 import { COLOR } from '../../components/color-palette'
-import {
-  CONTEXT,
-  getFontSize,
-  TYPOGRAPHY_TOKENS
-} from '../../service/fontsize-system'
-import { BottomBorder, TopBorder } from '../../components/bottom-border'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
 export default class SceneInfoCard {
   public place: PlaceFromApi | undefined =

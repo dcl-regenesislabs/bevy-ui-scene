@@ -34,7 +34,7 @@ export function PassportEquippedItem({
   const rarityColor =
     RARITY_COLORS[itemData?.rarity as RarityName] ?? RARITY_COLORS.base
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const fontSize_S = getFontSize({
+  const fontSizeS = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.BODY_S
   })
@@ -107,7 +107,7 @@ export function PassportEquippedItem({
             itemData?.name ?? itemData.i18n[0].text ?? '',
             13
           ),
-          fontSize: fontSize_S,
+          fontSize: fontSizeS,
           textWrap: 'nowrap'
         }}
       />

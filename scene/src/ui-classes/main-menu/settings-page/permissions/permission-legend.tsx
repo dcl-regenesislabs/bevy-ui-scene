@@ -1,6 +1,5 @@
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { getContentScaleRatio } from '../../../../service/canvas-ratio'
 import { PermissionBox } from './permission-box'
 import { getFontSize } from '../../../../service/fontsize-system'
 

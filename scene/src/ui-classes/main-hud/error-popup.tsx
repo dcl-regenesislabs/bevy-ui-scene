@@ -59,7 +59,7 @@ function ErrorContent({
         : ''
     }`
   )
-  const fontSize_title = getFontSize({
+  const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.POPUP_TITLE
   })
@@ -111,7 +111,7 @@ function ErrorContent({
             value: errorContent,
             color: COLOR.RED,
             textWrap: 'wrap',
-            fontSize: fontSize_title
+            fontSize: fontSizeTitle
           }}
         />
       </UiEntity>

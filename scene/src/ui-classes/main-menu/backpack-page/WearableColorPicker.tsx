@@ -33,7 +33,6 @@ export function closeColorPicker(): void {
 }
 
 export function WearableColorPicker(): ReactElement {
-  const canvasScaleRatio = getContentScaleRatio()
   const backpackState = store.getState().backpack
   const categoryDefinition =
     (backpackState.activeWearableCategory &&

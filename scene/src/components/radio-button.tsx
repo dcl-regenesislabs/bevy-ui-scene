@@ -3,7 +3,6 @@ import { Column, Row } from './layout'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { COLOR } from './color-palette'
 import { type InputOption } from '../utils/definitions'
-import { getContentScaleRatio } from '../service/canvas-ratio'
 import useState = ReactEcs.useState
 import { noop } from '../utils/function-utils'
 import { CONTEXT, getFontSize } from '../service/fontsize-system'

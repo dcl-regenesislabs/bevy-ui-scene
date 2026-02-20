@@ -16,7 +16,7 @@ import {
   type ChatMessageDefinition,
   type ChatMessageRepresentation
 } from './ChatMessage.types'
-import { getViewportHeight } from '../../service/canvas-ratio'
+
 import { COLOR } from '../color-palette'
 import { compose, memoize, noop } from '../../utils/function-utils'
 import { ButtonIcon } from '../button-icon'

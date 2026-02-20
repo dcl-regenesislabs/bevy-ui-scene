@@ -30,7 +30,7 @@ function closeDeleteOutfitDialog(): void {
 export function DeleteOutfitDialog(): ReactElement | null {
   if (!state.shown) return null
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const fontSize_title = getFontSize({
+  const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.POPUP_TITLE
   })
@@ -78,7 +78,7 @@ export function DeleteOutfitDialog(): ReactElement | null {
             value: '<b>Are you sure you want to delete this outfit?</b>',
             color: COLOR.TEXT_COLOR,
             textWrap: 'wrap',
-            fontSize: fontSize_title
+            fontSize: fontSizeTitle
           }}
           uiTransform={{
             margin: '5%',

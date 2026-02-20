@@ -1,7 +1,7 @@
 import Icon from './icon/Icon'
 import { Label, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { getContentScaleRatio } from '../service/canvas-ratio'
+
 import useState = ReactEcs.useState
 import { getFontSize } from '../service/fontsize-system'
 export type CheckboxProps = {

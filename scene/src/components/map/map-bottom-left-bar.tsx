@@ -14,7 +14,7 @@ import { getPlayerParcel } from '../../service/player-scenes'
 import { store } from '../../state/store'
 import { decoratePlaceRepresentation } from '../../ui-classes/main-hud/big-map/place-decoration'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
-import { UiTransformProps } from '@dcl/sdk/react-ecs'
+import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 
 const getButtonTransform = (): UiTransformProps => ({
   borderRadius: getFontSize({}) / 2,

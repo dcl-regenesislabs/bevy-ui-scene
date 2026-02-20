@@ -48,7 +48,7 @@ function DropdownStyled(props: {
       }}
     >
       {/* TITLE AND ICON */}
-      {(props.title?.length && (
+      {props.title?.length ? (
         <UiEntity
           uiTransform={{
             flexDirection: 'row',
@@ -65,13 +65,12 @@ function DropdownStyled(props: {
             }}
             uiText={{
               value: props.title,
-              fontSize: fontSize,
+              fontSize,
               color: props.fontColor ?? ALMOST_WHITE
             }}
           />
         </UiEntity>
-      )) ||
-        null}
+      ) : null}
 
       {/* DROPDOWN */}
       <UiEntity
@@ -99,7 +98,7 @@ function DropdownStyled(props: {
           }}
           uiText={{
             value: props.options[props.value]?.label ?? '<unselectable value>',
-            fontSize: fontSize,
+            fontSize,
             color: props.fontColor ?? ALMOST_BLACK,
             textAlign: 'middle-left'
           }}
@@ -211,7 +210,7 @@ function DropdownStyled(props: {
                       }}
                       uiText={{
                         value: option.label,
-                        fontSize: fontSize,
+                        fontSize,
                         color: ALMOST_BLACK,
                         textAlign: 'middle-left'
                       }}

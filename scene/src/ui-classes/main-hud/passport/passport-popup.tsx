@@ -120,7 +120,11 @@ export function setupPassportPopup(): void {
     }
   })
 
-  async function fetchAndStoreOwnProfileData({ userId }: { userId: string }) {
+  async function fetchAndStoreOwnProfileData({
+    userId
+  }: {
+    userId: string
+  }): Promise<void> {
     const profileData = await fetchProfileData({ userId })
     const player: GetPlayerDataRes = getPlayer({
       userId
