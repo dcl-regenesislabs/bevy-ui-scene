@@ -39,7 +39,7 @@ export function MapFooter(): ReactElement {
           width: '20%',
           position: { bottom: fontSize * 0.3 }
         }}
-        fontSize={fontSize * 0.9}
+        fontSize={fontSize}
       />
       <Row>
         <Row>
