@@ -10,16 +10,14 @@ let gameInstance: GameController
 export async function init(retry: boolean): Promise<void> {
   gameInstance = new GameController()
 
-  // gameInstance.uiController.loadingAndLogin.startLoading()
-
+  gameInstance.uiController.loadingAndLogin.startLoading()
   // BevyApi.loginGuest()
-
-  // gameInstance.uiController.menu?.show('settings')
-
   // gameInstance.uiController.loadingAndLogin.finishLoading()
+
   executeTask(async () => {
-    await sleep(100)
-    store.dispatch(updateHudStateAction({ loggedIn: true }))
+    // await sleep(100)
+    // store.dispatch(updateHudStateAction({ loggedIn: true }))
+    // gameInstance.uiController.menu?.show('settings')
     // gameInstance.uiController.menu?.show('backpack')
     // store.dispatch(updateHudStateAction({ realmURL: (await getRealm({})).realmInfo!.baseUrl}))
     /*  store.dispatch(
@@ -45,7 +43,6 @@ export async function init(retry: boolean): Promise<void> {
         data: 'This is the error description'
       })
     ) */
-
     /*    store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.PROFILE_MENU,
@@ -62,8 +59,7 @@ export async function init(retry: boolean): Promise<void> {
       pushPopupAction({
         type: HUD_POPUP_TYPE.ADD_LINK
       })
-    )
-
+    )*/
     /*store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.NAME_EDIT,
