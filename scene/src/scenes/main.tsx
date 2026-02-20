@@ -4,7 +4,6 @@ import { GameController } from '../controllers/game.controller'
 import { loadSettingsFromExplorer } from '../state/settings/actions'
 import { store } from '../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
-import { sleep } from '../utils/dcl-utils'
 
 let gameInstance: GameController
 
@@ -23,6 +22,18 @@ export async function init(retry: boolean): Promise<void> {
     store.dispatch(updateHudStateAction({ loggedIn: true }))
     // gameInstance.uiController.menu?.show('backpack')
     // store.dispatch(updateHudStateAction({ realmURL: (await getRealm({})).realmInfo!.baseUrl}))
+    /*  store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.URL,
+        data: 'https://google.es'
+      })
+    )*/
+    /*   store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.ERROR,
+        data: '0,0'
+      })
+    )*/
     /*    store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.NOTIFICATIONS_MENU
@@ -41,13 +52,13 @@ export async function init(retry: boolean): Promise<void> {
         data: getPlayer()?.userId
       })
     ) */
-    /*    store.dispatch(
+    /*store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.PASSPORT,
         data: `0x598f8af1565003AE7456DaC280a18ee826Df7a2c` // 0x4b538e1e044922aec2f428ec7e17a99f44205ff9 , 0x598f8af1565003AE7456DaC280a18ee826Df7a2c , 0x235ec1cc12dbda96f014896de38f74f6e60239c0
       })
-    ) */
-    /*   store.dispatch(
+    )*/
+    /*store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.ADD_LINK
       })
