@@ -332,8 +332,6 @@ export default class MainMenu {
             }}
           >
             {this.activePage === 'map' && this.uiController.mapPage.mainUi()}
-            {this.activePage === 'explore' &&
-              this.uiController.explorePage.mainUi()}
             {this.activePage === 'backpack' &&
               this.uiController.backpackPage.render()}
             {this.activePage === 'settings' &&

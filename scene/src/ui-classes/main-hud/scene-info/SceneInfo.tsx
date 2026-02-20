@@ -631,7 +631,7 @@ export default class SceneInfo {
               }}
               hintText={this.flagHint}
               showHint={this.isFlagHintVisible}
-              hintFontSize={this.fontSize * 0.75}
+              hintFontSize={this.fontSize}
             />
             <ButtonIcon
               uiTransform={{
@@ -650,7 +650,7 @@ export default class SceneInfo {
               }}
               hintText={'Scene is broken'}
               showHint={this.isBrokenHintVisible}
-              hintFontSize={this.fontSize * 0.75}
+              hintFontSize={this.fontSize}
             />
           </UiEntity>
         </UiEntity>
