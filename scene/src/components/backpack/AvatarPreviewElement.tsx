@@ -40,6 +40,7 @@ import {
 import { store } from '../../state/store'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
 // TODO GltfContainerLoadingState
 const CAMERA_SIZE = { WIDTH: 1600, HEIGHT: 1800 }
@@ -322,7 +323,7 @@ function AvatarPreviewInstructions({
   allowZoom: boolean
 }): ReactElement {
   const canvasScaleRatio = getContentScaleRatio()
-
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
@@ -340,17 +341,17 @@ function AvatarPreviewInstructions({
         >
           <Icon
             icon={{ atlasName: 'icons', spriteName: 'LeftClick' }}
-            iconSize={canvasScaleRatio * 26}
+            iconSize={fontSize}
             uiTransform={{
               alignSelf: 'flex-start',
               justifyContent: 'center',
-              position: { top: canvasScaleRatio * 13 }
+              position: { top: fontSize / 2 }
             }}
           />
           <UiEntity
             uiText={{
               value: 'Drag avatar to rotate',
-              fontSize: canvasScaleRatio * 26
+              fontSize
             }}
             uiTransform={{
               alignSelf: 'flex-start',
@@ -379,7 +380,7 @@ function AvatarPreviewInstructions({
           <UiEntity
             uiText={{
               value: 'Scroll to zoom in/out',
-              fontSize: canvasScaleRatio * 26
+              fontSize
             }}
             uiTransform={{
               alignSelf: 'flex-start',

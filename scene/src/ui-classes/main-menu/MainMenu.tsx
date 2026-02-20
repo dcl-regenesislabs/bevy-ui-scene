@@ -21,6 +21,7 @@ import {
 import { DeleteOutfitDialog } from './backpack-page/delete-outfit-dialog'
 import { noop } from '../../utils/function-utils'
 import { BevyApi } from '../../bevy-api'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
 const SELECTED_BUTTON_COLOR: Color4 = { ...Color4.Gray(), a: 0.3 }
 const BUTTON_TEXT_COLOR_INACTIVE = Color4.Gray()
@@ -141,18 +142,22 @@ export default class MainMenu {
     if (canvasInfo === null) return null
     // const sideBarHeight: number = Math.max(canvasInfo.height * 0.024, 46)
     const canvasScaleRatio = getContentScaleRatio()
-    const buttonSize: number = getMainMenuHeight() * 0.7
-    const ICON_SIZE = getMainMenuHeight() * 0.4
-    const BUTTON_ICON_FONT_SIZE = getMainMenuHeight() * 0.2
+    const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+    const closeButtonSize: number = fontSize * 2
+    const ICON_SIZE = fontSize * 2
+    const BUTTON_ICON_FONT_SIZE = fontSize
     const buttonTransform: UiTransformProps = {
       // height: getMainMenuHeight() * 0.6,
-      margin: { left: getMainMenuHeight() * 0.1 },
-      padding: {
+      margin: {
         left: getMainMenuHeight() * 0.1,
-        right: getMainMenuHeight() * 0.1
+        top: getMainMenuHeight() * 0.05,
+        bottom: getMainMenuHeight() * 0.05
       },
 
-      flexDirection: 'column'
+      flexShrink: 1,
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
     }
     // const LOGO_WIDTH = getMainMenuHeight() * 4
     // const LOGO_HEIGHT = 24 * canvasScaleRatio * 2.1
@@ -327,8 +332,6 @@ export default class MainMenu {
             }}
           >
             {this.activePage === 'map' && this.uiController.mapPage.mainUi()}
-            {this.activePage === 'explore' &&
-              this.uiController.explorePage.mainUi()}
             {this.activePage === 'backpack' &&
               this.uiController.backpackPage.render()}
             {this.activePage === 'settings' &&
@@ -365,14 +368,14 @@ export default class MainMenu {
                 this.hide()
               }}
               uiTransform={{
-                width: buttonSize,
-                height: buttonSize,
+                width: closeButtonSize,
+                height: closeButtonSize,
                 flexShrink: 0,
                 margin: {
-                  top: getMainMenuHeight() / 2 - buttonSize * 0.6
+                  top: getMainMenuHeight() / 2 - closeButtonSize * 0.6
                 }
               }}
-              iconSize={buttonSize / 2}
+              iconSize={closeButtonSize / 2}
               backgroundColor={COLOR.BLACK}
               icon={{ atlasName: 'icons', spriteName: 'CloseIcon' }}
             />
@@ -383,5 +386,5 @@ export default class MainMenu {
   }
 }
 export function getMainMenuHeight(): number {
-  return Math.floor(getViewportHeight() * 0.06)
+  return Math.floor(getContentScaleRatio() * 150)
 }

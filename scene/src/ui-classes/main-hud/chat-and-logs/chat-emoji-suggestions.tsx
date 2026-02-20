@@ -7,9 +7,9 @@ import { updateHudStateAction } from '../../../state/hud/actions'
 import { SUGGESTION_EMOJI_REGEXP } from '../../../components/chat-message/ChatMessage'
 import { COLOR } from '../../../components/color-palette'
 import { getViewportHeight } from '../../../service/canvas-ratio'
-import { getHudFontSize } from '../scene-info/SceneInfo'
 import emojiCompleteList from './emojis_complete.json'
 import { memoize } from '../../../utils/function-utils'
+import { getFontSize } from '../../../service/fontsize-system'
 const EMOJI_EXPRESSIONS = emojiCompleteList.emojis.reduce<string[]>(
   (acc, current) => [...acc, current.expression] as string[],
   []
@@ -64,7 +64,7 @@ export const ChatEmojiSuggestions = (): ReactElement => {
             uiTransform={{
               width: '100%',
               borderColor: index === 0 ? COLOR.WHITE : COLOR.BLACK_TRANSPARENT,
-              borderRadius: getHudFontSize(getViewportHeight()).NORMAL,
+              borderRadius: getFontSize({}),
               borderWidth: 1
             }}
             key={suggestedName}

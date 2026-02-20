@@ -1,4 +1,4 @@
-import { UiCanvasInformation, engine } from '@dcl/sdk/ecs'
+import { engine, UiCanvasInformation } from '@dcl/sdk/ecs'
 import { Color4 } from '@dcl/sdk/math'
 import ReactEcs, {
   type Callback,
@@ -13,7 +13,11 @@ import Icon from '../icon/Icon'
 import { ROUNDED_TEXTURE_BACKGROUND } from '../../utils/constants'
 import { type UiBackgroundProps } from '@dcl/react-ecs'
 import { COLOR } from '../color-palette'
-import { getContentScaleRatio } from '../../service/canvas-ratio'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../service/fontsize-system'
 
 function ButtonIcon(props: {
   // Events
@@ -27,17 +31,29 @@ function ButtonIcon(props: {
   backgroundColor?: Color4
   icon: AtlasIcon
   iconSize?: number
+  borderRadius?: number
   iconColor?: Color4
   hintText?: string
   showHint?: boolean
   hintFontSize?: number
   notifications?: number
   side?: 'left' | 'right' | 'top' | 'bottom'
+  layoutContext?: CONTEXT
 }): ReactEcs.JSX.Element | null {
   const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
   if (canvasInfo === null) return null
+  const layoutContext = props.layoutContext ?? CONTEXT.SIDE
+  const BUTTON_ICON_SIZE = getFontSize({
+    token: TYPOGRAPHY_TOKENS.BUTTON_ICON,
+    context: layoutContext
+  })
+  const BUTTON_ICON_BORDER_RADIUS = getFontSize({
+    token: TYPOGRAPHY_TOKENS.BUTTON_ICON_BORDER_RADIUS,
+    context: layoutContext
+  })
+  const BUTTON_ICON_HEIGHT = (BUTTON_ICON_SIZE / 1.5) * 2
 
-  const FONT_SIZE = Math.max(canvasInfo.height * 0.02, 12)
+  const DEFAULT_HINT_FONT_SIZE = getFontSize({})
 
   let position: Partial<Position> = { left: '100%' }
 
@@ -50,9 +66,10 @@ function ButtonIcon(props: {
       uiTransform={{
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: (props.iconSize ?? 30) * 0.5,
+        borderRadius: props.borderRadius ?? BUTTON_ICON_BORDER_RADIUS,
         borderColor: COLOR.BLACK_TRANSPARENT,
         borderWidth: 0,
+        height: BUTTON_ICON_HEIGHT,
         ...props.uiTransform
       }}
       uiBackground={{
@@ -68,7 +85,7 @@ function ButtonIcon(props: {
       <Icon
         icon={props.icon}
         iconColor={props.iconColor ?? Color4.White()}
-        iconSize={props.iconSize}
+        iconSize={props.iconSize ?? BUTTON_ICON_SIZE}
       />
       <UiEntity
         uiTransform={{
@@ -91,7 +108,7 @@ function ButtonIcon(props: {
         <Label
           value={props.notifications?.toString() ?? '0'}
           textAlign="middle-center"
-          fontSize={getContentScaleRatio() * 20}
+          fontSize={getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })}
           uiTransform={{ width: '100%', height: '100%' }}
           textWrap={'nowrap'}
         />
@@ -105,7 +122,7 @@ function ButtonIcon(props: {
             position
           }}
           text={props.hintText}
-          fontSize={props.hintFontSize ?? FONT_SIZE}
+          fontSize={props.hintFontSize ?? DEFAULT_HINT_FONT_SIZE}
           arrowSide={props.side ?? 'left'}
         />
       )}

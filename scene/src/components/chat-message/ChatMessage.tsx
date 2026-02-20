@@ -16,7 +16,7 @@ import {
   type ChatMessageDefinition,
   type ChatMessageRepresentation
 } from './ChatMessage.types'
-import { getViewportHeight } from '../../service/canvas-ratio'
+
 import { COLOR } from '../color-palette'
 import { compose, memoize, noop } from '../../utils/function-utils'
 import { ButtonIcon } from '../button-icon'
@@ -24,13 +24,13 @@ import { AvatarCircle } from '../avatar-circle'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { store } from '../../state/store'
-import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 import {
   type Address,
   hasClaimedName,
   namedUsersData
 } from '../../ui-classes/main-hud/chat-and-logs/named-users-data-service'
 import emojiCompleteList from '../../ui-classes/main-hud/chat-and-logs/emojis_complete.json'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
 const LINK_TYPE = {
   USER: 'user',
@@ -58,7 +58,7 @@ function ChatMessage(props: {
   if (getPlayer() === null) {
     return null
   }
-  const defaultFontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const defaultFontSize = getFontSize({})
   const messageMargin = defaultFontSize / 3
   const playerName = props.message.name
 
@@ -233,7 +233,7 @@ function ChatMessage(props: {
             height: defaultFontSize
           }}
           value={formatTimestamp(props.message.timestamp)}
-          fontSize={defaultFontSize * 0.7}
+          fontSize={getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })}
           color={COLOR.INACTIVE}
           textWrap="wrap"
           textAlign={`middle-left`}

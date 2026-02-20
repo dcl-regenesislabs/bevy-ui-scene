@@ -3,14 +3,13 @@ import { type ReactElement } from '@dcl/react-ecs'
 import { Row } from '../../../components/layout'
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
-import { getViewportHeight } from '../../../service/canvas-ratio'
 import { getPlayer } from '@dcl/sdk/players'
 import { getMainMenuHeight } from '../../main-menu/MainMenu'
-import { getHudFontSize } from '../../main-hud/scene-info/SceneInfo'
 import { Color4 } from '@dcl/sdk/math'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
+import { getFontSize } from '../../../service/fontsize-system'
 const LIGHT_TRANSPARENT = Color4.create(1, 1, 1, 0.03)
 
 export function ProfileButton({
@@ -69,7 +68,7 @@ export function ProfileButton({
         uiText={{
           color: getAddressColor(player.userId),
           value: `<b> ${player.name}  </b>`,
-          fontSize: getHudFontSize(getViewportHeight()).NORMAL,
+          fontSize: getFontSize({}),
           textWrap: 'nowrap'
         }}
       />

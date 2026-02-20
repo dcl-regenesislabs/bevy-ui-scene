@@ -4,7 +4,7 @@ import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import { COLOR } from '../color-palette'
 import { noop } from '../../utils/function-utils'
-import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
+import { getFontSize } from '../../service/fontsize-system'
 
 export type ListCardParams = {
   key?: any
@@ -25,7 +25,7 @@ export function ListCard({
 }: ListCardParams): ReactElement {
   const ROUNDED_BORDER_PROPS = {
     borderWidth: 0,
-    borderRadius: getHudFontSize(getViewportHeight()).SMALL,
+    borderRadius: getFontSize({}) / 2,
     borderColor: COLOR.BLACK_TRANSPARENT
   }
   return (
@@ -53,7 +53,7 @@ export function ListCard({
           src={thumbnailSrc}
           uiTransform={{
             width: getViewportHeight() * 0.2 * 0.8,
-            height: getViewportHeight() * 0.1 * 0.8,
+            height: getViewportHeight() * 0.125 * 0.8,
             flexShrink: 0,
             ...ROUNDED_BORDER_PROPS
           }}
@@ -77,7 +77,7 @@ export function ListCard({
           uiText={{
             value: activeFooter,
             color: COLOR.TEXT_COLOR_WHITE,
-            fontSize: getHudFontSize(getViewportHeight()).NORMAL
+            fontSize: getFontSize({})
           }}
         />
       ) : null}

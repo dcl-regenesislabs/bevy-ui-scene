@@ -24,7 +24,7 @@ import {
 import { fetchEmotesPage } from '../../../utils/emotes-promise-utils'
 import { WEARABLE_CATEGORY_DEFINITIONS } from '../../../service/categories'
 import { Checkbox } from '../../../components/checkbox'
-import { Input } from '@dcl/sdk/react-ecs'
+import { Input, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { Color4 } from '@dcl/sdk/math'
 import { debounce } from '../../../utils/dcl-utils'
@@ -32,6 +32,11 @@ import { updatePageGeneric } from './backpack-service'
 import { DropdownComponent } from '../../../components/dropdown-component'
 import Icon from '../../../components/icon/Icon'
 import { getMainMenuHeight } from '../MainMenu'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 const debouncedSearch = debounce((name: string) => {
   updatePageGeneric().catch(console.error)
@@ -39,7 +44,11 @@ const debouncedSearch = debounce((name: string) => {
 
 export function BackpackNavBar(): ReactElement {
   const backpackState = store.getState().backpack
-  const fontSize = getMainMenuHeight() * 0.3
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const NAV_BUTTON_HEIGHT = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.NAV_BUTTON_HEIGHT
+  })
   return (
     <NavBar>
       <LeftSection>
@@ -140,12 +149,18 @@ export function BackpackNavBar(): ReactElement {
             value={backpackState.searchFilter.collectiblesOnly}
             label={'Collectibles only'}
           />
-          <SearchBox />
+          <SearchBox
+            uiTransform={{
+              height: NAV_BUTTON_HEIGHT
+            }}
+          />
           <UiEntity
             uiTransform={{
               width: 'auto',
               flexShrink: 0,
-              flexGrow: 0
+              flexGrow: 0,
+              height: '100%',
+              justifyContent: 'center'
             }}
           >
             <UiEntity
@@ -160,11 +175,9 @@ export function BackpackNavBar(): ReactElement {
             />
             <DropdownComponent
               uiTransform={{
-                position: { top: '-21%' },
                 width: fontSize * 7,
-                height: '80%',
-                alignSelf: 'flex-end',
-                borderRadius: fontSize / 2
+                height: NAV_BUTTON_HEIGHT,
+                alignSelf: 'center'
               }}
               options={SORT_OPTIONS_MAP}
               value={
@@ -230,7 +243,7 @@ export function LeftSection({
         height: '100%',
         flexDirection: 'row',
         padding: 0,
-        alignItems: 'flex-start',
+        alignItems: 'center',
         alignSelf: 'flex-start'
       }}
     >
@@ -268,21 +281,29 @@ export function NavBarTitle({ text }: { text: string }): ReactElement {
       }}
       uiText={{
         value: text,
-        fontSize: getMainMenuHeight() * 0.5,
+        fontSize: getFontSize({
+          context: CONTEXT.DIALOG,
+          token: TYPOGRAPHY_TOKENS.TITLE_L
+        }),
         textWrap: 'nowrap'
       }}
     />
   )
 }
 
-function SearchBox(): ReactElement {
+function SearchBox({
+  uiTransform
+}: {
+  uiTransform: UiTransformProps
+}): ReactElement {
   const backpackState = store.getState().backpack
-  const fontSize = getMainMenuHeight() * 0.3
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
         width: '25%',
-        height: '100%'
+        height: '100%',
+        ...uiTransform
       }}
     >
       <Icon
@@ -298,12 +319,11 @@ function SearchBox(): ReactElement {
       <Input
         uiTransform={{
           width: getMainMenuHeight() * 6,
-          height: '70%',
           alignSelf: 'center',
           borderWidth: 0,
           borderRadius: fontSize / 2,
           padding: {
-            top: fontSize / 2,
+            top: fontSize / 1.5,
             left: fontSize * 2,
             right: fontSize / 4
           }

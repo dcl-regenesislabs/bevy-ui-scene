@@ -13,7 +13,6 @@ import {
   RARITY_COLORS,
   RARITY_HEX_COLORS
 } from '../../components/color-palette'
-import { getContentScaleRatio } from '../../service/canvas-ratio'
 import Icon from '../../components/icon/Icon'
 import { type Color4 } from '@dcl/sdk/math'
 import { type AtlasIcon } from '../../utils/definitions'
@@ -32,6 +31,7 @@ import useState = ReactEcs.useState
 import { closeLastPopupAction, pushPopupAction } from '../../state/hud/actions'
 import { store } from '../../state/store'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
+import { getFontSize } from '../../service/fontsize-system'
 
 export function NotificationItem({
   notification,
@@ -42,19 +42,20 @@ export function NotificationItem({
   uiTransform?: UiTransformProps
 }): ReactElement | null {
   const [loading, setLoading] = useState(false)
+  const fontSize = getFontSize({})
   return (
     <UiEntity
       uiTransform={{
-        height: getContentScaleRatio() * 200,
-        width: getContentScaleRatio() * 740,
+        height: fontSize * 6,
+        width: fontSize * 21,
         borderWidth: 0,
         borderColor: COLOR.WHITE,
-        borderRadius: getContentScaleRatio() * 20,
+        borderRadius: fontSize / 2,
         flexShrink: 0,
         margin: { bottom: '2%', left: '2%' },
         flexDirection: 'row',
         alignItems: 'center',
-        padding: { left: '5%' },
+        padding: { left: '2%' },
         ...uiTransform
       }}
       uiBackground={{ color: COLOR.NOTIFICATION_ITEM }}
@@ -115,8 +116,9 @@ export function NotificationItem({
         uiTransform={{
           flexDirection: 'column',
           width: '80%',
+          height: '100%',
           alignItems: 'flex-start',
-          justifyContent: 'flex-start',
+          justifyContent: 'center',
           alignSelf: 'flex-start',
           margin: { left: '3%' }
         }}
@@ -132,7 +134,7 @@ export function NotificationItem({
           uiText={{
             value: `<b>${getTitleFromNotification(notification)}</b>`,
             textAlign: 'top-left',
-            fontSize: getContentScaleRatio() * 32
+            fontSize
           }}
         />
         <UiEntity
@@ -140,12 +142,12 @@ export function NotificationItem({
             alignItems: 'flex-start',
             flexWrap: 'wrap',
             width: '100%',
-            margin: { top: getContentScaleRatio() * -30 }
+            margin: { top: -fontSize }
           }}
           uiText={{
             value: getDescriptionFromNotification(notification),
             textAlign: 'top-left',
-            fontSize: getContentScaleRatio() * 30
+            fontSize
           }}
         />
         <UiEntity
@@ -153,12 +155,12 @@ export function NotificationItem({
             alignItems: 'flex-start',
             flexWrap: 'wrap',
             width: '100%',
-            margin: { top: getContentScaleRatio() * -30 }
+            margin: { top: -fontSize }
           }}
           uiText={{
             value: formatTimeAgoFromTimestamp(notification.timestamp),
             textAlign: 'top-left',
-            fontSize: getContentScaleRatio() * 30,
+            fontSize,
             color: COLOR.TEXT_COLOR_LIGHT_GREY
           }}
         />
@@ -168,11 +170,11 @@ export function NotificationItem({
           uiTransform={{
             positionType: 'absolute',
             position: { right: '2%' },
-            width: getContentScaleRatio() * 20,
-            height: getContentScaleRatio() * 20,
+            width: fontSize * 0.6,
+            height: fontSize * 0.6,
             borderColor: COLOR.BLACK_TRANSPARENT,
             borderWidth: 0,
-            borderRadius: 999
+            borderRadius: 9999
           }}
           uiBackground={{
             color: COLOR.RED
@@ -188,16 +190,17 @@ function NotificationIcon({
 }: {
   notification: Notification
 }): ReactElement {
+  const fontSize = getFontSize({})
   return (
     <UiEntity
       uiTransform={{
         positionType: 'absolute',
-        position: { right: '-25%', bottom: '-25%' },
-        borderRadius: getContentScaleRatio() * 999,
-        borderWidth: getContentScaleRatio() * 6,
+        position: { right: '-10%', bottom: '-15%' },
+        borderRadius: 9999,
+        borderWidth: fontSize * 0.3,
         borderColor: COLOR.TEXT_COLOR,
-        width: getContentScaleRatio() * 60,
-        height: getContentScaleRatio() * 60,
+        width: fontSize * 2,
+        height: fontSize * 2,
         alignItems: 'center',
         justifyContent: 'center'
       }}
@@ -210,7 +213,7 @@ function NotificationIcon({
           flexShrink: 0
         }}
         icon={getIconForNotificationType(notification)}
-        iconSize={getContentScaleRatio() * 40}
+        iconSize={fontSize}
       />
     </UiEntity>
   )
@@ -317,14 +320,15 @@ function NotificationThumbnail({
 }: {
   notification: Notification
 }): ReactElement {
+  const fontSize = getFontSize({})
   return (
     <UiEntity
       uiTransform={{
-        height: getContentScaleRatio() * 130,
-        width: getContentScaleRatio() * 130,
+        height: fontSize * 5,
+        width: fontSize * 6,
         borderColor: COLOR.BLACK_TRANSPARENT,
         borderWidth: 0,
-        borderRadius: getContentScaleRatio() * 30,
+        borderRadius: fontSize / 2,
         flexShrink: 0,
         flexGrow: 0
       }}

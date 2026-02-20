@@ -18,6 +18,7 @@ import { noop } from '../../utils/function-utils'
 import { store } from '../../state/store'
 import { showErrorPopup } from '../../service/error-popup-service'
 import { createTween } from '../../service/tween'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
 type StatusType =
   | 'loading'
@@ -254,11 +255,15 @@ export default class LoadingAndLogin {
     const LOGO_SIZE: number = canvasInfo.height * 0.1
 
     // FONT SIZES
-    const TITLE_FONT_SIZE: number = canvasInfo.height * 0.036
-    const SUBTITLE_FONT_SIZE: number = canvasInfo.height * 0.03
-    const PARAGRAPH_FONT_SIZE: number = canvasInfo.height * 0.02
-    const BUTTON_FONT_SIZE: number = canvasInfo.height * 0.018
-    const CODE_FONT_SIZE: number = canvasInfo.height * 0.1
+    const TITLE_FONT_SIZE: number = getFontSize({
+      token: TYPOGRAPHY_TOKENS.TITLE_XL
+    })
+    const SUBTITLE_FONT_SIZE: number = getFontSize({
+      token: TYPOGRAPHY_TOKENS.TITLE_L
+    })
+    const PARAGRAPH_FONT_SIZE: number = getFontSize({})
+    const BUTTON_FONT_SIZE: number = getFontSize({})
+    const CODE_FONT_SIZE: number = getFontSize({})
 
     // BUTTON SIZES
     const BUTTON_WIDTH: number = canvasInfo.height * 0.3
@@ -410,7 +415,7 @@ export default class LoadingAndLogin {
                       icon={{ atlasName: 'icons', spriteName: 'LeftArrow' }}
                       onMouseDown={this.backButtonAction}
                       value={'BACK'}
-                      fontSize={BUTTON_FONT_SIZE * 0.7}
+                      fontSize={BUTTON_FONT_SIZE}
                       fontColor={ALMOST_BLACK}
                       onMouseEnter={function (): void {
                         // throw new Error('Function not implemented.')
@@ -554,7 +559,7 @@ export default class LoadingAndLogin {
                               text={
                                 'Keep this number private. It ensures that your sign-in is secure and unique to you.'
                               }
-                              fontSize={PARAGRAPH_FONT_SIZE * 0.7}
+                              fontSize={PARAGRAPH_FONT_SIZE}
                               arrowSide={'left'}
                             />
                           </UiEntity>
@@ -563,14 +568,14 @@ export default class LoadingAndLogin {
                         <UiEntity
                           uiTransform={{
                             width: '100%',
-                            height: PARAGRAPH_FONT_SIZE * 0.7
+                            height: PARAGRAPH_FONT_SIZE
                           }}
                           uiText={{
                             value:
                               'Verification number will expire in ' +
                               this.countDown +
                               ' minutes',
-                            fontSize: PARAGRAPH_FONT_SIZE * 0.7,
+                            fontSize: PARAGRAPH_FONT_SIZE,
                             textAlign: 'middle-left'
                           }}
                         />

@@ -16,6 +16,7 @@ import {
 } from '../../utils/definitions'
 import { DEFAULT_EMOTES } from '../../utils/backpack-constants'
 import { RoundedButton } from '../rounded-button'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
 const SELECTED_BACKGROUND = getBackgroundFromAtlas({
   atlasName: 'backpack',
@@ -254,6 +255,7 @@ function SelectedItemOverlay({
   onUnequipItem
 }: SelectedItemOverlayProps): ReactElement {
   const canvasScaleRatio = getContentScaleRatio()
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
@@ -286,7 +288,7 @@ function SelectedItemOverlay({
           width: 206 * canvasScaleRatio,
           height: 60 * canvasScaleRatio
         }}
-        fontSize={26 * canvasScaleRatio}
+        fontSize={fontSize}
         text={isEquipped ? 'UNEQUIP' : 'EQUIP'}
         isSecondary={isEquipped}
         onClick={() => {

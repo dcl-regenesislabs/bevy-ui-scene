@@ -1,11 +1,12 @@
 import { DropdownStyled } from './dropdown-styled'
-import { getContentScaleRatio } from '../service/canvas-ratio'
+
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { noop } from '../utils/function-utils'
 import { timers } from '@dcl-sdk/utils'
 import { type InputOption } from '../utils/definitions'
 import useState = ReactEcs.useState
+import { CONTEXT, getFontSize } from '../service/fontsize-system'
 
 export type DropdownComponentProps = {
   uiTransform?: UiTransformProps
@@ -30,7 +31,7 @@ export function DropdownComponent({
   options = [{ label: '', value: null }],
   value = null,
   uiTransform,
-  fontSize = getContentScaleRatio() * 32,
+  fontSize = getFontSize({ context: CONTEXT.DIALOG }),
   onChange = noop,
   scroll = false,
   disabled = false,

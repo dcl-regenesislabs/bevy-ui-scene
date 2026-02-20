@@ -2,7 +2,6 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import Icon from '../icon/Icon'
 import {
   getRightPanelWidth,
-  getViewportHeight,
   getViewportWidth
 } from '../../service/canvas-ratio'
 import {
@@ -13,6 +12,8 @@ import { COLOR } from '../color-palette'
 import { store } from '../../state/store'
 import { noop } from '../../utils/function-utils'
 import { updateHudStateAction } from '../../state/hud/actions'
+import { isSceneCatalogExpanded } from './scene-catalog-panel'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
 export function MapFilterBar(): ReactElement {
   return (
@@ -21,7 +22,9 @@ export function MapFilterBar(): ReactElement {
         flexDirection: 'row',
         alignSelf: 'flex-start',
         alignItems: 'flex-start',
-        width: getViewportWidth() - getRightPanelWidth(),
+        width:
+          getViewportWidth() -
+          (isSceneCatalogExpanded() ? getRightPanelWidth() : 0),
         flexWrap: 'wrap'
       }}
     >
@@ -47,7 +50,7 @@ export function MapFilterBar(): ReactElement {
 
 export function MapFilterBarButton({
   filterDefinition,
-  fontSize = getViewportHeight() * 0.018,
+  fontSize = getFontSize({ context: CONTEXT.DIALOG }),
   active = false,
   key,
   onClick = noop
@@ -62,7 +65,7 @@ export function MapFilterBarButton({
   return (
     <UiEntity
       uiTransform={{
-        borderRadius: fontSize * 10,
+        borderRadius: 9999,
         borderColor: active
           ? COLOR.ACTIVE_BACKGROUND_COLOR
           : COLOR.BLACK_TRANSPARENT,

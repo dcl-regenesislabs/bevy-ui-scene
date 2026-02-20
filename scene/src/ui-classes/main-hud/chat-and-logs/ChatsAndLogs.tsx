@@ -66,7 +66,6 @@ import { Checkbox } from '../../../components/checkbox'
 import { VIEWPORT_ACTION } from '../../../state/viewport/actions'
 import { ChatInput } from './chat-input'
 import { getPlayersInScene } from '~system/Players'
-import { getHudFontSize } from '../scene-info/SceneInfo'
 import { cleanMapPlaces } from '../../../service/map-places'
 import { fetchProfileData } from '../../../utils/passport-promise-utils'
 import { getHudBarWidth, getUnsafeAreaWidth } from '../MainHud'
@@ -84,6 +83,7 @@ import useEffect = ReactEcs.useEffect
 import { ChatEmojiButton } from './chat-emoji-button'
 import { ChatEmojiSuggestions } from './chat-emoji-suggestions'
 import { type GetPlayerDataRes } from '../../../utils/definitions'
+import { getFontSize } from '../../../service/fontsize-system'
 
 type Box = {
   position: { x: number; y: number }
@@ -379,7 +379,7 @@ function MessageSubMenu({
 }: {
   canvasInfo: PBUiCanvasInformation
 }): ReactElement[] | null {
-  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const fontSize = getFontSize({})
   if (!state.messageMenuTimestamp) return null
 
   return [
@@ -459,7 +459,7 @@ function MessageSubMenu({
         <UiEntity
           uiText={{
             value: 'COPY',
-            fontSize: getHudFontSize(getViewportHeight()).NORMAL
+            fontSize
           }}
         />
       </UiEntity>
@@ -491,7 +491,7 @@ function ShowNewMessages(): ReactElement | null {
     >
       <Label
         value={`+${state.newMessages.length}`}
-        fontSize={getHudFontSize(getViewportHeight()).NORMAL}
+        fontSize={getFontSize({})}
       />
       <Icon
         iconSize={20}
@@ -502,7 +502,7 @@ function ShowNewMessages(): ReactElement | null {
 }
 
 function HeaderArea(): ReactElement {
-  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const fontSize = getFontSize({})
 
   return (
     <UiEntity
@@ -706,7 +706,7 @@ function HeaderArea(): ReactElement {
 }
 
 function InputArea(): ReactElement {
-  const inputFontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const inputFontSize = getFontSize({})
 
   return (
     <UiEntity
@@ -742,7 +742,7 @@ function InputArea(): ReactElement {
             positionType: 'absolute',
             position: { right: 0 }
           }}
-          fontSize={inputFontSize}
+          fontSize={inputFontSize * 0.8}
           onEmoji={() => {}}
         />
       )}

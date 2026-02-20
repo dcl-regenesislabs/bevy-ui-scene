@@ -2,12 +2,8 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import useEffect = ReactEcs.useEffect
 import { engine, Transform } from '@dcl/sdk/ecs'
 import { Quaternion } from '@dcl/sdk/math'
-import {
-  getContentScaleRatio,
-  getViewportHeight
-} from '../../service/canvas-ratio'
+
 import { rotateUVs } from '../../utils/ui-utils'
-import { getHudFontSize } from '../../ui-classes/main-hud/scene-info/SceneInfo'
 import { COLOR } from '../color-palette'
 import {
   getLoadedMapPlaces,
@@ -38,6 +34,7 @@ import {
 } from '../../service/avatar-tracker'
 import { getUiController } from '../../controllers/ui.controller'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
 export function MiniMapContent(): ReactElement {
   const mapSize = getMapSize()
@@ -168,7 +165,7 @@ function CardinalLabels(): ReactElement {
     -Quaternion.toEulerAngles(Transform.get(engine.CameraEntity).rotation).y,
     0
   )
-  const fontSize = getHudFontSize(getViewportHeight()).NORMAL
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   return (
     <UiEntity
       uiText={{
@@ -196,7 +193,7 @@ function CardinalLabels(): ReactElement {
   )
 }
 function PlayerArrow({ mapSize = 1000 }: { mapSize: number }): ReactElement {
-  const ARROW_SIZE = getContentScaleRatio() * 50
+  const ARROW_SIZE = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S }) * 2
 
   return (
     <UiEntity

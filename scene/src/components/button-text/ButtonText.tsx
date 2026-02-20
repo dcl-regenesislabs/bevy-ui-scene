@@ -5,6 +5,7 @@ import ReactEcs, {
   type UiTransformProps
 } from '@dcl/sdk/react-ecs'
 import { ROUNDED_TEXTURE_BACKGROUND } from '../../utils/constants'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
 function ButtonText(props: {
   // Events
@@ -22,11 +23,12 @@ function ButtonText(props: {
   isLoading?: boolean
 }): ReactEcs.JSX.Element | null {
   //   const ICON_MARGIN = Math.max(canvasInfo.height * 0.01, 2)
+  const { fontSize = getFontSize({ context: CONTEXT.DIALOG }) } = props
   return (
     <UiEntity
       uiTransform={{
-        // padding: props.fontSize * 0.3,
-        // margin: props.fontSize * 0.3,
+        // padding: fontSize * 0.3,
+        // margin: fontSize * 0.3,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
@@ -50,7 +52,7 @@ function ButtonText(props: {
         }}
         uiText={{
           value: props.value,
-          fontSize: props.fontSize,
+          fontSize,
           color: props.fontColor ?? Color4.White()
         }}
       >
@@ -58,10 +60,10 @@ function ButtonText(props: {
         {props.isLoading && (
           <UiEntity
             uiTransform={{
-              width: props.fontSize,
-              height: props.fontSize,
+              width: fontSize,
+              height: fontSize,
               positionType: 'absolute',
-              position: { top: '25%', left: -1.25 * props.fontSize }
+              position: { top: '25%', left: -1.25 * fontSize }
             }}
             uiBackground={{
               textureMode: 'stretch',

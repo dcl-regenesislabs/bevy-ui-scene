@@ -7,7 +7,12 @@ import ReactEcs, {
 } from '@dcl/sdk/react-ecs'
 import { type AtlasIcon } from '../../utils/definitions'
 import Icon from '../icon/Icon'
-import { ROUNDED_TEXTURE_BACKGROUND, TRANSPARENT } from '../../utils/constants'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../service/fontsize-system'
+import { COLOR } from '../color-palette'
 
 function ButtonTextIcon(props: {
   // Events
@@ -20,23 +25,32 @@ function ButtonTextIcon(props: {
   backgroundColor?: Color4
   // Text
   value: string
-  fontSize: number
+  fontSize?: number
   icon: AtlasIcon
   iconSize?: PositionUnit
   fontColor?: Color4
   iconColor?: Color4
+  layoutContext?: CONTEXT
 }): ReactEcs.JSX.Element | null {
+  const layoutContext = props.layoutContext ?? CONTEXT.SIDE
+  const fontSize = props.fontSize ?? getFontSize({})
+  const borderRadius = getFontSize({
+    token: TYPOGRAPHY_TOKENS.BUTTON_ICON_BORDER_RADIUS,
+    context: layoutContext
+  })
   return (
     <UiEntity
       uiTransform={{
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'row',
+        borderWidth: 0,
+        borderColor: COLOR.BLACK_TRANSPARENT,
+        borderRadius,
         ...props.uiTransform
       }}
       uiBackground={{
-        ...ROUNDED_TEXTURE_BACKGROUND,
-        color: props.backgroundColor ?? TRANSPARENT
+        color: props.backgroundColor ?? COLOR.BLACK_TRANSPARENT
       }}
       onMouseDown={props.onMouseDown}
       onMouseEnter={props.onMouseEnter}
@@ -46,7 +60,7 @@ function ButtonTextIcon(props: {
 
       <Icon
         uiTransform={{ flexShrink: 0 }}
-        iconSize={props.iconSize}
+        iconSize={props.iconSize ?? fontSize}
         icon={props.icon}
         iconColor={props.iconColor}
       />
@@ -54,7 +68,7 @@ function ButtonTextIcon(props: {
       <UiEntity
         uiText={{
           value: props.value,
-          fontSize: props.fontSize,
+          fontSize,
           color: props.fontColor ?? Color4.White(),
           textWrap: 'nowrap'
         }}

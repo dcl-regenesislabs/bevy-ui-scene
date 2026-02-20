@@ -13,7 +13,7 @@ import { COLOR } from '../../../components/color-palette'
 import { getViewportHeight } from '../../../service/canvas-ratio'
 import { getNameWithHashPostfix } from './ChatsAndLogs'
 import { type Address, asyncHasClaimedName } from './named-users-data-service'
-import { getHudFontSize } from '../scene-info/SceneInfo'
+import { getFontSize } from '../../../service/fontsize-system'
 
 export const ChatMentionSuggestions = (): ReactElement => {
   const [suggestedNames, setSuggestedNames] = ReactEcs.useState<string[]>([])
@@ -73,7 +73,7 @@ export const ChatMentionSuggestions = (): ReactElement => {
             uiTransform={{
               width: '100%',
               borderColor: index === 0 ? COLOR.WHITE : COLOR.BLACK_TRANSPARENT,
-              borderRadius: getHudFontSize(getViewportHeight()).NORMAL,
+              borderRadius: getFontSize({}),
               borderWidth: 1
             }}
             key={suggestedName}

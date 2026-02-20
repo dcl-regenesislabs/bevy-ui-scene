@@ -1,12 +1,12 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { UiEntity, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { Color4 } from '@dcl/sdk/math'
-import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { ButtonIcon } from '../button-icon'
 import { NavButton } from '../nav-button/NavButton'
 import { getPaginationItems } from './pagination-util'
 import { ROUNDED_TEXTURE_BACKGROUND, TRANSPARENT } from '../../utils/constants'
 import { noop } from '../../utils/function-utils'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
 export type PaginationProps = {
   pages: number
@@ -25,9 +25,9 @@ export function Pagination({
   disabled = false,
   uiTransform
 }: PaginationProps): ReactElement | null {
-  const canvasScaleRatio = getContentScaleRatio()
   const pageElements = getCachedItems(currentPage, pages)
-
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const iconSize = fontSize * 2
   if (pages <= 1) return null
 
   return (
@@ -42,7 +42,7 @@ export function Pagination({
     >
       <ButtonIcon
         icon={{ spriteName: 'LeftArrow', atlasName: 'icons' }}
-        iconSize={50 * canvasScaleRatio}
+        iconSize={iconSize}
         uiTransform={{
           height: '60%'
         }}
@@ -57,10 +57,7 @@ export function Pagination({
         }}
       />
       {pageElements.map((pageElement) => (
-        <UiEntity
-          key={pageElement}
-          uiTransform={{ margin: canvasScaleRatio * 10 }}
-        >
+        <UiEntity key={pageElement} uiTransform={{ margin: fontSize / 4 }}>
           <NavButton
             active={currentPage === pageElement}
             text={pageElement.toString()}
@@ -85,7 +82,7 @@ export function Pagination({
           color: Color4.create(1, 1, 1, 0.04)
         }}
         icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
-        iconSize={50 * canvasScaleRatio}
+        iconSize={iconSize}
         onMouseDown={() => {
           if (!disabled) {
             onChange(currentPage === pages ? 1 : currentPage + 1)

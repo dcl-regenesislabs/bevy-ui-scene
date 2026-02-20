@@ -5,12 +5,13 @@ import { executeTask } from '@dcl/sdk/ecs'
 import { copyToClipboard } from '~system/RestrictedActions'
 import { sleep } from '../utils/dcl-utils'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
+import { CONTEXT, getFontSize } from '../service/fontsize-system'
 const state: { copyingElementId: string | null } = {
   copyingElementId: null
 }
 
 export function CopyButton({
-  fontSize,
+  fontSize = getFontSize({ context: CONTEXT.DIALOG }),
   text,
   elementId,
   uiTransform,

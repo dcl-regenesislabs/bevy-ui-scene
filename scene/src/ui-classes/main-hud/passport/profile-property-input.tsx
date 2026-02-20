@@ -10,6 +10,7 @@ import { DropdownComponent } from '../../../components/dropdown-component'
 import { store } from '../../../state/store'
 import { updateHudStateAction } from '../../../state/hud/actions'
 import { type ViewAvatarData } from '../../../state/hud/state'
+import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 type SelectablePropertyKey = keyof typeof selectableValues
 const selectableValuesMap: any = Object.keys(selectableValues).reduce(
   // TODO fix any's
@@ -98,12 +99,13 @@ export function ProfilePropertyField({
   disabled?: boolean
   key?: string
 }): ReactElement {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
         flexDirection: 'column',
         alignItems: 'flex-start',
-        margin: { top: getContentScaleRatio() * 30 },
+        margin: { top: fontSize },
         ...uiTransform
       }}
     >
@@ -114,15 +116,15 @@ export function ProfilePropertyField({
             flexGrow: 0,
             positionType: 'absolute',
             position: {
-              top: getContentScaleRatio() * 16,
-              left: getContentScaleRatio() * 5
+              top: fontSize * 0.6,
+              left: fontSize * 0.1
             }
           }}
           icon={{
             atlasName: 'profile',
             spriteName: iconsPerProperty[propertyKey]
           }}
-          iconSize={getContentScaleRatio() * 32}
+          iconSize={fontSize}
           iconColor={COLOR.INACTIVE}
         />
       )}
@@ -130,12 +132,12 @@ export function ProfilePropertyField({
         <UiEntity
           uiTransform={{
             margin: {
-              left: getContentScaleRatio() * 30
+              left: fontSize * 0.75
             }
           }}
           uiText={{
             value: labelsPerProperty[propertyKey],
-            fontSize: getContentScaleRatio() * 30
+            fontSize
           }}
         />
       )}
@@ -155,14 +157,14 @@ export function ProfilePropertyField({
         <UiEntity
           uiTransform={{
             margin: {
-              top: getContentScaleRatio() * -20,
-              left: getContentScaleRatio() * 30
+              top: -fontSize * 0.6,
+              left: fontSize
             },
             width: '100%'
           }}
           uiText={{
             value: formatProfileValue(propertyKey),
-            fontSize: getContentScaleRatio() * 30,
+            fontSize,
             color: COLOR.TEXT_COLOR_LIGHT_GREY,
             textWrap: 'wrap',
             textAlign: 'top-left'
@@ -189,22 +191,23 @@ export function ProfilePropertyField({
     onChange: (value: any) => void
   }): ReactElement {
     if (type === INPUT_TYPE.TEXT) {
+      const fontSize = getFontSize({ context: CONTEXT.DIALOG })
       return (
         <Input
           uiTransform={{
             width: '94%',
-            height: getContentScaleRatio() * 60,
+            height: fontSize * 2,
             zIndex: 999999,
             borderColor: COLOR.BLACK_TRANSPARENT,
-            borderRadius: getContentScaleRatio() * 16,
+            borderRadius: fontSize / 2,
             borderWidth: 0,
-            padding: getContentScaleRatio() * 10
+            padding: fontSize * 0.3
           }}
           disabled={disabled}
           uiBackground={{
             color: COLOR.WHITE
           }}
-          fontSize={getContentScaleRatio() * 28}
+          fontSize={fontSize}
           value={profileData[propertyKey]}
           onChange={onChange}
           onSubmit={noop}
@@ -218,8 +221,7 @@ export function ProfilePropertyField({
           uiTransform={{
             width: '97%',
             zIndex: 999999,
-            margin: { top: getContentScaleRatio() * -20 },
-            height: getContentScaleRatio() * 60,
+            height: fontSize * 2,
             borderColor: COLOR.BLACK_TRANSPARENT,
             borderRadius: getContentScaleRatio() * 16,
             borderWidth: 0
@@ -236,6 +238,9 @@ export function ProfilePropertyField({
     if (type === INPUT_TYPE.DATE) {
       return (
         <DateComponent
+          uiTransform={{
+            width: '97%'
+          }}
           value={profileData[propertyKey]}
           onChange={onChange}
           disabled={disabled}
@@ -250,7 +255,7 @@ function DateComponent({
   value,
   onChange,
   uiTransform,
-  fontSize = getContentScaleRatio() * 28,
+  fontSize = getFontSize({ context: CONTEXT.DIALOG }),
   disabled = false
 }: {
   value: number
@@ -267,7 +272,7 @@ function DateComponent({
         fontSize={fontSize}
         uiTransform={{
           width: '94%',
-          height: getContentScaleRatio() * 60,
+          height: '100%',
           zIndex: 999999,
           borderColor: COLOR.BLACK_TRANSPARENT,
           borderRadius: getContentScaleRatio() * 16,

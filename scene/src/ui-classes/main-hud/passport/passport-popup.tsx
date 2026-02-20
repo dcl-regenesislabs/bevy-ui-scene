@@ -62,8 +62,13 @@ import type {
 
 import { PassportEquippedItem } from './passport-equipped-item'
 import { fetchEmotesData } from '../../../utils/emotes-promise-utils'
-
-const COPY_ICON_SIZE = 40
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
+import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
+import { waitFor } from '../../../utils/dcl-utils'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -87,6 +92,10 @@ const DEFAULT_RGB = { r: 1, g: 1, b: 1, a: 1 }
  * setupPassportPopup: executed one time when the explorer is initialized
  */
 export function setupPassportPopup(): void {
+  executeTask(async () => {
+    await waitFor(() => !!getPlayer()?.userId)
+    await fetchAndStoreOwnProfileData({ userId: getPlayer()?.userId ?? '' })
+  })
   // When passport is open, the avatar preview is initialized and/or updated & profile data loaded
   store.subscribe((action, previousState) => {
     if (
@@ -102,45 +111,55 @@ export function setupPassportPopup(): void {
       executeTask(async () => {
         const shownPopup = action.payload as HUDPopup
         const userId: string = shownPopup.data as string
-        const profileData = await fetchProfileData({ userId })
-        const player: GetPlayerDataRes = getPlayer({
-          userId
-        }) as GetPlayerDataRes
-        const [avatarData] = profileData?.avatars ?? [
-          {
-            ...EMPTY_PROFILE_DATA,
-            hasConnectedWeb3: true,
-            userId,
-            avatar: {
-              bodyShape: player.avatar?.bodyShapeUrn || BASE_FEMALE_URN,
-              wearables: player.wearables,
-              forceRender: player.forceRender ?? [],
-              emotes: player.emotes,
-              skin: { color: player.avatar?.skinColor ?? DEFAULT_RGB },
-              eyes: { color: player.avatar?.eyesColor ?? DEFAULT_RGB },
-              hair: { color: player.avatar?.hairColor ?? DEFAULT_RGB }
-            }
-          }
-        ]
-        const names = await fetchAllUserNames({ userId })
         state.editable = userId === getPlayer()?.userId
-
+        await fetchAndStoreOwnProfileData({ userId })
         // TODO REVIEW to refactor, profileData refers to passport profileData state, which can be own or other users, can lead to confussion and to be used as a own profile data always, refactor to useState
-        store.dispatch(
-          updateHudStateAction({
-            profileData: avatarData as ViewAvatarData,
-            names
-          })
-        )
 
         state.loadingProfile = false
       })
     }
   })
+
+  async function fetchAndStoreOwnProfileData({
+    userId
+  }: {
+    userId: string
+  }): Promise<void> {
+    const profileData = await fetchProfileData({ userId })
+    const player: GetPlayerDataRes = getPlayer({
+      userId
+    }) as GetPlayerDataRes
+    const [avatarData] = profileData?.avatars ?? [
+      {
+        ...EMPTY_PROFILE_DATA,
+        hasConnectedWeb3: true,
+        userId,
+        avatar: {
+          bodyShape: player.avatar?.bodyShapeUrn || BASE_FEMALE_URN,
+          wearables: player.wearables,
+          forceRender: player.forceRender ?? [],
+          emotes: player.emotes,
+          skin: { color: player.avatar?.skinColor ?? DEFAULT_RGB },
+          eyes: { color: player.avatar?.eyesColor ?? DEFAULT_RGB },
+          hair: { color: player.avatar?.hairColor ?? DEFAULT_RGB }
+        }
+      }
+    ]
+    const names = await fetchAllUserNames({ userId })
+    store.dispatch(
+      updateHudStateAction({
+        profileData: avatarData as ViewAvatarData,
+        names
+      })
+    )
+  }
 }
 
 export const PassportPopup: Popup = ({ shownPopup }) => {
-  const borderRadius = (getContentScaleRatio() * 80) / 4
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const borderRadius = getFontSize({ context: CONTEXT.DIALOG }) / 2
+  const loadingAlpha = getLoadingAlphaValue()
+
   return (
     <UiEntity
       uiTransform={{
@@ -192,9 +211,10 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
             : null}
           {state.loadingProfile && (
             <Label
+              uiTransform={{ padding: fontSize }}
               value={'Loading Avatar Passport ...'}
-              fontSize={getContentScaleRatio() * 32}
-              color={COLOR.TEXT_COLOR_GREY}
+              fontSize={fontSize}
+              color={{ ...COLOR.TEXT_COLOR_GREY, a: loadingAlpha }}
             />
           )}
           <CloseButton
@@ -235,6 +255,11 @@ function PassportContent(): ReactElement {
   const [player, setPlayer] = useState<GetPlayerDataRes | null>(
     getPlayer({ userId: profileData.userId })
   )
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeTitle = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_M
+  })
   useEffect(() => {
     setPlayer(getPlayer({ userId: store.getState().hud.profileData.userId }))
   }, [store.getState().hud.profileData])
@@ -250,12 +275,12 @@ function PassportContent(): ReactElement {
       <Header>
         {NameRow({
           name: profileData.name,
-          fontSize: getContentScaleRatio() * 40,
+          fontSize: fontSizeTitle,
           hasClaimedName: profileData.hasClaimedName
         })}
         {AddressRow({
           address: profileData.userId,
-          fontSize: getContentScaleRatio() * 28
+          fontSize
         })}
       </Header>
       <TabComponent
@@ -268,7 +293,7 @@ function PassportContent(): ReactElement {
             active: true
           }
         ]}
-        fontSize={getContentScaleRatio() * 32}
+        fontSize={fontSize}
       />
       <Column
         uiTransform={{
@@ -285,13 +310,14 @@ function PassportContent(): ReactElement {
 }
 function Overview(): ReactElement {
   const profileData = store.getState().hud.profileData
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
         margin: { top: '1%' },
         padding: '2%',
         width: '96%',
-        borderRadius: getContentScaleRatio() * 20,
+        borderRadius: fontSize / 2,
         borderColor: COLOR.TEXT_COLOR_WHITE,
         borderWidth: 0,
         flexDirection: 'column',
@@ -320,7 +346,7 @@ function Overview(): ReactElement {
       <UiEntity
         uiText={{
           value: '<b>ABOUT ME</b>',
-          fontSize: getContentScaleRatio() * 32
+          fontSize
         }}
       />
 
@@ -418,6 +444,7 @@ function EquippedItemsContainer({
     }
   }, [player])
   const THUMBNAIL_SIZE = canvasScaleRatio * 228
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
@@ -425,7 +452,7 @@ function EquippedItemsContainer({
         padding: '2%',
         width: '96%',
         maxWidth: '96%',
-        borderRadius: getContentScaleRatio() * 20,
+        borderRadius: fontSize / 2,
         borderColor: COLOR.TEXT_COLOR_WHITE,
         borderWidth: 0,
         flexDirection: 'column',
@@ -445,7 +472,7 @@ function EquippedItemsContainer({
         <UiEntity
           uiText={{
             value: '<b>EQUIPPED WEARABLES</b>',
-            fontSize: getContentScaleRatio() * 32
+            fontSize
           }}
         />
 
@@ -478,7 +505,7 @@ function EquippedItemsContainer({
         <UiEntity
           uiText={{
             value: '<b>EQUIPPED EMOTES</b>',
-            fontSize: getContentScaleRatio() * 32
+            fontSize
           }}
         />
 
@@ -507,6 +534,8 @@ function EquippedItemsContainer({
 
 function LinksSection(): ReactElement {
   const profileData = store.getState().hud.profileData
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+
   return (
     <UiEntity
       uiTransform={{
@@ -522,7 +551,7 @@ function LinksSection(): ReactElement {
           }}
           uiText={{
             value: '<b>LINKS</b>',
-            fontSize: getContentScaleRatio() * 30
+            fontSize
           }}
         />
       )}
@@ -532,7 +561,7 @@ function LinksSection(): ReactElement {
           uiText={{
             value:
               'Add a maximum of 5 links to promote your personal website or social networks.',
-            fontSize: getContentScaleRatio() * 30
+            fontSize
           }}
         />
       )}
@@ -561,10 +590,10 @@ function LinksSection(): ReactElement {
               }}
               disabled={state.savingProfile}
               value={'<b>+</b> ADD'}
-              fontSize={getContentScaleRatio() * 32}
+              fontSize={fontSize}
               uiBackground={{ color: COLOR.WHITE_OPACITY_1 }}
               uiTransform={{
-                borderRadius: getContentScaleRatio() * 15,
+                borderRadius: fontSize / 2,
                 borderWidth: 0,
                 borderColor: COLOR.BLACK_TRANSPARENT,
                 margin: { left: '2%' },
@@ -578,6 +607,7 @@ function LinksSection(): ReactElement {
 }
 function BottomBar(): ReactElement | null {
   if (!state.editing) return null
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
@@ -596,7 +626,7 @@ function BottomBar(): ReactElement | null {
       />
       <UiEntity
         uiTransform={{
-          borderRadius: getContentScaleRatio() * 10,
+          borderRadius: fontSize / 2,
           borderColor: COLOR.BLACK_TRANSPARENT,
           borderWidth: 0,
           width: getContentScaleRatio() * 180,
@@ -618,13 +648,13 @@ function BottomBar(): ReactElement | null {
         }}
         uiText={{
           value: 'CANCEL',
-          fontSize: getContentScaleRatio() * 40,
+          fontSize,
           textWrap: 'nowrap'
         }}
       />
       <UiEntity
         uiTransform={{
-          borderRadius: getContentScaleRatio() * 10,
+          borderRadius: fontSize / 2,
           borderColor: COLOR.BLACK_TRANSPARENT,
           borderWidth: 0,
           width: getContentScaleRatio() * 180,
@@ -633,7 +663,7 @@ function BottomBar(): ReactElement | null {
         }}
         uiText={{
           value: 'SAVE',
-          fontSize: getContentScaleRatio() * 40,
+          fontSize,
           textWrap: 'nowrap'
         }}
         onMouseDown={() => {
@@ -661,6 +691,7 @@ function ProfileLink({
   key?: string
 }): ReactElement {
   const profileData = store.getState().hud.profileData
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
@@ -684,28 +715,28 @@ function ProfileLink({
       <Icon
         uiTransform={{
           position: {
-            top: getContentScaleRatio() * 15,
-            left: getContentScaleRatio() * 10
+            top: fontSize / 2,
+            left: fontSize * 0.3
           }
         }}
         icon={{
           atlasName: 'icons',
           spriteName: 'Link'
         }}
-        iconSize={getContentScaleRatio() * 40}
+        iconSize={fontSize}
         iconColor={COLOR.LINK_BLUE}
       />
       <UiEntity
         uiText={{
           value: link.title,
           color: COLOR.LINK_BLUE,
-          fontSize: getContentScaleRatio() * 32
+          fontSize
         }}
       />
       {editing && (
         <ButtonIcon
           icon={{ spriteName: 'CloseIcon', atlasName: 'icons' }}
-          iconSize={getContentScaleRatio() * 30}
+          iconSize={fontSize}
           uiBackground={{ color: COLOR.BLACK }}
           onMouseDown={() => {
             const newProfileData = cloneDeep(profileData)
@@ -751,7 +782,7 @@ function AddressRow({
         }}
       />
       {CopyButton({
-        fontSize: getContentScaleRatio() * COPY_ICON_SIZE,
+        fontSize,
         text: address,
         elementId: 'copy-address'
       })}
@@ -803,7 +834,7 @@ function NameRow({
         />
       )}
       {CopyButton({
-        fontSize: getContentScaleRatio() * COPY_ICON_SIZE,
+        fontSize,
         text: name,
         elementId: 'copy-name'
       })}

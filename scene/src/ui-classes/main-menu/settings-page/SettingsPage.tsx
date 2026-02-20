@@ -28,6 +28,11 @@ import { roundToStep } from '../../../components/slider/slider-utils'
 import Icon from '../../../components/icon/Icon'
 import { PERMISSION_DEFINITIONS } from '../../../bevy-api/permission-definitions'
 import { PermissionsForm } from './permissions/permissions-form'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 type SettingCategory =
   | 'General'
@@ -62,7 +67,7 @@ export default class SettingsPage {
 
 function SettingsContent(): ReactElement {
   const [currentCategory, setCurrentCategory] =
-    useState<SettingCategory>(`Gameplay`)
+    useState<SettingCategory>(`Permissions`)
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState<ExplorerSetting[]>([])
   useEffect(() => {
@@ -84,8 +89,6 @@ function SettingsContent(): ReactElement {
         <NavButton
           uiTransform={{}}
           icon={{ spriteName: 'Reset', atlasName: 'icons' }}
-          iconSize={getMainMenuHeight() * 0.3}
-          fontSize={getMainMenuHeight() * 0.3}
           text={'Reset all defaults'}
           onClick={() => {
             // TODO consider adding a confirm dialog
@@ -180,6 +183,7 @@ function SettingField({
 }): ReactElement {
   const [refValue, setRefValue] = useState<string>(setting.value.toString())
   const [showTooltip, setShowTooltip] = useState(false)
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   // TODO SLIDERS SHOULD HAVE ARROWS IN LEFT AND RIGHT ?
   return (
     <Column
@@ -205,7 +209,7 @@ function SettingField({
           uiText={{
             value: `${setting.description}`,
             textAlign: 'top-left',
-            fontSize: getContentScaleRatio() * 32,
+            fontSize,
             textWrap: 'wrap'
           }}
         />
@@ -216,7 +220,7 @@ function SettingField({
           uiText={{
             value: `${setting.name}`,
             textAlign: 'top-left',
-            fontSize: getContentScaleRatio() * 32,
+            fontSize,
             textWrap: 'nowrap'
           }}
         />
@@ -237,7 +241,7 @@ function SettingField({
             })
           }}
           iconColor={COLOR.WHITE}
-          iconSize={getContentScaleRatio() * 32 * 1.2}
+          iconSize={fontSize}
         />
 
         {!(setting.namedVariants?.length > 0) && (
@@ -252,7 +256,7 @@ function SettingField({
             uiText={{
               value: `${refValue}`,
               textAlign: 'top-right',
-              fontSize: getContentScaleRatio() * 32,
+              fontSize,
               textWrap: 'nowrap'
             }}
           />
@@ -260,6 +264,7 @@ function SettingField({
       </Row>
       {setting.namedVariants?.length > 0 ? (
         <DropdownComponent
+          fontSize={fontSize}
           options={setting.namedVariants.map(({ name, description }) => ({
             label: name,
             value: name
@@ -314,7 +319,10 @@ export function SettingsCategoryTitle({
       uiTransform={{ width: '100%' }}
       uiText={{
         value: title,
-        fontSize: getContentScaleRatio() * 42,
+        fontSize: getFontSize({
+          context: CONTEXT.DIALOG,
+          token: TYPOGRAPHY_TOKENS.TITLE_L
+        }),
         textAlign: 'top-left'
       }}
     />

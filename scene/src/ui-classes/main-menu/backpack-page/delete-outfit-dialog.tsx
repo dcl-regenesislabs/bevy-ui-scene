@@ -6,6 +6,11 @@ import Icon from '../../../components/icon/Icon'
 import { COLOR } from '../../../components/color-palette'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { noop } from '../../../utils/function-utils'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 const state: { confirmFn: () => void; shown: boolean } = {
   confirmFn: noop,
@@ -24,6 +29,11 @@ function closeDeleteOutfitDialog(): void {
 
 export function DeleteOutfitDialog(): ReactElement | null {
   if (!state.shown) return null
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeTitle = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.POPUP_TITLE
+  })
   return (
     <UiEntity
       uiTransform={{
@@ -68,7 +78,7 @@ export function DeleteOutfitDialog(): ReactElement | null {
             value: '<b>Are you sure you want to delete this outfit?</b>',
             color: COLOR.TEXT_COLOR,
             textWrap: 'wrap',
-            fontSize: getContentScaleRatio() * 42
+            fontSize: fontSizeTitle
           }}
           uiTransform={{
             margin: '5%',
@@ -94,7 +104,7 @@ export function DeleteOutfitDialog(): ReactElement | null {
             variant={'secondary'}
             uiBackground={{ color: COLOR.TEXT_COLOR }}
             color={Color4.White()}
-            fontSize={getContentScaleRatio() * 28}
+            fontSize={fontSize}
             onMouseDown={() => {
               closeDeleteOutfitDialog()
             }}
@@ -110,7 +120,7 @@ export function DeleteOutfitDialog(): ReactElement | null {
             }}
             value={'YES'}
             variant={'primary'}
-            fontSize={getContentScaleRatio() * 28}
+            fontSize={fontSize}
             onMouseUp={() => {
               state.confirmFn() // TODO REVIEW: isn't this an antipattern? a function in state? other way ? use a callback with the info?
               state.shown = false

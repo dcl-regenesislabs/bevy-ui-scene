@@ -30,11 +30,12 @@ import {
 } from '../../../utils/backpack-constants'
 import { Color4 } from '@dcl/sdk/math'
 import { COLOR } from '../../../components/color-palette'
+import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 
 export function EmotesCatalog(): ReactElement {
   const backpackState = store.getState().backpack
   const canvasScaleRatio = getContentScaleRatio()
-  const bottomButtonFontSize = canvasScaleRatio * 32
+  const bottomButtonFontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity>
       <EquippedEmoteList equippedEmotes={backpackState.equippedEmotes} />

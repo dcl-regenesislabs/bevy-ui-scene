@@ -34,10 +34,10 @@ import {
 } from 'src/utils/ui-utils'
 import { ButtonText } from 'src/components/button-text'
 import { openExternalUrl } from '~system/RestrictedActions'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
 export default class Photos {
   private readonly uiController: UIController
-  public fontSize: number = 16
   public index: number = 0
   public closeBackgroundColor: Color4 = { ...Color4.White(), a: 0.05 }
   public infoBackgroundColor: Color4 = { ...Color4.White(), a: 0.05 }
@@ -115,7 +115,7 @@ export default class Photos {
 
     const arrayPhotos: PhotoFromApi[] = store.getState().scene.explorerPhotos
     const photoInfo: PhotoMetadataResponse = store.getState().photo.photoInfo
-
+    const fontSize = getFontSize({})
     return (
       <UiEntity
         uiTransform={{
@@ -180,10 +180,10 @@ export default class Photos {
             >
               <ButtonIcon
                 uiTransform={{
-                  height: this.fontSize * 2,
-                  width: this.fontSize * 2,
+                  height: fontSize * 2,
+                  width: fontSize * 2,
                   display: this.index > 0 ? 'flex' : 'none',
-                  margin: { left: this.fontSize * 2 }
+                  margin: { left: fontSize * 2 }
                 }}
                 iconColor={DCL_SNOW}
                 backgroundColor={this.leftBackgroundColor}
@@ -202,10 +202,10 @@ export default class Photos {
               <UiEntity uiTransform={{ width: 1, height: 1 }} />
               <ButtonIcon
                 uiTransform={{
-                  height: this.fontSize * 2,
-                  width: this.fontSize * 2,
+                  height: fontSize * 2,
+                  width: fontSize * 2,
                   display: this.index < arrayPhotos.length ? 'flex' : 'none',
-                  margin: { right: this.fontSize * 2 }
+                  margin: { right: fontSize * 2 }
                 }}
                 iconColor={DCL_SNOW}
                 backgroundColor={this.rightBackgroundColor}
@@ -235,9 +235,9 @@ export default class Photos {
             >
               <ButtonIcon
                 uiTransform={{
-                  height: this.fontSize * 2,
-                  width: this.fontSize * 2,
-                  margin: { left: this.fontSize * 1, top: this.fontSize * 1 }
+                  height: fontSize * 2,
+                  width: fontSize * 2,
+                  margin: { left: fontSize * 1, top: fontSize * 1 }
                 }}
                 backgroundColor={this.closeBackgroundColor}
                 onMouseEnter={() => {
@@ -251,20 +251,20 @@ export default class Photos {
                   this.hide()
                 }}
                 icon={{ atlasName: 'icons', spriteName: 'CloseIcon' }}
-                iconSize={this.fontSize}
+                iconSize={fontSize}
               />
               <UiEntity
                 uiTransform={{
                   height: 'auto',
                   width: 'auto',
-                  margin: { right: this.fontSize * 1, top: this.fontSize * 1 }
+                  margin: { right: fontSize * 1, top: fontSize * 1 }
                 }}
               >
                 {/* <ButtonIcon
                   uiTransform={{
-                    height: this.fontSize * 2,
-                    width: this.fontSize * 2,
-                    margin: { left: this.fontSize }
+                    height: fontSize * 2,
+                    width: fontSize * 2,
+                    margin: { left: fontSize }
                   }}
                   backgroundColor={this.infoBackgroundColor}
                   onMouseEnter={() => {
@@ -281,13 +281,13 @@ export default class Photos {
                     atlasName: 'social',
                     spriteName: 'Twitter'
                   }}
-                  iconSize={this.fontSize}
+                  iconSize={fontSize}
                 />
                 <ButtonIcon
                   uiTransform={{
-                    height: this.fontSize * 2,
-                    width: this.fontSize * 2,
-                    margin: { left: this.fontSize }
+                    height: fontSize * 2,
+                    width: fontSize * 2,
+                    margin: { left: fontSize }
                   }}
                   backgroundColor={this.infoBackgroundColor}
                   onMouseEnter={() => {
@@ -304,13 +304,13 @@ export default class Photos {
                     atlasName: 'social',
                     spriteName: 'Link'
                   }}
-                  iconSize={this.fontSize}
+                  iconSize={fontSize}
                 />
                 <ButtonIcon
                   uiTransform={{
-                    height: this.fontSize * 2,
-                    width: this.fontSize * 2,
-                    margin: { left: this.fontSize }
+                    height: fontSize * 2,
+                    width: fontSize * 2,
+                    margin: { left: fontSize }
                   }}
                   backgroundColor={this.infoBackgroundColor}
                   onMouseEnter={() => {
@@ -327,13 +327,13 @@ export default class Photos {
                     atlasName: 'icons',
                     spriteName: 'DownloadIcon'
                   }}
-                  iconSize={this.fontSize}
+                  iconSize={fontSize}
                 />
                 <ButtonIcon
                   uiTransform={{
-                    height: this.fontSize * 2,
-                    width: this.fontSize * 2,
-                    margin: { left: this.fontSize }
+                    height: fontSize * 2,
+                    width: fontSize * 2,
+                    margin: { left: fontSize }
                   }}
                   backgroundColor={this.infoBackgroundColor}
                   onMouseEnter={() => {
@@ -350,7 +350,7 @@ export default class Photos {
                     atlasName: 'icons',
                     spriteName: 'Delete'
                   }}
-                  iconSize={this.fontSize}
+                  iconSize={fontSize}
                 /> */}
 
                 <UiEntity
@@ -358,17 +358,17 @@ export default class Photos {
                     height: '100%',
                     width: 1,
                     margin: {
-                      right: this.fontSize * 1,
-                      left: this.fontSize * 1
+                      right: fontSize * 1,
+                      left: fontSize * 1
                     }
                   }}
                   uiBackground={{ color: { ...Color4.White(), a: 0.1 } }}
                 />
                 <ButtonIcon
                   uiTransform={{
-                    height: this.fontSize * 2,
-                    width: this.fontSize * 2,
-                    margin: { left: this.fontSize }
+                    height: fontSize * 2,
+                    width: fontSize * 2,
+                    margin: { left: fontSize }
                   }}
                   backgroundColor={this.infoBackgroundColor}
                   onMouseEnter={() => {
@@ -387,7 +387,7 @@ export default class Photos {
                       ? 'DoubleRightArrow'
                       : 'DoubleLeftArrow'
                   }}
-                  iconSize={this.fontSize}
+                  iconSize={fontSize}
                 />
               </UiEntity>
             </UiEntity>
@@ -395,7 +395,7 @@ export default class Photos {
           {/* INFO */}
           <UiEntity
             uiTransform={{
-              padding: this.fontSize * 1.5,
+              padding: fontSize * 1.5,
               width: canvasInfo.width * 0.3,
               height: '100%',
               flexDirection: 'column',
@@ -408,7 +408,7 @@ export default class Photos {
               value={`${formatTimestamp(
                 photoInfo.metadata.dateTime
               )} - Taken by ${photoInfo.metadata.userName} `}
-              fontSize={this.fontSize}
+              fontSize={fontSize}
               textAlign="middle-left"
               uiTransform={{ width: 'auto', height: 'auto' }}
             />
@@ -416,8 +416,8 @@ export default class Photos {
               value={'PLACE'}
               color={GRAY_TEXT}
               textAlign="middle-center"
-              fontSize={this.fontSize}
-              uiTransform={{ width: 'auto', height: 2 * this.fontSize }}
+              fontSize={fontSize}
+              uiTransform={{ width: 'auto', height: 2 * fontSize }}
             />
             <UiEntity
               uiTransform={{
@@ -429,8 +429,8 @@ export default class Photos {
             >
               <UiEntity
                 uiTransform={{
-                  width: this.fontSize * 1.5,
-                  height: this.fontSize * 1.5,
+                  width: fontSize * 1.5,
+                  height: fontSize * 1.5,
                   alignItems: 'center'
                 }}
                 uiBackground={getBackgroundFromAtlas({
@@ -448,13 +448,13 @@ export default class Photos {
                   ')'
                 }
                 textAlign="middle-center"
-                fontSize={this.fontSize}
-                uiTransform={{ width: 'auto', height: 2 * this.fontSize }}
+                fontSize={fontSize}
+                uiTransform={{ width: 'auto', height: 2 * fontSize }}
               />
               <ButtonIcon
                 uiTransform={{
-                  width: this.fontSize * 2,
-                  height: this.fontSize * 2
+                  width: fontSize * 2,
+                  height: fontSize * 2
                 }}
                 icon={{
                   atlasName: 'icons',
@@ -466,13 +466,13 @@ export default class Photos {
               value={'PEOPLE'}
               color={GRAY_TEXT}
               textAlign="middle-center"
-              fontSize={this.fontSize}
-              uiTransform={{ width: 'auto', height: 4 * this.fontSize }}
+              fontSize={fontSize}
+              uiTransform={{ width: 'auto', height: 4 * fontSize }}
             />
             <UiEntity
               uiTransform={{
                 width: '100%',
-                height: canvasInfo.height - this.fontSize * 10,
+                height: canvasInfo.height - fontSize * 10,
                 flexDirection: 'column',
                 alignItems: 'flex-start',
                 overflow: 'scroll'
@@ -491,7 +491,7 @@ export default class Photos {
                     uiTransform={{
                       width: '100%',
                       height: 1,
-                      margin: { bottom: this.fontSize, top: this.fontSize }
+                      margin: { bottom: fontSize, top: fontSize }
                     }}
                     uiBackground={{ color: { ...GRAY_TEXT, a: 0.5 } }}
                   />
@@ -505,6 +505,8 @@ export default class Photos {
   }
 
   person(person: VisiblePerson, index: number): ReactEcs.JSX.Element {
+    const fontSize = getFontSize({})
+    const fontSizeM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
     return (
       <UiEntity
         uiTransform={{ width: '100%', height: 'auto', flexDirection: 'column' }}
@@ -521,8 +523,8 @@ export default class Photos {
           <UiEntity uiTransform={{ width: '100%', height: 'auto' }}>
             <UiEntity
               uiTransform={{
-                width: this.fontSize * 2.5,
-                height: this.fontSize * 2.5
+                width: fontSize * 2.5,
+                height: fontSize * 2.5
               }}
               uiBackground={getBackgroundFromAtlas({
                 atlasName: 'icons',
@@ -532,7 +534,7 @@ export default class Photos {
 
             <Label
               value={person.userName}
-              fontSize={this.fontSize * 1.25}
+              fontSize={fontSizeM}
               uiTransform={{ width: 'auto', height: 'auto' }}
             />
           </UiEntity>
@@ -545,10 +547,10 @@ export default class Photos {
               }
             }}
             uiTransform={{
-              width: 2 * this.fontSize,
-              height: 2 * this.fontSize
+              width: 2 * fontSize,
+              height: 2 * fontSize
             }}
-            iconSize={2 * this.fontSize}
+            iconSize={2 * fontSize}
             icon={{
               atlasName: 'icons',
               spriteName:
@@ -571,7 +573,7 @@ export default class Photos {
           ) : (
             <Label
               value={'No collectibles equipped when the photo was taken.'}
-              fontSize={this.fontSize}
+              fontSize={fontSize}
               textWrap="wrap"
               uiTransform={{ width: 'auto', height: 'auto' }}
             />
@@ -587,13 +589,15 @@ export default class Photos {
       wearable.includes(wearableToShow.urn)
     )
     if (wearableData === undefined) return null
+    const fontSize = getFontSize({})
+    const fontSizeM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
     return (
       <UiEntity
         uiTransform={{
           width: '100%',
-          height: this.fontSize * 6,
-          margin: this.fontSize * 0.25,
-          padding: this.fontSize * 0.25,
+          height: fontSize * 6,
+          margin: fontSize * 0.25,
+          padding: fontSize * 0.25,
           justifyContent: 'space-between',
           alignItems: 'center'
         }}
@@ -612,14 +616,14 @@ export default class Photos {
           }}
         >
           {this.wearableThumbnail(wearableData, {
-            minWidth: 5.5 * this.fontSize,
-            minHeight: 5.5 * this.fontSize
+            minWidth: 5.5 * fontSize,
+            minHeight: 5.5 * fontSize
           })}
           <Label
             value={wearableData.name}
-            fontSize={this.fontSize * 1.25}
+            fontSize={fontSizeM}
             // value={wearableData.urn}
-            // fontSize={this.fontSize * 0.5}
+            // fontSize={fontSize * 0.5}
             textAlign="middle-left"
           />
         </UiEntity>
@@ -632,12 +636,12 @@ export default class Photos {
             }
           }}
           value={'BUY'}
-          fontSize={this.fontSize * 1.25}
+          fontSize={fontSizeM}
           backgroundColor={RUBY}
           uiTransform={{
             width: 'auto',
-            height: 2.5 * this.fontSize,
-            margin: { right: this.fontSize * 0.5 }
+            height: 2.5 * fontSize,
+            margin: { right: fontSize * 0.5 }
           }}
         />
       </UiEntity>

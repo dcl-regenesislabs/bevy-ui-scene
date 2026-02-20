@@ -22,6 +22,11 @@ import { type SetAvatarData } from '../../../bevy-api/interface'
 import { type InputOption } from '../../../utils/definitions'
 import { getPlayer } from '@dcl/sdk/players'
 import { showErrorPopup } from '../../../service/error-popup-service'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 const { useState } = ReactEcs
 
@@ -50,13 +55,16 @@ const EditNameContent = (): ReactElement => {
   useEffect((): void => {
     executeTask(async () => {
       setLoading(true)
+
       await waitFor(() => !!store.getState().hud.profileData.userId)
+
       const profileData = store.getState().hud.profileData
       const nameDefinitions = await fetchAllUserNames({
         userId: profileData.userId
       })
       const names = nameDefinitions.map((n) => n.name).concat('')
       const activeTab = names.length && names.includes(profileData.name) ? 0 : 1
+
       const tabs = nameDefinitions.length
         ? cloneDeep(NAME_EDIT_TABS).map((tabDefinition, index) => {
             return { ...tabDefinition, active: index === activeTab }
@@ -73,7 +81,6 @@ const EditNameContent = (): ReactElement => {
     })
   }, [])
   const onSave = (selectedName: string): void => {
-    console.log('onSave', selectedName)
     const hasClaimedName = !!(selectableNames ?? []).find(
       (s) => s.value === selectedName
     )
@@ -111,6 +118,12 @@ const EditNameContent = (): ReactElement => {
       }
     })
   }
+
+  const fontSizeTitleL = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_L
+  })
+
   return (
     <UiEntity
       uiTransform={{
@@ -124,7 +137,7 @@ const EditNameContent = (): ReactElement => {
       <UiEntity
         uiText={{
           value: '<b>Edit Username</b>',
-          fontSize: getContentScaleRatio() * 50
+          fontSize: fontSizeTitleL
         }}
       />
       <UiEntity
@@ -139,7 +152,6 @@ const EditNameContent = (): ReactElement => {
         {(tabs?.length ?? 0) > 0 ? (
           <TabComponent
             tabs={tabs}
-            fontSize={getContentScaleRatio() * 32}
             uiTransform={{ width: '100%', margin: { bottom: '2%' } }}
             onClickTab={(activeTab: number) => {
               const tabs = cloneDeep(NAME_EDIT_TABS).map(
@@ -217,21 +229,26 @@ export const NameForm = ({
   value?: string
 }): ReactElement => {
   const [textValue, setTextValue] = useState(value)
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity uiTransform={{ flexDirection: 'column', width: '100%' }}>
       <Input
         uiTransform={{
-          width: '94%',
+          width: '97%',
           flexShrink: 0,
           flexGrow: 0,
-          height: getContentScaleRatio() * 88,
-          margin: { top: getContentScaleRatio() * 14 },
           borderColor: COLOR.BLACK_TRANSPARENT,
-          borderRadius: getContentScaleRatio() * 30,
+          borderRadius: fontSize / 2,
           borderWidth: 0,
-          padding: getContentScaleRatio() * 20
+          height: fontSize * 2,
+          padding: {
+            left: getContentScaleRatio() * 20,
+            top: getContentScaleRatio() * 20,
+            bottom: getContentScaleRatio() * 20,
+            right: getContentScaleRatio() * 150
+          }
         }}
-        fontSize={getContentScaleRatio() * 40}
+        fontSize={fontSize}
         uiBackground={{
           color: COLOR.WHITE
         }}
@@ -248,28 +265,28 @@ export const NameForm = ({
           width: '100%',
           positionType: 'absolute',
           position: {
-            top: getContentScaleRatio() * 90
+            top: fontSize * 1.75
           }
         }}
         uiText={{
           value: `${textValue.length} / 15`,
           color: COLOR.TEXT_COLOR_LIGHT_GREY,
-          fontSize: getContentScaleRatio() * 32,
+          fontSize: getFontSize({
+            context: CONTEXT.DIALOG,
+            token: TYPOGRAPHY_TOKENS.BODY_S
+          }),
           textAlign: 'top-left'
         }}
       />
       <UiEntity
         uiTransform={{
           width: '92%',
-          positionType: 'absolute',
-          position: {
-            top: getContentScaleRatio() * 18
-          }
+          positionType: 'absolute'
         }}
         uiText={{
           value: `#${(getPlayer()?.userId ?? '').slice(-4)}`,
           color: COLOR.TEXT_COLOR_GREY,
-          fontSize: getContentScaleRatio() * 40,
+          fontSize,
           textAlign: 'top-right'
         }}
       />
@@ -290,11 +307,10 @@ export const NameForm = ({
             borderWidth: 0,
             width: '40%',
             margin: { right: '5%' },
-            height: getContentScaleRatio() * 100,
             opacity: disabled ? 0.5 : 1,
             flexShrink: 0
           }}
-          fontSize={getContentScaleRatio() * 40}
+          fontSize={fontSize}
           uiBackground={{
             color: COLOR.WHITE_OPACITY_1
           }}
@@ -313,11 +329,11 @@ export const NameForm = ({
             borderRadius: getContentScaleRatio() * 20,
             borderColor: COLOR.BLACK_TRANSPARENT,
             borderWidth: 0,
-            height: getContentScaleRatio() * 100,
+
             opacity: disabled ? 0.5 : 1,
             flexShrink: 0
           }}
-          fontSize={getContentScaleRatio() * 40}
+          fontSize={fontSize}
           value={'SAVE'}
           disabled={disabled || !textValue?.length || isInvalidName(textValue)}
           onMouseDown={() => {
@@ -349,6 +365,7 @@ export const UniqueNameForm = ({
   onChange?: (value: string) => void
   onSave?: (selectedName: string) => void
 }): ReactElement => {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{ flexDirection: 'column', width: '100%', zIndex: 1 }}
@@ -356,13 +373,12 @@ export const UniqueNameForm = ({
       <DropdownComponent
         uiTransform={{
           width: '97%',
+          height: fontSize * 2,
           zIndex: 999999,
-          margin: { top: getContentScaleRatio() * -20 },
           borderColor: COLOR.BLACK_TRANSPARENT,
           borderRadius: getContentScaleRatio() * 30,
           borderWidth: 0
         }}
-        fontSize={getContentScaleRatio() * 40}
         scroll={true}
         options={selectableNames}
         value={selectedName}
@@ -385,11 +401,10 @@ export const UniqueNameForm = ({
             borderWidth: 0,
             width: '40%',
             margin: { right: '5%' },
-            height: getContentScaleRatio() * 100,
             opacity: disabled ? 0.5 : 1,
             flexShrink: 0
           }}
-          fontSize={getContentScaleRatio() * 40}
+          fontSize={fontSize}
           uiBackground={{
             color: COLOR.WHITE_OPACITY_1
           }}
@@ -404,16 +419,15 @@ export const UniqueNameForm = ({
           variant={'primary'}
           uiTransform={{
             width: '40%',
-            borderRadius: getContentScaleRatio() * 20,
+            borderRadius: fontSize / 2,
             borderColor: COLOR.BLACK_TRANSPARENT,
             borderWidth: 0,
-            height: getContentScaleRatio() * 100,
             flexShrink: 0,
             justifyContent: 'center',
             alignItems: 'center',
             alignContent: 'center'
           }}
-          fontSize={getContentScaleRatio() * 40}
+          fontSize={fontSize}
           value={'SAVE'}
           disabled={
             disabled || selectedName === store.getState().hud.profileData.name

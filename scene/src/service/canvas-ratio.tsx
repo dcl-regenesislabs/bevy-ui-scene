@@ -44,4 +44,4 @@ export const getViewportWidth = (): number =>
   store.getState().viewport?.width ?? 0
 export const getViewportHeight = (): number =>
   store.getState().viewport?.height ?? 0
-export const getRightPanelWidth = (): number => getViewportHeight() * 0.4
+export const getRightPanelWidth = (): number => getViewportHeight() * 0.45

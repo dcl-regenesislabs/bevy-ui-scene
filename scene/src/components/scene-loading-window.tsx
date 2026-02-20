@@ -3,10 +3,10 @@ import { store } from '../state/store'
 import { updateHudStateAction } from '../state/hud/actions'
 import { BevyApi } from '../bevy-api'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { getContentHeight, getViewportHeight } from '../service/canvas-ratio'
+import { getContentHeight } from '../service/canvas-ratio'
 import { getBackgroundFromAtlas } from '../utils/ui-utils'
-import { getHudFontSize } from '../ui-classes/main-hud/scene-info/SceneInfo'
 import { SpinnerLoading } from './spinner-loading'
+import { getFontSize } from 'src/service/fontsize-system'
 
 export async function initSceneLoadingUi(): Promise<void> {
   const awaitSceneLoadingWindow = async (
@@ -69,7 +69,7 @@ export function SceneLoadingWindowComponent(): ReactElement | null {
           value: `<b>${loadingScene.title}</b>\nLoading Scene Assets ${
             loadingScene.pendingAssets ? `(${loadingScene.pendingAssets})` : ''
           }`,
-          fontSize: getHudFontSize(getViewportHeight()).BIG
+          fontSize: getFontSize({})
         }}
       />
       <SpinnerLoading

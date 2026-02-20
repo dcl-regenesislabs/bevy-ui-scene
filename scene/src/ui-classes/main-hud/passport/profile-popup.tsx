@@ -36,6 +36,11 @@ import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getNameWithHashPostfix } from '../chat-and-logs/ChatsAndLogs'
 import { fetchProfileData } from '../../../utils/passport-promise-utils'
 import { composedUsersData } from '../chat-and-logs/named-users-data-service'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
@@ -180,6 +185,14 @@ function ProfileHeader({
   player: GetPlayerDataRes
 }): ReactElement[] {
   const hasClaimedName = !!(player.name?.length && player.name?.includes('#'))
+  const fontSizeTitleL = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_L
+  })
+  const fontSizeTitleM = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_M
+  })
   return [
     <AvatarCircle
       userId={player.userId}
@@ -204,7 +217,7 @@ function ProfileHeader({
         uiText={{
           value: `<b>${player.name}</b>`,
           color: getAddressColor(player.userId),
-          fontSize: getContentScaleRatio() * 48
+          fontSize: fontSizeTitleL
         }}
       />
       {hasClaimedName && (
@@ -222,7 +235,7 @@ function ProfileHeader({
         />
       )}
       <CopyButton
-        fontSize={getContentScaleRatio() * 42}
+        fontSize={fontSizeTitleL}
         text={player.name}
         elementId={'copy-profile-name-' + player.userId}
         uiTransform={{
@@ -243,11 +256,11 @@ function ProfileHeader({
               uiText={{
                 value: applyMiddleEllipsis(player.userId),
                 color: COLOR.TEXT_COLOR_LIGHT_GREY,
-                fontSize: getContentScaleRatio() * 38
+                fontSize: fontSizeTitleM
               }}
             />
             <CopyButton
-              fontSize={getContentScaleRatio() * 42}
+              fontSize={fontSizeTitleL}
               text={player.userId}
               elementId={'copy-profile-address-' + player.userId}
               uiTransform={{
@@ -267,7 +280,7 @@ function ProfileHeader({
             }}
             uiText={{
               value: 'VIEW PASSPORT',
-              fontSize: getContentScaleRatio() * 42
+              fontSize: fontSizeTitleL
             }}
             onMouseDown={() => {
               closeDialog()
@@ -300,6 +313,10 @@ function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
         (await fetchProfileData({ userId: player.userId, useCache: true }))
     })
   }, [])
+  const fontSizeTitleL = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_L
+  })
 
   return (
     <ButtonTextIcon
@@ -324,7 +341,7 @@ function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
         atlasName: 'icons',
         spriteName: '@'
       }}
-      fontSize={getContentScaleRatio() * 42}
+      fontSize={fontSizeTitleL}
     />
   )
 }

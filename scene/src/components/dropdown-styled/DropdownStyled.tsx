@@ -12,6 +12,7 @@ import { COLOR } from '../color-palette'
 import { isTruthy, noop } from '../../utils/function-utils'
 import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { type InputOption } from '../../utils/definitions'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 // TODO REVIEW if makes worth: find a way to close list when clicking outside, maybe onMouseEnter/Leave state + onMouseDown
 
 function DropdownStyled(props: {
@@ -35,53 +36,57 @@ function DropdownStyled(props: {
 }): ReactEcs.JSX.Element | null {
   const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
   if (canvasInfo === null) return null
-  const { scroll = true } = props
+  const { scroll = true, fontSize = getFontSize({ context: CONTEXT.DIALOG }) } =
+    props
   return (
     <UiEntity
       uiTransform={{
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         ...props.uiTransform
       }}
     >
       {/* TITLE AND ICON */}
-      <UiEntity
-        uiTransform={{
-          flexDirection: 'row',
-          justifyContent: 'flex-start',
-          alignItems: 'center',
-          margin: { bottom: props.fontSize * 0.3 }
-        }}
-      >
-        {/* Title */}
+      {props.title?.length ? (
         <UiEntity
           uiTransform={{
-            width: 'auto',
-            height: props.fontSize
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            margin: { bottom: fontSize * 0.3 }
           }}
-          uiText={{
-            value: props.title,
-            fontSize: props.fontSize,
-            color: props.fontColor ?? ALMOST_WHITE
-          }}
-        />
-      </UiEntity>
+        >
+          {/* Title */}
+          <UiEntity
+            uiTransform={{
+              width: 'auto',
+              height: fontSize
+            }}
+            uiText={{
+              value: props.title,
+              fontSize,
+              color: props.fontColor ?? ALMOST_WHITE
+            }}
+          />
+        </UiEntity>
+      ) : null}
 
       {/* DROPDOWN */}
       <UiEntity
         uiTransform={{
           width: '100%',
-          padding: { right: props.fontSize * 0.3 },
+          height: '100%',
+          flexGrow: 1,
+          flexShrink: 0,
+          padding: { right: fontSize * 0.3 },
           justifyContent: 'space-between',
           alignItems: 'center',
-          borderRadius: getContentScaleRatio() * 30,
-          borderWidth: 0,
-          borderColor: COLOR.BLACK_TRANSPARENT,
-          ...props.uiTransform
+          borderRadius: fontSize / 2,
+          borderWidth: 0
         }}
         uiBackground={{
-          color: ALMOST_WHITE
+          color: COLOR.WHITE
         }}
         onMouseDown={props.onMouseDown}
       >
@@ -89,11 +94,11 @@ function DropdownStyled(props: {
         <UiEntity
           uiTransform={{
             width: '100%',
-            height: props.fontSize * 2.2
+            height: fontSize * 2.2
           }}
           uiText={{
             value: props.options[props.value]?.label ?? '<unselectable value>',
-            fontSize: props.fontSize,
+            fontSize,
             color: props.fontColor ?? ALMOST_BLACK,
             textAlign: 'middle-left'
           }}
@@ -102,8 +107,8 @@ function DropdownStyled(props: {
         {/* ICON */}
         <UiEntity
           uiTransform={{
-            width: props.fontSize,
-            height: props.fontSize
+            width: fontSize,
+            height: fontSize
           }}
           uiBackground={{
             ...getBackgroundFromAtlas({
@@ -122,12 +127,12 @@ function DropdownStyled(props: {
               props.listMaxHeight ??
               (scroll
                 ? props.options.length >= 4
-                  ? props.fontSize * 2.1 * 4
-                  : props.fontSize * props.options.length * 2.1
+                  ? fontSize * 2.1 * 4
+                  : fontSize * props.options.length * 2.1
                 : undefined),
             maxHeight: props.listMaxHeight,
             positionType: 'absolute',
-            position: { left: 0, top: 2.5 * props.fontSize },
+            position: { left: 0, top: 2.5 * fontSize },
             zIndex: isTruthy(props.uiTransform?.zIndex)
               ? (props.uiTransform?.zIndex ?? 0) + 2
               : 2,
@@ -205,7 +210,7 @@ function DropdownStyled(props: {
                       }}
                       uiText={{
                         value: option.label,
-                        fontSize: props.fontSize,
+                        fontSize,
                         color: ALMOST_BLACK,
                         textAlign: 'middle-left'
                       }}
@@ -214,9 +219,9 @@ function DropdownStyled(props: {
                     <UiEntity
                       uiTransform={{
                         display: props.value === index ? 'flex' : 'none',
-                        width: props.fontSize,
-                        height: props.fontSize,
-                        margin: { right: props.fontSize * 0.3 }
+                        width: fontSize,
+                        height: fontSize,
+                        margin: { right: fontSize * 0.3 }
                       }}
                       uiBackground={{
                         ...getBackgroundFromAtlas({
@@ -230,7 +235,7 @@ function DropdownStyled(props: {
                   <UiEntity
                     uiTransform={{
                       width: '100%',
-                      height: props.fontSize * 0.1
+                      height: fontSize * 0.1
                     }}
                   />
                 </UiEntity>

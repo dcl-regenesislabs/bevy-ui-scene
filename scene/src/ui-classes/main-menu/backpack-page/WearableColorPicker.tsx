@@ -24,6 +24,7 @@ import {
   rgbToHsv
 } from '../../../utils/ui-utils'
 import { updateAvatarPreview } from '../../../components/backpack/AvatarPreview'
+import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 
 const state = { open: false }
 
@@ -32,7 +33,6 @@ export function closeColorPicker(): void {
 }
 
 export function WearableColorPicker(): ReactElement {
-  const canvasScaleRatio = getContentScaleRatio()
   const backpackState = store.getState().backpack
   const categoryDefinition =
     (backpackState.activeWearableCategory &&
@@ -46,6 +46,7 @@ export function WearableColorPicker(): ReactElement {
         ...rgbToArray((backpackState as any).outfitSetup.base[categoryColorKey])
       )
     : Color4.Black()
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <NavItem
       active={true}
@@ -59,7 +60,7 @@ export function WearableColorPicker(): ReactElement {
             categoryColorKey
           ]?.name?.toUpperCase()}</b>`,
           color: COLOR.TEXT_COLOR,
-          fontSize: 26 * canvasScaleRatio
+          fontSize
         }}
         onMouseDown={() => (state.open = !state.open)}
       />
@@ -130,6 +131,7 @@ function ColorPickerDialog({
         ?.baseColorKey as string)
     : ''
   const colorPreset: Color4[] = COLOR_PRESETS[baseColorKey] ?? []
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
       uiTransform={{
@@ -142,7 +144,12 @@ function ColorPickerDialog({
           top: canvasScaleRatio * 100,
           left: 0
         },
-        padding: '30%',
+        padding: {
+          left: '20%',
+          right: '20%',
+          bottom: '30%',
+          top: '30%'
+        },
         flexDirection: 'column',
         justifyContent: 'space-between',
         alignItems: 'flex-start'
@@ -156,7 +163,7 @@ function ColorPickerDialog({
       <Label
         value={'<b>PRESETS</b>'}
         color={COLOR.TEXT_COLOR}
-        fontSize={canvasScaleRatio * 26}
+        fontSize={fontSize}
       />
       <UiEntity
         uiTransform={{
@@ -190,7 +197,7 @@ function ColorPickerDialog({
       <Label
         value={'<b>COLOR</b>'}
         color={COLOR.TEXT_COLOR}
-        fontSize={canvasScaleRatio * 26}
+        fontSize={fontSize}
       />
       <BasicSlider
         value={hsv.h}
@@ -216,7 +223,7 @@ function ColorPickerDialog({
       <Label
         value={'<b>SATURATION</b>'}
         color={COLOR.TEXT_COLOR}
-        fontSize={canvasScaleRatio * 26}
+        fontSize={fontSize}
       />
 
       <BasicSlider
@@ -261,7 +268,7 @@ function ColorPickerDialog({
       <Label
         value={'<b>BRIGHTNESS</b>'}
         color={COLOR.TEXT_COLOR}
-        fontSize={canvasScaleRatio * 26}
+        fontSize={fontSize}
       />
       <BasicSlider
         value={hsv.v}

@@ -61,17 +61,14 @@ import type {
   EventFromApi,
   PlaceFromApi
 } from './SceneInfoCard.types'
-import {
-  getRightPanelWidth,
-  getViewportHeight
-} from '../../service/canvas-ratio'
+import { getRightPanelWidth } from '../../service/canvas-ratio'
 import { closeBigMapIfActive } from '../../service/map/map-camera'
 import { MAP_FILTER_DEFINITIONS } from '../../components/map/map-definitions'
 import { type PlaceRepresentation } from '../main-hud/big-map/big-map-view'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { Row } from '../../components/layout'
-import { getHudFontSize } from '../main-hud/scene-info/SceneInfo'
 import { COLOR } from '../../components/color-palette'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
 export default class SceneInfoCard {
   public place: PlaceFromApi | undefined =
@@ -383,7 +380,7 @@ export default class SceneInfoCard {
     const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
     if (canvasInfo === null) return null
     if (this.place === undefined) return null
-    this.fontSize = getHudFontSize(getViewportHeight()).NORMAL
+    this.fontSize = getFontSize({})
     const panelWidth = getRightPanelWidth()
 
     return (
@@ -582,6 +579,7 @@ export default class SceneInfoCard {
               value={'PHOTOS (' + this.photosQuantityInPlace + ')'}
               color={BLACK_TEXT}
               fontSize={this.fontSize}
+              textWrap={'nowrap'}
             />
             <UiEntity
               uiTransform={{ width: '100%', height: 4 }}
@@ -638,6 +636,7 @@ export default class SceneInfoCard {
   sceneInfo(): ReactEcs.JSX.Element | null {
     if (this.place === undefined) return null
     const likeRate: number = this.place.like_rate ?? 0
+    const TITLE_L_FONT_SIZE = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_L })
 
     return (
       <UiEntity
@@ -651,7 +650,7 @@ export default class SceneInfoCard {
         <UiEntity
           uiText={{
             value: `<b>${this.place?.title ?? ''}</b>`,
-            fontSize: this.fontSize * 1.5,
+            fontSize: TITLE_L_FONT_SIZE,
             textAlign: 'middle-left',
             color: COLOR.TEXT_COLOR
           }}
@@ -768,10 +767,8 @@ export default class SceneInfoCard {
           >
             <ButtonIcon
               uiTransform={{
-                width: '23%',
-                height: this.fontSize * 2
+                width: '23%'
               }}
-              iconSize={this.fontSize * 1.5}
               icon={this.likeIcon}
               backgroundColor={
                 this.updating
@@ -800,10 +797,8 @@ export default class SceneInfoCard {
             />
             <ButtonIcon
               uiTransform={{
-                width: '23%',
-                height: this.fontSize * 2
+                width: '23%'
               }}
-              iconSize={this.fontSize * 1.5}
               icon={this.dislikeIcon}
               backgroundColor={
                 this.updating
@@ -832,10 +827,8 @@ export default class SceneInfoCard {
             />
             <ButtonIcon
               uiTransform={{
-                width: '23%',
-                height: this.fontSize * 2
+                width: '23%'
               }}
-              iconSize={this.fontSize * 1.5}
               icon={this.favIcon}
               backgroundColor={
                 this.updating
@@ -869,7 +862,6 @@ export default class SceneInfoCard {
                   minHeight: '100%',
                   minWidth: '100%'
                 }}
-                iconSize={this.fontSize * 1.5}
                 icon={{
                   atlasName: 'context',
                   spriteName: 'Share'
@@ -896,28 +888,20 @@ export default class SceneInfoCard {
                   position: { right: 0, bottom: '110%' },
                   width: 'auto',
                   minWidth: '100%',
-                  height: 'auto'
+                  height: 'auto',
+                  borderRadius: getFontSize({}) / 2,
+                  borderWidth: 0
                 }}
                 uiBackground={{
-                  texture: { src: 'assets/images/backgrounds/rounded.png' },
-                  color: BLACK_TEXT,
-                  textureMode: 'nine-slices',
-                  textureSlices: {
-                    top: 0.42,
-                    bottom: 0.42,
-                    left: 0.42,
-                    right: 0.42
-                  }
+                  color: COLOR.BLACK_POPUP_BACKGROUND
                 }}
               >
                 <ButtonTextIcon
                   value={'Share on X'}
-                  fontSize={(this.fontSize * 2) / 3}
                   icon={{
                     atlasName: 'social',
                     spriteName: 'Twitter'
                   }}
-                  iconSize={this.fontSize}
                   onMouseDown={() => {
                     void openExternalUrl({
                       url: `https://twitter.com/intent/tweet?text=Check%20out%20${
@@ -935,12 +919,10 @@ export default class SceneInfoCard {
                     })
                   }}
                   value={'Copy Link'}
-                  fontSize={(this.fontSize * 2) / 3}
                   icon={{
                     atlasName: 'social',
                     spriteName: 'Link'
                   }}
-                  iconSize={this.fontSize}
                 />
               </UiEntity>
             </UiEntity>
@@ -967,12 +949,18 @@ export default class SceneInfoCard {
         }}
       >
         {title !== undefined && (
-          <Label
-            value={title}
-            fontSize={this.fontSize}
-            textAlign="middle-left"
-            uiTransform={{ width: '100%', height: this.fontSize }}
-            color={GRAY_TEXT}
+          <UiEntity
+            uiText={{
+              value: title,
+              fontSize: this.fontSize,
+              textAlign: 'middle-left',
+              color: GRAY_TEXT
+            }}
+            uiTransform={{
+              width: '100%',
+              height: this.fontSize,
+              margin: { top: this.fontSize }
+            }}
           />
         )}
         <UiEntity
