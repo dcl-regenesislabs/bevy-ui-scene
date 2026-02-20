@@ -3,7 +3,7 @@ import { type GameController } from './game.controller'
 import { BackpackPage } from '../ui-classes/main-menu/backpack-page'
 import { MainHud } from '../ui-classes/main-hud'
 import { MainMenu } from '../ui-classes/main-menu'
-import { ExplorePage } from '../ui-classes/main-menu/explore-page'
+
 import { MapPage } from '../ui-classes/main-menu/map-page'
 import { LoadingAndLogin } from '../ui-classes/loading-and-login'
 import { PopUpWarning } from '../ui-classes/main-hud/pop-up-warning'
@@ -63,7 +63,7 @@ export class UIController {
   public settingsPage: SettingsPage
   public backpackPage: BackpackPage
   public mapPage: MapPage
-  public explorePage: ExplorePage
+
   loadingAndLogin: LoadingAndLogin
   gameController: GameController
   mainHud: MainHud
@@ -87,7 +87,6 @@ export class UIController {
     this.settingsPage = new SettingsPage()
     this.backpackPage = new BackpackPage()
     this.mapPage = new MapPage()
-    this.explorePage = new ExplorePage()
     this.sceneCard = new SceneInfoCard(this)
     this.warningPopUp = new PopUpWarning(this)
     this.photosPanel = new Photos(this)
