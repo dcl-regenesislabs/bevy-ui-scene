@@ -29,6 +29,8 @@ import { updateHudStateAction } from '../../../state/hud/actions'
 import Icon from '../../../components/icon/Icon'
 import { currentRealmProviderIsWorld } from '../../../service/realm-change'
 import { getFontSize } from '../../../service/fontsize-system'
+import { ThinChevronButton } from '../../../components/thin-chevron-button'
+import { ThinMenuButton } from '../../../components/thin-menu-button'
 
 export default class SceneInfo {
   private readonly uiController: UIController
@@ -265,6 +267,7 @@ export default class SceneInfo {
             height: '100%',
             padding: {
               left: getViewportHeight() * 0.01,
+              right: getViewportHeight() * 0.01,
               bottom: getViewportHeight() * 0.01
             },
             margin: {
@@ -480,27 +483,16 @@ export default class SceneInfo {
         uiTransform={{
           width: '100%',
           height: 'auto',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start',
           alignItems: 'center',
-          flexDirection: 'row'
+          flexDirection: 'row',
+          margin: store.getState().hud.minimapOpen
+            ? undefined
+            : { bottom: -fontSize / 2 }
         }}
       >
-        <UiEntity
-          uiTransform={{
-            alignSelf: 'flex-end',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            zIndex: 2,
-            width: fontSize * 2,
-            height: fontSize * 2,
-            position: { top: '-25%' },
-            padding: '3%',
-            borderRadius: 10,
-            borderColor: COLOR.WHITE,
-            borderWidth: 0
-          }}
-          uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+        <ThinChevronButton
+          lookingUp={store.getState().hud.minimapOpen}
           onMouseDown={() => {
             store.dispatch(
               updateHudStateAction({
@@ -508,38 +500,7 @@ export default class SceneInfo {
               })
             )
           }}
-        >
-          <Icon
-            uiTransform={{
-              positionType: 'absolute',
-              zIndex: 9,
-              position: { top: -0.15 * fontSize }
-            }}
-            iconColor={COLOR.WHITE}
-            iconSize={fontSize * 1.5}
-            icon={{
-              spriteName: store.getState().hud.minimapOpen
-                ? 'UpArrow'
-                : 'DownArrow',
-              atlasName: 'icons'
-            }}
-          />
-          <Icon
-            uiTransform={{
-              positionType: 'absolute',
-              zIndex: 10,
-              position: { top: 0.15 * fontSize }
-            }}
-            iconColor={COLOR.WHITE}
-            iconSize={fontSize * 1.5}
-            icon={{
-              spriteName: store.getState().hud.minimapOpen
-                ? 'UpArrow'
-                : 'DownArrow',
-              atlasName: 'icons'
-            }}
-          />
-        </UiEntity>
+        />
         <UiEntity
           uiTransform={{
             width: 'auto',
@@ -654,24 +615,10 @@ export default class SceneInfo {
           </UiEntity>
         </UiEntity>
 
-        <ButtonIcon
+        <ThinMenuButton
           onMouseDown={() => {
             this.setMenuOpen(!this.isMenuOpen)
           }}
-          onMouseEnter={() => {
-            this.menuBackgroundColor = SELECTED_BUTTON_COLOR
-          }}
-          onMouseLeave={() => {
-            this.menuBackgroundColor = undefined
-          }}
-          uiTransform={{
-            width: this.fontSize * 2,
-            height: this.fontSize * 2,
-            margin: { right: this.fontSize * 0.5 }
-          }}
-          backgroundColor={this.menuBackgroundColor}
-          icon={{ atlasName: 'icons', spriteName: 'Menu' }}
-          iconSize={this.fontSize * 1.5}
         />
       </UiEntity>
     )
