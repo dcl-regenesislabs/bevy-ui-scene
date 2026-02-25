@@ -16,12 +16,7 @@ import ReactEcs, {
 import { getPlayer } from '@dcl/sdk/src/players'
 import { ChatMessage } from '../../../components/chat-message'
 
-import {
-  MAX_ZINDEX,
-  ONE_ADDRESS,
-  ROUNDED_TEXTURE_BACKGROUND,
-  ZERO_ADDRESS
-} from '../../../utils/constants'
+import { MAX_ZINDEX, ONE_ADDRESS, ZERO_ADDRESS } from '../../../utils/constants'
 import { BevyApi } from '../../../bevy-api'
 import {
   CHAT_SIDE,
@@ -68,7 +63,7 @@ import { ChatInput } from './chat-input'
 import { getPlayersInScene } from '~system/Players'
 import { cleanMapPlaces } from '../../../service/map-places'
 import { fetchProfileData } from '../../../utils/passport-promise-utils'
-import { getHudBarWidth, getUnsafeAreaWidth } from '../MainHud'
+import { getChatWidth, getHudBarWidth, getUnsafeAreaWidth } from '../MainHud'
 import { ChatMentionSuggestions } from './chat-mention-suggestions'
 import {
   type Address,
@@ -84,6 +79,7 @@ import { ChatEmojiButton } from './chat-emoji-button'
 import { ChatEmojiSuggestions } from './chat-emoji-suggestions'
 import { type GetPlayerDataRes } from '../../../utils/definitions'
 import { getFontSize } from '../../../service/fontsize-system'
+import { CloseButton } from '../../../components/close-button'
 
 type Box = {
   position: { x: number; y: number }
@@ -225,6 +221,7 @@ export default class ChatAndLogs {
       if (action.type === VIEWPORT_ACTION.UPDATE_VIEWPORT) {
         state.chatBox.position.x = getHudBarWidth()
         state.chatBox.position.y = 0
+        // TODO review to apply getChatWidth
         state.chatBox.size.x =
           (getUnsafeAreaWidth() - getHudBarWidth()) * SAFE_SUBMENU
         state.chatBox.size.y = store.getState().viewport.height
@@ -511,13 +508,13 @@ function HeaderArea(): ReactElement {
         position: { top: '-5%' },
         width: '100%',
         height: '4%',
-        padding: { top: '4%', bottom: '-1%', left: 0, right: 0 },
+        padding: { top: '4%', bottom: 0, left: 0, right: '2%' },
         justifyContent: 'flex-start',
         flexShrink: 0,
         alignItems: 'center',
-        borderRadius: fontSize,
+        borderRadius: fontSize / 2,
         borderColor: COLOR.BLACK_TRANSPARENT,
-        borderWidth: 1,
+        borderWidth: 0,
         zIndex: 2
       }}
       uiBackground={{
@@ -660,47 +657,16 @@ function HeaderArea(): ReactElement {
           />
         </UiEntity>
       </UiEntity>
-      <UiEntity
+      <CloseButton
         uiTransform={{
-          alignSelf: 'flex-end',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          zIndex: 2,
-          width: fontSize * 2,
-          height: fontSize * 2,
-          position: { top: '100%', right: '1%' },
-          padding: '3%',
-          borderRadius: 10,
-          borderColor: COLOR.BLACK_TRANSPARENT,
-          borderWidth: 0
+          zIndex: 2
         }}
-        uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
-        onMouseDown={() => {
+        onClick={() => {
           store.dispatch(
             updateHudStateAction({ chatOpen: !store.getState().hud.chatOpen })
           )
         }}
-      >
-        <Icon
-          uiTransform={{
-            positionType: 'absolute',
-            zIndex: 9,
-            position: { top: -0.15 * fontSize }
-          }}
-          iconSize={fontSize * 1.5}
-          icon={{ spriteName: 'DownArrow', atlasName: 'icons' }}
-        />
-        <Icon
-          uiTransform={{
-            positionType: 'absolute',
-            zIndex: 10,
-            position: { top: 0.15 * fontSize }
-          }}
-          iconSize={fontSize * 1.5}
-          icon={{ spriteName: 'DownArrow', atlasName: 'icons' }}
-        />
-      </UiEntity>
+      />
     </UiEntity>
   )
 }
@@ -724,11 +690,11 @@ function InputArea(): ReactElement {
           bottom: store.getState().viewport.height * 0.005
         },
         position: { bottom: inputFontSize * 0.1 },
-        padding: inputFontSize * 0.4
+        padding: inputFontSize * 0.4,
+        borderRadius: inputFontSize / 2
       }}
       uiBackground={{
-        ...ROUNDED_TEXTURE_BACKGROUND,
-        color: { ...Color4.Black(), a: 0.4 }
+        color: COLOR.DARK_OPACITY_5
       }}
     >
       <ChatMentionSuggestions />
