@@ -14,7 +14,7 @@ import ReactEcs, {
   type UiTransformProps
 } from '@dcl/sdk/react-ecs'
 import { getPlayer } from '@dcl/sdk/src/players'
-import { ChatMessage } from '../../../components/chat-message'
+import { ChatMessage } from '../../../components/chat/chat-message'
 
 import { MAX_ZINDEX, ONE_ADDRESS, ZERO_ADDRESS } from '../../../utils/constants'
 import { BevyApi } from '../../../bevy-api'
@@ -23,7 +23,7 @@ import {
   type ChatMessageDefinition,
   type ChatMessageRepresentation,
   MESSAGE_TYPE
-} from '../../../components/chat-message/ChatMessage.types'
+} from '../../../components/chat/chat-message/ChatMessage.types'
 import { memoize, setIfNot } from '../../../utils/function-utils'
 import { getViewportHeight } from '../../../service/canvas-ratio'
 import { listenSystemAction } from '../../../service/system-actions-emitter'
@@ -38,7 +38,7 @@ import {
   decorateMessageWithLinks,
   isSystemMessage,
   NAME_MENTION_REGEXP
-} from '../../../components/chat-message/ChatMessage'
+} from '../../../components/chat/chat-message/ChatMessage'
 import { COLOR } from '../../../components/color-palette'
 import { type ReactElement } from '@dcl/react-ecs'
 import Icon from '../../../components/icon/Icon'
@@ -59,12 +59,12 @@ import { type AppState } from '../../../state/types'
 import { type PermissionUsed } from '../../../bevy-api/permission-definitions'
 import { Checkbox } from '../../../components/checkbox'
 import { VIEWPORT_ACTION } from '../../../state/viewport/actions'
-import { ChatInput } from './chat-input'
+import { ChatInput } from '../../../components/chat/chat-input'
 import { getPlayersInScene } from '~system/Players'
 import { cleanMapPlaces } from '../../../service/map-places'
 import { fetchProfileData } from '../../../utils/passport-promise-utils'
 import { getChatWidth, getHudBarWidth, getUnsafeAreaWidth } from '../MainHud'
-import { ChatMentionSuggestions } from './chat-mention-suggestions'
+import { ChatMentionSuggestions } from '../../../components/chat/chat-mention-suggestions'
 import {
   type Address,
   asyncHasClaimedName,
@@ -75,11 +75,13 @@ import {
 import { getAddressColor } from './ColorByAddress'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
-import { ChatEmojiButton } from './chat-emoji-button'
-import { ChatEmojiSuggestions } from './chat-emoji-suggestions'
+import { ChatEmojiButton } from '../../../components/chat/chat-emoji-button'
+import { ChatEmojiSuggestions } from '../../../components/chat/chat-emoji-suggestions'
 import { type GetPlayerDataRes } from '../../../utils/definitions'
 import { getFontSize } from '../../../service/fontsize-system'
 import { CloseButton } from '../../../components/close-button'
+import { ThinMenuButton } from '../../../components/thin-menu-button'
+import { MessageSubMenu } from '../../../components/chat/chat-message/chat-message-submenu'
 
 type Box = {
   position: { x: number; y: number }
@@ -366,102 +368,9 @@ function ChatContent({
       })}
       {InputArea()}
       {ShowNewMessages()}
-      {MessageSubMenu({ canvasInfo })}
+      {MessageSubMenu({ canvasInfo, state })}
     </UiEntity>
   )
-}
-
-function MessageSubMenu({
-  canvasInfo
-}: {
-  canvasInfo: PBUiCanvasInformation
-}): ReactElement[] | null {
-  const fontSize = getFontSize({})
-  if (!state.messageMenuTimestamp) return null
-
-  return [
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: '-100%', left: '-100%' },
-        width: canvasInfo.width * 2,
-        height: canvasInfo.height * 2,
-        zIndex: MAX_ZINDEX - 2
-      }}
-      uiBackground={{
-        color: COLOR.BLACK_TRANSPARENT
-      }}
-      onMouseDown={() => {
-        state.messageMenuTimestamp = 0
-      }}
-    />,
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: {
-          left:
-            canvasInfo.height *
-            (0.3 +
-              (state.shownMessages.find(
-                (m) => m.timestamp === state.messageMenuTimestamp
-              )?.side ?? 0) *
-                0.019),
-          top: state.messageMenuPositionTop
-        },
-        width: canvasInfo.width * 0.1,
-        height: '5%',
-        flexShrink: 0,
-        flexGrow: 1,
-        zIndex: MAX_ZINDEX - 1,
-        borderWidth: 0,
-        borderRadius: 10,
-        borderColor: COLOR.DARK_OPACITY_9,
-        padding: '1%'
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_9
-      }}
-    >
-      <UiEntity
-        uiTransform={{
-          borderWidth: 1,
-          borderRadius: fontSize,
-          borderColor: COLOR.MENU_ITEM_BACKGROUND,
-          alignItems: 'center',
-          width: '100%',
-          height: '100%',
-          padding: { left: '2%' }
-        }}
-        uiBackground={{
-          color: COLOR.MENU_ITEM_BACKGROUND
-        }}
-        onMouseDown={() => {
-          try {
-            const textToCopy =
-              state.shownMessages.find(
-                (m) => m.timestamp === state.messageMenuTimestamp
-              )?.message ?? ''
-            copyToClipboard({
-              text: textToCopy
-            }).catch(console.error)
-          } catch (error) {}
-
-          state.messageMenuTimestamp = 0
-        }}
-      >
-        <Icon
-          icon={{ spriteName: 'CopyIcon', atlasName: 'icons' }}
-          iconSize={fontSize}
-        />
-        <UiEntity
-          uiText={{
-            value: 'COPY',
-            fontSize
-          }}
-        />
-      </UiEntity>
-    </UiEntity>
-  ]
 }
 
 function ShowNewMessages(): ReactElement | null {
@@ -508,7 +417,7 @@ function HeaderArea(): ReactElement {
         position: { top: '-5%' },
         width: '100%',
         height: '4%',
-        padding: { top: '4%', bottom: 0, left: 0, right: '2%' },
+        padding: { top: '4%', bottom: 0, left: 0, right: fontSize / 4 },
         justifyContent: 'flex-start',
         flexShrink: 0,
         alignItems: 'center',
@@ -584,14 +493,11 @@ function HeaderArea(): ReactElement {
         }}
         uiBackground={{ color: COLOR.TEXT_COLOR }}
       >
-        <Icon
+        <ThinMenuButton
           uiTransform={{
-            zIndex: 10,
-            positionType: 'absolute',
-            position: { top: '20%' }
+            height: '100%',
+            alignSelf: 'flex-end'
           }}
-          iconSize={fontSize * 1.2}
-          icon={{ spriteName: 'Menu', atlasName: 'icons' }}
           onMouseDown={() => {
             state.headerMenuOpen = !state.headerMenuOpen
 
@@ -604,10 +510,11 @@ function HeaderArea(): ReactElement {
             }
           }}
         />
+
         <UiEntity
           uiTransform={{
             positionType: 'absolute',
-            position: { left: '220%', top: '50%' },
+            position: { left: '250%', top: 0 },
             flexDirection: 'column',
             alignItems: 'flex-start',
             justifyContent: 'flex-start',

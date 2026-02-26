@@ -1,19 +1,22 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../layout'
 import useEffect = ReactEcs.useEffect
-import { store } from '../../../state/store'
-import { updateHudStateAction } from '../../../state/hud/actions'
+import { store } from '../../state/store'
+import { updateHudStateAction } from '../../state/hud/actions'
 import { getPlayersInScene } from '~system/Players'
 import { getPlayer } from '@dcl/sdk/src/players'
 import {
   NAME_MENTION_REGEXP,
   SUGGESTION_NAME_MENTION_REGEXP
-} from '../../../components/chat-message/ChatMessage'
-import { COLOR } from '../../../components/color-palette'
-import { getViewportHeight } from '../../../service/canvas-ratio'
-import { getNameWithHashPostfix } from './ChatsAndLogs'
-import { type Address, asyncHasClaimedName } from './named-users-data-service'
-import { getFontSize } from '../../../service/fontsize-system'
+} from './chat-message/ChatMessage'
+import { COLOR } from '../color-palette'
+import { getViewportHeight } from '../../service/canvas-ratio'
+import { getNameWithHashPostfix } from '../../ui-classes/main-hud/chat-and-logs/ChatsAndLogs'
+import {
+  type Address,
+  asyncHasClaimedName
+} from '../../ui-classes/main-hud/chat-and-logs/named-users-data-service'
+import { getFontSize } from '../../service/fontsize-system'
 
 export const ChatMentionSuggestions = (): ReactElement => {
   const [suggestedNames, setSuggestedNames] = ReactEcs.useState<string[]>([])

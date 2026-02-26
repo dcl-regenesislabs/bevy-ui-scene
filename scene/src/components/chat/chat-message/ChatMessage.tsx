@@ -9,7 +9,11 @@ import ReactEcs, {
   type UiTransformProps
 } from '@dcl/sdk/react-ecs'
 import { Color4 } from '@dcl/sdk/math'
-import { ALMOST_WHITE, ONE_ADDRESS, ZERO_ADDRESS } from '../../utils/constants'
+import {
+  ALMOST_WHITE,
+  ONE_ADDRESS,
+  ZERO_ADDRESS
+} from '../../../utils/constants'
 
 import {
   CHAT_SIDE,
@@ -17,20 +21,23 @@ import {
   type ChatMessageRepresentation
 } from './ChatMessage.types'
 
-import { COLOR } from '../color-palette'
-import { compose, memoize, noop } from '../../utils/function-utils'
-import { ButtonIcon } from '../button-icon'
-import { AvatarCircle } from '../avatar-circle'
-import { pushPopupAction } from '../../state/hud/actions'
-import { HUD_POPUP_TYPE } from '../../state/hud/state'
-import { store } from '../../state/store'
+import { COLOR } from '../../color-palette'
+import { compose, memoize, noop } from '../../../utils/function-utils'
+import { ButtonIcon } from '../../button-icon'
+import { AvatarCircle } from '../../avatar-circle'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
+import { store } from '../../../state/store'
 import {
   type Address,
   hasClaimedName,
   namedUsersData
-} from '../../ui-classes/main-hud/chat-and-logs/named-users-data-service'
-import emojiCompleteList from '../../ui-classes/main-hud/chat-and-logs/emojis_complete.json'
-import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
+} from '../../../ui-classes/main-hud/chat-and-logs/named-users-data-service'
+import emojiCompleteList from '../../../ui-classes/main-hud/chat-and-logs/emojis_complete.json'
+import {
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
 
 const LINK_TYPE = {
   USER: 'user',

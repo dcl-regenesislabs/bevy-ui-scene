@@ -1,13 +1,16 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type Callback, type UiTransformProps } from '@dcl/sdk/react-ecs'
-import { ButtonIcon } from '../../../components/button-icon'
-import { Column, Row } from '../../../components/layout'
-import { getChatWidth } from '../MainHud'
-import { COLOR } from '../../../components/color-palette'
-import emojisCollection from './emojis_complete.json'
-import { type EmojiCategory, type EmojiCategoryName } from './emoji-types'
-import { store } from '../../../state/store'
-import { updateHudStateAction } from '../../../state/hud/actions'
+import { ButtonIcon } from '../button-icon'
+import { Column, Row } from '../layout'
+import { getChatWidth } from '../../ui-classes/main-hud/MainHud'
+import { COLOR } from '../color-palette'
+import emojisCollection from '../../ui-classes/main-hud/chat-and-logs/emojis_complete.json'
+import {
+  type EmojiCategory,
+  type EmojiCategoryName
+} from '../../ui-classes/main-hud/chat-and-logs/emoji-types'
+import { store } from '../../state/store'
+import { updateHudStateAction } from '../../state/hud/actions'
 
 const EMOJI_CATEGORIES: EmojiCategory[] =
   emojisCollection.categories as EmojiCategory[]

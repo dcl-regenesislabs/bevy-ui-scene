@@ -7,14 +7,14 @@ import useState = ReactEcs.useState
 import { CameraMode, CameraType, engine, executeTask } from '@dcl/sdk/ecs'
 import { type RGBAColor } from '../../bevy-api/interface'
 import { onNewMessage } from '../../ui-classes/main-hud/chat-and-logs/ChatsAndLogs'
-import { type ChatMessageRepresentation } from '../chat-message/ChatMessage.types'
+import { type ChatMessageRepresentation } from '../chat/chat-message/ChatMessage.types'
 import { sleep } from '../../utils/dcl-utils'
 import { Column, Row } from '../layout'
 import { truncateWithoutBreakingWords } from '../../utils/ui-utils'
 import Icon from '../icon/Icon'
 import { store } from '../../state/store'
 import { getPlayer } from '@dcl/sdk/players'
-import { isSingleEmoji } from '../chat-message/ChatMessage'
+import { isSingleEmoji } from '../chat/chat-message/ChatMessage'
 import {
   type Address,
   asyncHasClaimedName
