@@ -76,7 +76,11 @@ export async function initAvatarTags(): Promise<void> {
     if (!pressed) return
     state.hideNames = !state.hideNames
     addressTagEntitiesMap.forEach((entity) => {
-      VisibilityComponent.getMutable(entity).visible = !state.hideNames
+      if (state.hideNames) {
+        VisibilityComponent.createOrReplace(entity, { visible: false })
+      } else {
+        VisibilityComponent.deleteFrom(entity) // inherit
+      }
     })
   })
 }
@@ -112,7 +116,6 @@ function createTag(player: GetPlayerDataRes): undefined | Entity {
     tagWrapperEntity,
     getTagElement({ userId: player.userId as Address })
   )
-  VisibilityComponent.create(tagWrapperEntity, { visible: true })
 
   Material.setPbrMaterial(tagWrapperEntity, {
     transparencyMode: MaterialTransparencyMode.MTM_ALPHA_BLEND,
