@@ -15,8 +15,7 @@ import ReactEcs, {
 } from '@dcl/sdk/react-ecs'
 import { getPlayer } from '@dcl/sdk/src/players'
 import { ChatMessage } from '../../../components/chat/chat-message'
-
-import { MAX_ZINDEX, ONE_ADDRESS, ZERO_ADDRESS } from '../../../utils/constants'
+import { ONE_ADDRESS, ZERO_ADDRESS } from '../../../utils/constants'
 import { BevyApi } from '../../../bevy-api'
 import {
   CHAT_SIDE,
@@ -29,7 +28,6 @@ import { getViewportHeight } from '../../../service/canvas-ratio'
 import { listenSystemAction } from '../../../service/system-actions-emitter'
 import {
   changeRealm,
-  copyToClipboard,
   getUiFocus,
   setUiFocus,
   teleportTo
@@ -82,6 +80,8 @@ import { getFontSize } from '../../../service/fontsize-system'
 import { CloseButton } from '../../../components/close-button'
 import { ThinMenuButton } from '../../../components/thin-menu-button'
 import { MessageSubMenu } from '../../../components/chat/chat-message/chat-message-submenu'
+import { ChatArea } from 'src/components/chat/chat-area'
+import { ChatHeaderArea } from '../../../components/chat/chat-header-area'
 
 type Box = {
   position: { x: number; y: number }
@@ -361,10 +361,11 @@ function ChatContent({
           : COLOR.BLACK_TRANSPARENT
       }}
     >
-      {state.hoveringChat && HeaderArea()}
+      {state.hoveringChat && ChatHeaderArea({ state })}
       {ChatArea({
         messages: state.shownMessages,
-        onMessageMenu
+        onMessageMenu,
+        state
       })}
       {InputArea()}
       {ShowNewMessages()}
@@ -402,177 +403,6 @@ function ShowNewMessages(): ReactElement | null {
       <Icon
         iconSize={20}
         icon={{ spriteName: 'DownArrow', atlasName: 'icons' }}
-      />
-    </UiEntity>
-  )
-}
-
-function HeaderArea(): ReactElement {
-  const fontSize = getFontSize({})
-
-  return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: '-5%' },
-        width: '100%',
-        height: '4%',
-        padding: { top: '4%', bottom: 0, left: 0, right: fontSize / 4 },
-        justifyContent: 'flex-start',
-        flexShrink: 0,
-        alignItems: 'center',
-        borderRadius: fontSize / 2,
-        borderColor: COLOR.BLACK_TRANSPARENT,
-        borderWidth: 0,
-        zIndex: 2
-      }}
-      uiBackground={{
-        color: COLOR.TEXT_COLOR
-      }}
-    >
-      <UiEntity
-        uiTransform={{
-          width: '100%',
-          height: '100%',
-          positionType: 'absolute',
-          position: { top: '70%' },
-          zIndex: 2
-        }}
-        uiBackground={{
-          color: COLOR.TEXT_COLOR
-        }}
-      />
-      <Icon
-        uiTransform={{ margin: { left: '4%' }, zIndex: 3, flexShrink: 0 }}
-        iconSize={fontSize * 1.5}
-        icon={{ spriteName: 'DdlIconColor', atlasName: 'icons' }}
-      />
-      <Label
-        uiTransform={{
-          zIndex: 3,
-          width: '100%'
-        }}
-        textAlign={'top-left'}
-        value={'Nearby'}
-        fontSize={fontSize}
-        color={COLOR.INACTIVE}
-      />
-      <UiEntity
-        uiTransform={{
-          alignSelf: 'flex-end',
-          width: '60%',
-          height: '100%',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          zIndex: 3
-        }}
-      >
-        <Icon
-          iconSize={fontSize}
-          icon={{ spriteName: 'Members', atlasName: 'icons' }}
-        />
-        <Label
-          uiTransform={{ position: { left: '-4%' } }}
-          value={getChatMembers().length.toString()}
-          fontSize={fontSize}
-        />
-      </UiEntity>
-
-      <UiEntity
-        uiTransform={{
-          alignSelf: 'center',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          zIndex: 2,
-          width: fontSize * 2,
-          height: fontSize * 2,
-          flexShrink: 0,
-          margin: { right: '2%' }
-        }}
-        uiBackground={{ color: COLOR.TEXT_COLOR }}
-      >
-        <ThinMenuButton
-          uiTransform={{
-            height: '100%',
-            alignSelf: 'flex-end'
-          }}
-          onMouseDown={() => {
-            state.headerMenuOpen = !state.headerMenuOpen
-
-            if (state.headerMenuOpen) {
-              state.chatBox.size.x =
-                store.getState().viewport.width * 0.26 +
-                (state.headerMenuOpen
-                  ? store.getState().viewport.width * 0.12
-                  : 0)
-            }
-          }}
-        />
-
-        <UiEntity
-          uiTransform={{
-            positionType: 'absolute',
-            position: { left: '250%', top: 0 },
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            alignContent: 'flex-start',
-            alignSelf: 'flex-start',
-            padding: '10%',
-            opacity: state.headerMenuOpen ? 1 : 0
-          }}
-          uiBackground={{
-            color: state.headerMenuOpen
-              ? COLOR.DARK_OPACITY_5
-              : COLOR.BLACK_TRANSPARENT
-          }}
-        >
-          <Checkbox
-            uiTransform={{
-              alignSelf: 'flex-start'
-            }}
-            onChange={(value) => {
-              state.filterMessages[MESSAGE_TYPE.USER] = !value
-              scrollToBottom()
-            }}
-            value={!state.filterMessages[MESSAGE_TYPE.USER]}
-            label={'Show user messages'}
-          />
-          <Checkbox
-            uiTransform={{
-              alignSelf: 'flex-start'
-            }}
-            onChange={(value) => {
-              state.filterMessages[MESSAGE_TYPE.SYSTEM] = !value
-              scrollToBottom()
-            }}
-            value={!state.filterMessages[MESSAGE_TYPE.SYSTEM]}
-            label={'Show engine messages'}
-          />
-          <Checkbox
-            uiTransform={{
-              alignSelf: 'flex-start'
-            }}
-            onChange={(value) => {
-              state.filterMessages[MESSAGE_TYPE.SYSTEM_FEEDBACK] = !value
-              scrollToBottom()
-            }}
-            value={!state.filterMessages[MESSAGE_TYPE.SYSTEM_FEEDBACK]}
-            label={'Show system messages'}
-          />
-        </UiEntity>
-      </UiEntity>
-      <CloseButton
-        uiTransform={{
-          zIndex: 2
-        }}
-        onClick={() => {
-          store.dispatch(
-            updateHudStateAction({ chatOpen: !store.getState().hud.chatOpen })
-          )
-        }}
       />
     </UiEntity>
   )
@@ -619,47 +449,6 @@ function InputArea(): ReactElement {
           onEmoji={() => {}}
         />
       )}
-    </UiEntity>
-  )
-}
-
-const getScrollVector = memoize(_getScrollVector)
-
-function ChatArea({
-  messages,
-  onMessageMenu
-}: {
-  messages: ChatMessageRepresentation[]
-  onMessageMenu: (timestampKey: number) => void
-}): ReactElement {
-  const scrollPosition = getScrollVector(
-    store.getState().viewport.height * 0.7 - state.autoScrollSwitch
-  )
-
-  return (
-    <UiEntity
-      uiTransform={{
-        elementId: 'chat-area',
-        width: '100%',
-        display: store.getState().hud.chatOpen ? 'flex' : 'none',
-        flexDirection: 'column',
-        alignSelf: 'flex-end',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-end',
-        height: getChatMaxHeight(), // the rest of the sibling in parent container
-        overflow: 'scroll',
-        scrollVisible: state.hoveringChat ? 'vertical' : 'hidden',
-        scrollPosition,
-        padding: { left: '3%', right: '8%' }
-      }}
-    >
-      {messages.map((message) => (
-        <ChatMessage
-          message={message}
-          key={message.id ?? message.timestamp}
-          onMessageMenu={onMessageMenu}
-        />
-      ))}
     </UiEntity>
   )
 }
@@ -776,7 +565,7 @@ function sendChatMessage(value: string): void {
   }
 }
 
-function scrollToBottom(): void {
+export function scrollToBottom(): void {
   state.autoScrollSwitch = state.autoScrollSwitch ? 0 : 1
 }
 
@@ -787,18 +576,6 @@ export function focusChatInput(uiFocus: boolean = false): void {
     scrollToBottom()
   } catch (error) {
     console.error('focusChatInput error', error)
-  }
-}
-
-function _getScrollVector(positionY: number): Vector2 {
-  return Vector2.create(0, positionY)
-}
-
-function getChatMaxHeight(): number {
-  if (store.getState().hud.minimapOpen) {
-    return getViewportHeight() * 0.58
-  } else {
-    return getViewportHeight() * 0.83
   }
 }
 
