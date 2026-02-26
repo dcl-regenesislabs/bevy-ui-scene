@@ -14,7 +14,6 @@ import ReactEcs, {
   type UiTransformProps
 } from '@dcl/sdk/react-ecs'
 import { getPlayer } from '@dcl/sdk/src/players'
-import { ChatMessage } from '../../../components/chat/chat-message'
 import { ONE_ADDRESS, ZERO_ADDRESS } from '../../../utils/constants'
 import { BevyApi } from '../../../bevy-api'
 import {
@@ -23,8 +22,6 @@ import {
   type ChatMessageRepresentation,
   MESSAGE_TYPE
 } from '../../../components/chat/chat-message/ChatMessage.types'
-import { memoize, setIfNot } from '../../../utils/function-utils'
-import { getViewportHeight } from '../../../service/canvas-ratio'
 import { listenSystemAction } from '../../../service/system-actions-emitter'
 import {
   changeRealm,
@@ -34,14 +31,12 @@ import {
 } from '~system/RestrictedActions'
 import {
   decorateMessageWithLinks,
-  isSystemMessage,
-  NAME_MENTION_REGEXP
+  isSystemMessage
 } from '../../../components/chat/chat-message/ChatMessage'
 import { COLOR } from '../../../components/color-palette'
 import { type ReactElement } from '@dcl/react-ecs'
 import Icon from '../../../components/icon/Icon'
 import {
-  getChatMembers,
   initChatMembersCount,
   requestPlayer
 } from '../../../service/chat-members'
@@ -58,30 +53,22 @@ import { type PermissionUsed } from '../../../bevy-api/permission-definitions'
 import { Checkbox } from '../../../components/checkbox'
 import { VIEWPORT_ACTION } from '../../../state/viewport/actions'
 import { ChatInput } from '../../../components/chat/chat-input'
-import { getPlayersInScene } from '~system/Players'
 import { cleanMapPlaces } from '../../../service/map-places'
-import { fetchProfileData } from '../../../utils/passport-promise-utils'
-import { getChatWidth, getHudBarWidth, getUnsafeAreaWidth } from '../MainHud'
+import { getHudBarWidth, getUnsafeAreaWidth } from '../MainHud'
 import { ChatMentionSuggestions } from '../../../components/chat/chat-mention-suggestions'
-import {
-  type Address,
-  asyncHasClaimedName,
-  composedUsersData,
-  namedUsersData,
-  type nameString
-} from './named-users-data-service'
-import { getAddressColor } from './ColorByAddress'
+import { composedUsersData } from './named-users-data-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { ChatEmojiButton } from '../../../components/chat/chat-emoji-button'
 import { ChatEmojiSuggestions } from '../../../components/chat/chat-emoji-suggestions'
-import { type GetPlayerDataRes } from '../../../utils/definitions'
 import { getFontSize } from '../../../service/fontsize-system'
-import { CloseButton } from '../../../components/close-button'
-import { ThinMenuButton } from '../../../components/thin-menu-button'
 import { MessageSubMenu } from '../../../components/chat/chat-message/chat-message-submenu'
 import { ChatArea } from 'src/components/chat/chat-area'
 import { ChatHeaderArea } from '../../../components/chat/chat-header-area'
+import {
+  extendMessageMentionedUsers,
+  getNameWithHashPostfix
+} from '../../../service/chat/chat-utils'
 
 type Box = {
   position: { x: number; y: number }
@@ -628,15 +615,6 @@ export function messageHasMentionToMe(message: string): boolean {
   )
 }
 
-export const getNameWithHashPostfix = (
-  name: string,
-  address: string
-): `${string}#${string}` => {
-  return `${name}#${address
-    .substring(address.length - 4, address.length)
-    .toLowerCase()}`
-}
-
 async function pushMessage(message: ChatMessageDefinition): Promise<void> {
   const messageType = isSystemMessage(message)
     ? message.sender_address === ZERO_ADDRESS
@@ -690,7 +668,7 @@ async function pushMessage(message: ChatMessageDefinition): Promise<void> {
     mentionedPlayers: {}
   }
 
-  decorateAsyncMessageData(decoratedChatMessage).catch(console.error)
+  extendMessageMentionedUsers(decoratedChatMessage).catch(console.error)
 
   if (getChatScroll() !== null && (getChatScroll()?.y ?? 0) < 1) {
     state.newMessages.push(decoratedChatMessage)
@@ -705,11 +683,6 @@ async function pushMessage(message: ChatMessageDefinition): Promise<void> {
   callbacks.onNewMessage.forEach((fn) => {
     fn(decoratedChatMessage)
   })
-  async function decorateAsyncMessageData(
-    message: ChatMessageRepresentation
-  ): Promise<void> {
-    extendMessageMentionedUsers(message).catch(console.error)
-  }
 }
 
 function getSystemName(address: string): string {
@@ -718,75 +691,6 @@ function getSystemName(address: string): string {
   return ''
 }
 
-async function extendMessageMentionedUsers(
-  message: ChatMessageRepresentation
-): Promise<void> {
-  const mentionMatches = message._originalMessage.match(NAME_MENTION_REGEXP)
-  const mentionMatchesAndSenderName = [...(mentionMatches ?? []), message.name]
-
-  const playersInScene = (await getPlayersInScene({})).players.map(
-    ({ userId }) => getPlayer({ userId })
-  )
-
-  for (const mentionMatchOrSenderName of mentionMatchesAndSenderName ?? []) {
-    const nameKey = mentionMatchOrSenderName.replace('@', '').toLowerCase()
-    const nameAddress = namedUsersData.get(nameKey)
-    const composedUserData = setIfNot(composedUsersData).get(
-      nameAddress ?? '__NOTHING__'
-    )
-
-    for (const player of playersInScene) {
-      if (
-        player !== undefined &&
-        nameKey ===
-          (getNameWithHashPostfix(
-            player?.name ?? '',
-            player?.userId ?? ''
-          )?.toLowerCase() ?? '')
-      ) {
-        composedUserData.playerData = getPlayer({
-          userId: player?.userId ?? ''
-        })
-        if (player?.userId) {
-          namedUsersData.set(
-            getNameWithHashPostfix(
-              player?.name ?? '',
-              player?.userId ?? ''
-            )?.toLowerCase() ?? '',
-            player.userId as Address
-          )
-        }
-        await checkProfileData(nameKey, player)
-      } else if (
-        player !== undefined &&
-        nameKey === player?.name.toLowerCase()
-      ) {
-        composedUserData.playerData = player
-        await checkProfileData(nameKey, player)
-      }
-
-      async function checkProfileData(
-        nameKey: nameString,
-        player: GetPlayerDataRes | null
-      ): Promise<void> {
-        const nameAddress = namedUsersData.get(nameKey)
-        const composedPlayerData = setIfNot(composedUsersData).get(nameAddress)
-        if (composedPlayerData.profileData) {
-          await decorateMessageNameAndLinks(message)
-        } else {
-          if (!player?.userId) return
-          composedPlayerData.profileData = await fetchProfileData({
-            userId: player?.userId,
-            useCache: true
-          })
-          await decorateMessageNameAndLinks(message)
-        }
-      }
-    }
-  }
-
-  message.message = decorateMessageWithLinks(message._originalMessage)
-}
 const callbacks: {
   onNewMessage: Array<(m: ChatMessageRepresentation) => void>
 } = {
@@ -800,14 +704,4 @@ export function onNewMessage(
   return (): void => {
     callbacks.onNewMessage = callbacks.onNewMessage.filter((f) => f !== fn)
   }
-}
-
-async function decorateMessageNameAndLinks(
-  message: ChatMessageRepresentation
-): Promise<void> {
-  if (await asyncHasClaimedName(message.sender_address as Address)) {
-    message.addressColor = getAddressColor(message.sender_address)
-    message.name = message.name.split('#')[0]
-  }
-  message.message = decorateMessageWithLinks(message._originalMessage)
 }

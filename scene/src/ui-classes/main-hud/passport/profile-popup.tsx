@@ -33,7 +33,6 @@ import {
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
-import { getNameWithHashPostfix } from '../chat-and-logs/ChatsAndLogs'
 import { fetchProfileData } from '../../../utils/passport-promise-utils'
 import { composedUsersData } from '../chat-and-logs/named-users-data-service'
 import {
@@ -41,6 +40,7 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
+import { getNameWithHashPostfix } from '../../../service/chat/chat-utils'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()

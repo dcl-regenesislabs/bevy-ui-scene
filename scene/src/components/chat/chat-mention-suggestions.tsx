@@ -11,12 +11,12 @@ import {
 } from './chat-message/ChatMessage'
 import { COLOR } from '../color-palette'
 import { getViewportHeight } from '../../service/canvas-ratio'
-import { getNameWithHashPostfix } from '../../ui-classes/main-hud/chat-and-logs/ChatsAndLogs'
 import {
   type Address,
   asyncHasClaimedName
 } from '../../ui-classes/main-hud/chat-and-logs/named-users-data-service'
 import { getFontSize } from '../../service/fontsize-system'
+import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 
 export const ChatMentionSuggestions = (): ReactElement => {
   const [suggestedNames, setSuggestedNames] = ReactEcs.useState<string[]>([])
@@ -121,6 +121,6 @@ async function getSuggestedNames(matchText: string): Promise<string[]> {
         })
     )
   )
-    .filter((i) => i)
-    .sort((a, b) => (a as string).localeCompare(b as string)) as string[]
+    .filter((i): i is string => !!i)
+    .sort((a, b) => a.localeCompare(b))
 }
