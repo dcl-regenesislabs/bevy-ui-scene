@@ -7,7 +7,7 @@ import {
   UiScrollResult,
   UiTransform
 } from '@dcl/sdk/ecs'
-import { Color4, Vector2 } from '@dcl/sdk/math'
+import { Vector2 } from '@dcl/sdk/math'
 import ReactEcs, {
   Label,
   UiEntity,

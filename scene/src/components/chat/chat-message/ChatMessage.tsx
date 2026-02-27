@@ -65,7 +65,7 @@ function ChatMessage(props: {
   if (getPlayer() === null) {
     return null
   }
-  const defaultFontSize = getFontSize({})
+  const defaultFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   const messageMargin = defaultFontSize / 3
   const playerName = props.message.name
 
@@ -240,7 +240,7 @@ function ChatMessage(props: {
             height: defaultFontSize
           }}
           value={formatTimestamp(props.message.timestamp)}
-          fontSize={getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })}
+          fontSize={getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })}
           color={COLOR.INACTIVE}
           textWrap="wrap"
           textAlign={`middle-left`}

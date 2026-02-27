@@ -1,5 +1,5 @@
 import ReactEcs, { ReactElement, UiEntity, Label } from '@dcl/react-ecs'
-import { getFontSize } from '../../service/fontsize-system'
+import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
 import { ThinMenuButton } from '../thin-menu-button'
@@ -12,7 +12,7 @@ import { updateHudStateAction } from '../../state/hud/actions'
 import { CloseButton } from '../close-button'
 
 export function ChatHeaderArea({ state }: { state: any }): ReactElement {
-  const fontSize = getFontSize({})
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
 
   return (
     <UiEntity
@@ -169,6 +169,7 @@ export function ChatHeaderArea({ state }: { state: any }): ReactElement {
         </UiEntity>
       </UiEntity>
       <CloseButton
+        fontSize={fontSize}
         uiTransform={{
           zIndex: 2
         }}
