@@ -7,7 +7,7 @@ import {
   UiScrollResult,
   UiTransform
 } from '@dcl/sdk/ecs'
-import { Vector2 } from '@dcl/sdk/math'
+import { type Vector2 } from '@dcl/sdk/math'
 import ReactEcs, {
   Label,
   UiEntity,
@@ -50,7 +50,6 @@ import {
 } from '../../../state/hud/actions'
 import { type AppState } from '../../../state/types'
 import { type PermissionUsed } from '../../../bevy-api/permission-definitions'
-import { Checkbox } from '../../../components/checkbox'
 import { VIEWPORT_ACTION } from '../../../state/viewport/actions'
 import { ChatInput } from '../../../components/chat/chat-input'
 import { cleanMapPlaces } from '../../../service/map-places'

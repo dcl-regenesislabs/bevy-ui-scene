@@ -1,7 +1,6 @@
 import { noop } from '../utils/function-utils'
 import type { Callback, UiTransformProps } from '@dcl/sdk/react-ecs'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { getContentScaleRatio } from '../service/canvas-ratio'
 import { Color4 } from '@dcl/sdk/math'
 import Icon from './icon/Icon'
 import { getFontSize } from '../service/fontsize-system'

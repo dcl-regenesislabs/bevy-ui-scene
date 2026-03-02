@@ -1,9 +1,9 @@
 import { COLOR } from './color-palette'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { getFontSize } from '../service/fontsize-system'
-import { Color4 } from '@dcl/sdk/math'
+import { type Color4 } from '@dcl/sdk/math'
 import { noop } from '../utils/function-utils'
-import { Callback, UiTransformProps } from '@dcl/sdk/react-ecs'
+import { type Callback, type UiTransformProps } from '@dcl/sdk/react-ecs'
 
 export const ThinButton = ({
   children,

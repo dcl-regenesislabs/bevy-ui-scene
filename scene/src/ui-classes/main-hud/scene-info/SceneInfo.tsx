@@ -10,7 +10,6 @@ import {
   ALMOST_WHITE,
   ALPHA_BLACK_PANEL,
   ROUNDED_TEXTURE_BACKGROUND,
-  SELECTED_BUTTON_COLOR,
   UNSELECTED_TEXT_WHITE
 } from '../../../utils/constants'
 import type { AtlasIcon } from '../../../utils/definitions'
@@ -24,9 +23,7 @@ import { setHome } from 'src/state/sceneInfo/actions'
 import { getViewportHeight } from '../../../service/canvas-ratio'
 import { MiniMapContent } from '../../../components/map/mini-map-content'
 import { type ReactElement } from '@dcl/react-ecs'
-import { COLOR } from '../../../components/color-palette'
 import { updateHudStateAction } from '../../../state/hud/actions'
-import Icon from '../../../components/icon/Icon'
 import { currentRealmProviderIsWorld } from '../../../service/realm-change'
 import { getFontSize } from '../../../service/fontsize-system'
 import { ThinChevronButton } from '../../../components/thin-chevron-button'
@@ -45,7 +42,7 @@ export default class SceneInfo {
   private isHome: boolean = false
   private hideSceneUi: boolean = false
   // private expandBackgroundColor: Color4 | undefined = undefined
-  private menuBackgroundColor: Color4 | undefined = undefined
+  private readonly menuBackgroundColor: Color4 | undefined = undefined
   private setHomeLabelColor: Color4 = UNSELECTED_TEXT_WHITE
   private reloadLabelColor: Color4 = UNSELECTED_TEXT_WHITE
   private openInfoLabelColor: Color4 = UNSELECTED_TEXT_WHITE

@@ -1,13 +1,11 @@
-import ReactEcs, { UiEntity, UiTransformProps } from '@dcl/sdk/react-ecs'
+import ReactEcs, { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { COLOR } from './color-palette'
-import { store } from '../state/store'
-import { updateHudStateAction } from '../state/hud/actions'
 import Icon from './icon/Icon'
 import { getFontSize } from '../service/fontsize-system'
 import { noop } from '../utils/function-utils'
-import { Color4 } from '@dcl/sdk/math'
+import { type Color4 } from '@dcl/sdk/math'
 import { ThinButton } from './thin-button'
-import { Column } from './layout'
+import { type ReactElement } from '@dcl/react-ecs'
 
 export const ThinChevronButton = ({
   fontSize = getFontSize({}) * 0.9,
@@ -21,7 +19,7 @@ export const ThinChevronButton = ({
   backgroundColor?: Color4
   lookingUp?: boolean
   uiTransform?: UiTransformProps
-}) => (
+}): ReactElement => (
   <ThinButton
     uiTransform={uiTransform}
     onMouseDown={onMouseDown}

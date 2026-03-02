@@ -4,7 +4,7 @@ import {
   asyncHasClaimedName,
   composedUsersData,
   namedUsersData,
-  nameString
+  type nameString
 } from '../../ui-classes/main-hud/chat-and-logs/named-users-data-service'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import {
@@ -15,7 +15,7 @@ import { getPlayersInScene } from '~system/Players'
 import { getPlayer } from '@dcl/sdk/players'
 import { setIfNot } from '../../utils/function-utils'
 
-import { GetPlayerDataRes } from '../../utils/definitions'
+import { type GetPlayerDataRes } from '../../utils/definitions'
 import { fetchProfileData } from '../../utils/passport-promise-utils'
 
 export async function extendMessageMentionedUsers(

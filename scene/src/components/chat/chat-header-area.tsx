@@ -1,4 +1,4 @@
-import ReactEcs, { ReactElement, UiEntity, Label } from '@dcl/react-ecs'
+import ReactEcs, { type ReactElement, UiEntity, Label } from '@dcl/react-ecs'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'

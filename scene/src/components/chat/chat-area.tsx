@@ -1,6 +1,6 @@
 import { Vector2 } from '@dcl/sdk/math'
-import { ChatMessageRepresentation } from './chat-message/ChatMessage.types'
-import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
+import { type ChatMessageRepresentation } from './chat-message/ChatMessage.types'
+import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { store } from 'src/state/store'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import { ChatMessage } from './chat-message'
