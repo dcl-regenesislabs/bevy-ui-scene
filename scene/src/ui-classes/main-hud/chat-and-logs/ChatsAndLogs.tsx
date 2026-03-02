@@ -7,48 +7,36 @@ import {
   UiScrollResult,
   UiTransform
 } from '@dcl/sdk/ecs'
-import { Color4, Vector2 } from '@dcl/sdk/math'
+import { type Vector2 } from '@dcl/sdk/math'
 import ReactEcs, {
   Label,
   UiEntity,
   type UiTransformProps
 } from '@dcl/sdk/react-ecs'
 import { getPlayer } from '@dcl/sdk/src/players'
-import { ChatMessage } from '../../../components/chat-message'
-
-import {
-  MAX_ZINDEX,
-  ONE_ADDRESS,
-  ROUNDED_TEXTURE_BACKGROUND,
-  ZERO_ADDRESS
-} from '../../../utils/constants'
+import { ONE_ADDRESS, ZERO_ADDRESS } from '../../../utils/constants'
 import { BevyApi } from '../../../bevy-api'
 import {
   CHAT_SIDE,
   type ChatMessageDefinition,
   type ChatMessageRepresentation,
   MESSAGE_TYPE
-} from '../../../components/chat-message/ChatMessage.types'
-import { memoize, setIfNot } from '../../../utils/function-utils'
-import { getViewportHeight } from '../../../service/canvas-ratio'
+} from '../../../components/chat/chat-message/ChatMessage.types'
 import { listenSystemAction } from '../../../service/system-actions-emitter'
 import {
   changeRealm,
-  copyToClipboard,
   getUiFocus,
   setUiFocus,
   teleportTo
 } from '~system/RestrictedActions'
 import {
   decorateMessageWithLinks,
-  isSystemMessage,
-  NAME_MENTION_REGEXP
-} from '../../../components/chat-message/ChatMessage'
+  isSystemMessage
+} from '../../../components/chat/chat-message/ChatMessage'
 import { COLOR } from '../../../components/color-palette'
 import { type ReactElement } from '@dcl/react-ecs'
 import Icon from '../../../components/icon/Icon'
 import {
-  getChatMembers,
   initChatMembersCount,
   requestPlayer
 } from '../../../service/chat-members'
@@ -62,28 +50,24 @@ import {
 } from '../../../state/hud/actions'
 import { type AppState } from '../../../state/types'
 import { type PermissionUsed } from '../../../bevy-api/permission-definitions'
-import { Checkbox } from '../../../components/checkbox'
 import { VIEWPORT_ACTION } from '../../../state/viewport/actions'
-import { ChatInput } from './chat-input'
-import { getPlayersInScene } from '~system/Players'
+import { ChatInput } from '../../../components/chat/chat-input'
 import { cleanMapPlaces } from '../../../service/map-places'
-import { fetchProfileData } from '../../../utils/passport-promise-utils'
 import { getHudBarWidth, getUnsafeAreaWidth } from '../MainHud'
-import { ChatMentionSuggestions } from './chat-mention-suggestions'
-import {
-  type Address,
-  asyncHasClaimedName,
-  composedUsersData,
-  namedUsersData,
-  type nameString
-} from './named-users-data-service'
-import { getAddressColor } from './ColorByAddress'
+import { ChatMentionSuggestions } from '../../../components/chat/chat-mention-suggestions'
+import { composedUsersData } from './named-users-data-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
-import { ChatEmojiButton } from './chat-emoji-button'
-import { ChatEmojiSuggestions } from './chat-emoji-suggestions'
-import { type GetPlayerDataRes } from '../../../utils/definitions'
+import { ChatEmojiButton } from '../../../components/chat/chat-emoji-button'
+import { ChatEmojiSuggestions } from '../../../components/chat/chat-emoji-suggestions'
 import { getFontSize } from '../../../service/fontsize-system'
+import { MessageSubMenu } from '../../../components/chat/chat-message/chat-message-submenu'
+import { ChatArea } from 'src/components/chat/chat-area'
+import { ChatHeaderArea } from '../../../components/chat/chat-header-area'
+import {
+  extendMessageMentionedUsers,
+  getNameWithHashPostfix
+} from '../../../service/chat/chat-utils'
 
 type Box = {
   position: { x: number; y: number }
@@ -225,6 +209,7 @@ export default class ChatAndLogs {
       if (action.type === VIEWPORT_ACTION.UPDATE_VIEWPORT) {
         state.chatBox.position.x = getHudBarWidth()
         state.chatBox.position.y = 0
+        // TODO review to apply getChatWidth
         state.chatBox.size.x =
           (getUnsafeAreaWidth() - getHudBarWidth()) * SAFE_SUBMENU
         state.chatBox.size.y = store.getState().viewport.height
@@ -362,109 +347,17 @@ function ChatContent({
           : COLOR.BLACK_TRANSPARENT
       }}
     >
-      {state.hoveringChat && HeaderArea()}
+      {state.hoveringChat && ChatHeaderArea({ state })}
       {ChatArea({
         messages: state.shownMessages,
-        onMessageMenu
+        onMessageMenu,
+        state
       })}
       {InputArea()}
       {ShowNewMessages()}
-      {MessageSubMenu({ canvasInfo })}
+      {MessageSubMenu({ canvasInfo, state })}
     </UiEntity>
   )
-}
-
-function MessageSubMenu({
-  canvasInfo
-}: {
-  canvasInfo: PBUiCanvasInformation
-}): ReactElement[] | null {
-  const fontSize = getFontSize({})
-  if (!state.messageMenuTimestamp) return null
-
-  return [
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: '-100%', left: '-100%' },
-        width: canvasInfo.width * 2,
-        height: canvasInfo.height * 2,
-        zIndex: MAX_ZINDEX - 2
-      }}
-      uiBackground={{
-        color: COLOR.BLACK_TRANSPARENT
-      }}
-      onMouseDown={() => {
-        state.messageMenuTimestamp = 0
-      }}
-    />,
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: {
-          left:
-            canvasInfo.height *
-            (0.3 +
-              (state.shownMessages.find(
-                (m) => m.timestamp === state.messageMenuTimestamp
-              )?.side ?? 0) *
-                0.019),
-          top: state.messageMenuPositionTop
-        },
-        width: canvasInfo.width * 0.1,
-        height: '5%',
-        flexShrink: 0,
-        flexGrow: 1,
-        zIndex: MAX_ZINDEX - 1,
-        borderWidth: 0,
-        borderRadius: 10,
-        borderColor: COLOR.DARK_OPACITY_9,
-        padding: '1%'
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_9
-      }}
-    >
-      <UiEntity
-        uiTransform={{
-          borderWidth: 1,
-          borderRadius: fontSize,
-          borderColor: COLOR.MENU_ITEM_BACKGROUND,
-          alignItems: 'center',
-          width: '100%',
-          height: '100%',
-          padding: { left: '2%' }
-        }}
-        uiBackground={{
-          color: COLOR.MENU_ITEM_BACKGROUND
-        }}
-        onMouseDown={() => {
-          try {
-            const textToCopy =
-              state.shownMessages.find(
-                (m) => m.timestamp === state.messageMenuTimestamp
-              )?.message ?? ''
-            copyToClipboard({
-              text: textToCopy
-            }).catch(console.error)
-          } catch (error) {}
-
-          state.messageMenuTimestamp = 0
-        }}
-      >
-        <Icon
-          icon={{ spriteName: 'CopyIcon', atlasName: 'icons' }}
-          iconSize={fontSize}
-        />
-        <UiEntity
-          uiText={{
-            value: 'COPY',
-            fontSize
-          }}
-        />
-      </UiEntity>
-    </UiEntity>
-  ]
 }
 
 function ShowNewMessages(): ReactElement | null {
@@ -501,210 +394,6 @@ function ShowNewMessages(): ReactElement | null {
   )
 }
 
-function HeaderArea(): ReactElement {
-  const fontSize = getFontSize({})
-
-  return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: '-5%' },
-        width: '100%',
-        height: '4%',
-        padding: { top: '4%', bottom: '-1%', left: 0, right: 0 },
-        justifyContent: 'flex-start',
-        flexShrink: 0,
-        alignItems: 'center',
-        borderRadius: fontSize,
-        borderColor: COLOR.BLACK_TRANSPARENT,
-        borderWidth: 1,
-        zIndex: 2
-      }}
-      uiBackground={{
-        color: COLOR.TEXT_COLOR
-      }}
-    >
-      <UiEntity
-        uiTransform={{
-          width: '100%',
-          height: '100%',
-          positionType: 'absolute',
-          position: { top: '70%' },
-          zIndex: 2
-        }}
-        uiBackground={{
-          color: COLOR.TEXT_COLOR
-        }}
-      />
-      <Icon
-        uiTransform={{ margin: { left: '4%' }, zIndex: 3, flexShrink: 0 }}
-        iconSize={fontSize * 1.5}
-        icon={{ spriteName: 'DdlIconColor', atlasName: 'icons' }}
-      />
-      <Label
-        uiTransform={{
-          zIndex: 3,
-          width: '100%'
-        }}
-        textAlign={'top-left'}
-        value={'Nearby'}
-        fontSize={fontSize}
-        color={COLOR.INACTIVE}
-      />
-      <UiEntity
-        uiTransform={{
-          alignSelf: 'flex-end',
-          width: '60%',
-          height: '100%',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          zIndex: 3
-        }}
-      >
-        <Icon
-          iconSize={fontSize}
-          icon={{ spriteName: 'Members', atlasName: 'icons' }}
-        />
-        <Label
-          uiTransform={{ position: { left: '-4%' } }}
-          value={getChatMembers().length.toString()}
-          fontSize={fontSize}
-        />
-      </UiEntity>
-
-      <UiEntity
-        uiTransform={{
-          alignSelf: 'center',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          zIndex: 2,
-          width: fontSize * 2,
-          height: fontSize * 2,
-          flexShrink: 0,
-          margin: { right: '2%' }
-        }}
-        uiBackground={{ color: COLOR.TEXT_COLOR }}
-      >
-        <Icon
-          uiTransform={{
-            zIndex: 10,
-            positionType: 'absolute',
-            position: { top: '20%' }
-          }}
-          iconSize={fontSize * 1.2}
-          icon={{ spriteName: 'Menu', atlasName: 'icons' }}
-          onMouseDown={() => {
-            state.headerMenuOpen = !state.headerMenuOpen
-
-            if (state.headerMenuOpen) {
-              state.chatBox.size.x =
-                store.getState().viewport.width * 0.26 +
-                (state.headerMenuOpen
-                  ? store.getState().viewport.width * 0.12
-                  : 0)
-            }
-          }}
-        />
-        <UiEntity
-          uiTransform={{
-            positionType: 'absolute',
-            position: { left: '220%', top: '50%' },
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            alignContent: 'flex-start',
-            alignSelf: 'flex-start',
-            padding: '10%',
-            opacity: state.headerMenuOpen ? 1 : 0
-          }}
-          uiBackground={{
-            color: state.headerMenuOpen
-              ? COLOR.DARK_OPACITY_5
-              : COLOR.BLACK_TRANSPARENT
-          }}
-        >
-          <Checkbox
-            uiTransform={{
-              alignSelf: 'flex-start'
-            }}
-            onChange={(value) => {
-              state.filterMessages[MESSAGE_TYPE.USER] = !value
-              scrollToBottom()
-            }}
-            value={!state.filterMessages[MESSAGE_TYPE.USER]}
-            label={'Show user messages'}
-          />
-          <Checkbox
-            uiTransform={{
-              alignSelf: 'flex-start'
-            }}
-            onChange={(value) => {
-              state.filterMessages[MESSAGE_TYPE.SYSTEM] = !value
-              scrollToBottom()
-            }}
-            value={!state.filterMessages[MESSAGE_TYPE.SYSTEM]}
-            label={'Show engine messages'}
-          />
-          <Checkbox
-            uiTransform={{
-              alignSelf: 'flex-start'
-            }}
-            onChange={(value) => {
-              state.filterMessages[MESSAGE_TYPE.SYSTEM_FEEDBACK] = !value
-              scrollToBottom()
-            }}
-            value={!state.filterMessages[MESSAGE_TYPE.SYSTEM_FEEDBACK]}
-            label={'Show system messages'}
-          />
-        </UiEntity>
-      </UiEntity>
-      <UiEntity
-        uiTransform={{
-          alignSelf: 'flex-end',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          zIndex: 2,
-          width: fontSize * 2,
-          height: fontSize * 2,
-          position: { top: '100%', right: '1%' },
-          padding: '3%',
-          borderRadius: 10,
-          borderColor: COLOR.BLACK_TRANSPARENT,
-          borderWidth: 0
-        }}
-        uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
-        onMouseDown={() => {
-          store.dispatch(
-            updateHudStateAction({ chatOpen: !store.getState().hud.chatOpen })
-          )
-        }}
-      >
-        <Icon
-          uiTransform={{
-            positionType: 'absolute',
-            zIndex: 9,
-            position: { top: -0.15 * fontSize }
-          }}
-          iconSize={fontSize * 1.5}
-          icon={{ spriteName: 'DownArrow', atlasName: 'icons' }}
-        />
-        <Icon
-          uiTransform={{
-            positionType: 'absolute',
-            zIndex: 10,
-            position: { top: 0.15 * fontSize }
-          }}
-          iconSize={fontSize * 1.5}
-          icon={{ spriteName: 'DownArrow', atlasName: 'icons' }}
-        />
-      </UiEntity>
-    </UiEntity>
-  )
-}
-
 function InputArea(): ReactElement {
   const inputFontSize = getFontSize({})
 
@@ -724,11 +413,11 @@ function InputArea(): ReactElement {
           bottom: store.getState().viewport.height * 0.005
         },
         position: { bottom: inputFontSize * 0.1 },
-        padding: inputFontSize * 0.4
+        padding: inputFontSize * 0.4,
+        borderRadius: inputFontSize / 2
       }}
       uiBackground={{
-        ...ROUNDED_TEXTURE_BACKGROUND,
-        color: { ...Color4.Black(), a: 0.4 }
+        color: COLOR.DARK_OPACITY_5
       }}
     >
       <ChatMentionSuggestions />
@@ -746,47 +435,6 @@ function InputArea(): ReactElement {
           onEmoji={() => {}}
         />
       )}
-    </UiEntity>
-  )
-}
-
-const getScrollVector = memoize(_getScrollVector)
-
-function ChatArea({
-  messages,
-  onMessageMenu
-}: {
-  messages: ChatMessageRepresentation[]
-  onMessageMenu: (timestampKey: number) => void
-}): ReactElement {
-  const scrollPosition = getScrollVector(
-    store.getState().viewport.height * 0.7 - state.autoScrollSwitch
-  )
-
-  return (
-    <UiEntity
-      uiTransform={{
-        elementId: 'chat-area',
-        width: '100%',
-        display: store.getState().hud.chatOpen ? 'flex' : 'none',
-        flexDirection: 'column',
-        alignSelf: 'flex-end',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-end',
-        height: getChatMaxHeight(), // the rest of the sibling in parent container
-        overflow: 'scroll',
-        scrollVisible: state.hoveringChat ? 'vertical' : 'hidden',
-        scrollPosition,
-        padding: { left: '3%', right: '8%' }
-      }}
-    >
-      {messages.map((message) => (
-        <ChatMessage
-          message={message}
-          key={message.id ?? message.timestamp}
-          onMessageMenu={onMessageMenu}
-        />
-      ))}
     </UiEntity>
   )
 }
@@ -903,7 +551,7 @@ function sendChatMessage(value: string): void {
   }
 }
 
-function scrollToBottom(): void {
+export function scrollToBottom(): void {
   state.autoScrollSwitch = state.autoScrollSwitch ? 0 : 1
 }
 
@@ -914,18 +562,6 @@ export function focusChatInput(uiFocus: boolean = false): void {
     scrollToBottom()
   } catch (error) {
     console.error('focusChatInput error', error)
-  }
-}
-
-function _getScrollVector(positionY: number): Vector2 {
-  return Vector2.create(0, positionY)
-}
-
-function getChatMaxHeight(): number {
-  if (store.getState().hud.minimapOpen) {
-    return getViewportHeight() * 0.58
-  } else {
-    return getViewportHeight() * 0.83
   }
 }
 
@@ -976,15 +612,6 @@ export function messageHasMentionToMe(message: string): boolean {
           (getPlayer()?.name.length ?? 0)
       ] !== '#')
   )
-}
-
-export const getNameWithHashPostfix = (
-  name: string,
-  address: string
-): `${string}#${string}` => {
-  return `${name}#${address
-    .substring(address.length - 4, address.length)
-    .toLowerCase()}`
 }
 
 async function pushMessage(message: ChatMessageDefinition): Promise<void> {
@@ -1040,7 +667,7 @@ async function pushMessage(message: ChatMessageDefinition): Promise<void> {
     mentionedPlayers: {}
   }
 
-  decorateAsyncMessageData(decoratedChatMessage).catch(console.error)
+  extendMessageMentionedUsers(decoratedChatMessage).catch(console.error)
 
   if (getChatScroll() !== null && (getChatScroll()?.y ?? 0) < 1) {
     state.newMessages.push(decoratedChatMessage)
@@ -1055,11 +682,6 @@ async function pushMessage(message: ChatMessageDefinition): Promise<void> {
   callbacks.onNewMessage.forEach((fn) => {
     fn(decoratedChatMessage)
   })
-  async function decorateAsyncMessageData(
-    message: ChatMessageRepresentation
-  ): Promise<void> {
-    extendMessageMentionedUsers(message).catch(console.error)
-  }
 }
 
 function getSystemName(address: string): string {
@@ -1068,75 +690,6 @@ function getSystemName(address: string): string {
   return ''
 }
 
-async function extendMessageMentionedUsers(
-  message: ChatMessageRepresentation
-): Promise<void> {
-  const mentionMatches = message._originalMessage.match(NAME_MENTION_REGEXP)
-  const mentionMatchesAndSenderName = [...(mentionMatches ?? []), message.name]
-
-  const playersInScene = (await getPlayersInScene({})).players.map(
-    ({ userId }) => getPlayer({ userId })
-  )
-
-  for (const mentionMatchOrSenderName of mentionMatchesAndSenderName ?? []) {
-    const nameKey = mentionMatchOrSenderName.replace('@', '').toLowerCase()
-    const nameAddress = namedUsersData.get(nameKey)
-    const composedUserData = setIfNot(composedUsersData).get(
-      nameAddress ?? '__NOTHING__'
-    )
-
-    for (const player of playersInScene) {
-      if (
-        player !== undefined &&
-        nameKey ===
-          (getNameWithHashPostfix(
-            player?.name ?? '',
-            player?.userId ?? ''
-          )?.toLowerCase() ?? '')
-      ) {
-        composedUserData.playerData = getPlayer({
-          userId: player?.userId ?? ''
-        })
-        if (player?.userId) {
-          namedUsersData.set(
-            getNameWithHashPostfix(
-              player?.name ?? '',
-              player?.userId ?? ''
-            )?.toLowerCase() ?? '',
-            player.userId as Address
-          )
-        }
-        await checkProfileData(nameKey, player)
-      } else if (
-        player !== undefined &&
-        nameKey === player?.name.toLowerCase()
-      ) {
-        composedUserData.playerData = player
-        await checkProfileData(nameKey, player)
-      }
-
-      async function checkProfileData(
-        nameKey: nameString,
-        player: GetPlayerDataRes | null
-      ): Promise<void> {
-        const nameAddress = namedUsersData.get(nameKey)
-        const composedPlayerData = setIfNot(composedUsersData).get(nameAddress)
-        if (composedPlayerData.profileData) {
-          await decorateMessageNameAndLinks(message)
-        } else {
-          if (!player?.userId) return
-          composedPlayerData.profileData = await fetchProfileData({
-            userId: player?.userId,
-            useCache: true
-          })
-          await decorateMessageNameAndLinks(message)
-        }
-      }
-    }
-  }
-
-  message.message = decorateMessageWithLinks(message._originalMessage)
-}
 const callbacks: {
   onNewMessage: Array<(m: ChatMessageRepresentation) => void>
 } = {
@@ -1150,14 +703,4 @@ export function onNewMessage(
   return (): void => {
     callbacks.onNewMessage = callbacks.onNewMessage.filter((f) => f !== fn)
   }
-}
-
-async function decorateMessageNameAndLinks(
-  message: ChatMessageRepresentation
-): Promise<void> {
-  if (await asyncHasClaimedName(message.sender_address as Address)) {
-    message.addressColor = getAddressColor(message.sender_address)
-    message.name = message.name.split('#')[0]
-  }
-  message.message = decorateMessageWithLinks(message._originalMessage)
 }

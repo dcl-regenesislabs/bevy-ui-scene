@@ -33,6 +33,7 @@ import { changeSectionAction } from '../state/backpack/actions'
 import { CloseButton } from '../components/close-button'
 import { isFalsy } from '../utils/function-utils'
 import { listenSystemAction } from '../service/system-actions-emitter'
+import { CONTEXT, getFontSize } from '../service/fontsize-system'
 
 const state: any = {
   visible: false,
@@ -212,8 +213,10 @@ export function renderEmotesWheel(): ReactElement {
               position: {
                 top: '5%',
                 right: '5%'
-              }
+              },
+              positionType: 'absolute'
             }}
+            fontSize={getFontSize({ context: CONTEXT.DIALOG })}
             onClick={() => (state.visible = false)}
           />
         </UiEntity>

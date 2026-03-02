@@ -17,14 +17,14 @@ const getRepresentationSprite = memoize(_getRepresentationSprite)
 export function _decoratePlaceRepresentation(
   place: Place | null | undefined
 ): PlaceRepresentation | null {
-  if (place === null || place === undefined) return null
+  if (place === null || place === undefined || place.world) return null
+  // TODO REVIEW memoization is not working?
   const centralParcelCoords = fromParcelCoordsToPosition(
     fromStringToCoords(
       getCentralParcel([...place.positions, place.base_position]) as string
     ),
     { height: 0 }
   )
-
   return {
     ...place,
     centralParcelCoords,

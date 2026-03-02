@@ -1,5 +1,5 @@
-import { type GetPlayerDataRes } from '../../utils/definitions'
-import { type ProfileResponse } from '../../utils/passport-promise-utils'
+import { type GetPlayerDataRes } from '../../../utils/definitions'
+import { type ProfileResponse } from '../../../utils/passport-promise-utils'
 import { type Color4 } from '@dcl/sdk/math'
 
 export type ChatMessageDefinition = {

@@ -1,32 +1,30 @@
 import { noop } from '../utils/function-utils'
 import type { Callback, UiTransformProps } from '@dcl/sdk/react-ecs'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { getContentScaleRatio } from '../service/canvas-ratio'
 import { Color4 } from '@dcl/sdk/math'
 import Icon from './icon/Icon'
+import { getFontSize } from '../service/fontsize-system'
 
 export function CloseButton({
   uiTransform,
   onClick = noop,
-  size = 80
+  fontSize = getFontSize({})
 }: {
   uiTransform?: UiTransformProps
   onClick: Callback
-  size?: number
+  fontSize?: number
 }): ReactElement {
-  const canvasScaleRatio = getContentScaleRatio()
   return (
     <UiEntity
       uiTransform={{
-        borderWidth: 1,
-        borderRadius: (canvasScaleRatio * size) / 4,
+        borderWidth: 0,
+        borderRadius: fontSize / 2,
         borderColor: Color4.Black(),
-        positionType: 'absolute',
-        position: { top: 0, right: 0 },
-        width: canvasScaleRatio * size,
-        height: canvasScaleRatio * size,
+        width: fontSize * 2,
+        height: fontSize * 2,
         justifyContent: 'center',
         alignItems: 'center',
+        flexShrink: 0,
         ...uiTransform
       }}
       uiBackground={{
@@ -37,7 +35,7 @@ export function CloseButton({
       <Icon
         icon={{ atlasName: 'icons', spriteName: 'CloseIcon' }}
         uiTransform={{}}
-        iconSize={size / 3}
+        iconSize={fontSize}
       />
     </UiEntity>
   )

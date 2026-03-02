@@ -1,7 +1,7 @@
 import type { Vector2 } from '@dcl/sdk/math'
 import type { URN, URNWithoutTokenId } from '../utils/definitions'
 import { type WearableCategory } from '../service/categories'
-import { type ChatMessageDefinition } from '../components/chat-message/ChatMessage.types'
+import { type ChatMessageDefinition } from '../components/chat/chat-message/ChatMessage.types'
 import { type ProfileExtra } from '../utils/passport-promise-utils'
 import {
   type GetPermanentPermissionsArgs,

@@ -1,15 +1,15 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../layout'
 import useEffect = ReactEcs.useEffect
-import { store } from '../../../state/store'
-import { updateHudStateAction } from '../../../state/hud/actions'
+import { store } from '../../state/store'
+import { updateHudStateAction } from '../../state/hud/actions'
 
-import { SUGGESTION_EMOJI_REGEXP } from '../../../components/chat-message/ChatMessage'
-import { COLOR } from '../../../components/color-palette'
-import { getViewportHeight } from '../../../service/canvas-ratio'
-import emojiCompleteList from './emojis_complete.json'
-import { memoize } from '../../../utils/function-utils'
-import { getFontSize } from '../../../service/fontsize-system'
+import { SUGGESTION_EMOJI_REGEXP } from './chat-message/ChatMessage'
+import { COLOR } from '../color-palette'
+import { getViewportHeight } from '../../service/canvas-ratio'
+import emojiCompleteList from '../../ui-classes/main-hud/chat-and-logs/emojis_complete.json'
+import { memoize } from '../../utils/function-utils'
+import { getFontSize } from '../../service/fontsize-system'
 const EMOJI_EXPRESSIONS = emojiCompleteList.emojis.reduce<string[]>(
   (acc, current) => [...acc, current.expression] as string[],
   []

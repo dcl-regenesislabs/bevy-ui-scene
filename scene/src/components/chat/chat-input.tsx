@@ -1,17 +1,17 @@
 import { ReactEcs, type ReactElement } from '@dcl/react-ecs'
 import useState = ReactEcs.useState
-import { ALMOST_WHITE } from '../../../utils/constants'
+import { ALMOST_WHITE } from '../../utils/constants'
 import { Input } from '@dcl/sdk/react-ecs'
-import { focusChatInput } from './ChatsAndLogs'
+import { focusChatInput } from '../../ui-classes/main-hud/chat-and-logs/ChatsAndLogs'
 import useEffect = ReactEcs.useEffect
-import { store } from '../../../state/store'
-import { updateHudStateAction } from '../../../state/hud/actions'
+import { store } from '../../state/store'
+import { updateHudStateAction } from '../../state/hud/actions'
 import { executeTask } from '@dcl/sdk/ecs'
-import { sleep } from '../../../utils/dcl-utils'
+import { sleep } from '../../utils/dcl-utils'
 import {
   SUGGESTION_EMOJI_REGEXP,
   SUGGESTION_NAME_MENTION_REGEXP
-} from '../../../components/chat-message/ChatMessage'
+} from './chat-message/ChatMessage'
 import { getEmojiFromExpression } from './chat-emoji-suggestions'
 const state = {
   visible: true

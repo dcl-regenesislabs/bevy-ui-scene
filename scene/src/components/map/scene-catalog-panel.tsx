@@ -318,7 +318,7 @@ function SceneCatalogContent(): ReactElement {
                 uiTransform={{
                   width: '93%'
                 }}
-                thumbnailSrc={place.image}
+                thumbnailSrc={place.image ?? ''}
                 active={
                   store.getState().hud.placeListActiveItem?.id === place.id
                 }
@@ -363,7 +363,7 @@ function SceneCatalogContent(): ReactElement {
                       textWrap: 'wrap',
                       textAlign: 'top-left',
                       value: `<b>${truncateWithoutBreakingWords(
-                        place.title,
+                        place.title ?? '',
                         24
                       )}</b>`,
                       color: COLOR.TEXT_COLOR,
