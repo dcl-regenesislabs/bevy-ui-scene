@@ -8,6 +8,7 @@ import {
   engine,
   executeTask,
   inputSystem,
+  PointerEventType,
   PrimaryPointerInfo
 } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
@@ -16,12 +17,11 @@ import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
 import { type Key, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { MAX_ZINDEX } from '../../utils/constants'
-import { PointerEventType } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/common/input_action.gen'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
-import { type PBPointerEvents_Entry } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/pointer_events.gen'
 import { getSceneInputBindingsMap } from '../../service/input-bindings'
 import { getFontSize } from '../../service/fontsize-system'
+import { type PBPointerEvents_Entry } from '@dcl/ecs'
 
 export const HoverActionComponent = (): ReactElement | null => {
   const [systemHoverEvent, setSystemHoverEvent] =
