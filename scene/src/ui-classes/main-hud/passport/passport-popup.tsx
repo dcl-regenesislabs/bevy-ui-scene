@@ -70,6 +70,9 @@ import {
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { waitFor } from '../../../utils/dcl-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
+import { BevyApi } from '../../../bevy-api'
+import { AchievedAchievementItem } from './badges-types'
+import { Color4 } from '@dcl/sdk/math'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -176,7 +179,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
           }}
           onMouseDown={noop}
           uiBackground={{
-            texture: { src: 'assets/images/passport/background.png' },
+            texture: { src: 'assets/images/menu/background.png' },
             textureMode: 'stretch'
           }}
         >
@@ -287,14 +290,99 @@ function PassportContent(): ReactElement {
           overflow: 'scroll'
         }}
       >
+        <BadgesPreview userId={profileData.userId} />
         <Overview />
         <EquippedItemsContainer player={player} />
       </Column>
     </UiEntity>
   )
 }
-function Overview(): ReactElement {
-  const profileData = store.getState().hud.profileData
+
+function BadgesPreview({ userId }: { userId: string }): ReactElement | null {
+  const badgesBaseURL = 'https://badges.decentraland.org'
+  const [loadingBadges, setLoadingBadges] = useState(true)
+  const [achievedBadges, setAchievedBadges] = useState<
+    AchievedAchievementItem[]
+  >([]) // TODO REMOVE any type; mayke type for Badges API items
+  useEffect(() => {
+    executeTask(async () => {
+      const achievedBadges: AchievedAchievementItem[] = await fetch(
+        `${badgesBaseURL}/users/${userId}/badges?includeNotAchieved=false`
+      )
+        .then((r) => r.json())
+        .then((r) => r.data.achieved)
+      console.log('badges', achievedBadges)
+      setAchievedBadges(
+        achievedBadges
+          .sort(
+            (a, b) => b.completedAt?.localeCompare(a.completedAt ?? '') ?? 0
+          )
+          .slice(0, 9)
+      )
+      setLoadingBadges(false)
+    })
+  }, [])
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const size = fontSize * 4
+  const loadingAlpha = loadingBadges ? getLoadingAlphaValue() : 0
+  if (!loadingBadges && achievedBadges.length === 0) return null
+  return (
+    <PassportSection>
+      <UiEntity
+        uiText={{
+          value: '<b>BADGES</b>',
+          fontSize
+        }}
+      />
+      <Row
+        uiTransform={{
+          alignItems: 'space-around',
+          justifyContent: 'space-around'
+        }}
+      >
+        {loadingBadges ? (
+          <UiEntity
+            uiTransform={{
+              width: '98%',
+              height: size,
+              alignSelf: 'flex-start',
+              borderRadius: fontSize / 2,
+              borderWidth: 0,
+              borderColor: COLOR.BLACK_TRANSPARENT
+            }}
+            uiBackground={{
+              color: Color4.create(1, 1, 1, loadingAlpha * 0.3)
+            }}
+            uiText={{
+              value: '...',
+              fontSize,
+              color: COLOR.WHITE_OPACITY_5
+            }}
+          />
+        ) : null}
+        {achievedBadges.map((achievedBadge) => {
+          return (
+            <UiEntity
+              uiTransform={{
+                width: size,
+                height: size
+              }}
+              uiBackground={{
+                texture: { src: `${achievedBadge.assets['2d']?.normal}` },
+                textureMode: 'stretch'
+              }}
+            />
+          )
+        })}
+      </Row>
+    </PassportSection>
+  )
+}
+function PassportSection({
+  children
+}: {
+  children?: ReactElement
+}): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
     <UiEntity
@@ -312,6 +400,15 @@ function Overview(): ReactElement {
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
     >
+      {children}
+    </UiEntity>
+  )
+}
+function Overview(): ReactElement {
+  const profileData = store.getState().hud.profileData
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  return (
+    <PassportSection>
       {state.editable && !state.editing && (
         <ButtonIcon
           uiTransform={{
@@ -386,7 +483,7 @@ function Overview(): ReactElement {
       <LinksSection />
 
       <BottomBar />
-    </UiEntity>
+    </PassportSection>
   )
 }
 
@@ -431,22 +528,7 @@ function EquippedItemsContainer({
   const THUMBNAIL_SIZE = canvasScaleRatio * 228
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
-    <UiEntity
-      uiTransform={{
-        margin: { top: '1%' },
-        padding: '2%',
-        width: '96%',
-        maxWidth: '96%',
-        borderRadius: fontSize / 2,
-        borderColor: COLOR.TEXT_COLOR_WHITE,
-        borderWidth: 0,
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        opacity: state.savingProfile ? 0.5 : 1
-      }}
-      uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
-    >
+    <PassportSection>
       <Column
         uiTransform={{
           width: '100%',
@@ -513,7 +595,7 @@ function EquippedItemsContainer({
           })}
         </Row>
       </Column>
-    </UiEntity>
+    </PassportSection>
   )
 }
 
