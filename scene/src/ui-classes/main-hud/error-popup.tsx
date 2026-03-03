@@ -14,34 +14,19 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../service/fontsize-system'
+import { PopupBackdrop } from '../../components/popup-backdrop'
 const { useState } = ReactEcs
 
 export const ErrorPopup: Popup = ({ shownPopup }) => {
   const error: any = (shownPopup.data as any).error
 
   return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: 0, left: 0 },
-        zIndex: 999,
-        width: '100%',
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_7
-      }}
-      onMouseDown={() => {
-        closeDialog()
-      }}
-    >
+    <PopupBackdrop>
       <ErrorContent
         error={error}
         source={(shownPopup.data as any)?.source ?? ''}
       />
-    </UiEntity>
+    </PopupBackdrop>
   )
 }
 

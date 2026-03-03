@@ -26,6 +26,7 @@ import useEffect = ReactEcs.useEffect
 import { executeTask } from '@dcl/sdk/ecs'
 import { getCompletePermissionsMatrix } from '../../main-menu/settings-page/permissions-map'
 import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
+import { PopupBackdrop } from '../../../components/popup-backdrop'
 
 const ONCE = 'Once'
 const PERMISSION_REQUEST_OPTIONS = [ONCE, ...PERMISSION_LEVELS].map((i) => ({
@@ -37,23 +38,9 @@ export const PermissionRequestPopup: Popup = ({ shownPopup }) => {
   const data: PermissionRequest = shownPopup.data as PermissionRequest
 
   return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: 0, left: 0 },
-        zIndex: 999,
-        width: '100%',
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_2
-      }}
-      onMouseDown={noop}
-    >
+    <PopupBackdrop>
       <PermissionRequestContent data={data} />
-    </UiEntity>
+    </PopupBackdrop>
   )
 }
 

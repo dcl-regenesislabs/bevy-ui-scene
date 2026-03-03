@@ -27,6 +27,7 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
+import { PopupBackdrop } from '../../../components/popup-backdrop'
 
 const { useState } = ReactEcs
 
@@ -443,23 +444,7 @@ export const UniqueNameForm = ({
 
 export const NameEditPopup: Popup = () => {
   return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: 0, left: 0 },
-        zIndex: 999,
-        width: '100%',
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_7
-      }}
-      onMouseDown={() => {
-        closeDialog()
-      }}
-    >
+    <PopupBackdrop>
       <UiEntity
         uiTransform={{
           width: getContentScaleRatio() * 1200,
@@ -478,7 +463,7 @@ export const NameEditPopup: Popup = () => {
       >
         <EditNameContent />
       </UiEntity>
-    </UiEntity>
+    </PopupBackdrop>
   )
 
   function closeDialog(): void {
