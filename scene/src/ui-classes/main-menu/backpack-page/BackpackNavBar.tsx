@@ -357,9 +357,6 @@ export function NavButtonBar({
         alignItems: 'center',
         justifyContent: 'flex-start'
       }}
-      uiBackground={{
-        color: { ...Color4.Blue(), a: 0.0 }
-      }}
     >
       {children}
     </UiEntity>

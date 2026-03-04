@@ -250,7 +250,7 @@ function PassportContent(): ReactElement {
     getPlayer({ userId: profileData.userId })
   )
   const sections: string[] = ['OVERVIEW', 'BADGES']
-  const [activeSection, setActiveSection] = useState<string>(sections[0])
+  const [activeSection, setActiveSection] = useState<string>(sections[1])
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
@@ -323,7 +323,7 @@ function PassportContent(): ReactElement {
         ) : null}
         {activeSection === sections[1] ? (
           <Column>
-            <BadgesCollection badges-data={badgesData} />
+            <BadgesCollection badgesData={badgesData} />
           </Column>
         ) : null}
       </Column>
