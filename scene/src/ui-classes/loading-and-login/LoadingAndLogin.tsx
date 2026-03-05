@@ -19,6 +19,7 @@ import { store } from '../../state/store'
 import { showErrorPopup } from '../../service/error-popup-service'
 import { createTween } from '../../service/tween'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
+import { getPlayer } from '@dcl/sdk/players'
 
 type StatusType =
   | 'loading'
@@ -87,6 +88,10 @@ export default class LoadingAndLogin {
       this.opacity = 1
       startTween.cancel()
     })
+
+    if (getPlayer()) {
+      this.finishLoading()
+    }
   }
 
   finishLoading(): void {
