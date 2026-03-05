@@ -79,6 +79,7 @@ import {
 import { Color4 } from '@dcl/sdk/math'
 import { PassportSection } from './passport-section'
 import { BadgesCollection } from './badges-collection'
+import { PASSPORT_SECTIONS } from './passport-constants'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -191,15 +192,20 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
         >
           {!state.loadingProfile
             ? [
-                <UserAvatarPreviewElement
-                  userId={shownPopup.data as string}
-                  allowRotation={true}
-                  allowZoom={false}
-                  uiTransform={{
-                    flexShrink: 0,
-                    flexGrow: 0
-                  }}
-                />,
+                store.getState().hud.passportActiveSection ===
+                PASSPORT_SECTIONS[0] ? (
+                  <UserAvatarPreviewElement
+                    userId={shownPopup.data as string}
+                    allowRotation={true}
+                    allowZoom={false}
+                    uiTransform={{
+                      flexShrink: 0,
+                      flexGrow: 0
+                    }}
+                  />
+                ) : (
+                  <UiEntity uiTransform={{ width: '29.8%' }}></UiEntity>
+                ),
                 <PassportContent />
               ]
             : null}
@@ -249,8 +255,7 @@ function PassportContent(): ReactElement {
   const [player, setPlayer] = useState<GetPlayerDataRes | null>(
     getPlayer({ userId: profileData.userId })
   )
-  const sections: string[] = ['OVERVIEW', 'BADGES']
-  const [activeSection, setActiveSection] = useState<string>(sections[1])
+
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
@@ -266,8 +271,9 @@ function PassportContent(): ReactElement {
       const badgesBaseURL = 'https://badges.decentraland.org'
       // TODO REVIEW MAYBE move to redux store and includeNotAchieved=true, to reuse in badges section?
       const userId = store.getState().hud.profileData.userId
+
       const _badgesData: AchievementsData = await fetch(
-        `${badgesBaseURL}/users/${userId}/badges?includeNotAchieved=false`
+        `${badgesBaseURL}/users/${userId}/badges?includeNotAchieved=true`
       )
         .then((r) => r.json())
         .then((r: AchievementsResponse) => r.data)
@@ -301,9 +307,16 @@ function PassportContent(): ReactElement {
         uiTransform={{
           margin: { top: '5%' }
         }}
-        tabs={sections.map((s) => ({ text: s, active: activeSection === s }))}
+        tabs={PASSPORT_SECTIONS.map((s) => ({
+          text: s,
+          active: store.getState().hud.passportActiveSection === s
+        }))}
         onClickTab={(tab) => {
-          setActiveSection(sections[tab])
+          store.dispatch(
+            updateHudStateAction({
+              passportActiveSection: PASSPORT_SECTIONS[tab]
+            })
+          )
         }}
         fontSize={fontSize}
       />
@@ -314,14 +327,14 @@ function PassportContent(): ReactElement {
           overflow: 'scroll'
         }}
       >
-        {activeSection === sections[0] ? (
+        {store.getState().hud.passportActiveSection === PASSPORT_SECTIONS[0] ? (
           <Column>
             <BadgesPreview badgesData={badgesData} loading={loadingBadges} />
             <Overview />
             <EquippedItemsContainer player={player} />
           </Column>
         ) : null}
-        {activeSection === sections[1] ? (
+        {store.getState().hud.passportActiveSection === PASSPORT_SECTIONS[1] ? (
           <Column>
             <BadgesCollection badgesData={badgesData} />
           </Column>

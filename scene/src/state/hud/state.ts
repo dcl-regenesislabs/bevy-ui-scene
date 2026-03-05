@@ -3,6 +3,11 @@ import { type NameDefinition } from '../../utils/passport-promise-utils'
 import { type Place } from '../../service/map-places'
 import { Vector3 } from '@dcl/sdk/math'
 import { type SceneLoadingWindow } from '../../bevy-api/interface'
+import {
+  AchievedAchievementItem,
+  NotAchievedAchievementItem
+} from '../../ui-classes/main-hud/passport/badges-types'
+import { PASSPORT_SECTIONS } from '../../ui-classes/main-hud/passport/passport-constants'
 
 export const HUD_STORE_ID = 'hud'
 
@@ -97,6 +102,11 @@ export type HudState = {
   playerVoiceStateMap: Record<string, boolean>
   micEnabled: boolean
   loadingScene: SceneLoadingWindow
+  passportSelectedBadge:
+    | AchievedAchievementItem
+    | NotAchievedAchievementItem
+    | null
+  passportActiveSection: (typeof PASSPORT_SECTIONS)[number]
 }
 
 export type HudStateUpdateParams = {
@@ -130,6 +140,11 @@ export type HudStateUpdateParams = {
   playerVoiceStateMap?: Record<string, boolean>
   micEnabled?: boolean
   loadingScene?: SceneLoadingWindow
+  passportSelectedBadge?:
+    | AchievedAchievementItem
+    | NotAchievedAchievementItem
+    | null
+  passportActiveSection?: (typeof PASSPORT_SECTIONS)[number]
 }
 
 export const hudInitialState: HudState = {
@@ -166,5 +181,7 @@ export const hudInitialState: HudState = {
     visible: false,
     title: '',
     pendingAssets: null
-  }
+  },
+  passportSelectedBadge: null,
+  passportActiveSection: PASSPORT_SECTIONS[1]
 }
