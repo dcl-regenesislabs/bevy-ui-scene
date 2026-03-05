@@ -36,7 +36,7 @@ export function BackpackAvatarPreviewElement(): ReactElement {
   )
 }
 
-function getAvatarShapeFromBackpackStore(): PBAvatarShape {
+export function getAvatarShapeFromBackpackStore(): PBAvatarShape {
   return {
     wearables: store.getState().backpack.equippedWearables,
     eyeColor: store.getState().backpack.outfitSetup.base.eyesColor,

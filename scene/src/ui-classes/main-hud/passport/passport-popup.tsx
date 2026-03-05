@@ -80,6 +80,7 @@ import { Color4 } from '@dcl/sdk/math'
 import { PassportSection } from './passport-section'
 import { BadgesCollection } from './badges-collection'
 import { PASSPORT_SECTIONS } from './passport-constants'
+import { Badge3dPreviewElement } from './badge-3d-preview'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -204,7 +205,9 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
                     }}
                   />
                 ) : (
-                  <UiEntity uiTransform={{ width: '29.8%' }}></UiEntity>
+                  <UiEntity uiTransform={{ width: '29.8%' }}>
+                    <Badge3dPreviewElement />
+                  </UiEntity>
                 ),
                 <PassportContent />
               ]
