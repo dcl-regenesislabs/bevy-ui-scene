@@ -69,6 +69,16 @@ import {
 } from '../../../service/fontsize-system'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { waitFor } from '../../../utils/dcl-utils'
+import { PopupBackdrop } from '../../../components/popup-backdrop'
+import {
+  type AchievementsData,
+  type AchievementsResponse
+} from './badges-types'
+import { PassportSection } from './passport-section'
+import { BadgesCollection } from './badges-collection'
+import { PASSPORT_SECTIONS } from './passport-constants'
+import { Badge3dPreviewElement } from './badge-3d-preview'
+import { BadgesPreview } from './badges-preview'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -161,23 +171,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   const loadingAlpha = getLoadingAlphaValue()
 
   return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: 0, left: 0 },
-        zIndex: 999,
-        width: '100%',
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_9
-      }}
-      onMouseDown={() => {
-        closeDialog()
-      }}
-    >
+    <PopupBackdrop>
       <ResponsiveContent>
         <UiEntity
           uiTransform={{
@@ -191,21 +185,28 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
           }}
           onMouseDown={noop}
           uiBackground={{
-            texture: { src: 'assets/images/passport/background.png' },
+            texture: { src: 'assets/images/menu/background.png' },
             textureMode: 'stretch'
           }}
         >
           {!state.loadingProfile
             ? [
-                <UserAvatarPreviewElement
-                  userId={shownPopup.data as string}
-                  allowRotation={true}
-                  allowZoom={false}
-                  uiTransform={{
-                    flexShrink: 0,
-                    flexGrow: 0
-                  }}
-                />,
+                store.getState().hud.passportActiveSection ===
+                PASSPORT_SECTIONS[0] ? (
+                  <UserAvatarPreviewElement
+                    userId={shownPopup.data as string}
+                    allowRotation={true}
+                    allowZoom={false}
+                    uiTransform={{
+                      flexShrink: 0,
+                      flexGrow: 0
+                    }}
+                  />
+                ) : (
+                  <UiEntity uiTransform={{ width: '29.8%' }}>
+                    <Badge3dPreviewElement />
+                  </UiEntity>
+                ),
                 <PassportContent />
               ]
             : null}
@@ -238,7 +239,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
           />
         </UiEntity>
       </ResponsiveContent>
-    </UiEntity>
+    </PopupBackdrop>
   )
 
   function closeDialog(): void {
@@ -255,6 +256,7 @@ function PassportContent(): ReactElement {
   const [player, setPlayer] = useState<GetPlayerDataRes | null>(
     getPlayer({ userId: profileData.userId })
   )
+
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
@@ -263,6 +265,25 @@ function PassportContent(): ReactElement {
   useEffect(() => {
     setPlayer(getPlayer({ userId: store.getState().hud.profileData.userId }))
   }, [store.getState().hud.profileData])
+  const [badgesData, setBadgesData] = useState<AchievementsData | null>(null) // TODO REMOVE any type; mayke type for Badges API items
+  const [loadingBadges, setLoadingBadges] = useState<boolean>(true)
+  useEffect(() => {
+    executeTask(async () => {
+      const badgesBaseURL = 'https://badges.decentraland.org'
+      // TODO REVIEW MAYBE move to redux store and includeNotAchieved=true, to reuse in badges section?
+      const userId = store.getState().hud.profileData.userId
+
+      const _badgesData: AchievementsData = await fetch(
+        `${badgesBaseURL}/users/${userId}/badges?includeNotAchieved=true`
+      )
+        .then(async (r) => await r.json())
+        .then((r: AchievementsResponse) => r.data)
+
+      setBadgesData(_badgesData)
+      setLoadingBadges(false)
+    })
+  }, [])
+
   return (
     <UiEntity
       uiTransform={{
@@ -287,12 +308,17 @@ function PassportContent(): ReactElement {
         uiTransform={{
           margin: { top: '5%' }
         }}
-        tabs={[
-          {
-            text: 'OVERVIEW',
-            active: true
-          }
-        ]}
+        tabs={PASSPORT_SECTIONS.map((s) => ({
+          text: s,
+          active: store.getState().hud.passportActiveSection === s
+        }))}
+        onClickTab={(tab) => {
+          store.dispatch(
+            updateHudStateAction({
+              passportActiveSection: PASSPORT_SECTIONS[tab]
+            })
+          )
+        }}
         fontSize={fontSize}
       />
       <Column
@@ -302,31 +328,28 @@ function PassportContent(): ReactElement {
           overflow: 'scroll'
         }}
       >
-        <Overview />
-        <EquippedItemsContainer player={player} />
+        {store.getState().hud.passportActiveSection === PASSPORT_SECTIONS[0] ? (
+          <Column>
+            <BadgesPreview badgesData={badgesData} loading={loadingBadges} />
+            <Overview />
+            <EquippedItemsContainer player={player} />
+          </Column>
+        ) : null}
+        {store.getState().hud.passportActiveSection === PASSPORT_SECTIONS[1] ? (
+          <Column>
+            <BadgesCollection badgesData={badgesData} />
+          </Column>
+        ) : null}
       </Column>
     </UiEntity>
   )
 }
+
 function Overview(): ReactElement {
   const profileData = store.getState().hud.profileData
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
-    <UiEntity
-      uiTransform={{
-        margin: { top: '1%' },
-        padding: '2%',
-        width: '96%',
-        borderRadius: fontSize / 2,
-        borderColor: COLOR.TEXT_COLOR_WHITE,
-        borderWidth: 0,
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        opacity: state.savingProfile ? 0.5 : 1
-      }}
-      uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
-    >
+    <PassportSection uiTransform={{ opacity: state.savingProfile ? 0.5 : 1 }}>
       {state.editable && !state.editing && (
         <ButtonIcon
           uiTransform={{
@@ -401,7 +424,7 @@ function Overview(): ReactElement {
       <LinksSection />
 
       <BottomBar />
-    </UiEntity>
+    </PassportSection>
   )
 }
 
@@ -446,22 +469,7 @@ function EquippedItemsContainer({
   const THUMBNAIL_SIZE = canvasScaleRatio * 228
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   return (
-    <UiEntity
-      uiTransform={{
-        margin: { top: '1%' },
-        padding: '2%',
-        width: '96%',
-        maxWidth: '96%',
-        borderRadius: fontSize / 2,
-        borderColor: COLOR.TEXT_COLOR_WHITE,
-        borderWidth: 0,
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        opacity: state.savingProfile ? 0.5 : 1
-      }}
-      uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
-    >
+    <PassportSection uiTransform={{ opacity: state.savingProfile ? 0.5 : 1 }}>
       <Column
         uiTransform={{
           width: '100%',
@@ -528,7 +536,7 @@ function EquippedItemsContainer({
           })}
         </Row>
       </Column>
-    </UiEntity>
+    </PassportSection>
   )
 }
 

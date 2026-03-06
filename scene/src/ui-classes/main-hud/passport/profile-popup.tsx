@@ -41,6 +41,7 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import { getNameWithHashPostfix } from '../../../service/chat/chat-utils'
+import { PopupBackdrop } from '../../../components/popup-backdrop'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
@@ -61,24 +62,7 @@ export function setupProfilePopups(): void {
 
 export const ProfileMenuPopup: Popup = ({ shownPopup }) => {
   return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: 0, left: 0 },
-        zIndex: 999,
-        width: '100%',
-        height: '100%',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start',
-        padding: { left: '4.1%', top: '0.5%' }
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_2
-      }}
-      onMouseDown={() => {
-        closeDialog()
-      }}
-    >
+    <PopupBackdrop>
       <ProfileContent
         data={
           shownPopup.data as {
@@ -87,7 +71,7 @@ export const ProfileMenuPopup: Popup = ({ shownPopup }) => {
           }
         }
       />
-    </UiEntity>
+    </PopupBackdrop>
   )
 }
 

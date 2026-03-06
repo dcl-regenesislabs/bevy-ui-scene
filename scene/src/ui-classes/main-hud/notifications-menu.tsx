@@ -1,10 +1,7 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { store } from '../../state/store'
 import { COLOR } from '../../components/color-palette'
-import {
-  closeLastPopupAction,
-  updateHudStateAction
-} from '../../state/hud/actions'
+import { updateHudStateAction } from '../../state/hud/actions'
 import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { noop } from '../../utils/function-utils'
 import { type Popup } from '../../components/popup-stack'
@@ -19,6 +16,7 @@ import { fetchNotifications } from '../../utils/notifications-promise-utils'
 import { sleep } from '../../utils/dcl-utils'
 import { getLoadingAlphaValue } from '../../service/loading-alpha-color'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
+import { PopupBackdrop } from '../../components/popup-backdrop'
 const { useEffect, useState } = ReactEcs
 const emptyMeta: SignedFetchMeta = {}
 const meta: string = JSON.stringify(emptyMeta)
@@ -48,25 +46,9 @@ export async function setupNotifications(): Promise<void> {
 
 export const NotificationsMenu: Popup = (): ReactElement => {
   return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: 0, left: 0 },
-        zIndex: 999,
-        width: '100%',
-        height: '100%',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start'
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_7
-      }}
-      onMouseDown={() => {
-        closeDialog()
-      }}
-    >
+    <PopupBackdrop>
       <NotificationsContent />
-    </UiEntity>
+    </PopupBackdrop>
   )
 }
 
@@ -175,8 +157,4 @@ function NotificationsContent(): ReactElement {
       </UiEntity>
     </UiEntity>
   )
-}
-
-function closeDialog(): void {
-  store.dispatch(closeLastPopupAction())
 }

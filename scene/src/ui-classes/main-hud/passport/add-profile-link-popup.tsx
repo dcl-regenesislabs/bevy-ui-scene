@@ -16,26 +16,11 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
+import { PopupBackdrop } from '../../../components/popup-backdrop'
 
 export const AddProfileLinkPopup: Popup = ({ shownPopup }) => {
   return (
-    <UiEntity
-      uiTransform={{
-        positionType: 'absolute',
-        position: { top: 0, left: 0 },
-        zIndex: 999,
-        width: '100%',
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-      uiBackground={{
-        color: COLOR.DARK_OPACITY_7
-      }}
-      onMouseDown={() => {
-        closeDialog()
-      }}
-    >
+    <PopupBackdrop>
       <UiEntity
         uiTransform={{
           width: getContentScaleRatio() * 1200,
@@ -55,12 +40,8 @@ export const AddProfileLinkPopup: Popup = ({ shownPopup }) => {
       >
         <AddProfileLinkContent />
       </UiEntity>
-    </UiEntity>
+    </PopupBackdrop>
   )
-
-  function closeDialog(): void {
-    store.dispatch(closeLastPopupAction())
-  }
 }
 
 function AddProfileLinkContent(): ReactElement {
