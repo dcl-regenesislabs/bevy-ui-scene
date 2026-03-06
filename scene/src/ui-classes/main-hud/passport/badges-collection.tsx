@@ -128,7 +128,7 @@ export function BadgesCollection({
 
                     .filter((b) => b.category === category)
                     .map((badgeItem, index) => {
-                      return badgeItem ? (
+                      return (
                         <BadgesCollectionItem
                           onMouseDown={() => {
                             store.dispatch(
@@ -138,13 +138,13 @@ export function BadgesCollection({
                             )
                           }}
                           badgeItem={badgeItem}
-                          key={badgeItem?.id ?? index}
+                          key={badgeItem.id ?? index}
                           selected={
                             store.getState().hud.passportSelectedBadge?.id ===
                             badgeItem.id
                           }
                         />
-                      ) : null
+                      )
                     })}
                 </Row>
               </Column>

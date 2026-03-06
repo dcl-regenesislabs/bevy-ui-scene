@@ -4,13 +4,13 @@ export type AchievementCategory =
   | 'Creator'
   | 'Socializer'
   | 'Builder'
-  | (string & {})
+  | (string & object)
 
 export type AchievementAssetVariant =
   | 'normal'
   | 'hrm'
   | 'basecolor'
-  | (string & {})
+  | (string & object)
 
 export type AchievementAssets2D = Partial<
   Record<AchievementAssetVariant, string>

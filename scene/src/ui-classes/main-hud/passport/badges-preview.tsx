@@ -35,8 +35,8 @@ export function BadgesPreview({
       />
       <Row
         uiTransform={{
-          alignItems: 'space-around',
-          justifyContent: 'space-around'
+          alignItems: 'flex-start',
+          justifyContent: 'flex-start'
         }}
       >
         {loadingBadges ? (
@@ -64,7 +64,8 @@ export function BadgesPreview({
             <UiEntity
               uiTransform={{
                 width: size,
-                height: size
+                height: size,
+                margin: { right: size / 4 }
               }}
               uiBackground={{
                 texture: { src: `${previewBadge.assets['2d']?.normal}` },

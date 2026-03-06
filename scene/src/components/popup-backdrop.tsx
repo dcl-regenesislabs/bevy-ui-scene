@@ -3,7 +3,7 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { store } from '../state/store'
 import { closeLastPopupAction } from '../state/hud/actions'
 
-export function PopupBackdrop({ children }: { children?: ReactElement }) {
+export function PopupBackdrop({ children }: { children?: ReactElement }): ReactElement {
   return (
     <UiEntity
       uiTransform={{

@@ -42,10 +42,6 @@ export const AddProfileLinkPopup: Popup = ({ shownPopup }) => {
       </UiEntity>
     </PopupBackdrop>
   )
-
-  function closeDialog(): void {
-    store.dispatch(closeLastPopupAction())
-  }
 }
 
 function AddProfileLinkContent(): ReactElement {

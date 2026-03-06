@@ -16,7 +16,6 @@ import useState = ReactEcs.useState
 import { getAliveAvatarPreviews } from '../../../components/backpack/AvatarPreviewElement'
 import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 import { COLOR } from '../../../components/color-palette'
-import { waitFor } from '../../../utils/dcl-utils'
 import { Column } from '../../../components/layout'
 import {
   CONTEXT,
@@ -38,11 +37,8 @@ export function Badge3dPreviewElement(): ReactElement | null {
     setBadgePreviewCamera(badgePreviewEntities.badgeCameraEntity)
 
     return () => {
-      if (badgePreviewEntities.badgeEntity)
-        engine.removeEntity(badgePreviewEntities.badgeEntity)
-
-      if (badgePreviewEntities.badgeCameraEntity)
-        engine.removeEntity(badgePreviewEntities.badgeCameraEntity)
+      engine.removeEntity(badgePreviewEntities.badgeEntity)
+      engine.removeEntity(badgePreviewEntities.badgeCameraEntity)
 
       engine.removeSystem(FloatingBadgeSystem)
     }
@@ -209,7 +205,7 @@ function createBadgePreview(): {
   return { badgeEntity, badgeCameraEntity }
 }
 
-function FloatingBadgeSystem(dt: number) {
+function FloatingBadgeSystem(dt: number): void {
   const t = Date.now() / 1000
   for (const [badgeEntity] of engine.getEntitiesWith(FloatingBadgeComponent)) {
     const transform = Transform.getMutable(badgeEntity)

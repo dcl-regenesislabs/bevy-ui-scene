@@ -2,7 +2,6 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { store } from '../../state/store'
 import { COLOR } from '../../components/color-palette'
 import {
-  closeLastPopupAction,
   updateHudStateAction
 } from '../../state/hud/actions'
 import { getContentScaleRatio } from '../../service/canvas-ratio'
