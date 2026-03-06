@@ -1,11 +1,11 @@
-import { ReactEcs, ReactElement, UiEntity } from '@dcl/react-ecs'
+import { ReactEcs, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import useEffect = ReactEcs.useEffect
 import { store } from '../../../state/store'
 import {
   CameraLayer,
   CameraLayers,
   engine,
-  Entity,
+  type Entity,
   executeTask,
   Material,
   MeshRenderer,

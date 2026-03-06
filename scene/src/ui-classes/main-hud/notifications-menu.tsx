@@ -161,7 +161,3 @@ function NotificationsContent(): ReactElement {
     </UiEntity>
   )
 }
-
-function closeDialog(): void {
-  store.dispatch(closeLastPopupAction())
-}

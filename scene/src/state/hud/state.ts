@@ -4,8 +4,8 @@ import { type Place } from '../../service/map-places'
 import { Vector3 } from '@dcl/sdk/math'
 import { type SceneLoadingWindow } from '../../bevy-api/interface'
 import {
-  AchievedAchievementItem,
-  NotAchievedAchievementItem
+  type AchievedAchievementItem,
+  type NotAchievedAchievementItem
 } from '../../ui-classes/main-hud/passport/badges-types'
 import { PASSPORT_SECTIONS } from '../../ui-classes/main-hud/passport/passport-constants'
 
@@ -183,5 +183,5 @@ export const hudInitialState: HudState = {
     pendingAssets: null
   },
   passportSelectedBadge: null,
-  passportActiveSection: PASSPORT_SECTIONS[1]
+  passportActiveSection: PASSPORT_SECTIONS[0]
 }

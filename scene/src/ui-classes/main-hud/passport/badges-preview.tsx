@@ -1,5 +1,5 @@
-import { AchievementsData } from './badges-types'
-import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
+import { type AchievementsData } from './badges-types'
+import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { PassportSection } from './passport-section'

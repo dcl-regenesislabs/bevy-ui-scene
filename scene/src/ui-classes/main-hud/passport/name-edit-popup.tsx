@@ -465,8 +465,4 @@ export const NameEditPopup: Popup = () => {
       </UiEntity>
     </PopupBackdrop>
   )
-
-  function closeDialog(): void {
-    store.dispatch(closeLastPopupAction())
-  }
 }

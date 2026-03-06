@@ -70,13 +70,10 @@ import {
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { waitFor } from '../../../utils/dcl-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
-import { BevyApi } from '../../../bevy-api'
 import {
-  AchievedAchievementItem,
-  AchievementsData,
-  AchievementsResponse
+  type AchievementsData,
+  type AchievementsResponse
 } from './badges-types'
-import { Color4 } from '@dcl/sdk/math'
 import { PassportSection } from './passport-section'
 import { BadgesCollection } from './badges-collection'
 import { PASSPORT_SECTIONS } from './passport-constants'
@@ -279,7 +276,7 @@ function PassportContent(): ReactElement {
       const _badgesData: AchievementsData = await fetch(
         `${badgesBaseURL}/users/${userId}/badges?includeNotAchieved=true`
       )
-        .then((r) => r.json())
+        .then(async (r) => await r.json())
         .then((r: AchievementsResponse) => r.data)
 
       setBadgesData(_badgesData)

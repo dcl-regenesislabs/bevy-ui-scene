@@ -19,12 +19,12 @@ export type AchievementAssets3D = Partial<
   Record<AchievementAssetVariant, string>
 >
 
-export interface AchievementAssets {
+export type AchievementAssets = {
   '2d'?: AchievementAssets2D
   '3d'?: AchievementAssets3D
 }
 
-export interface AchievedTier {
+export type AchievedTier = {
   tierId: string
   completedAt: number // epoch ms
 }
@@ -39,7 +39,7 @@ export type AchievementProgress =
   | AchievementProgressTierish
   | AchievementProgressSimple
 
-export interface AchievementProgressTierish {
+export type AchievementProgressTierish = {
   achievedTiers?: AchievedTier[] // only present for isTier=true
   stepsDone: number
   nextStepsTarget: number | null
@@ -49,7 +49,7 @@ export interface AchievementProgressTierish {
   lastCompletedTierImage: string | null
 }
 
-export interface AchievementProgressSimple {
+export type AchievementProgressSimple = {
   stepsDone: number
   nextStepsTarget: number | null
   totalStepsTarget: number
@@ -60,7 +60,7 @@ export interface AchievementProgressSimple {
   lastCompletedTierImage?: undefined
 }
 
-export interface AchievementItemBase {
+export type AchievementItemBase = {
   id: string
   name: string
   description: string
@@ -69,24 +69,24 @@ export interface AchievementItemBase {
   assets: AchievementAssets
 }
 
-export interface AchievedAchievementItem extends AchievementItemBase {
+export type AchievedAchievementItem = {
   completedAt: string | null // API returns string ms or null in your sample
   progress: AchievementProgressTierish // achieved sample always includes tierish fields (often null)
-}
+} & AchievementItemBase
 
-export interface NotAchievedAchievementItem extends AchievementItemBase {
+export type NotAchievedAchievementItem = {
   completedAt: null
   progress: AchievementProgressSimple // matches your notAchieved sample
-}
+} & AchievementItemBase
 
 export type AchievedItems = AchievedAchievementItem[]
 export type NotAchievedItems = NotAchievedAchievementItem[]
 
-export interface AchievementsData {
+export type AchievementsData = {
   achieved: AchievedItems
   notAchieved: NotAchievedItems
 }
 
-export interface AchievementsResponse {
+export type AchievementsResponse = {
   data: AchievementsData
 }

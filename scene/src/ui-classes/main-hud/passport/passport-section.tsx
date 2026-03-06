@@ -1,7 +1,7 @@
-import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
+import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 import { COLOR } from '../../../components/color-palette'
-import { UiTransformProps } from '@dcl/sdk/react-ecs'
+import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 
 export function PassportSection({
   children,

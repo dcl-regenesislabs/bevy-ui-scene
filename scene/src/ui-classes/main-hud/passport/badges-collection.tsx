@@ -1,4 +1,4 @@
-import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
+import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { PassportSection } from './passport-section'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
@@ -12,9 +12,9 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import {
-  AchievedAchievementItem,
-  AchievementsData,
-  NotAchievedAchievementItem
+  type AchievedAchievementItem,
+  type AchievementsData,
+  type NotAchievedAchievementItem
 } from './badges-types'
 import { store } from '../../../state/store'
 import { updateHudStateAction } from '../../../state/hud/actions'
@@ -35,14 +35,13 @@ export function BadgesCollection({
   const [loading, setLoading] = useState<boolean>(true)
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY)
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const imageSize = fontSize * 4
 
   useEffect(() => {
     executeTask(async () => {
       const _categories = await fetch(
         'https://badges.decentraland.org/categories'
       )
-        .then((res) => res.json())
+        .then(async (res) => await res.json())
         .then((body) => body.data.categories)
 
       setCategories(_categories)
@@ -77,7 +76,9 @@ export function BadgesCollection({
             <NavButton
               text={category}
               active={activeCategory === category}
-              onClick={() => setActiveCategory(category)}
+              onClick={() => {
+                setActiveCategory(category)
+              }}
               fontSize={getFontSize({
                 context: CONTEXT.DIALOG
               })}
@@ -129,13 +130,13 @@ export function BadgesCollection({
                     .map((badgeItem, index) => {
                       return badgeItem ? (
                         <BadgesCollectionItem
-                          onMouseDown={() =>
+                          onMouseDown={() => {
                             store.dispatch(
                               updateHudStateAction({
                                 passportSelectedBadge: badgeItem
                               })
                             )
-                          }
+                          }}
                           badgeItem={badgeItem}
                           key={badgeItem?.id ?? index}
                           selected={
@@ -164,7 +165,7 @@ export function BadgesCollectionItem({
   selected: boolean
   onMouseDown: () => void
   key?: string | number
-}) {
+}): ReactElement {
   const fontSize = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.BODY_S
@@ -228,7 +229,7 @@ export function BadgesCollectionItem({
               width: '100%'
             }}
             uiText={{
-              fontSize: fontSize,
+              fontSize,
               value: badgeItem.completedAt
                 ? formatCompletedAt(badgeItem.completedAt)
                 : '-',
@@ -272,7 +273,7 @@ function BadgeProgressBar({
       <UiEntity
         uiText={{
           value: `${stepsDone}/${nextStepsTarget}`,
-          fontSize: fontSize,
+          fontSize,
           color: COLOR.TEXT_COLOR_LIGHT_GREY
         }}
       />
