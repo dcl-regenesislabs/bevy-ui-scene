@@ -296,7 +296,7 @@ function BadgeProgressBar({
     </Column>
   )
 }
-function formatCompletedAt(completedAt: string): string {
+export function formatCompletedAt(completedAt: string): string {
   const months = [
     'Jan',
     'Feb',

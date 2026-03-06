@@ -17,6 +17,13 @@ import { getAliveAvatarPreviews } from '../../../components/backpack/AvatarPrevi
 import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 import { COLOR } from '../../../components/color-palette'
 import { waitFor } from '../../../utils/dcl-utils'
+import { Column } from '../../../components/layout'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
+import { formatCompletedAt } from './badges-collection'
 
 export function Badge3dPreviewElement(): ReactElement | null {
   const [badgePreviewCamera, setBadgePreviewCamera] = useState<Entity | null>(
@@ -73,22 +80,76 @@ export function Badge3dPreviewElement(): ReactElement | null {
   }, [badgeEntity, store.getState().hud.passportSelectedBadge])
 
   if (!badgePreviewCamera) return null
+  if (!store.getState().hud.passportSelectedBadge) return null
 
   return (
-    <UiEntity
+    <Column
       uiTransform={{
         width: '100%',
         height: '100%',
-        borderRadius: 0,
-        borderWidth: 1,
-        borderColor: COLOR.BLACK_TRANSPARENT
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start'
       }}
       uiBackground={{
         videoTexture: { videoPlayerEntity: badgePreviewCamera },
 
         textureMode: 'stretch'
       }}
-    ></UiEntity>
+    >
+      <Column
+        uiTransform={{
+          width: '100%',
+          margin: { top: '132%' },
+          padding: { left: '5%' },
+          alignItems: 'flex-start',
+          justifyContent: 'flex-start'
+        }}
+      >
+        <UiEntity
+          uiTransform={{
+            margin: { left: '-1%' }
+          }}
+          uiText={{
+            value: `<b>${store.getState().hud.passportSelectedBadge?.name}</b>`,
+            fontSize: getFontSize({
+              context: CONTEXT.DIALOG,
+              token: TYPOGRAPHY_TOKENS.TITLE_M
+            }),
+            textAlign: 'top-left'
+          }}
+        />
+        <UiEntity
+          uiTransform={{
+            margin: { top: '-3%' }
+          }}
+          uiText={{
+            value: `Unlocked: ${formatCompletedAt(
+              store.getState().hud.passportSelectedBadge?.completedAt ?? ''
+            )}`,
+            textAlign: 'top-left',
+            fontSize: getFontSize({
+              context: CONTEXT.DIALOG,
+              token: TYPOGRAPHY_TOKENS.BODY_S
+            }),
+            color: COLOR.TEXT_COLOR_LIGHT_GREY
+          }}
+        />
+        <UiEntity
+          uiText={{
+            value:
+              store
+                .getState()
+                .hud.passportSelectedBadge?.description.replace(/;/g, '\n') ??
+              '',
+            fontSize: getFontSize({
+              context: CONTEXT.DIALOG,
+              token: TYPOGRAPHY_TOKENS.BODY_S
+            }),
+            textAlign: 'top-left'
+          }}
+        />
+      </Column>
+    </Column>
   )
 }
 const FloatingBadgeComponent = engine.defineComponent('FloatingBadge', {})
