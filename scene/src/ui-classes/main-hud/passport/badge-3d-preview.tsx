@@ -25,13 +25,20 @@ export function Badge3dPreviewElement(): ReactElement | null {
   const [badgeEntity, setBadgeEntity] = useState<Entity | null>(null)
 
   useEffect(() => {
-    executeTask(async () => {
-      await waitFor(() => !!store.getState().hud.passportSelectedBadge)
+    const badgePreviewEntities = createBadgePreview()
 
-      const { badgeEntity, badgeCameraEntity } = createBadgePreview()
-      setBadgeEntity(badgeEntity)
-      setBadgePreviewCamera(badgeCameraEntity)
-    })
+    setBadgeEntity(badgePreviewEntities.badgeEntity)
+    setBadgePreviewCamera(badgePreviewEntities.badgeCameraEntity)
+
+    return () => {
+      if (badgePreviewEntities.badgeEntity)
+        engine.removeEntity(badgePreviewEntities.badgeEntity)
+
+      if (badgePreviewEntities.badgeCameraEntity)
+        engine.removeEntity(badgePreviewEntities.badgeCameraEntity)
+
+      engine.removeSystem(FloatingBadgeSystem)
+    }
   }, [])
 
   useEffect(() => {
@@ -86,11 +93,11 @@ export function Badge3dPreviewElement(): ReactElement | null {
 }
 const FloatingBadgeComponent = engine.defineComponent('FloatingBadge', {})
 const CAMERA_SIZE = { WIDTH: 270 * 2, HEIGHT: 600 * 2 }
+
 function createBadgePreview(): {
   badgeEntity: Entity
   badgeCameraEntity: Entity
 } {
-  engine.removeSystem(FloatingBadgeSystem)
   engine.addSystem(FloatingBadgeSystem)
 
   const badgeEntity = engine.addEntity()
