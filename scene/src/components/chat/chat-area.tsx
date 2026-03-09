@@ -49,7 +49,7 @@ export function ChatArea({
   )
 }
 
-function getChatMaxHeight(): number {
+export function getChatMaxHeight(): number {
   if (store.getState().hud.minimapOpen) {
     return getViewportHeight() * 0.58
   } else {

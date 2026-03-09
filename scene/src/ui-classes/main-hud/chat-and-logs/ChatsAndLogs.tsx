@@ -336,7 +336,7 @@ function ChatContent({
         justifyContent: 'flex-start',
         alignItems: 'flex-start',
         flexDirection: 'column',
-        borderRadius: 10,
+        borderRadius: getFontSize({}) / 2,
         borderColor: COLOR.BLACK_TRANSPARENT,
         borderWidth: 0,
         opacity

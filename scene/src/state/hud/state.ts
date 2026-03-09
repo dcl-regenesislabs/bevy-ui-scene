@@ -107,6 +107,7 @@ export type HudState = {
     | NotAchievedAchievementItem
     | null
   passportActiveSection: (typeof PASSPORT_SECTIONS)[number]
+  friendsOpen: boolean
 }
 
 export type HudStateUpdateParams = {
@@ -145,11 +146,12 @@ export type HudStateUpdateParams = {
     | NotAchievedAchievementItem
     | null
   passportActiveSection?: (typeof PASSPORT_SECTIONS)[number]
+  friendsOpen?: boolean
 }
 
 export const hudInitialState: HudState = {
   transitioningToMap: false,
-  chatOpen: true,
+  chatOpen: false,
   shownPopups: [],
   profileData: cloneDeep(EMPTY_PROFILE_DATA),
   names: [],
@@ -183,5 +185,6 @@ export const hudInitialState: HudState = {
     pendingAssets: null
   },
   passportSelectedBadge: null,
-  passportActiveSection: PASSPORT_SECTIONS[0]
+  passportActiveSection: PASSPORT_SECTIONS[0],
+  friendsOpen: true
 }

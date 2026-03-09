@@ -20,6 +20,7 @@ import { BevyApi } from '../../bevy-api'
 import { sleep } from '../../utils/dcl-utils'
 import { listenSystemAction } from '../../service/system-actions-emitter'
 import { getFontSize } from '../../service/fontsize-system'
+import FriendsPanel from '../../components/friends/friends-panel'
 
 const ZERO_SIZE = {
   width: 0,
@@ -28,7 +29,8 @@ const ZERO_SIZE = {
 
 enum MENU_ELEMENT {
   NONE,
-  CHAT
+  CHAT,
+  FRIENDS
 }
 
 const state: { hover: MENU_ELEMENT } = {
@@ -40,7 +42,14 @@ const ChatIconInactive: AtlasIcon = {
   spriteName: 'Chat off',
   atlasName: 'navbar'
 }
-
+const FriendsIconActive: AtlasIcon = {
+  spriteName: 'Friends on',
+  atlasName: 'navbar'
+}
+const FriendsIconInactive: AtlasIcon = {
+  spriteName: 'Friends off',
+  atlasName: 'navbar'
+}
 export default class MainHud {
   public readonly isSideBarVisible: boolean = true
   private readonly uiController: UIController
@@ -89,6 +98,11 @@ export default class MainHud {
   private readonly voiceChatIcon: AtlasIcon = {
     atlasName: 'voice-chat',
     spriteName: 'Mic off'
+  }
+
+  private readonly friendsIcon: AtlasIcon = {
+    atlasName: 'navbar',
+    spriteName: 'Friends off'
   }
 
   // private cameraIcon: {atlasName:string, spriteName:string} = {atlasName:'navbar',  spriteName:'Camera Off'}
@@ -259,12 +273,6 @@ export default class MainHud {
     this.voiceChatHint = false
   }
 
-  openCloseChat(): void {
-    store.dispatch(
-      updateHudStateAction({ chatOpen: !store.getState().hud.chatOpen })
-    )
-  }
-
   mainUi(): ReactEcs.JSX.Element | null {
     return (
       <UiEntity
@@ -308,6 +316,7 @@ export default class MainHud {
             }}
           >
             {this.chatAndLogs.isOpen() && this.chatAndLogs.mainUi()}
+            {store.getState().hud.friendsOpen && <FriendsPanel />}
           </UiEntity>
         </UiEntity>
       </UiEntity>
@@ -529,6 +538,36 @@ export default class MainHud {
           />
           <ButtonIcon
             uiTransform={buttonTransform}
+            icon={
+              store.getState().hud.friendsOpen
+                ? FriendsIconActive
+                : FriendsIconInactive
+            }
+            onMouseDown={() => {
+              store.dispatch(
+                updateHudStateAction({
+                  friendsOpen: !store.getState().hud.friendsOpen,
+                  chatOpen: store.getState().hud.friendsOpen ? true : false
+                })
+              )
+              this.updateButtons()
+            }}
+            hintText={'Friends'}
+            hintFontSize={getFontSize({})}
+            showHint={state.hover === MENU_ELEMENT.FRIENDS}
+            notifications={1}
+            iconSize={buttonIconSize}
+            onMouseEnter={() => {
+              state.hover = MENU_ELEMENT.FRIENDS
+            }}
+            onMouseLeave={() => {
+              if (!(state.hover > 0 && state.hover !== MENU_ELEMENT.FRIENDS)) {
+                state.hover = MENU_ELEMENT.FRIENDS
+              }
+            }}
+          />
+          <ButtonIcon
+            uiTransform={buttonTransform}
             onMouseEnter={() => {
               state.hover = MENU_ELEMENT.CHAT
             }}
@@ -538,7 +577,12 @@ export default class MainHud {
               }
             }}
             onMouseDown={() => {
-              this.openCloseChat()
+              store.dispatch(
+                updateHudStateAction({
+                  chatOpen: !store.getState().hud.chatOpen,
+                  friendsOpen: false
+                })
+              )
               this.updateButtons()
             }}
             backgroundColor={
