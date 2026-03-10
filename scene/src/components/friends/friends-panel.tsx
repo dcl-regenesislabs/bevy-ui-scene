@@ -14,6 +14,7 @@ import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorBy
 import { getFriends } from './mock-friends-data'
 import useState = ReactEcs.useState
 import { ButtonIcon } from '../button-icon'
+import { noop } from '../../utils/function-utils'
 
 const FRIENDS_TAB: Tab[] = [
   { text: '  FRIENDS ' },
@@ -25,7 +26,8 @@ export default function FriendsPanel(): ReactElement {
   const fontSize = getFontSize({})
   const [friends, setFriends] = useState<Friend[]>(getFriends())
   const [hoveredFriend, setHoveredFriend] = useState<Friend | null>(null)
-
+  const [isOnlineExpanded, setIsOnlineExpanded] = useState<boolean>(true)
+  const [isOfflineExpanded, setIsOfflineExpanded] = useState<boolean>(true)
   return (
     <Column
       uiTransform={{
@@ -71,71 +73,90 @@ export default function FriendsPanel(): ReactElement {
           height: getChatMaxHeight() * 1.05
         }}
       >
-        <PanelSectionHeader topBorder={false}>
+        <PanelSectionHeader
+          topBorder={false}
+          onMouseDown={() => {
+            setIsOnlineExpanded(!isOnlineExpanded)
+          }}
+        >
           <Icon
-            icon={{ spriteName: 'UpArrow', atlasName: 'icons' }}
+            icon={{
+              spriteName: isOnlineExpanded ? 'UpArrow' : 'DownArrow',
+              atlasName: 'icons'
+            }}
             iconSize={fontSize}
           />
           <UiEntity uiText={{ value: 'ONLINE', fontSize }} />
         </PanelSectionHeader>
-        <Column uiTransform={{ width: '100%' }}>
-          {friends
-            .filter(
-              (f) =>
-                f.onlineStatus === ONLINE_STATUS.IDLE ||
-                f.onlineStatus === ONLINE_STATUS.ONLINE
-            )
-            .sort((a: Friend, b: Friend) => {
-              return a.onlineStatus < b.onlineStatus ? 1 : -1
-            })
-            .map((friend) => {
-              return (
-                <FriendPanelItem
-                  friend={friend}
-                  hovered={friend === hoveredFriend}
-                  onMouseEnter={() => {
-                    setHoveredFriend(friend)
-                  }}
-                  onMouseLeave={() => {
-                    if (friend === hoveredFriend) {
-                      setHoveredFriend(null)
-                    }
-                  }}
-                />
+        {isOnlineExpanded ? (
+          <Column uiTransform={{ width: '100%' }}>
+            {friends
+              .filter(
+                (f) =>
+                  f.onlineStatus === ONLINE_STATUS.IDLE ||
+                  f.onlineStatus === ONLINE_STATUS.ONLINE
               )
-            })}
-        </Column>
-        <PanelSectionHeader>
+              .sort((a: Friend, b: Friend) => {
+                return a.onlineStatus < b.onlineStatus ? 1 : -1
+              })
+              .map((friend) => {
+                return (
+                  <FriendPanelItem
+                    friend={friend}
+                    hovered={friend === hoveredFriend}
+                    onMouseEnter={() => {
+                      setHoveredFriend(friend)
+                    }}
+                    onMouseLeave={() => {
+                      if (friend === hoveredFriend) {
+                        setHoveredFriend(null)
+                      }
+                    }}
+                  />
+                )
+              })}
+          </Column>
+        ) : null}
+        <PanelSectionHeader
+          onMouseDown={() => {
+            setIsOfflineExpanded(!isOfflineExpanded)
+          }}
+        >
           <Icon
-            icon={{ spriteName: 'UpArrow', atlasName: 'icons' }}
+            icon={{
+              spriteName: isOfflineExpanded ? 'UpArrow' : 'DownArrow',
+              atlasName: 'icons'
+            }}
             iconSize={fontSize}
           />
           <UiEntity uiText={{ value: 'OFFLINE', fontSize }} />
         </PanelSectionHeader>
-        <Column
-          uiTransform={{
-            width: '100%'
-          }}
-        >
-          {friends
-            .filter((f) => f.onlineStatus === ONLINE_STATUS.OFFLINE)
-            .map((friend) => {
-              return (
-                <FriendPanelItem
-                  friend={friend}
-                  hovered={friend === hoveredFriend}
-                  onMouseEnter={() => {
-                    setHoveredFriend(friend)
-                  }}
-                  onMouseLeave={() => {
-                    if (friend === hoveredFriend) {
-                      setHoveredFriend(null)
-                    }
-                  }}
-                />
-              )
-            })}
-        </Column>
+        {isOfflineExpanded ? (
+          <Column
+            uiTransform={{
+              width: '100%'
+            }}
+          >
+            {friends
+              .filter((f) => f.onlineStatus === ONLINE_STATUS.OFFLINE)
+              .map((friend) => {
+                return (
+                  <FriendPanelItem
+                    friend={friend}
+                    hovered={friend === hoveredFriend}
+                    onMouseEnter={() => {
+                      setHoveredFriend(friend)
+                    }}
+                    onMouseLeave={() => {
+                      if (friend === hoveredFriend) {
+                        setHoveredFriend(null)
+                      }
+                    }}
+                  />
+                )
+              })}
+          </Column>
+        ) : null}
       </Column>
     </Column>
   )
@@ -143,14 +164,17 @@ export default function FriendsPanel(): ReactElement {
 
 export function PanelSectionHeader({
   children,
-  topBorder = true
+  topBorder = true,
+  onMouseDown = noop
 }: {
   children?: ReactElement
   topBorder?: boolean
+  onMouseDown?: () => void
 }): ReactElement {
   const fontSize = getFontSize({})
   return (
     <Row
+      onMouseDown={onMouseDown}
       uiTransform={{
         justifyContent: 'flex-start',
         alignItems: 'center'
