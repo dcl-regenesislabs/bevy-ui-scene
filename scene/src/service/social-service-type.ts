@@ -10,6 +10,7 @@ export type Friend = {
   hasClaimedName: boolean
   profilePictureUrl: string
   nameColor: NameColor | null
+  online: boolean
 }
 
 export type PaginationData = {

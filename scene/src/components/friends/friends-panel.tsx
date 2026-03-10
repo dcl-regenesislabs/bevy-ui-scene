@@ -6,6 +6,10 @@ import { NavItem } from '../nav-button/NavButton'
 import { Tab, TabComponent } from '../tab-component'
 import { store } from '../../state/store'
 import { updateHudStateAction } from '../../state/hud/actions'
+import { Label } from '@dcl/sdk/react-ecs'
+import Icon from '../icon/Icon'
+import { Column, Row } from '../layout'
+import { BottomBorder } from '../bottom-border'
 const FRIENDS_TAB: Tab[] = [
   { text: '  FRIENDS ' },
   { text: '  REQUESTS  ' },
@@ -54,6 +58,48 @@ export default function FriendsPanel(): ReactElement {
           )
         }}
       ></TabComponent>
+      <PanelSectionHeader>
+        <Icon
+          icon={{ spriteName: 'UpArrow', atlasName: 'icons' }}
+          iconSize={fontSize}
+        />
+        <UiEntity uiText={{ value: 'ONLINE', fontSize }} />
+      </PanelSectionHeader>
+      <Column></Column>
+      <PanelSectionHeader>
+        <Icon
+          icon={{ spriteName: 'UpArrow', atlasName: 'icons' }}
+          iconSize={fontSize}
+        />
+        <UiEntity uiText={{ value: 'OFFLINE', fontSize }} />
+      </PanelSectionHeader>
     </UiEntity>
+  )
+}
+
+export function PanelSectionHeader({
+  children
+}: {
+  children?: ReactElement
+}): ReactElement {
+  const fontSize = getFontSize({})
+  return (
+    <Row
+      uiTransform={{
+        justifyContent: 'flex-start',
+        alignItems: 'center'
+      }}
+    >
+      <Row
+        uiTransform={{
+          padding: { left: fontSize / 2 },
+          justifyContent: 'flex-start',
+          alignItems: 'center'
+        }}
+      >
+        {children}
+      </Row>
+      <BottomBorder color={COLOR.WHITE_OPACITY_1} uiTransform={{ height: 1 }} />
+    </Row>
   )
 }
