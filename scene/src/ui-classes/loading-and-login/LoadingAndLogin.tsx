@@ -20,6 +20,7 @@ import { showErrorPopup } from '../../service/error-popup-service'
 import { createTween } from '../../service/tween'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { getPlayer } from '@dcl/sdk/players'
+import { waitFor } from '../../utils/dcl-utils'
 
 type StatusType =
   | 'loading'
@@ -89,9 +90,11 @@ export default class LoadingAndLogin {
       startTween.cancel()
     })
 
-    if (getPlayer()) {
+    executeTask(async () => {
+      await waitFor(() => !!getPlayer())
       this.finishLoading()
-    }
+      state.loading = false
+    })
   }
 
   finishLoading(): void {
@@ -151,8 +154,6 @@ export default class LoadingAndLogin {
               this.codeText = code.toString()
               this.setStatus('secure-step')
               await getSuccess
-              this.finishLoading()
-              state.loading = false
             } catch (error) {
               state.loading = false
               console.error(error)
@@ -163,7 +164,6 @@ export default class LoadingAndLogin {
         this.secondButtonAction = () => {
           console.log('login guest')
           BevyApi.loginGuest()
-          this.finishLoading()
         }
         break
 
@@ -206,17 +206,12 @@ export default class LoadingAndLogin {
         this.firstButtonAction = () => {
           if (state.loading) return
           state.loading = true
-          BevyApi.loginPrevious()
-            .then(() => {
-              state.loading = false
-              this.finishLoading()
-            })
-            .catch((error) => {
-              state.loading = false
-              console.error(error)
-              // TODO consider removing commented code along with related code
+          BevyApi.loginPrevious().catch((error) => {
+            state.loading = false
+            console.error(error)
+            // TODO consider removing commented code along with related code
 
-              /*  this.uiController.warningPopUp.message = error.message
+            /*  this.uiController.warningPopUp.message = error.message
               this.uiController.warningPopUp.tittle =
                 'Error logging in with previous account:'
               this.uiController.warningPopUp.action = () => {
@@ -225,9 +220,9 @@ export default class LoadingAndLogin {
               this.uiController.warningPopUp.icon = 'WarningColor'
               this.uiController.warningPopUp.show() */
 
-              showErrorPopup(error, 'BevyApi.loginPrevious')
-              this.setStatus('sign-in-or-guest')
-            })
+            showErrorPopup(error, 'BevyApi.loginPrevious')
+            this.setStatus('sign-in-or-guest')
+          })
         }
         this.secondButtonText = 'USE DIFFERENT ACCOUNT'
         this.secondButtonAction = () => {
