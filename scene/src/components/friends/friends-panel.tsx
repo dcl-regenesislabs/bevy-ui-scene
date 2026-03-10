@@ -42,7 +42,7 @@ export default function FriendsPanel(): ReactElement {
     >
       <TabComponent
         uiTransform={{
-          width: '100%',
+          width: '97%',
           height: fontSize * 2,
           borderRadius: { topLeft: fontSize / 2, topRight: fontSize / 2 },
           padding: { left: fontSize / 2 },
@@ -68,7 +68,7 @@ export default function FriendsPanel(): ReactElement {
           scrollVisible: 'vertical',
           overflow: 'scroll',
           width: '100%',
-          height: getChatMaxHeight()
+          height: getChatMaxHeight() * 1.05
         }}
       >
         <PanelSectionHeader topBorder={false}>
