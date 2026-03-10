@@ -108,6 +108,7 @@ export type HudState = {
     | null
   passportActiveSection: (typeof PASSPORT_SECTIONS)[number]
   friendsOpen: boolean
+  friendsActiveTabIndex: number
 }
 
 export type HudStateUpdateParams = {
@@ -147,6 +148,7 @@ export type HudStateUpdateParams = {
     | null
   passportActiveSection?: (typeof PASSPORT_SECTIONS)[number]
   friendsOpen?: boolean
+  friendsActiveTabIndex?: number
 }
 
 export const hudInitialState: HudState = {
@@ -186,5 +188,6 @@ export const hudInitialState: HudState = {
   },
   passportSelectedBadge: null,
   passportActiveSection: PASSPORT_SECTIONS[0],
-  friendsOpen: true
+  friendsOpen: true,
+  friendsActiveTabIndex: 0
 }

@@ -2,6 +2,15 @@ import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../color-palette'
 import { getFontSize } from '../../service/fontsize-system'
 import { getChatMaxHeight } from '../chat/chat-area'
+import { NavItem } from '../nav-button/NavButton'
+import { Tab, TabComponent } from '../tab-component'
+import { store } from '../../state/store'
+import { updateHudStateAction } from '../../state/hud/actions'
+const FRIENDS_TAB: Tab[] = [
+  { text: '  FRIENDS ' },
+  { text: '  REQUESTS  ' },
+  { text: '  BLOCKED  ' }
+]
 
 export default function FriendsPanel(): ReactElement {
   const fontSize = getFontSize({})
@@ -22,14 +31,29 @@ export default function FriendsPanel(): ReactElement {
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_9 }}
     >
-      <UiEntity
+      <TabComponent
         uiTransform={{
           width: '100%',
           height: fontSize * 2,
-          borderRadius: { topLeft: fontSize / 2, topRight: fontSize / 2 }
+          borderRadius: { topLeft: fontSize / 2, topRight: fontSize / 2 },
+          padding: { left: fontSize / 2 },
+          justifyContent: 'flex-start',
+          alignItems: 'center'
         }}
+        fontSize={fontSize}
         uiBackground={{ color: COLOR.BLACK_POPUP_BACKGROUND }}
-      ></UiEntity>
+        tabs={FRIENDS_TAB.map((t, tabIndex) => ({
+          ...t,
+          active: store.getState().hud.friendsActiveTabIndex === tabIndex
+        }))}
+        onClickTab={(tabIndex) => {
+          store.dispatch(
+            updateHudStateAction({
+              friendsActiveTabIndex: tabIndex
+            })
+          )
+        }}
+      ></TabComponent>
     </UiEntity>
   )
 }
