@@ -78,15 +78,15 @@ function TeleportContent({
         const catalystBaseURl =
           realm.realmInfo?.baseUrl ?? CATALYST_BASE_URL_FALLBACK
 
-        if (targetRealm) {
-          const currentRealm =
-            realm.realmInfo?.realmName ?? realm.realmInfo?.baseUrl ?? ''
-          const needsChange =
-            currentRealm !== targetRealm &&
-            catalystBaseURl !== targetRealm
-          setRealmChangeNeeded(needsChange)
-          setResolvedTargetRealm(targetRealm)
-        }
+        const MAIN_REALM = 'https://realm-provider.decentraland.org/main'
+        const effectiveTargetRealm = targetRealm ?? MAIN_REALM
+        const currentRealm =
+          realm.realmInfo?.realmName ?? realm.realmInfo?.baseUrl ?? ''
+        const isOnDifferentRealm =
+          currentRealm !== effectiveTargetRealm &&
+          catalystBaseURl !== effectiveTargetRealm
+        setRealmChangeNeeded(isOnDifferentRealm)
+        setResolvedTargetRealm(effectiveTargetRealm)
 
         const [result] = await fetchJsonOrTryFallback(
           `${catalystBaseURl}/content/entities/scene?pointer=${worldCoordinates.x},${worldCoordinates.y}`

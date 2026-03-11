@@ -77,6 +77,7 @@ function ChatMessage(props: {
   ) => {
     if (event?.hit?.meshName) {
       const [type, value] = event?.hit?.meshName.split('::')
+      console.log('chat link value', value)
       if (type === LINK_TYPE.USER) {
         const player =
           getPlayer({ userId: value }) ??
