@@ -43,6 +43,8 @@ function getAvatarShapeDefinitionFromPlayer({
   userId: string
 }): PBAvatarShape {
   const player = getPlayer({ userId })
+  // TODO we need to change approach because we want to see passport of offline avatars; maybe use getPlayer or await fetch profile
+
   return {
     id: userId,
     emotes: [],
