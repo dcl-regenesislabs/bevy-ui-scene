@@ -1,4 +1,4 @@
-import { Friend } from '../../service/social-service-type'
+import { Friend, ONLINE_STATUS } from '../../service/social-service-type'
 import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
@@ -10,7 +10,8 @@ import { ButtonIcon } from '../button-icon'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { store } from '../../state/store'
-import { GetPlayerDataRes } from '../../utils/definitions'
+import { executeTask } from '@dcl/sdk/ecs'
+import { fetchFriendLocation } from '../../service/friend-location'
 
 export function FriendPanelItem({
   friend,
@@ -107,13 +108,32 @@ export function FriendPanelItem({
               ...menuButtonTransform
             }}
           />
-          <ButtonIcon
-            icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
-            iconSize={menuButtonIconSize}
-            uiTransform={{
-              ...menuButtonTransform
-            }}
-          />
+          {isOnline(friend) ? (
+            <ButtonIcon
+              icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
+              iconSize={menuButtonIconSize}
+              uiTransform={{
+                ...menuButtonTransform
+              }}
+              onMouseDown={() => {
+                executeTask(async () => {
+                  const location = await fetchFriendLocation(
+                    friend.address
+                  )
+                  if (!location) return
+                  store.dispatch(
+                    pushPopupAction({
+                      type: HUD_POPUP_TYPE.TELEPORT,
+                      data: {
+                        coordinates: location.coordinates,
+                        realm: location.realm
+                      }
+                    })
+                  )
+                })
+              }}
+            />
+          ) : null}
           <ButtonIcon
             iconSize={menuButtonIconSize}
             icon={{ spriteName: 'Menu', atlasName: 'icons' }}
@@ -138,5 +158,12 @@ export function FriendPanelItem({
         </Row>
       </Column>
     </Row>
+  )
+}
+
+export function isOnline(friend: Friend) {
+  return (
+    friend.onlineStatus === ONLINE_STATUS.ONLINE ||
+    friend.onlineStatus === ONLINE_STATUS.IDLE
   )
 }

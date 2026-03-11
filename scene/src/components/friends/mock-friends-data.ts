@@ -2,7 +2,7 @@ import { Friend, ONLINE_STATUS } from '../../service/social-service-type'
 export const getFriends = () => mockFriends
 export const mockFriends: Friend[] = [
   {
-    address: '0x598f8af1565003AE7456DaC280a18ee826Df7a2c',
+    address: '0x6440350e4adb24c82874e6a34505425f8b66db80',
     name: 'CryptoNaut',
     hasClaimedName: true,
     profilePictureUrl: '',

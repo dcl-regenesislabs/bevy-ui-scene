@@ -9,7 +9,7 @@ import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import Icon from '../../components/icon/Icon'
 import { Color4, type Vector2 } from '@dcl/sdk/math'
 import { type Popup } from '../../components/popup-stack'
-import { teleportTo } from '~system/RestrictedActions'
+import { teleportTo, changeRealm } from '~system/RestrictedActions'
 import { getRealm } from '~system/Runtime'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
@@ -27,27 +27,45 @@ const state = {
   rememberDomain: false
 }
 
-export const PopupTeleport: Popup = ({ shownPopup }): ReactElement | null => {
-  const URL: string = shownPopup.data as string
+export type TeleportPopupData =
+  | string
+  | { coordinates: string; realm?: string }
 
+export const PopupTeleport: Popup = ({ shownPopup }): ReactElement | null => {
   if (shownPopup?.type !== HUD_POPUP_TYPE.TELEPORT) return null
-  const [x, y] = URL.replace(' ', '')
+
+  const data = shownPopup.data as TeleportPopupData
+  const coordString =
+    typeof data === 'string' ? data : data.coordinates
+  const targetRealm = typeof data === 'string' ? undefined : data.realm
+
+  const [x, y] = coordString
+    .replace(' ', '')
     .split(',')
     .map((n) => Number(n))
   const worldCoordinates = { x, y }
   return (
     <PopupBackdrop>
-      <TeleportContent worldCoordinates={worldCoordinates} />
+      <TeleportContent
+        worldCoordinates={worldCoordinates}
+        targetRealm={targetRealm}
+      />
     </PopupBackdrop>
   )
 }
 function TeleportContent({
-  worldCoordinates
+  worldCoordinates,
+  targetRealm
 }: {
   worldCoordinates: Vector2
+  targetRealm?: string
 }): ReactElement {
   const [sceneTitle, setSceneTitle] = useState<string>('')
   const [sceneThumbnail, setSceneThumbnail] = useState<string | null>(null)
+  const [realmChangeNeeded, setRealmChangeNeeded] = useState<boolean>(false)
+  const [resolvedTargetRealm, setResolvedTargetRealm] = useState<
+    string | undefined
+  >(targetRealm)
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.POPUP_TITLE
@@ -59,6 +77,17 @@ function TeleportContent({
         const realm = await getRealm({})
         const catalystBaseURl =
           realm.realmInfo?.baseUrl ?? CATALYST_BASE_URL_FALLBACK
+
+        if (targetRealm) {
+          const currentRealm =
+            realm.realmInfo?.realmName ?? realm.realmInfo?.baseUrl ?? ''
+          const needsChange =
+            currentRealm !== targetRealm &&
+            catalystBaseURl !== targetRealm
+          setRealmChangeNeeded(needsChange)
+          setResolvedTargetRealm(targetRealm)
+        }
+
         const [result] = await fetchJsonOrTryFallback(
           `${catalystBaseURl}/content/entities/scene?pointer=${worldCoordinates.x},${worldCoordinates.y}`
         )
@@ -109,7 +138,7 @@ function TeleportContent({
 
       <UiEntity
         uiText={{
-          value: `\nAre you sure you want to be teleported to <b>${worldCoordinates.x},${worldCoordinates.y}?</b>\n\n${sceneTitle}`,
+          value: `\nAre you sure you want to be teleported to <b>${worldCoordinates.x},${worldCoordinates.y}?</b>${realmChangeNeeded ? `\n\nThis will also change your realm to <b>${resolvedTargetRealm}</b>` : ''}\n\n${sceneTitle}`,
           color: COLOR.WHITE,
           textWrap: 'wrap',
           fontSize: fontSizeTitle
@@ -181,7 +210,16 @@ function TeleportContent({
             state.rememberDomain = false
 
             closeDialog()
-            teleportTo({ worldCoordinates }).catch(console.error)
+            executeTask(async () => {
+              try {
+                if (realmChangeNeeded && resolvedTargetRealm) {
+                  await changeRealm({ realm: resolvedTargetRealm })
+                }
+                await teleportTo({ worldCoordinates })
+              } catch (error) {
+                console.error(error)
+              }
+            })
           }}
         />
       </UiEntity>
