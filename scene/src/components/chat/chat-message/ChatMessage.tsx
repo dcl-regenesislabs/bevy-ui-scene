@@ -42,7 +42,8 @@ import {
 const LINK_TYPE = {
   USER: 'user',
   URL: 'url',
-  LOCATION: 'location'
+  LOCATION: 'location',
+  WORLD: 'world'
 }
 
 const EMOJI_SET = new Set(emojiCompleteList.emojis.map((e) => e.emoji))
@@ -104,6 +105,13 @@ function ChatMessage(props: {
           pushPopupAction({
             type: HUD_POPUP_TYPE.TELEPORT,
             data: value
+          })
+        )
+      } else if (type === LINK_TYPE.WORLD) {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.TELEPORT,
+            data: { coordinates: '0,0', realm: value }
           })
         )
       }
@@ -294,11 +302,13 @@ export const SUGGESTION_EMOJI_REGEXP = /:\w*(#\w+)?:?$/g
 export const EMOJI_MENTION_REGEXP = /:\w+(#\w+)?/g
 const URL_REGEXP = /https:\/\/[^\s"',]+/g
 const LOCATION_REGEXP = /-?\d+,\s?-?\d+/g
+const REALM_REGEXP = /\b[\w-]+\.dcl\.eth\b/g
 
 export const decorateMessageWithLinks = compose(
   replaceNameTags,
   replaceURLTags,
-  replaceLocationTags
+  replaceLocationTags,
+  replaceRealmTags
 )
 
 export function replaceLocationTags(message: string): string {
@@ -310,6 +320,13 @@ export function replaceLocationTags(message: string): string {
 export function replaceURLTags(message: string): string {
   return message.replace(URL_REGEXP, function (...[match]) {
     return `<b><color=#00B1FE><link=${LINK_TYPE.URL}::${match}>${match}</link></color></b>`
+  })
+}
+
+export function replaceRealmTags(message: string): string {
+  return message.replace(REALM_REGEXP, function (...[match]) {
+    console.log('match', match)
+    return `<b><color=#00B1FE><link=${LINK_TYPE.WORLD}::${match}>${match}</link></color></b>`
   })
 }
 

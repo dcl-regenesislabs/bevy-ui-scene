@@ -14,7 +14,10 @@ import { getRealm } from '~system/Runtime'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 import { fetchJsonOrTryFallback } from '../../utils/promise-utils'
-import { CATALYST_BASE_URL_FALLBACK } from '../../utils/constants'
+import {
+  CATALYST_BASE_URL_FALLBACK,
+  WORLDS_CONTENT_SERVER_URL
+} from '../../utils/constants'
 import { executeTask } from '@dcl/sdk/ecs'
 import {
   CONTEXT,
@@ -88,19 +91,18 @@ function TeleportContent({
         setRealmChangeNeeded(isOnDifferentRealm)
         setResolvedTargetRealm(effectiveTargetRealm)
 
-        const [result] = await fetchJsonOrTryFallback(
-          `${catalystBaseURl}/content/entities/scene?pointer=${worldCoordinates.x},${worldCoordinates.y}`
-        )
-        setSceneTitle(
-          `<b>${result.metadata.display.title}</b>\n${result.metadata.display.description}\n\n`
-        )
-        const thumbnailFileName = result.metadata.display?.navmapThumbnail
-        const fileEntry = result.content.find(
-          (f: any) => f.file === thumbnailFileName
-        )
-        if (fileEntry) {
-          setSceneThumbnail(
-            `https://peer.decentraland.org/content/contents/${fileEntry.hash}`
+        const isWorld =
+          targetRealm?.endsWith('.dcl.eth') ||
+          targetRealm?.endsWith('.eth')
+
+        if (isWorld) {
+          await fetchWorldSceneInfo(targetRealm!, setSceneTitle, setSceneThumbnail)
+        } else {
+          await fetchMainRealmSceneInfo(
+            catalystBaseURl,
+            worldCoordinates,
+            setSceneTitle,
+            setSceneThumbnail
           )
         }
       } catch (error) {
@@ -228,4 +230,64 @@ function TeleportContent({
 }
 function closeDialog(): void {
   store.dispatch(closeLastPopupAction())
+}
+
+async function fetchMainRealmSceneInfo(
+  catalystBaseURl: string,
+  worldCoordinates: Vector2,
+  setSceneTitle: (v: string) => void,
+  setSceneThumbnail: (v: string | null) => void
+): Promise<void> {
+  const [result] = await fetchJsonOrTryFallback(
+    `${catalystBaseURl}/content/entities/scene?pointer=${worldCoordinates.x},${worldCoordinates.y}`
+  )
+  setSceneTitle(
+    `<b>${result.metadata.display.title}</b>\n${result.metadata.display.description}\n\n`
+  )
+  const thumbnailFileName = result.metadata.display?.navmapThumbnail
+  const fileEntry = result.content.find(
+    (f: any) => f.file === thumbnailFileName
+  )
+  if (fileEntry) {
+    setSceneThumbnail(
+      `https://peer.decentraland.org/content/contents/${fileEntry.hash}`
+    )
+  }
+}
+
+async function fetchWorldSceneInfo(
+  worldName: string,
+  setSceneTitle: (v: string) => void,
+  setSceneThumbnail: (v: string | null) => void
+): Promise<void> {
+  const aboutUrl = `${WORLDS_CONTENT_SERVER_URL}/world/${worldName}/about`
+  const aboutData = await (await fetch(aboutUrl)).json()
+
+  const sceneUrn = aboutData.configurations?.scenesUrn?.[0]
+  if (!sceneUrn) {
+    setSceneTitle(`<b>${worldName}</b>\n\n`)
+    return
+  }
+
+  const urnMatch = sceneUrn.match(/baseUrl=([^&]+)/)
+  const baseUrl = urnMatch?.[1] ?? `${WORLDS_CONTENT_SERVER_URL}/contents/`
+  const entityId = sceneUrn.match(/entity:([^?]+)/)?.[1]
+  if (!entityId) {
+    setSceneTitle(`<b>${worldName}</b>\n\n`)
+    return
+  }
+
+  const entityData = await (await fetch(`${baseUrl}${entityId}`)).json()
+  const display = entityData?.metadata?.display
+  setSceneTitle(
+    `<b>${display?.title ?? worldName}</b>\n${display?.description ?? ''}\n\n`
+  )
+
+  const thumbnailFileName = display?.navmapThumbnail
+  const fileEntry = entityData?.content?.find(
+    (f: any) => f.file === thumbnailFileName
+  )
+  if (fileEntry) {
+    setSceneThumbnail(`${baseUrl}${fileEntry.hash}`)
+  }
 }
