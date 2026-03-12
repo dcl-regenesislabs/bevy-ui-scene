@@ -13,6 +13,8 @@ import { getFriends } from './mock-friends-data'
 import useState = ReactEcs.useState
 import { noop } from '../../utils/function-utils'
 import { FriendPanelItem } from './friend-panel-item'
+import { PanelSectionHeader } from './panel-section-header'
+import { FriendListPanel } from './friend-list-panel'
 
 const FRIENDS_TAB: Tab[] = [
   { text: '  FRIENDS ' },
@@ -22,10 +24,7 @@ const FRIENDS_TAB: Tab[] = [
 
 export default function FriendsPanel(): ReactElement {
   const fontSize = getFontSize({})
-  const [friends, setFriends] = useState<Friend[]>(getFriends())
-  const [hoveredFriend, setHoveredFriend] = useState<Friend | null>(null)
-  const [isOnlineExpanded, setIsOnlineExpanded] = useState<boolean>(true)
-  const [isOfflineExpanded, setIsOfflineExpanded] = useState<boolean>(true)
+
   return (
     <Column
       uiTransform={{
@@ -63,134 +62,9 @@ export default function FriendsPanel(): ReactElement {
           )
         }}
       ></TabComponent>
-      <Column
-        uiTransform={{
-          scrollVisible: 'vertical',
-          overflow: 'scroll',
-          width: '100%',
-          height: getChatMaxHeight() * 1.05
-        }}
-      >
-        <PanelSectionHeader
-          topBorder={false}
-          onMouseDown={() => {
-            setIsOnlineExpanded(!isOnlineExpanded)
-          }}
-        >
-          <Icon
-            icon={{
-              spriteName: isOnlineExpanded ? 'UpArrow' : 'DownArrow',
-              atlasName: 'icons'
-            }}
-            iconSize={fontSize}
-          />
-          <UiEntity uiText={{ value: 'ONLINE', fontSize }} />
-        </PanelSectionHeader>
-        {isOnlineExpanded ? (
-          <Column uiTransform={{ width: '100%' }}>
-            {friends
-              .filter(
-                (f) =>
-                  f.onlineStatus === ONLINE_STATUS.IDLE ||
-                  f.onlineStatus === ONLINE_STATUS.ONLINE
-              )
-              .sort((a: Friend, b: Friend) => {
-                return a.onlineStatus < b.onlineStatus ? 1 : -1
-              })
-              .map((friend) => {
-                return (
-                  <FriendPanelItem
-                    friend={friend}
-                    hovered={friend === hoveredFriend}
-                    onMouseEnter={() => {
-                      setHoveredFriend(friend)
-                    }}
-                    onMouseLeave={() => {
-                      if (friend === hoveredFriend) {
-                        setHoveredFriend(null)
-                      }
-                    }}
-                  />
-                )
-              })}
-          </Column>
-        ) : null}
-        <PanelSectionHeader
-          onMouseDown={() => {
-            setIsOfflineExpanded(!isOfflineExpanded)
-          }}
-        >
-          <Icon
-            icon={{
-              spriteName: isOfflineExpanded ? 'UpArrow' : 'DownArrow',
-              atlasName: 'icons'
-            }}
-            iconSize={fontSize}
-          />
-          <UiEntity uiText={{ value: 'OFFLINE', fontSize }} />
-        </PanelSectionHeader>
-        {isOfflineExpanded ? (
-          <Column
-            uiTransform={{
-              width: '100%'
-            }}
-          >
-            {friends
-              .filter((f) => f.onlineStatus === ONLINE_STATUS.OFFLINE)
-              .map((friend) => {
-                return (
-                  <FriendPanelItem
-                    friend={friend}
-                    hovered={friend === hoveredFriend}
-                    onMouseEnter={() => {
-                      setHoveredFriend(friend)
-                    }}
-                    onMouseLeave={() => {
-                      if (friend === hoveredFriend) {
-                        setHoveredFriend(null)
-                      }
-                    }}
-                  />
-                )
-              })}
-          </Column>
-        ) : null}
-      </Column>
+      {store.getState().hud.friendsActiveTabIndex === 0 ? (
+        <FriendListPanel />
+      ) : null}
     </Column>
-  )
-}
-
-export function PanelSectionHeader({
-  children,
-  topBorder = true,
-  onMouseDown = noop
-}: {
-  children?: ReactElement
-  topBorder?: boolean
-  onMouseDown?: () => void
-}): ReactElement {
-  const fontSize = getFontSize({})
-  return (
-    <Row
-      onMouseDown={onMouseDown}
-      uiTransform={{
-        justifyContent: 'flex-start',
-        alignItems: 'center'
-      }}
-    >
-      {topBorder && (
-        <TopBorder color={COLOR.WHITE_OPACITY_1} uiTransform={{ height: 1 }} />
-      )}
-      <Row
-        uiTransform={{
-          padding: { left: fontSize / 2 },
-          justifyContent: 'flex-start',
-          alignItems: 'center'
-        }}
-      >
-        {children}
-      </Row>
-      <BottomBorder color={COLOR.WHITE_OPACITY_1} uiTransform={{ height: 1 }} />
-    </Row>
   )
 }
