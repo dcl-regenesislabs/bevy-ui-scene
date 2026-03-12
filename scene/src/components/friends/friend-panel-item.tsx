@@ -101,13 +101,6 @@ export function FriendPanelItem({
             alignItems: 'flex-end'
           }}
         >
-          <ButtonIcon
-            iconSize={menuButtonIconSize}
-            icon={{ spriteName: 'Chat', atlasName: 'context' }}
-            uiTransform={{
-              ...menuButtonTransform
-            }}
-          />
           {isOnline(friend) ? (
             <ButtonIcon
               icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
@@ -117,9 +110,7 @@ export function FriendPanelItem({
               }}
               onMouseDown={() => {
                 executeTask(async () => {
-                  const location = await fetchFriendLocation(
-                    friend.address
-                  )
+                  const location = await fetchFriendLocation(friend.address)
                   if (!location) return
                   store.dispatch(
                     pushPopupAction({
