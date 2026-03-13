@@ -8,7 +8,7 @@ import Icon from '../icon/Icon'
 import { getChatMaxHeight } from '../chat/chat-area'
 import { PanelSectionHeader } from './panel-section-header'
 import { UiEntity } from '@dcl/sdk/react-ecs'
-import { FriendPanelItem } from './friend-panel-item'
+import { FriendListItem } from './friend-list-item'
 
 export function FriendListPanel() {
   const fontSize = getFontSize({})
@@ -53,8 +53,9 @@ export function FriendListPanel() {
               return a.onlineStatus < b.onlineStatus ? 1 : -1
             })
             .map((friend) => {
+              // TODO hovered, onMouseEnter, onMouseLeave could be removed and leave for internal logic if enter/leave worked fine
               return (
-                <FriendPanelItem
+                <FriendListItem
                   friend={friend}
                   hovered={friend === hoveredFriend}
                   onMouseEnter={() => {
@@ -94,7 +95,7 @@ export function FriendListPanel() {
             .filter((f) => f.onlineStatus === ONLINE_STATUS.OFFLINE)
             .map((friend) => {
               return (
-                <FriendPanelItem
+                <FriendListItem
                   friend={friend}
                   hovered={friend === hoveredFriend}
                   onMouseEnter={() => {

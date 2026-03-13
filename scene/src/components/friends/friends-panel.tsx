@@ -12,9 +12,10 @@ import { Friend, ONLINE_STATUS } from '../../service/social-service-type'
 import { getFriends } from './mock-friends-data'
 import useState = ReactEcs.useState
 import { noop } from '../../utils/function-utils'
-import { FriendPanelItem } from './friend-panel-item'
+import { FriendListItem } from './friend-list-item'
 import { PanelSectionHeader } from './panel-section-header'
 import { FriendListPanel } from './friend-list-panel'
+import { FriendRequestList } from './friend-request-list'
 
 const FRIENDS_TAB: Tab[] = [
   { text: '  FRIENDS ' },
@@ -64,6 +65,9 @@ export default function FriendsPanel(): ReactElement {
       ></TabComponent>
       {store.getState().hud.friendsActiveTabIndex === 0 ? (
         <FriendListPanel />
+      ) : null}
+      {store.getState().hud.friendsActiveTabIndex === 1 ? (
+        <FriendRequestList />
       ) : null}
     </Column>
   )

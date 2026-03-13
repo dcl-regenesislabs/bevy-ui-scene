@@ -189,5 +189,5 @@ export const hudInitialState: HudState = {
   passportSelectedBadge: null,
   passportActiveSection: PASSPORT_SECTIONS[0],
   friendsOpen: true,
-  friendsActiveTabIndex: 0
+  friendsActiveTabIndex: 1
 }

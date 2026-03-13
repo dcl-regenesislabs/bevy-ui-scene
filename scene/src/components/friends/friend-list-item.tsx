@@ -13,7 +13,7 @@ import { store } from '../../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
 import { fetchFriendLocation } from '../../service/friend-location'
 
-export function FriendPanelItem({
+export function FriendListItem({
   friend,
   onMouseEnter,
   onMouseLeave,

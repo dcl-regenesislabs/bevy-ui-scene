@@ -10,6 +10,16 @@ export enum ONLINE_STATUS {
   IDLE = 'Idle'
 }
 
+export enum FRIENDSHIP_STATUS {
+  REQUEST_SENT = 0,
+  REQUEST_RECEIVED = 1,
+  CANCELED = 2,
+  ACCEPTED = 3,
+  REJECTED = 4,
+  DELETED = 5,
+  BLOCKED = 6
+}
+
 export type Friend = {
   address: string
   name: string
@@ -17,6 +27,8 @@ export type Friend = {
   profilePictureUrl: string
   nameColor: NameColor | null
   onlineStatus: ONLINE_STATUS
+  friendshipStatus: FRIENDSHIP_STATUS
+  friendshipRequestMessage?: string
 }
 
 export type PaginationData = {
