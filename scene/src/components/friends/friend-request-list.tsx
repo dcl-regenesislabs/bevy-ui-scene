@@ -15,6 +15,7 @@ export function FriendRequestList() {
   const [friendRequests, setFriendRequests] = useState<Friend[]>(
     getFriendRequests()
   )
+  const [hoveredRequest, setHoveredRequest] = useState<Friend | null>(null)
   const fontSize = getFontSize({})
 
   return (
@@ -44,10 +45,16 @@ export function FriendRequestList() {
             )
             .map((friendRequest) => (
               <FriendRequestItem
-                hovered={false}
+                hovered={hoveredRequest === friendRequest}
                 friend={friendRequest}
-                onMouseLeave={() => {}}
-                onMouseEnter={() => {}}
+                onMouseEnter={() => {
+                  setHoveredRequest(friendRequest)
+                }}
+                onMouseLeave={() => {
+                  if (friendRequest === hoveredRequest) {
+                    setHoveredRequest(null)
+                  }
+                }}
               />
             ))}
         </Column>

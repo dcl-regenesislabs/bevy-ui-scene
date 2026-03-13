@@ -1,17 +1,18 @@
 import { Friend, ONLINE_STATUS } from '../../service/social-service-type'
-import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
+import ReactEcs, { Button, ReactElement, UiEntity } from '@dcl/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { Column, Row } from '../layout'
 import { COLOR } from '../color-palette'
 import { AvatarCircle } from '../avatar-circle'
 import Icon from '../icon/Icon'
-import { ButtonIcon } from '../button-icon'
+import { ButtonText } from '../button-text'
+import { Callback, Label } from '@dcl/sdk/react-ecs'
+import { noop } from '../../utils/function-utils'
+import { truncateWithoutBreakingWords } from '../../utils/ui-utils'
+import { store } from '../../state/store'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
-import { store } from '../../state/store'
-import { executeTask } from '@dcl/sdk/ecs'
-import { fetchFriendLocation } from '../../service/friend-location'
 
 export function FriendRequestItem({
   friend,
@@ -35,7 +36,8 @@ export function FriendRequestItem({
   return (
     <Row
       uiTransform={{
-        width: '100%'
+        width: '100%',
+        height: fontSize * 3
       }}
       onMouseLeave={onMouseLeave}
       onMouseEnter={onMouseEnter}
@@ -62,7 +64,7 @@ export function FriendRequestItem({
         <Row>
           <UiEntity
             uiText={{
-              value: `<b>${friend.name}</b>`,
+              value: `<b>${truncateWithoutBreakingWords(friend.name, 10)}</b>`,
               textAlign: 'middle-left',
               color: addressColor,
               fontSize
@@ -97,11 +99,70 @@ export function FriendRequestItem({
           uiTransform={{
             width: '100%',
             justifyContent: 'flex-end',
-            alignItems: 'flex-end'
+            alignItems: 'center'
           }}
-        ></Row>
+        >
+          <PanelListButton variant={'secondary'} onMouseDown={() => {}}>
+            <Label value={'DELETE'} />
+          </PanelListButton>
+          <PanelListButton onMouseDown={() => {}}>
+            <Label value={'ACCEPT'} />
+          </PanelListButton>
+          <PanelListButton
+            onMouseDown={() => {
+              store.dispatch(
+                pushPopupAction({
+                  type: HUD_POPUP_TYPE.PROFILE_MENU,
+                  data: {
+                    player: {
+                      ...friend,
+                      userId: friend.address.toLowerCase(),
+                      isGuest: false
+                    }
+                  }
+                })
+              )
+            }}
+            variant={'secondary'}
+          >
+            <Icon
+              icon={{ spriteName: 'Menu', atlasName: 'icons' }}
+              iconSize={fontSize}
+            />
+          </PanelListButton>
+        </Row>
       </Column>
     </Row>
+  )
+}
+
+export function PanelListButton({
+  onMouseDown = noop,
+  variant = 'primary',
+  children
+}: {
+  variant?: 'primary' | 'secondary'
+  onMouseDown?: Callback
+  children?: ReactElement | ReactElement[] | null
+}) {
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  return (
+    <UiEntity
+      uiTransform={{
+        height: fontSize * 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: { right: fontSize / 2 },
+        borderRadius: fontSize / 2
+      }}
+      uiBackground={{
+        color:
+          variant === 'secondary' ? COLOR.WHITE_OPACITY_1 : COLOR.BUTTON_PRIMARY
+      }}
+      onMouseDown={onMouseDown}
+    >
+      {children}
+    </UiEntity>
   )
 }
 

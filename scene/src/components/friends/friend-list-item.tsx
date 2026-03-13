@@ -35,7 +35,8 @@ export function FriendListItem({
   return (
     <Row
       uiTransform={{
-        width: '100%'
+        width: '100%',
+        height: fontSize * 3
       }}
       onMouseLeave={onMouseLeave}
       onMouseEnter={onMouseEnter}

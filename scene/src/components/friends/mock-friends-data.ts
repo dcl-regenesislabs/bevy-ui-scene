@@ -32,13 +32,14 @@ export const mockFriends: Friend[] = [
   },
   {
     address: '0x235ec1cc12dbda96f014896de38f74f6e60239c0',
-    name: 'PixelWanderer',
+    name: 'PixelWandererMagical',
     hasClaimedName: true,
     profilePictureUrl: '',
     nameColor: { r: 88, g: 86, b: 214 },
     onlineStatus: ONLINE_STATUS.OFFLINE,
     friendshipStatus: FRIENDSHIP_STATUS.REQUEST_RECEIVED,
-    friendshipRequestMessage: 'Hey! We met at the music festival in Genesis Plaza'
+    friendshipRequestMessage:
+      'Hey! We met at the music festival in Genesis Plaza'
   },
   {
     address: '0x0000000000000000000000000000000000000000',
@@ -105,7 +106,7 @@ export const mockFriends: Friend[] = [
   },
   {
     address: '0x3faacc4e4287b82ccc1ca40adab0fc49a380b7ab',
-    name: 'QuantumRider',
+    name: 'QuantumR',
     hasClaimedName: true,
     profilePictureUrl: '',
     nameColor: { r: 48, g: 176, b: 199 },
