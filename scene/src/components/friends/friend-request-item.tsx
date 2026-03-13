@@ -18,12 +18,14 @@ export function FriendRequestItem({
   friend,
   onMouseEnter,
   onMouseLeave,
-  hovered = false
+  hovered = false,
+  children
 }: {
   friend: Friend
   onMouseEnter?: () => void
   onMouseLeave?: () => void
   hovered: boolean
+  children?: ReactElement | ReactElement[] | null
 }): ReactElement {
   const addressColor = getAddressColor(friend.address)
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
@@ -102,34 +104,7 @@ export function FriendRequestItem({
             alignItems: 'center'
           }}
         >
-          <PanelListButton variant={'secondary'} onMouseDown={() => {}}>
-            <Label value={'DELETE'} />
-          </PanelListButton>
-          <PanelListButton onMouseDown={() => {}}>
-            <Label value={'ACCEPT'} />
-          </PanelListButton>
-          <PanelListButton
-            onMouseDown={() => {
-              store.dispatch(
-                pushPopupAction({
-                  type: HUD_POPUP_TYPE.PROFILE_MENU,
-                  data: {
-                    player: {
-                      ...friend,
-                      userId: friend.address.toLowerCase(),
-                      isGuest: false
-                    }
-                  }
-                })
-              )
-            }}
-            variant={'secondary'}
-          >
-            <Icon
-              icon={{ spriteName: 'Menu', atlasName: 'icons' }}
-              iconSize={fontSize}
-            />
-          </PanelListButton>
+          {children}
         </Row>
       </Column>
     </Row>
@@ -170,5 +145,105 @@ export function isOnline(friend: Friend) {
   return (
     friend.onlineStatus === ONLINE_STATUS.ONLINE ||
     friend.onlineStatus === ONLINE_STATUS.IDLE
+  )
+}
+
+export function FriendRequestItemReceived({
+  friendRequest,
+  hovered,
+  onMouseEnter,
+  onMouseLeave
+}: {
+  friendRequest: Friend
+  hovered?: boolean
+  onMouseEnter?: Callback
+  onMouseLeave?: Callback
+}) {
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  return (
+    <FriendRequestItem
+      hovered={!!hovered}
+      friend={friendRequest}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <PanelListButton variant={'secondary'} onMouseDown={() => {}}>
+        <Label value={'DELETE'} />
+      </PanelListButton>
+      <PanelListButton onMouseDown={() => {}}>
+        <Label value={'ACCEPT'} />
+      </PanelListButton>
+      <PanelListButton
+        onMouseDown={() => {
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.PROFILE_MENU,
+              data: {
+                player: {
+                  ...friendRequest,
+                  userId: friendRequest.address.toLowerCase(),
+                  isGuest: false
+                }
+              }
+            })
+          )
+        }}
+        variant={'secondary'}
+      >
+        <Icon
+          icon={{ spriteName: 'Menu', atlasName: 'icons' }}
+          iconSize={fontSize}
+        />
+      </PanelListButton>
+    </FriendRequestItem>
+  )
+}
+
+export function FriendRequestItemSent({
+  friendRequest,
+  hovered,
+  onMouseEnter,
+  onMouseLeave
+}: {
+  friendRequest: Friend
+  hovered?: boolean
+  onMouseEnter?: Callback
+  onMouseLeave?: Callback
+}) {
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  return (
+    <FriendRequestItem
+      hovered={!!hovered}
+      friend={friendRequest}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <PanelListButton variant={'secondary'} onMouseDown={() => {}}>
+        <Label value={'CANCEL'} />
+      </PanelListButton>
+
+      <PanelListButton
+        onMouseDown={() => {
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.PROFILE_MENU,
+              data: {
+                player: {
+                  ...friendRequest,
+                  userId: friendRequest.address.toLowerCase(),
+                  isGuest: false
+                }
+              }
+            })
+          )
+        }}
+        variant={'secondary'}
+      >
+        <Icon
+          icon={{ spriteName: 'Menu', atlasName: 'icons' }}
+          iconSize={fontSize}
+        />
+      </PanelListButton>
+    </FriendRequestItem>
   )
 }
