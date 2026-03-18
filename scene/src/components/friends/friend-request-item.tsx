@@ -1,40 +1,33 @@
-import { Friend, ONLINE_STATUS } from '../../service/social-service-type'
-import ReactEcs, { Button, ReactElement, UiEntity } from '@dcl/react-ecs'
+import type { FriendRequestData } from '../../service/social-service-type'
+import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
+import { Key, UiEntity } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { Column, Row } from '../layout'
 import { COLOR } from '../color-palette'
 import { AvatarCircle } from '../avatar-circle'
 import Icon from '../icon/Icon'
-import { ButtonText } from '../button-text'
-import { Callback, Label } from '@dcl/sdk/react-ecs'
-import { noop } from '../../utils/function-utils'
+import { type Callback, Label } from '@dcl/sdk/react-ecs'
 import { truncateWithoutBreakingWords } from '../../utils/ui-utils'
 import { store } from '../../state/store'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 
 export function FriendRequestItem({
-  friend,
+  friendRequest,
   onMouseEnter,
   onMouseLeave,
   hovered = false,
   children
 }: {
-  friend: Friend
+  friendRequest: FriendRequestData
   onMouseEnter?: () => void
   onMouseLeave?: () => void
   hovered: boolean
   children?: ReactElement | ReactElement[] | null
 }): ReactElement {
-  const addressColor = getAddressColor(friend.address)
+  const addressColor = getAddressColor(friendRequest.address)
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
-  const menuButtonTransform = {
-    width: fontSize * 1.5,
-    height: fontSize * 1.5,
-    margin: { right: fontSize / 2 }
-  }
-  const menuButtonIconSize = fontSize * 1.2
   return (
     <Row
       uiTransform={{
@@ -48,7 +41,8 @@ export function FriendRequestItem({
       }}
     >
       <AvatarCircle
-        userId={friend.address}
+        imageSrc={friendRequest.profilePictureUrl}
+        userId={friendRequest.address}
         circleColor={addressColor}
         uiTransform={{
           margin: { left: fontSize },
@@ -66,13 +60,16 @@ export function FriendRequestItem({
         <Row>
           <UiEntity
             uiText={{
-              value: `<b>${truncateWithoutBreakingWords(friend.name, 10)}</b>`,
+              value: `<b>${truncateWithoutBreakingWords(
+                friendRequest.name,
+                10
+              )}</b>`,
               textAlign: 'middle-left',
               color: addressColor,
               fontSize
             }}
           />
-          {friend.hasClaimedName ? (
+          {friendRequest.hasClaimedName ? (
             <Icon
               icon={{ spriteName: 'Verified', atlasName: 'icons' }}
               iconSize={fontSize}
@@ -80,7 +77,7 @@ export function FriendRequestItem({
           ) : null}
         </Row>
 
-        {friend.friendshipRequestMessage ? (
+        {friendRequest.message ? (
           <Icon
             uiTransform={{
               position: { left: fontSize / 2, top: -fontSize / 2 }
@@ -112,7 +109,7 @@ export function FriendRequestItem({
 }
 
 export function PanelListButton({
-  onMouseDown = noop,
+  onMouseDown,
   variant = 'primary',
   children
 }: {
@@ -141,29 +138,24 @@ export function PanelListButton({
   )
 }
 
-export function isOnline(friend: Friend) {
-  return (
-    friend.onlineStatus === ONLINE_STATUS.ONLINE ||
-    friend.onlineStatus === ONLINE_STATUS.IDLE
-  )
-}
-
 export function FriendRequestItemReceived({
   friendRequest,
   hovered,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  key
 }: {
-  friendRequest: Friend
+  friendRequest: FriendRequestData
   hovered?: boolean
   onMouseEnter?: Callback
   onMouseLeave?: Callback
+  key: Key
 }) {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   return (
     <FriendRequestItem
       hovered={!!hovered}
-      friend={friendRequest}
+      friendRequest={friendRequest}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -205,7 +197,7 @@ export function FriendRequestItemSent({
   onMouseEnter,
   onMouseLeave
 }: {
-  friendRequest: Friend
+  friendRequest: FriendRequestData
   hovered?: boolean
   onMouseEnter?: Callback
   onMouseLeave?: Callback
@@ -214,7 +206,7 @@ export function FriendRequestItemSent({
   return (
     <FriendRequestItem
       hovered={!!hovered}
-      friend={friendRequest}
+      friendRequest={friendRequest}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

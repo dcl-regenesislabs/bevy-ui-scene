@@ -1,5 +1,6 @@
-import { Friend, ONLINE_STATUS } from '../../service/social-service-type'
-import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
+import { type FriendData } from '../../service/social-service-type'
+import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
+import { Key, UiEntity } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { Column, Row } from '../layout'
@@ -17,14 +18,19 @@ export function FriendListItem({
   friend,
   onMouseEnter,
   onMouseLeave,
-  hovered = false
+  hovered = false,
+  key
 }: {
-  friend: Friend
+  friend: FriendData
   onMouseEnter?: () => void
   onMouseLeave?: () => void
   hovered: boolean
+  key: Key
 }): ReactElement {
-  const addressColor = getAddressColor(friend.address)
+  const addressColor = {
+    ...(friend.nameColor ?? getAddressColor(friend.address)),
+    a: 1
+  }
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   const menuButtonTransform = {
     width: fontSize * 1.5,
@@ -45,6 +51,7 @@ export function FriendListItem({
       }}
     >
       <AvatarCircle
+        imageSrc={friend.profilePictureUrl}
         userId={friend.address}
         circleColor={addressColor}
         uiTransform={{
@@ -76,17 +83,6 @@ export function FriendListItem({
             />
           ) : null}
         </Row>
-
-        <UiEntity
-          uiTransform={{
-            margin: { top: -fontSize / 2 }
-          }}
-          uiText={{
-            value: friend.onlineStatus,
-            textAlign: 'middle-left',
-            fontSize: getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
-          }}
-        />
       </Column>
       <Column
         uiTransform={{
@@ -102,30 +98,28 @@ export function FriendListItem({
             alignItems: 'flex-end'
           }}
         >
-          {isOnline(friend) ? (
-            <ButtonIcon
-              icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
-              iconSize={menuButtonIconSize}
-              uiTransform={{
-                ...menuButtonTransform
-              }}
-              onMouseDown={() => {
-                executeTask(async () => {
-                  const location = await fetchFriendLocation(friend.address)
-                  if (!location) return
-                  store.dispatch(
-                    pushPopupAction({
-                      type: HUD_POPUP_TYPE.TELEPORT,
-                      data: {
-                        coordinates: location.coordinates,
-                        realm: location.realm
-                      }
-                    })
-                  )
-                })
-              }}
-            />
-          ) : null}
+          <ButtonIcon
+            icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
+            iconSize={menuButtonIconSize}
+            uiTransform={{
+              ...menuButtonTransform
+            }}
+            onMouseDown={() => {
+              executeTask(async () => {
+                const location = await fetchFriendLocation(friend.address)
+                if (!location) return
+                store.dispatch(
+                  pushPopupAction({
+                    type: HUD_POPUP_TYPE.TELEPORT,
+                    data: {
+                      coordinates: location.coordinates,
+                      realm: location.realm
+                    }
+                  })
+                )
+              })
+            }}
+          />
           <ButtonIcon
             iconSize={menuButtonIconSize}
             icon={{ spriteName: 'Menu', atlasName: 'icons' }}
@@ -150,12 +144,5 @@ export function FriendListItem({
         </Row>
       </Column>
     </Row>
-  )
-}
-
-export function isOnline(friend: Friend) {
-  return (
-    friend.onlineStatus === ONLINE_STATUS.ONLINE ||
-    friend.onlineStatus === ONLINE_STATUS.IDLE
   )
 }

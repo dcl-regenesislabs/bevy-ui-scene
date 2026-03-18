@@ -3,33 +3,38 @@ import { getChatMaxHeight } from '../chat/chat-area'
 import { Column } from '../layout'
 import { PanelSectionHeader } from './panel-section-header'
 import Icon from '../icon/Icon'
-import { Label, UiEntity } from '@dcl/sdk/react-ecs'
+import { UiEntity } from '@dcl/sdk/react-ecs'
 import { getFontSize } from '../../service/fontsize-system'
-import { getFriendRequests } from './mock-friends-data'
-import { Friend, FRIENDSHIP_STATUS } from '../../service/social-service-type'
+import type { FriendRequestData } from '../../service/social-service-type'
 import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 import {
-  FriendRequestItem,
   FriendRequestItemReceived,
-  FriendRequestItemSent,
-  PanelListButton
+  FriendRequestItemSent
 } from './friend-request-item'
+import { executeTask } from '@dcl/sdk/ecs'
+import { BevyApi } from '../../bevy-api'
 
 export function FriendRequestList() {
   const [isReceivedExpanded, setIsReceivedExpanded] = useState<boolean>(true)
   const [isSentExpanded, setIsSentExpanded] = useState<boolean>(true)
-  const [friendRequests, setFriendRequests] = useState<Friend[]>(
-    getFriendRequests()
+  const [sentRequests, setSentRequests] = useState<FriendRequestData[]>([])
+  const [receivedRequests, setReceivedRequests] = useState<FriendRequestData[]>(
+    []
   )
-  const [hoveredRequest, setHoveredRequest] = useState<Friend | null>(null)
+  const [hoveredRequest, setHoveredRequest] = useState<string | null>(null)
   const fontSize = getFontSize({})
 
-  const friendRequestsSent = friendRequests.filter(
-    (f) => f.friendshipStatus === FRIENDSHIP_STATUS.REQUEST_SENT
-  )
-  const friendRequestsReceived = friendRequests.filter(
-    (f) => f.friendshipStatus === FRIENDSHIP_STATUS.REQUEST_RECEIVED
-  )
+  useEffect(() => {
+    executeTask(async () => {
+      const [sent, received] = await Promise.all([
+        BevyApi.getSentFriendRequests(),
+        BevyApi.getReceivedFriendRequests()
+      ])
+      setSentRequests(sent)
+      setReceivedRequests(received)
+    })
+  }, [])
 
   return (
     <Column
@@ -55,22 +60,23 @@ export function FriendRequestList() {
         />
         <UiEntity
           uiText={{
-            value: `RECEIVED (${friendRequestsReceived.length})`,
+            value: `RECEIVED (${receivedRequests.length})`,
             fontSize
           }}
         />
       </PanelSectionHeader>
       {isReceivedExpanded ? (
         <Column uiTransform={{ width: '100%' }}>
-          {friendRequestsReceived.map((friendRequest) => (
+          {receivedRequests.map((request) => (
             <FriendRequestItemReceived
-              friendRequest={friendRequest}
-              hovered={hoveredRequest === friendRequest}
+              key={request.id}
+              friendRequest={request}
+              hovered={hoveredRequest === request.address}
               onMouseEnter={() => {
-                setHoveredRequest(friendRequest)
+                setHoveredRequest(request.address)
               }}
               onMouseLeave={() => {
-                if (friendRequest === hoveredRequest) {
+                if (request.address === hoveredRequest) {
                   setHoveredRequest(null)
                 }
               }}
@@ -80,7 +86,7 @@ export function FriendRequestList() {
       ) : null}
       <PanelSectionHeader
         onMouseDown={() => {
-          setIsSentExpanded(!isReceivedExpanded)
+          setIsSentExpanded(!isSentExpanded)
         }}
       >
         <Icon
@@ -91,20 +97,20 @@ export function FriendRequestList() {
           iconSize={fontSize}
         />
         <UiEntity
-          uiText={{ value: `SENT (${friendRequestsSent.length})`, fontSize }}
+          uiText={{ value: `SENT (${sentRequests.length})`, fontSize }}
         />
       </PanelSectionHeader>
       {isSentExpanded ? (
         <Column uiTransform={{ width: '100%' }}>
-          {friendRequestsSent.map((friendRequest) => (
+          {sentRequests.map((request) => (
             <FriendRequestItemSent
-              friendRequest={friendRequest}
-              hovered={hoveredRequest === friendRequest}
+              friendRequest={request}
+              hovered={hoveredRequest === request.address}
               onMouseEnter={() => {
-                setHoveredRequest(friendRequest)
+                setHoveredRequest(request.address)
               }}
               onMouseLeave={() => {
-                if (friendRequest === hoveredRequest) {
+                if (request.address === hoveredRequest) {
                   setHoveredRequest(null)
                 }
               }}

@@ -7,6 +7,7 @@ import { memoize } from '../../../utils/function-utils'
 const addressColors = new Map<string, RGBColor>()
 
 function _getAddressColor(address: string): RGBAColor {
+  // TODO this is not in sync with default color in Godot/Unity explorers
   if (address === ZERO_ADDRESS) return { r: 0.6, g: 0.6, b: 0.6, a: 1 }
   if (addressColors.has(address)) return addressColors.get(address) as RGBAColor
 

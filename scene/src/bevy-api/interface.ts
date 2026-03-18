@@ -3,6 +3,11 @@ import type { URN, URNWithoutTokenId } from '../utils/definitions'
 import { type WearableCategory } from '../service/categories'
 import { type ChatMessageDefinition } from '../components/chat/chat-message/ChatMessage.types'
 import { type ProfileExtra } from '../utils/passport-promise-utils'
+import type {
+  FriendData,
+  FriendRequestData,
+  FriendshipEventUpdate
+} from '../service/social-service-type'
 import {
   type GetPermanentPermissionsArgs,
   type PermanentPermissionItem,
@@ -210,6 +215,19 @@ export type BevyApiInterface = {
   }) => void
   setMicEnabled: (enabled: boolean) => void
   getMicState: () => Promise<{ enabled: boolean; available: boolean }>
+  // Social / Friends
+  getFriendshipEventStream: () => Promise<
+    AsyncGenerator<FriendshipEventUpdate>
+  >
+  getFriends: () => Promise<FriendData[]>
+  getSentFriendRequests: () => Promise<FriendRequestData[]>
+  getReceivedFriendRequests: () => Promise<FriendRequestData[]>
+  getSocialInitialized: () => Promise<boolean>
+  sendFriendRequest: (address: string, message?: string) => Promise<void>
+  acceptFriendRequest: (address: string) => Promise<void>
+  rejectFriendRequest: (address: string) => Promise<void>
+  cancelFriendRequest: (address: string) => Promise<void>
+  deleteFriend: (address: string) => Promise<void>
 }
 
 // system api module

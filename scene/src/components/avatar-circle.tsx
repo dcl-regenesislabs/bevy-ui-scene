@@ -13,13 +13,15 @@ export function AvatarCircle({
   circleColor,
   uiTransform,
   isGuest,
-  onMouseDown = noop
+  onMouseDown = noop,
+  imageSrc
 }: {
   userId: string
   circleColor: Color4
   uiTransform: UiTransformProps
   isGuest: boolean
   onMouseDown?: () => void
+  imageSrc?: string
 }): ReactElement | null {
   const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
   if (canvasInfo === null) return null
@@ -55,7 +57,9 @@ export function AvatarCircle({
           borderColor: COLOR.BLACK_TRANSPARENT
         }}
         uiBackground={
-          userId === ZERO_ADDRESS || userId === ONE_ADDRESS
+          imageSrc?.length
+            ? { textureMode: 'stretch', texture: { src: imageSrc } }
+            : userId === ZERO_ADDRESS || userId === ONE_ADDRESS
             ? getBackgroundFromAtlas({
                 atlasName: 'icons',
                 spriteName: 'DdlIconColor'
