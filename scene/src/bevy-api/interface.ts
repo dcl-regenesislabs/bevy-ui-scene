@@ -5,6 +5,8 @@ import { type ChatMessageDefinition } from '../components/chat/chat-message/Chat
 import { type ProfileExtra } from '../utils/passport-promise-utils'
 import type {
   FriendData,
+  FriendStatusData,
+  FriendConnectivityEvent,
   FriendRequestData,
   FriendshipEventUpdate
 } from '../service/social-service-type'
@@ -220,6 +222,10 @@ export type BevyApiInterface = {
     AsyncGenerator<FriendshipEventUpdate>
   >
   getFriends: () => Promise<FriendData[]>
+  getOnlineFriends: () => Promise<FriendStatusData[]>
+  getFriendConnectivityStream: () => Promise<
+    AsyncGenerator<FriendConnectivityEvent>
+  >
   getSentFriendRequests: () => Promise<FriendRequestData[]>
   getReceivedFriendRequests: () => Promise<FriendRequestData[]>
   getSocialInitialized: () => Promise<boolean>

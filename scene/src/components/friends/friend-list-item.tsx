@@ -1,4 +1,4 @@
-import { type FriendData } from '../../service/social-service-type'
+import { type FriendStatusData } from '../../service/social-service-type'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { Key, UiEntity } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
@@ -21,7 +21,7 @@ export function FriendListItem({
   hovered = false,
   key
 }: {
-  friend: FriendData
+  friend: FriendStatusData
   onMouseEnter?: () => void
   onMouseLeave?: () => void
   hovered: boolean
@@ -98,28 +98,30 @@ export function FriendListItem({
             alignItems: 'flex-end'
           }}
         >
-          <ButtonIcon
-            icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
-            iconSize={menuButtonIconSize}
-            uiTransform={{
-              ...menuButtonTransform
-            }}
-            onMouseDown={() => {
-              executeTask(async () => {
-                const location = await fetchFriendLocation(friend.address)
-                if (!location) return
-                store.dispatch(
-                  pushPopupAction({
-                    type: HUD_POPUP_TYPE.TELEPORT,
-                    data: {
-                      coordinates: location.coordinates,
-                      realm: location.realm
-                    }
-                  })
-                )
-              })
-            }}
-          />
+          {friend.status !== 'offline' ? (
+            <ButtonIcon
+              icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
+              iconSize={menuButtonIconSize}
+              uiTransform={{
+                ...menuButtonTransform
+              }}
+              onMouseDown={() => {
+                executeTask(async () => {
+                  const location = await fetchFriendLocation(friend.address)
+                  if (!location) return
+                  store.dispatch(
+                    pushPopupAction({
+                      type: HUD_POPUP_TYPE.TELEPORT,
+                      data: {
+                        coordinates: location.coordinates,
+                        realm: location.realm
+                      }
+                    })
+                  )
+                })
+              }}
+            />
+          ) : null}
           <ButtonIcon
             iconSize={menuButtonIconSize}
             icon={{ spriteName: 'Menu', atlasName: 'icons' }}

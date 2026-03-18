@@ -22,6 +22,26 @@ export type FriendData = {
   nameColor?: NameColor
 }
 
+/** Returned by getOnlineFriends(). Mirrors Rust `FriendStatusData` (serde camelCase). */
+export type FriendStatusData = {
+  address: string
+  name: string
+  hasClaimedName: boolean
+  profilePictureUrl: string
+  nameColor?: NameColor
+  status: 'online' | 'offline' | 'away'
+}
+
+/** Yielded by getFriendConnectivityStream(). Mirrors Rust `FriendConnectivityEvent`. */
+export type FriendConnectivityEvent = {
+  address: string
+  name: string
+  hasClaimedName: boolean
+  profilePictureUrl: string
+  nameColor?: NameColor
+  status: 'online' | 'offline' | 'away'
+}
+
 /**
  * Returned by getSentFriendRequests() and getReceivedFriendRequests().
  * Mirrors Rust `FriendRequestData` (serde camelCase).
