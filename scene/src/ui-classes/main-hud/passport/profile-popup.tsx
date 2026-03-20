@@ -316,7 +316,9 @@ function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
             : `${getNameWithHashPostfix(player.name, player.userId)}`
           store.dispatch(
             updateHudStateAction({
-              chatInput: store.getState().hud.chatInput + ` @${nameToRender} `
+              chatInput: store.getState().hud.chatInput + ` @${nameToRender} `,
+              chatOpen: true,
+              friendsOpen: false
             })
           )
         })
