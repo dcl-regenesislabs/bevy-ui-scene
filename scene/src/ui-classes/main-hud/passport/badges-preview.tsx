@@ -1,11 +1,10 @@
 import { type AchievementsData } from './badges-types'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { PassportSection } from './passport-section'
 import { Row } from '../../../components/layout'
 import { COLOR } from '../../../components/color-palette'
-import { Color4 } from '@dcl/sdk/math'
+import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 
 export function BadgesPreview({
   badgesData,
@@ -17,7 +16,6 @@ export function BadgesPreview({
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const size = fontSize * 4
   const loadingBadges = loading ?? false
-  const loadingAlpha = loadingBadges ? getLoadingAlphaValue() : 0
 
   const previewBadges = badgesData?.achieved
     .sort((a, b) => b.completedAt?.localeCompare(a.completedAt ?? '') ?? 0)
@@ -40,7 +38,7 @@ export function BadgesPreview({
         }}
       >
         {loadingBadges ? (
-          <UiEntity
+          <LoadingPlaceholder
             uiTransform={{
               width: '98%',
               height: size,
@@ -48,9 +46,6 @@ export function BadgesPreview({
               borderRadius: fontSize / 2,
               borderWidth: 0,
               borderColor: COLOR.BLACK_TRANSPARENT
-            }}
-            uiBackground={{
-              color: Color4.create(1, 1, 1, loadingAlpha * 0.3)
             }}
             uiText={{
               value: '...',
