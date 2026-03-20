@@ -210,6 +210,9 @@ export type BevyApiInterface = {
   }) => void
   setMicEnabled: (enabled: boolean) => void
   getMicState: () => Promise<{ enabled: boolean; available: boolean }>
+  getAvatarModifiers: () => Promise<
+    Array<{ userId: string; hideAvatar: boolean; hideProfile: boolean }>
+  >
 }
 
 // system api module

@@ -47,7 +47,7 @@ export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
   avatarTracker.onClick((userId) => {
     if (!getPlayer({ userId })?.isGuest) {
-      // TODO AvatarModifierType.AMT_DISABLE_PASSPORTS
+      if (avatarTracker.isProfileBlocked(userId)) return
 
       PointerLock.getMutable(engine.CameraEntity).isPointerLocked = false
       store.dispatch(
