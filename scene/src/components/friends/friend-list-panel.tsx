@@ -11,6 +11,7 @@ import { UiEntity } from '@dcl/sdk/react-ecs'
 import { FriendListItem } from './friend-list-item'
 import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
+import { LoadingPlaceholder } from '../loading-placeholder'
 
 export function FriendListPanel() {
   const fontSize = getFontSize({})
@@ -20,11 +21,13 @@ export function FriendListPanel() {
   )
   const [isOnlineExpanded, setIsOnlineExpanded] = useState<boolean>(true)
   const [isOfflineExpanded, setIsOfflineExpanded] = useState<boolean>(true)
-
+  const [loading, setLoading] = useState<boolean>(true)
   useEffect(() => {
     executeTask(async () => {
+      //  const result = await (async () => [])() //await BevyApi.getOnlineFriends()
       const result = await BevyApi.getOnlineFriends()
       setFriends(result)
+      setLoading(false)
 
       const stream = await BevyApi.getFriendConnectivityStream()
       for await (const event of stream) {
@@ -47,6 +50,8 @@ export function FriendListPanel() {
     })
 
   const offlineFriends = friends.filter((f) => f.status === 'offline')
+
+  if (loading) return <LoadingPlaceholder />
 
   return (
     <Column
