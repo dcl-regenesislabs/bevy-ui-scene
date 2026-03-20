@@ -32,6 +32,7 @@ export function FriendListItem({
     a: 1
   }
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const fontSize_S = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   const menuButtonTransform = {
     width: fontSize * 1.5,
     height: fontSize * 1.5,
@@ -67,7 +68,7 @@ export function FriendListItem({
           justifyContent: 'center'
         }}
       >
-        <Row>
+        <Row uiTransform={{ position: { top: fontSize_S / 2 } }}>
           <UiEntity
             uiText={{
               value: `<b>${friend.name}</b>`,
@@ -83,6 +84,18 @@ export function FriendListItem({
             />
           ) : null}
         </Row>
+
+        <UiEntity
+          uiTransform={{
+            position: { top: -fontSize_S / 2 }
+          }}
+          uiText={{
+            value: `${friend.status.replace(/\b\w/g, (l) => l.toUpperCase())}`,
+            textAlign: 'middle-left',
+            color: COLOR.TEXT_COLOR_GREY,
+            fontSize: fontSize_S
+          }}
+        />
       </Column>
       <Column
         uiTransform={{
