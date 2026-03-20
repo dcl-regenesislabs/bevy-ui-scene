@@ -61,10 +61,7 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
       !avatarProxies.has(playerIdentity.address) &&
       playerIdentity.address !== getPlayer()?.userId
     ) {
-      const proxy = createAvatarProxy(
-        playerIdentity.address,
-        playerEntity
-      )
+      const proxy = createAvatarProxy(playerIdentity.address, playerEntity)
       avatarProxies.set(playerIdentity.address, proxy)
     }
   }
@@ -83,10 +80,7 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
     }
 
     if (!avatarProxies.has(player.userId) && playerEntity) {
-      const proxy = createAvatarProxy(
-        player.userId,
-        playerEntity
-      )
+      const proxy = createAvatarProxy(player.userId, playerEntity)
       avatarProxies.set(player.userId, proxy)
     }
     callbacks.onEnterScene.forEach((fn) => {
@@ -210,10 +204,7 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
     )
   }
 
-  function createAvatarProxy(
-    userId: string,
-    playerEntity: Entity
-  ): Entity {
+  function createAvatarProxy(userId: string, playerEntity: Entity): Entity {
     registerPointerDown(userId, playerEntity, false)
     return playerEntity
   }
