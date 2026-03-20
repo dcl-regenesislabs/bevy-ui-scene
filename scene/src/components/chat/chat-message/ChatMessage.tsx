@@ -325,7 +325,6 @@ export function replaceURLTags(message: string): string {
 
 export function replaceRealmTags(message: string): string {
   return message.replace(REALM_REGEXP, function (...[match]) {
-    console.log('match', match)
     return `<b><color=#00B1FE><link=${LINK_TYPE.WORLD}::${match}>${match}</link></color></b>`
   })
 }

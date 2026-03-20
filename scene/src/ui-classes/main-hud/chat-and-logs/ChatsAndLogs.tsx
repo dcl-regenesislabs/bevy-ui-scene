@@ -465,13 +465,17 @@ function sendChatMessage(value: string): void {
               worldCoordinates: { x: Number(x), y: Number(y) }
             })
           } else if (x && !y) {
+            const _worldName = x.includes('.eth')
+              ? x
+              : `${x.replace('.dcl.eth', '')}.dcl.eth`
+
             const { acceptingUsers } = await fetch(
-              `https://worlds-content-server.decentraland.org/world/${x}/about`
+              `https://worlds-content-server.decentraland.org/world/${_worldName}/about`
             ).then(async (res) => await res.json())
 
             if (acceptingUsers) {
               await changeRealm({
-                realm: x
+                realm: _worldName
               })
             } else {
               pushMessage({
@@ -488,6 +492,7 @@ function sendChatMessage(value: string): void {
 <b>/help</b> - show this help message
 <b>/goto x,y</b> - teleport to world x,y
 <b>/goto</b> world_name.dcl.eth - teleport to realm world_name.dcl.eth
+<b>/goto</b> world_name - teleport to realm world_name.dcl.eth
 <b>/world</b> world_name.dcl.eth - teleport to realm world_name.dcl.eth
 <b>/goto</b> main - teleport to Genesis Plaza
 <b>/world</b> main - teleport to Genesis Plaza
