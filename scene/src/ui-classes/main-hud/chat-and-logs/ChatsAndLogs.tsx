@@ -622,6 +622,7 @@ export function messageHasMentionToMe(message: string): boolean {
 }
 
 async function pushMessage(message: ChatMessageDefinition): Promise<void> {
+  console.log('pushMessage', JSON.stringify(message))
   const messageType = isSystemMessage(message)
     ? message.sender_address === ZERO_ADDRESS
       ? MESSAGE_TYPE.SYSTEM
