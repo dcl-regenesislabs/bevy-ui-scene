@@ -41,6 +41,7 @@ import {
   requestPlayer
 } from '../../../service/chat-members'
 import { store } from '../../../state/store'
+import { COMMIT_HASH } from '../../../version'
 import { filterEntitiesWith, sleep } from '../../../utils/dcl-utils'
 import { type PBUiCanvasInformation } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/ui_canvas_information.gen'
 import {
@@ -498,7 +499,8 @@ function sendChatMessage(value: string): void {
 <b>/world</b> main - teleport to Genesis Plaza
 <b>/goto</b> genesis - teleport to Genesis Plaza
 <b>/world</b> genesis - teleport to Genesis Plaza
-<b>/reload</b> - reloads the current scene`,
+<b>/reload</b> - reloads the current scene
+build: ${COMMIT_HASH}`,
           sender_address: ONE_ADDRESS,
           channel: 'Nearby'
         }).catch(console.error)
