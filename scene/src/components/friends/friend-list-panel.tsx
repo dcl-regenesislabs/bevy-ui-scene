@@ -7,7 +7,8 @@ import { Column } from '../layout'
 import Icon from '../icon/Icon'
 import { getChatMaxHeight } from '../chat/chat-area'
 import { PanelSectionHeader } from './panel-section-header'
-import { UiEntity } from '@dcl/sdk/react-ecs'
+import { Input, UiEntity } from '@dcl/sdk/react-ecs'
+import { COLOR } from '../color-palette'
 import { FriendListItem } from './friend-list-item'
 import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
@@ -23,6 +24,7 @@ export function FriendListPanel() {
   const [isOnlineExpanded, setIsOnlineExpanded] = useState<boolean>(true)
   const [isOfflineExpanded, setIsOfflineExpanded] = useState<boolean>(true)
   const [loading, setLoading] = useState<boolean>(true)
+  const [filterText, setFilterText] = useState<string>('')
   useEffect(() => {
     executeTask(async () => {
       //  const result = await (async () => [])() //await BevyApi.getOnlineFriends()
@@ -65,8 +67,12 @@ export function FriendListPanel() {
   const byName = (a: FriendStatusData, b: FriendStatusData) =>
     a.name.localeCompare(b.name)
 
+  const filter = filterText.toLowerCase()
+  const matchesFilter = (f: FriendStatusData) =>
+    !filter || f.name.toLowerCase().includes(filter)
+
   const onlineFriends = friends
-    .filter((f) => f.status === 'online' || f.status === 'away')
+    .filter((f) => (f.status === 'online' || f.status === 'away') && matchesFilter(f))
     .sort((a, b) => {
       if (a.status === 'online' && b.status === 'away') return -1
       if (a.status === 'away' && b.status === 'online') return 1
@@ -74,7 +80,7 @@ export function FriendListPanel() {
     })
 
   const offlineFriends = friends
-    .filter((f) => f.status === 'offline')
+    .filter((f) => f.status === 'offline' && matchesFilter(f))
     .sort(byName)
 
   if (loading) return <LoadingPlaceholder />
@@ -89,8 +95,21 @@ export function FriendListPanel() {
         height: getChatMaxHeight() * 1.05
       }}
     >
+      <Input
+        uiTransform={{
+          width: '90%',
+          height: fontSize * 2,
+          padding: { left: fontSize, top: fontSize / 2 }
+        }}
+        value={filterText}
+        placeholder="type to filter by name..."
+        placeholderColor={COLOR.TEXT_COLOR_GREY}
+        fontSize={fontSize}
+        color={COLOR.TEXT_COLOR_WHITE}
+        onChange={(value) => setFilterText(value)}
+      />
       <PanelSectionHeader
-        topBorder={false}
+        topBorder={true}
         onMouseDown={() => {
           setIsOnlineExpanded(!isOnlineExpanded)
         }}
