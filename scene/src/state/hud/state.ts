@@ -61,7 +61,8 @@ export enum HUD_POPUP_TYPE {
   NOTIFICATIONS_MENU,
   PERMISSION_REQUEST,
   FRIEND_REQUEST_RECEIVED,
-  FRIEND_REQUEST_SENT
+  FRIEND_REQUEST_SENT,
+  SEND_FRIEND_REQUEST
 }
 
 export type HUDPopup = {
@@ -191,5 +192,5 @@ export const hudInitialState: HudState = {
   passportSelectedBadge: null,
   passportActiveSection: PASSPORT_SECTIONS[0],
   friendsOpen: true,
-  friendsActiveTabIndex: 0
+  friendsActiveTabIndex: 1
 }

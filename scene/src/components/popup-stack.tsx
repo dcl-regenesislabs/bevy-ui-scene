@@ -16,6 +16,7 @@ import {
   FriendRequestReceivedPopup,
   FriendRequestSentPopup
 } from './friends/friend-request-popup'
+import { SendFriendRequestPopup } from './friends/send-friend-request-popup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
 export type Popup = (
@@ -35,7 +36,8 @@ const popupComponents: Record<number, Popup> = {
   [HUD_POPUP_TYPE.PERMISSION_REQUEST as number]: PermissionRequestPopup,
   [HUD_POPUP_TYPE.FRIEND_REQUEST_RECEIVED as number]:
     FriendRequestReceivedPopup,
-  [HUD_POPUP_TYPE.FRIEND_REQUEST_SENT as number]: FriendRequestSentPopup
+  [HUD_POPUP_TYPE.FRIEND_REQUEST_SENT as number]: FriendRequestSentPopup,
+  [HUD_POPUP_TYPE.SEND_FRIEND_REQUEST as number]: SendFriendRequestPopup
 }
 
 export function PopupStack(): ReactElement | null {

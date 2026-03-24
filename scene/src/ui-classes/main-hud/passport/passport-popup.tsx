@@ -244,10 +244,18 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               }}
               uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
               onMouseDown={() => {
-                executeTask(async () => {
-                  await BevyApi.sendFriendRequest(userId)
-                  setIsFriend(true)
-                })
+                const profileData = store.getState().hud.profileData
+                store.dispatch(
+                  pushPopupAction({
+                    type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
+                    data: {
+                      address: userId,
+                      name: profileData.name,
+                      hasClaimedName: profileData.hasClaimedName,
+                      profilePictureUrl: ''
+                    }
+                  })
+                )
               }}
             >
               <Row uiTransform={{ alignItems: 'center' }}>
