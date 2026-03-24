@@ -2,7 +2,7 @@ import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { COLOR } from '../color-palette'
 import { getFontSize } from '../../service/fontsize-system'
 import { getChatMaxHeight } from '../chat/chat-area'
-import { Tab, TabComponent } from '../tab-component'
+import { type Tab, TabComponent } from '../tab-component'
 import { store } from '../../state/store'
 import { updateHudStateAction } from '../../state/hud/actions'
 import { Column } from '../layout'
@@ -28,7 +28,8 @@ export default function FriendsPanel(): ReactElement {
         alignSelf: 'space-around',
         flexDirection: 'column',
         opacity: 1,
-        margin: { bottom: fontSize }
+        margin: { bottom: fontSize },
+        borderRadius: fontSize / 2
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_9 }}
     >

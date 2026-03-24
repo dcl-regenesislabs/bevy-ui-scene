@@ -1,5 +1,8 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import type { FriendData } from '../../service/social-service-type'
+import type {
+  FriendData,
+  type FriendRequestData
+} from '../../service/social-service-type'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { type Popup } from '../popup-stack'
@@ -21,7 +24,6 @@ import { store } from '../../state/store'
 import { closeLastPopupAction } from '../../state/hud/actions'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
-import { type FriendRequestData } from '../../service/social-service-type'
 import { formatRequestDate, PanelListButton } from './friend-request-item'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 import { refreshFriendRequests } from './friend-request-list'
@@ -150,7 +152,7 @@ function FriendRequestPopupContent({
         }}
         uiText={{
           value: formatRequestDate(request.createdAt),
-          fontSize: fontSize,
+          fontSize,
           color: COLOR.TEXT_COLOR_LIGHT_GREY,
           textAlign: 'top-left'
         }}

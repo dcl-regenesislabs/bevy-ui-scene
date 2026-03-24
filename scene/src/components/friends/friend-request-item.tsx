@@ -1,14 +1,13 @@
 import type { FriendRequestData } from '../../service/social-service-type'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import useState = ReactEcs.useState
-import { Key, UiEntity } from '@dcl/sdk/react-ecs'
+import { type Key, UiEntity, type Callback, Label } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { Column, Row } from '../layout'
 import { COLOR } from '../color-palette'
 import { AvatarCircle } from '../avatar-circle'
 import Icon from '../icon/Icon'
-import { type Callback, Label } from '@dcl/sdk/react-ecs'
 import { truncateWithoutBreakingWords } from '../../utils/ui-utils'
 import { store } from '../../state/store'
 import { pushPopupAction } from '../../state/hud/actions'
@@ -139,7 +138,7 @@ export function FriendRequestItem({
               }}
               uiText={{
                 value: formatRequestDate(friendRequest.createdAt),
-                fontSize: fontSize,
+                fontSize,
                 color: COLOR.TEXT_COLOR_GREY,
                 textAlign: 'middle-right'
               }}
@@ -159,7 +158,7 @@ export function PanelListButton({
   variant?: 'primary' | 'secondary'
   onMouseDown?: Callback
   children?: ReactElement | ReactElement[] | null
-}) {
+}): ReactElement {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   return (
     <UiEntity
@@ -195,9 +194,9 @@ export function FriendRequestItemReceived({
   onMouseLeave?: Callback
   onAction?: (address: string) => void
   key: Key
-}) {
+}): ReactElement {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
-  const fontSize_s = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
+  const fontSizeS = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
   const [acting, setActing] = useState<boolean>(false)
   return (
     <FriendRequestItem
@@ -225,7 +224,7 @@ export function FriendRequestItemReceived({
           })
         }}
       >
-        <Label fontSize={fontSize_s} value={'DELETE'} />
+        <Label fontSize={fontSizeS} value={'DELETE'} />
       </PanelListButton>
       <PanelListButton
         onMouseDown={() => {
@@ -237,7 +236,7 @@ export function FriendRequestItemReceived({
           })
         }}
       >
-        <Label fontSize={fontSize_s} value={'ACCEPT'} />
+        <Label fontSize={fontSizeS} value={'ACCEPT'} />
       </PanelListButton>
       <PanelListButton
         onMouseDown={() => {
@@ -277,9 +276,9 @@ export function FriendRequestItemSent({
   onMouseEnter?: Callback
   onMouseLeave?: Callback
   onAction?: (address: string) => void
-}) {
+}): ReactElement {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
-  const fontSize_s = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
+  const fontSizeS = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
   const [acting, setActing] = useState<boolean>(false)
   return (
     <FriendRequestItem
@@ -307,7 +306,7 @@ export function FriendRequestItemSent({
           })
         }}
       >
-        <Label value={'CANCEL'} fontSize={fontSize_s} />
+        <Label value={'CANCEL'} fontSize={fontSizeS} />
       </PanelListButton>
 
       <PanelListButton

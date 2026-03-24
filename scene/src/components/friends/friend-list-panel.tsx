@@ -15,7 +15,7 @@ import { BevyApi } from '../../bevy-api'
 import { LoadingPlaceholder } from '../loading-placeholder'
 import { EmptyFriends } from './empty-friends'
 
-export function FriendListPanel() {
+export function FriendListPanel(): ReactEcs.JSX.Element {
   const fontSize = getFontSize({})
   const [friends, setFriends] = useState<FriendStatusData[]>([])
   const [hoveredFriend, setHoveredFriend] = useState<FriendStatusData | null>(
@@ -64,15 +64,17 @@ export function FriendListPanel() {
     })
   }, [])
 
-  const byName = (a: FriendStatusData, b: FriendStatusData) =>
+  const byName = (a: FriendStatusData, b: FriendStatusData): number =>
     a.name.localeCompare(b.name)
 
   const filter = filterText.toLowerCase()
-  const matchesFilter = (f: FriendStatusData) =>
+  const matchesFilter = (f: FriendStatusData): boolean =>
     !filter || f.name.toLowerCase().includes(filter)
 
   const onlineFriends = friends
-    .filter((f) => (f.status === 'online' || f.status === 'away') && matchesFilter(f))
+    .filter(
+      (f) => (f.status === 'online' || f.status === 'away') && matchesFilter(f)
+    )
     .sort((a, b) => {
       if (a.status === 'online' && b.status === 'away') return -1
       if (a.status === 'away' && b.status === 'online') return 1
@@ -106,7 +108,9 @@ export function FriendListPanel() {
         placeholderColor={COLOR.TEXT_COLOR_GREY}
         fontSize={fontSize}
         color={COLOR.TEXT_COLOR_WHITE}
-        onChange={(value) => setFilterText(value)}
+        onChange={(value) => {
+          setFilterText(value)
+        }}
       />
       <PanelSectionHeader
         topBorder={true}

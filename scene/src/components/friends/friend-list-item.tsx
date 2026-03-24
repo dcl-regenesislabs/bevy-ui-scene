@@ -1,6 +1,6 @@
 import { type FriendStatusData } from '../../service/social-service-type'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
-import { Key, UiEntity } from '@dcl/sdk/react-ecs'
+import { type Key, UiEntity } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { Column, Row } from '../layout'
@@ -35,7 +35,7 @@ export function FriendListItem({
     ? friend.name
     : getNameWithHashPostfix(friend.name, friend.address)
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
-  const fontSize_S = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
+  const fontSizeS = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   const menuButtonTransform = {
     width: fontSize * 1.5,
     height: fontSize * 1.5,
@@ -79,7 +79,7 @@ export function FriendListItem({
           justifyContent: 'center'
         }}
       >
-        <Row uiTransform={{ position: { top: fontSize_S / 2 } }}>
+        <Row uiTransform={{ position: { top: fontSizeS / 2 } }}>
           <UiEntity
             uiText={{
               value: `<b>${displayName}</b>`,
@@ -98,13 +98,13 @@ export function FriendListItem({
 
         <UiEntity
           uiTransform={{
-            position: { top: -fontSize_S / 2 }
+            position: { top: -fontSizeS / 2 }
           }}
           uiText={{
             value: `${friend.status.replace(/\b\w/g, (l) => l.toUpperCase())}`,
             textAlign: 'middle-left',
             color: COLOR.TEXT_COLOR_GREY,
-            fontSize: fontSize_S
+            fontSize: fontSizeS
           }}
         />
       </Column>

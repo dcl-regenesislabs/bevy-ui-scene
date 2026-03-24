@@ -7,7 +7,7 @@ import { Column } from '../layout'
 
 export function EmptyFriends(): ReactEcs.JSX.Element {
   const fontSize = getFontSize({})
-  const fontSize_title = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
+  const fontSizeTitle = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
   const iconSize = fontSize * 5
 
   return (
@@ -40,7 +40,7 @@ export function EmptyFriends(): ReactEcs.JSX.Element {
       <UiEntity
         uiText={{
           value: 'Time To Make Some Friends!',
-          fontSize: fontSize_title,
+          fontSize: fontSizeTitle,
           color: COLOR.TEXT_COLOR_WHITE
         }}
         uiTransform={{ margin: { bottom: 8 } }}
@@ -49,7 +49,7 @@ export function EmptyFriends(): ReactEcs.JSX.Element {
         uiText={{
           value:
             "View someone's Profile or click on their name\nin the Chat to see the '<b>Add Friend</b>' option.",
-          fontSize: fontSize,
+          fontSize,
           color: COLOR.TEXT_COLOR_GREY,
           textAlign: 'middle-center'
         }}

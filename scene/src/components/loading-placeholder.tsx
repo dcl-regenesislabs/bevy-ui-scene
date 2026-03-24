@@ -1,9 +1,9 @@
 import { getFontSize } from '../service/fontsize-system'
 import { COLOR } from './color-palette'
-import { Color4 } from '@dcl/sdk/math'
-import ReactEcs, { UiEntity, UiTransformProps } from '@dcl/sdk/react-ecs'
+import { type Color4 } from '@dcl/sdk/math'
+import ReactEcs, { UiEntity, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getLoadingAlphaValue } from '../service/loading-alpha-color'
-import { UiLabelProps } from '@dcl/react-ecs/dist/components/Label/types'
+import { type UiLabelProps } from '@dcl/react-ecs/dist/components/Label/types'
 
 export function LoadingPlaceholder({
   color = COLOR.WHITE_OPACITY_1,
@@ -18,7 +18,7 @@ export function LoadingPlaceholder({
   color?: Color4
   uiTransform?: UiTransformProps
   uiText?: UiLabelProps
-}) {
+}): ReactEcs.JSX.Element {
   return (
     <UiEntity
       uiBackground={{

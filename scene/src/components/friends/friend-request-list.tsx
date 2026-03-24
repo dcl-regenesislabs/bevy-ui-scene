@@ -16,7 +16,6 @@ import {
 import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { LoadingPlaceholder } from '../loading-placeholder'
-import { BottomBorder, TopBorder } from '../bottom-border'
 
 let _refreshFn: (() => void) | null = null
 
@@ -24,7 +23,7 @@ export function refreshFriendRequests(): void {
   _refreshFn?.()
 }
 
-export function FriendRequestList() {
+export function FriendRequestList(): ReactEcs.JSX.Element {
   const [isReceivedExpanded, setIsReceivedExpanded] = useState<boolean>(true)
   const [isSentExpanded, setIsSentExpanded] = useState<boolean>(true)
   const [sentRequests, setSentRequests] = useState<FriendRequestData[]>([])
@@ -37,7 +36,9 @@ export function FriendRequestList() {
   const [filterText, setFilterText] = useState<string>('')
   const fontSize = getFontSize({})
 
-  _refreshFn = () => setFetchVersion((v) => v + 1)
+  _refreshFn = () => {
+    setFetchVersion((v) => v + 1)
+  }
 
   useEffect(() => {
     executeTask(async () => {
@@ -45,7 +46,7 @@ export function FriendRequestList() {
         BevyApi.getSentFriendRequests(),
         BevyApi.getReceivedFriendRequests()
       ])
-      const byDateDesc = (a: FriendRequestData, b: FriendRequestData) =>
+      const byDateDesc = (a: FriendRequestData, b: FriendRequestData): number =>
         b.createdAt - a.createdAt
       setSentRequests(sent.sort(byDateDesc))
       setReceivedRequests(received.sort(byDateDesc))
@@ -83,7 +84,9 @@ export function FriendRequestList() {
         placeholderColor={COLOR.WHITE_OPACITY_5}
         fontSize={fontSize}
         color={COLOR.TEXT_COLOR_WHITE}
-        onChange={(value) => setFilterText(value)}
+        onChange={(value) => {
+          setFilterText(value)
+        }}
       />
       <PanelSectionHeader
         topBorder={true}
@@ -109,7 +112,10 @@ export function FriendRequestList() {
         <Column uiTransform={{ width: '100%' }}>
           {filteredReceived.length === 0 ? (
             <UiEntity
-              uiTransform={{ padding: { left: fontSize }, height: fontSize * 2 }}
+              uiTransform={{
+                padding: { left: fontSize },
+                height: fontSize * 2
+              }}
               uiText={{
                 value: 'No Requests',
                 fontSize,
@@ -161,7 +167,10 @@ export function FriendRequestList() {
         <Column uiTransform={{ width: '100%' }}>
           {filteredSent.length === 0 ? (
             <UiEntity
-              uiTransform={{ padding: { left: fontSize }, height: fontSize * 2 }}
+              uiTransform={{
+                padding: { left: fontSize },
+                height: fontSize * 2
+              }}
               uiText={{
                 value: 'No Requests',
                 fontSize,

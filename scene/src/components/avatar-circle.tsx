@@ -1,12 +1,15 @@
 import { getContentScaleRatio } from '../service/canvas-ratio'
-import ReactEcs, { UiEntity, type UiTransformProps } from '@dcl/sdk/react-ecs'
+import ReactEcs, {
+  UiEntity,
+  type UiTransformProps,
+  type Key
+} from '@dcl/sdk/react-ecs'
 import { getBackgroundFromAtlas } from '../utils/ui-utils'
 import { COLOR } from './color-palette'
 import { engine, UiCanvasInformation } from '@dcl/sdk/ecs'
 import { type Color4 } from '@dcl/sdk/math'
 import { ONE_ADDRESS, ZERO_ADDRESS } from '../utils/constants'
 import { type ReactElement } from '@dcl/react-ecs'
-import { type Key } from '@dcl/sdk/react-ecs'
 import { noop } from '../utils/function-utils'
 
 export function AvatarCircle({
