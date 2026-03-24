@@ -91,10 +91,7 @@ export function FriendRequestItem({
         <Row>
           <UiEntity
             uiText={{
-              value: `<b>${truncateWithoutBreakingWords(
-                displayName,
-                10
-              )}</b>`,
+              value: `<b>${truncateWithoutBreakingWords(displayName, 10)}</b>`,
               textAlign: 'middle-left',
               color: addressColor,
               fontSize
@@ -199,6 +196,7 @@ export function FriendRequestItemReceived({
   key: Key
 }) {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const fontSize_s = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
   return (
     <FriendRequestItem
       hovered={!!hovered}
@@ -223,7 +221,7 @@ export function FriendRequestItemReceived({
           })
         }}
       >
-        <Label value={'DELETE'} />
+        <Label fontSize={fontSize_s} value={'DELETE'} />
       </PanelListButton>
       <PanelListButton
         onMouseDown={() => {
@@ -233,7 +231,7 @@ export function FriendRequestItemReceived({
           })
         }}
       >
-        <Label value={'ACCEPT'} />
+        <Label fontSize={fontSize_s} value={'ACCEPT'} />
       </PanelListButton>
       <PanelListButton
         onMouseDown={() => {
