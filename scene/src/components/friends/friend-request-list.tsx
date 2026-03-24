@@ -31,8 +31,10 @@ export function FriendRequestList() {
         BevyApi.getSentFriendRequests(),
         BevyApi.getReceivedFriendRequests()
       ])
-      setSentRequests(sent)
-      setReceivedRequests(received)
+      const byDateDesc = (a: FriendRequestData, b: FriendRequestData) =>
+        b.createdAt - a.createdAt
+      setSentRequests(sent.sort(byDateDesc))
+      setReceivedRequests(received.sort(byDateDesc))
     })
   }, [])
 
@@ -71,9 +73,9 @@ export function FriendRequestList() {
             <FriendRequestItemReceived
               key={request.id}
               friendRequest={request}
-              hovered={hoveredRequest === request.address}
+              hovered={hoveredRequest === request.id}
               onMouseEnter={() => {
-                setHoveredRequest(request.address)
+                setHoveredRequest(request.id)
               }}
               onMouseLeave={() => {
                 if (request.address === hoveredRequest) {

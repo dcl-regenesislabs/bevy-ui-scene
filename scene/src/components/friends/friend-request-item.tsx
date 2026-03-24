@@ -13,6 +13,26 @@ import { store } from '../../state/store'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 
+const MONTH_NAMES = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC'
+]
+
+function formatRequestDate(timestamp: number): string {
+  const date = new Date(timestamp)
+  return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`
+}
+
 export function FriendRequestItem({
   friendRequest,
   onMouseEnter,
@@ -101,7 +121,21 @@ export function FriendRequestItem({
             alignItems: 'center'
           }}
         >
-          {children}
+          {hovered ? (
+            children
+          ) : (
+            <UiEntity
+              uiTransform={{
+                position: { right: fontSize }
+              }}
+              uiText={{
+                value: formatRequestDate(friendRequest.createdAt),
+                fontSize: fontSize,
+                color: COLOR.TEXT_COLOR_GREY,
+                textAlign: 'middle-right'
+              }}
+            />
+          )}
         </Row>
       </Column>
     </Row>
