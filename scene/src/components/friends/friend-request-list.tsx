@@ -107,26 +107,38 @@ export function FriendRequestList() {
       </PanelSectionHeader>
       {isReceivedExpanded ? (
         <Column uiTransform={{ width: '100%' }}>
-          {filteredReceived.map((request) => (
-            <FriendRequestItemReceived
-              key={request.id}
-              friendRequest={request}
-              hovered={hoveredRequest === request.id}
-              onMouseEnter={() => {
-                setHoveredRequest(request.id)
-              }}
-              onMouseLeave={() => {
-                if (request.address === hoveredRequest) {
-                  setHoveredRequest(null)
-                }
-              }}
-              onAction={(address) => {
-                setReceivedRequests((prev) =>
-                  prev.filter((r) => r.address !== address)
-                )
+          {filteredReceived.length === 0 ? (
+            <UiEntity
+              uiTransform={{ padding: { left: fontSize }, height: fontSize * 2 }}
+              uiText={{
+                value: 'No Requests',
+                fontSize,
+                color: COLOR.TEXT_COLOR_GREY,
+                textAlign: 'middle-left'
               }}
             />
-          ))}
+          ) : (
+            filteredReceived.map((request) => (
+              <FriendRequestItemReceived
+                key={request.id}
+                friendRequest={request}
+                hovered={hoveredRequest === request.id}
+                onMouseEnter={() => {
+                  setHoveredRequest(request.id)
+                }}
+                onMouseLeave={() => {
+                  if (request.address === hoveredRequest) {
+                    setHoveredRequest(null)
+                  }
+                }}
+                onAction={(address) => {
+                  setReceivedRequests((prev) =>
+                    prev.filter((r) => r.address !== address)
+                  )
+                }}
+              />
+            ))
+          )}
         </Column>
       ) : null}
       <PanelSectionHeader
@@ -147,25 +159,37 @@ export function FriendRequestList() {
       </PanelSectionHeader>
       {isSentExpanded ? (
         <Column uiTransform={{ width: '100%' }}>
-          {filteredSent.map((request) => (
-            <FriendRequestItemSent
-              friendRequest={request}
-              hovered={hoveredRequest === request.address}
-              onMouseEnter={() => {
-                setHoveredRequest(request.address)
-              }}
-              onMouseLeave={() => {
-                if (request.address === hoveredRequest) {
-                  setHoveredRequest(null)
-                }
-              }}
-              onAction={(address) => {
-                setSentRequests((prev) =>
-                  prev.filter((r) => r.address !== address)
-                )
+          {filteredSent.length === 0 ? (
+            <UiEntity
+              uiTransform={{ padding: { left: fontSize }, height: fontSize * 2 }}
+              uiText={{
+                value: 'No Requests',
+                fontSize,
+                color: COLOR.TEXT_COLOR_GREY,
+                textAlign: 'middle-left'
               }}
             />
-          ))}
+          ) : (
+            filteredSent.map((request) => (
+              <FriendRequestItemSent
+                friendRequest={request}
+                hovered={hoveredRequest === request.address}
+                onMouseEnter={() => {
+                  setHoveredRequest(request.address)
+                }}
+                onMouseLeave={() => {
+                  if (request.address === hoveredRequest) {
+                    setHoveredRequest(null)
+                  }
+                }}
+                onAction={(address) => {
+                  setSentRequests((prev) =>
+                    prev.filter((r) => r.address !== address)
+                  )
+                }}
+              />
+            ))
+          )}
         </Column>
       ) : null}
     </Column>
