@@ -20,6 +20,7 @@ import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { type FriendRequestData } from '../../service/social-service-type'
 import { formatRequestDate, PanelListButton } from './friend-request-item'
+import { refreshFriendRequests } from './friend-request-list'
 
 export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
   const request = shownPopup.data as FriendRequestData
@@ -34,12 +35,14 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         onPrimary={() => {
           executeTask(async () => {
             await BevyApi.acceptFriendRequest(request.address)
+            refreshFriendRequests()
             store.dispatch(closeLastPopupAction())
           })
         }}
         onSecondary={() => {
           executeTask(async () => {
             await BevyApi.rejectFriendRequest(request.address)
+            refreshFriendRequests()
             store.dispatch(closeLastPopupAction())
           })
         }}
@@ -63,6 +66,7 @@ export const FriendRequestSentPopup: Popup = ({ shownPopup }) => {
         onPrimary={() => {
           executeTask(async () => {
             await BevyApi.cancelFriendRequest(request.address)
+            refreshFriendRequests()
             store.dispatch(closeLastPopupAction())
           })
         }}
@@ -100,7 +104,7 @@ function FriendRequestPopupContent({
   })
   const fontSizeSmall = getFontSize({
     context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.CAPTION
+    token: TYPOGRAPHY_TOKENS.BODY_S
   })
   const addressColor = getAddressColor(request.address)
   const avatarSize = fontSize * 4
@@ -109,13 +113,12 @@ function FriendRequestPopupContent({
     <Column
       uiTransform={{
         width: getContentScaleRatio() * 1200,
-        height: getContentScaleRatio() * 1400,
         borderRadius: BORDER_RADIUS_F,
         padding: {
-          top: fontSize,
-          bottom: fontSize,
-          left: fontSize * 1.5,
-          right: fontSize * 1.5
+          top: fontSize * 4,
+          bottom: fontSize * 4,
+          left: fontSize * 4,
+          right: fontSize * 4
         },
         alignItems: 'center'
       }}
@@ -125,12 +128,12 @@ function FriendRequestPopupContent({
       <UiEntity
         uiTransform={{
           width: '100%',
-          margin: { bottom: fontSize * 0.5 }
+          margin: { bottom: -fontSize * 0.5 }
         }}
         uiText={{
           value: formatRequestDate(request.createdAt),
-          fontSize: fontSizeSmall,
-          color: COLOR.TEXT_COLOR_GREY,
+          fontSize: fontSize,
+          color: COLOR.TEXT_COLOR_LIGHT_GREY,
           textAlign: 'top-left'
         }}
       />
@@ -202,7 +205,7 @@ function FriendRequestPopupContent({
         uiTransform={{
           width: '100%',
           justifyContent: 'center',
-          margin: { bottom: dismissLabel ? fontSize * 0.5 : 0 }
+          margin: { bottom: dismissLabel ? fontSize : 0 }
         }}
       >
         <PanelListButton variant="secondary" onMouseDown={onSecondary}>

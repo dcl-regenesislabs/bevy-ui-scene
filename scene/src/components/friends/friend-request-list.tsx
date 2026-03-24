@@ -16,6 +16,12 @@ import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { LoadingPlaceholder } from '../loading-placeholder'
 
+let _refreshFn: (() => void) | null = null
+
+export function refreshFriendRequests(): void {
+  _refreshFn?.()
+}
+
 export function FriendRequestList() {
   const [isReceivedExpanded, setIsReceivedExpanded] = useState<boolean>(true)
   const [isSentExpanded, setIsSentExpanded] = useState<boolean>(true)
@@ -25,7 +31,10 @@ export function FriendRequestList() {
   )
   const [hoveredRequest, setHoveredRequest] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
+  const [fetchVersion, setFetchVersion] = useState<number>(0)
   const fontSize = getFontSize({})
+
+  _refreshFn = () => setFetchVersion((v) => v + 1)
 
   useEffect(() => {
     executeTask(async () => {
@@ -39,7 +48,7 @@ export function FriendRequestList() {
       setReceivedRequests(received.sort(byDateDesc))
       setLoading(false)
     })
-  }, [])
+  }, [fetchVersion])
 
   if (loading) return <LoadingPlaceholder />
 
