@@ -12,6 +12,7 @@ import { FriendListItem } from './friend-list-item'
 import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { LoadingPlaceholder } from '../loading-placeholder'
+import { EmptyFriends } from './empty-friends'
 
 export function FriendListPanel() {
   const fontSize = getFontSize({})
@@ -52,6 +53,7 @@ export function FriendListPanel() {
   const offlineFriends = friends.filter((f) => f.status === 'offline')
 
   if (loading) return <LoadingPlaceholder />
+  if (friends.length === 0) return <EmptyFriends />
 
   return (
     <Column
