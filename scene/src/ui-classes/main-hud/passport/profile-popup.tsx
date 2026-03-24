@@ -168,7 +168,10 @@ function ProfileHeader({
 }: {
   player: GetPlayerDataRes
 }): ReactElement[] {
-  const hasClaimedName = !!(player.name?.length && player.name?.includes('#'))
+  const hasClaimedName = !!(player.name?.length && !player.name?.includes('#'))
+  const nameColor = hasClaimedName
+    ? getAddressColor(player.userId)
+    : COLOR.TEXT_COLOR_LIGHT_GREY
   const fontSizeTitleL = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_L
@@ -180,7 +183,7 @@ function ProfileHeader({
   return [
     <AvatarCircle
       userId={player.userId}
-      circleColor={getAddressColor(player.userId)}
+      circleColor={nameColor}
       uiTransform={{
         width: getContentScaleRatio() * 200,
         height: getContentScaleRatio() * 200,
@@ -200,7 +203,7 @@ function ProfileHeader({
         uiTransform={{ margin: 0, padding: 0 }}
         uiText={{
           value: `<b>${player.name}</b>`,
-          color: getAddressColor(player.userId),
+          color: nameColor,
           fontSize: fontSizeTitleL
         }}
       />
