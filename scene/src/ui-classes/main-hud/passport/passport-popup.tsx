@@ -48,6 +48,7 @@ import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
 import { CloseButton } from '../../../components/close-button'
+import { BevyApi } from '../../../bevy-api'
 import { Label } from '@dcl/sdk/react-ecs'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
 import { Column, Row } from '../../../components/layout'
@@ -169,6 +170,15 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const borderRadius = getFontSize({ context: CONTEXT.DIALOG }) / 2
   const loadingAlpha = getLoadingAlphaValue()
+  const [isFriend, setIsFriend] = useState<boolean>(true)
+  const userId = (shownPopup.data as string).toLowerCase()
+
+  useEffect(() => {
+    executeTask(async () => {
+      const friends = await BevyApi.getFriends()
+      setIsFriend(friends.some((f) => f.address.toLowerCase() === userId))
+    })
+  }, [])
 
   return (
     <PopupBackdrop>
@@ -218,6 +228,43 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               color={{ ...COLOR.TEXT_COLOR_GREY, a: loadingAlpha }}
             />
           )}
+          {!state.editable && !isFriend ? (
+            <UiEntity
+              uiTransform={{
+                position: {
+                  top: getContentScaleRatio() * 16,
+                  right: getContentScaleRatio() * 16 + fontSize * 2.5
+                },
+                positionType: 'absolute',
+                height: fontSize * 2,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: fontSize / 2,
+                padding: { left: fontSize * 0.5, right: fontSize * 0.8 }
+              }}
+              uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+              onMouseDown={() => {
+                executeTask(async () => {
+                  await BevyApi.sendFriendRequest(userId)
+                  setIsFriend(true)
+                })
+              }}
+            >
+              <Row uiTransform={{ alignItems: 'center' }}>
+                <Icon
+                  icon={{ spriteName: 'Add', atlasName: 'context' }}
+                  iconSize={fontSize}
+                />
+                <UiEntity
+                  uiText={{
+                    value: '<b>Add Friend</b>',
+                    fontSize: fontSize * 0.85,
+                    color: COLOR.TEXT_COLOR_WHITE
+                  }}
+                />
+              </Row>
+            </UiEntity>
+          ) : null}
           <CloseButton
             uiTransform={{
               position: {
