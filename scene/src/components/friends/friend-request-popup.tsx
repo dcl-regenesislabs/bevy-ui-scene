@@ -212,7 +212,7 @@ function FriendRequestPopupContent({
             margin: { bottom: fontSize }
           }}
         >
-          {mutualFriends.slice(0, 4).map((friend) => (
+          {mutualFriends.slice(0, 10).map((friend) => (
             <AvatarCircle
               key={friend.address}
               imageSrc={friend.profilePictureUrl}
