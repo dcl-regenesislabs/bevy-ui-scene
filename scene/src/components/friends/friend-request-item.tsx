@@ -1,5 +1,6 @@
 import type { FriendRequestData } from '../../service/social-service-type'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
+import useState = ReactEcs.useState
 import { Key, UiEntity } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
@@ -197,6 +198,7 @@ export function FriendRequestItemReceived({
 }) {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   const fontSize_s = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
+  const [acting, setActing] = useState<boolean>(false)
   return (
     <FriendRequestItem
       hovered={!!hovered}
@@ -215,6 +217,8 @@ export function FriendRequestItemReceived({
       <PanelListButton
         variant={'secondary'}
         onMouseDown={() => {
+          if (acting) return
+          setActing(true)
           executeTask(async () => {
             await BevyApi.rejectFriendRequest(friendRequest.address)
             onAction?.(friendRequest.address)
@@ -225,6 +229,8 @@ export function FriendRequestItemReceived({
       </PanelListButton>
       <PanelListButton
         onMouseDown={() => {
+          if (acting) return
+          setActing(true)
           executeTask(async () => {
             await BevyApi.acceptFriendRequest(friendRequest.address)
             onAction?.(friendRequest.address)
@@ -273,6 +279,8 @@ export function FriendRequestItemSent({
   onAction?: (address: string) => void
 }) {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const fontSize_s = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
+  const [acting, setActing] = useState<boolean>(false)
   return (
     <FriendRequestItem
       hovered={!!hovered}
@@ -291,13 +299,15 @@ export function FriendRequestItemSent({
       <PanelListButton
         variant={'secondary'}
         onMouseDown={() => {
+          if (acting) return
+          setActing(true)
           executeTask(async () => {
             await BevyApi.cancelFriendRequest(friendRequest.address)
             onAction?.(friendRequest.address)
           })
         }}
       >
-        <Label value={'CANCEL'} />
+        <Label value={'CANCEL'} fontSize={fontSize_s} />
       </PanelListButton>
 
       <PanelListButton
