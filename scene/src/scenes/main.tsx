@@ -1,7 +1,6 @@
 import { BevyApi } from '../bevy-api'
-import type { ExplorerSetting, KernelFetchRespose } from '../bevy-api/interface'
+import type { ExplorerSetting } from '../bevy-api/interface'
 import { GameController } from '../controllers/game.controller'
-import type { FriendsResponse } from '../service/social-service-type'
 import { loadSettingsFromExplorer } from '../state/settings/actions'
 import { store } from '../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
@@ -21,27 +20,8 @@ export async function init(retry: boolean): Promise<void> {
     await sleep(100)
     await waitFor(() => !!getPlayer())
     console.log('friends')
-    const friendsResponse: KernelFetchRespose = await BevyApi.kernelFetch({
-      url: `https://social-service.decentraland.org/v1/friendships/${
-        getPlayer()?.userId ?? ''
-      }`,
-      init: {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      },
-      meta: JSON.stringify({})
-    })
-    console.log('friendsResponse', friendsResponse)
-    if (friendsResponse.ok) {
-      const friendsData: FriendsResponse = JSON.parse(friendsResponse.body)
-      console.log('friendList', friendsData.friends)
-    } else {
-      console.error(
-        'Error fetching friends:',
-        friendsResponse.status,
-        friendsResponse.statusText
-      )
-    }
+    const friends = await BevyApi.getFriends()
+    console.log('friendList', friends)
     // store.dispatch(updateHudStateAction({ loggedIn: true }))
     // gameInstance.uiController.menu?.show('settings')
     // gameInstance.uiController.menu?.show('backpack')
