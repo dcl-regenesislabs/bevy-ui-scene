@@ -5,9 +5,11 @@ import {
   pointerEventsSystem,
   InputAction,
   type PBPointerEventsResult,
-  PlayerIdentityData
+  PlayerIdentityData,
+  executeTask
 } from '@dcl/sdk/ecs'
 import { onEnterScene, onLeaveScene, getPlayer } from '@dcl/sdk/players'
+import { BevyApi } from '../bevy-api'
 import {
   type PBAvatarBase,
   type PBAvatarEquippedData,
@@ -33,6 +35,7 @@ export type AvatarTracker = {
   onClick: (fn: UserIdCallback) => UnListenFn
   onEnterScene: (fn: PlayerCallback) => UnListenFn
   onLeaveScene: (fn: UserIdCallback) => UnListenFn
+  isProfileBlocked: (userId: string) => boolean
   dispose: () => void
 }
 
@@ -48,6 +51,7 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
     onLeaveScene: []
   }
   const avatarProxies = new Map<string, Entity>()
+  const blockedProfiles = new Set<string>()
 
   for (const [playerEntity, data] of engine.getEntitiesWith(
     PlayerIdentityData
@@ -57,11 +61,7 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
       !avatarProxies.has(playerIdentity.address) &&
       playerIdentity.address !== getPlayer()?.userId
     ) {
-      const proxy = createAvatarProxy(
-        playerIdentity.address,
-        playerEntity,
-        `Show Profile`
-      )
+      const proxy = createAvatarProxy(playerIdentity.address, playerEntity)
       avatarProxies.set(playerIdentity.address, proxy)
     }
   }
@@ -80,11 +80,7 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
     }
 
     if (!avatarProxies.has(player.userId) && playerEntity) {
-      const proxy = createAvatarProxy(
-        player.userId,
-        playerEntity,
-        'Show Profile'
-      )
+      const proxy = createAvatarProxy(player.userId, playerEntity)
       avatarProxies.set(player.userId, proxy)
     }
     callbacks.onEnterScene.forEach((fn) => {
@@ -123,9 +119,40 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
     }
   })
 
+  let modifierTimer = 0
+  engine.addSystem((dt) => {
+    modifierTimer += dt
+    if (modifierTimer < 1.0) return
+    modifierTimer = 0
+    executeTask(async () => {
+      const modifiers = await BevyApi.getAvatarModifiers()
+      const newBlocked = new Set<string>()
+      for (const entry of modifiers) {
+        if (entry.hideProfile) {
+          newBlocked.add(entry.userId)
+        }
+      }
+
+      for (const [userId, entity] of avatarProxies.entries()) {
+        const wasBlocked = blockedProfiles.has(userId)
+        const isBlocked = newBlocked.has(userId)
+        if (wasBlocked !== isBlocked) {
+          pointerEventsSystem.removeOnPointerDown(entity)
+          registerPointerDown(userId, entity, isBlocked)
+        }
+      }
+
+      blockedProfiles.clear()
+      for (const id of newBlocked) {
+        blockedProfiles.add(id)
+      }
+    })
+  })
+
   avatarTracker = {
     onClick,
     dispose,
+    isProfileBlocked: (userId: string) => blockedProfiles.has(userId),
     onEnterScene: (fn: PlayerCallback) => {
       callbacks.onEnterScene.push(fn)
       return () => {
@@ -155,26 +182,30 @@ export const createOrGetAvatarsTracker = (): AvatarTracker => {
     }
   }
 
-  function createAvatarProxy(
+  function registerPointerDown(
     userId: string,
-    playerEntity: Entity,
-    hoverText?: string
-  ): Entity {
+    entity: Entity,
+    blocked: boolean
+  ): void {
     pointerEventsSystem.onPointerDown(
       {
-        entity: playerEntity,
+        entity,
         opts: {
           button: InputAction.IA_POINTER,
-          hoverText
+          hoverText: blocked ? undefined : 'Show Profile',
+          showFeedback: !blocked
         }
       },
-      (event: PBPointerEventsResult) => {
+      (_event: PBPointerEventsResult) => {
         callbacks.onClick.forEach((fn) => {
           ;(fn as UserIdCallback)(userId)
         })
       }
     )
+  }
 
+  function createAvatarProxy(userId: string, playerEntity: Entity): Entity {
+    registerPointerDown(userId, playerEntity, false)
     return playerEntity
   }
 }

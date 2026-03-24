@@ -217,6 +217,9 @@ export type BevyApiInterface = {
   }) => void
   setMicEnabled: (enabled: boolean) => void
   getMicState: () => Promise<{ enabled: boolean; available: boolean }>
+  getAvatarModifiers: () => Promise<
+    Array<{ userId: string; hideAvatar: boolean; hideProfile: boolean }>
+  >
   // Social / Friends
   getFriendshipEventStream: () => Promise<
     AsyncGenerator<FriendshipEventUpdate>
