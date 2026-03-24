@@ -42,15 +42,20 @@ export function FriendListPanel() {
     })
   }, [])
 
+  const byName = (a: FriendStatusData, b: FriendStatusData) =>
+    a.name.localeCompare(b.name)
+
   const onlineFriends = friends
     .filter((f) => f.status === 'online' || f.status === 'away')
     .sort((a, b) => {
       if (a.status === 'online' && b.status === 'away') return -1
       if (a.status === 'away' && b.status === 'online') return 1
-      return 0
+      return byName(a, b)
     })
 
-  const offlineFriends = friends.filter((f) => f.status === 'offline')
+  const offlineFriends = friends
+    .filter((f) => f.status === 'offline')
+    .sort(byName)
 
   if (loading) return <LoadingPlaceholder />
   if (friends.length === 0) return <EmptyFriends />
