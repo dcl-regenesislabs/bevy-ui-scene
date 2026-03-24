@@ -30,15 +30,35 @@ export function FriendListPanel() {
       setFriends(result)
       setLoading(false)
 
-      const stream = await BevyApi.getFriendConnectivityStream()
-      for await (const event of stream) {
-        console.log('[social] friend status changed', event)
-        setFriends((prev) => {
-          const updated = prev.filter((f) => f.address !== event.address)
-          updated.push(event)
-          return updated
-        })
-      }
+      const connectivityStream = await BevyApi.getFriendConnectivityStream()
+      const friendshipStream = await BevyApi.getFriendshipEventStream()
+
+      executeTask(async () => {
+        for await (const event of connectivityStream) {
+          console.log('[social] friend connectivity changed', event)
+          setFriends((prev) => {
+            const updated = prev.filter((f) => f.address !== event.address)
+            updated.push(event)
+            return updated
+          })
+        }
+      })
+
+      executeTask(async () => {
+        for await (const event of friendshipStream) {
+          console.log('[social] friendship event', event)
+          if (event.type === 'accept') {
+            // Someone accepted our request — re-fetch to get full profile
+            const refreshed = await BevyApi.getOnlineFriends()
+            setFriends(refreshed)
+          } else if (event.type === 'delete') {
+            // We were removed as friend
+            setFriends((prev) =>
+              prev.filter((f) => f.address !== event.address)
+            )
+          }
+        }
+      })
     })
   }, [])
 
