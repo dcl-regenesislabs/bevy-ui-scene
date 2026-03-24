@@ -1,4 +1,7 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import type { FriendData } from '../../service/social-service-type'
+import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 import { type Popup } from '../popup-stack'
 import { PopupBackdrop } from '../popup-backdrop'
 import { COLOR } from '../color-palette'
@@ -114,6 +117,15 @@ function FriendRequestPopupContent({
     ? request.name
     : getNameWithHashPostfix(request.name, request.address)
   const avatarSize = fontSize * 4
+  const mutualAvatarSize = fontSize * 2
+  const [mutualFriends, setMutualFriends] = useState<FriendData[]>([])
+
+  useEffect(() => {
+    executeTask(async () => {
+      const result = await BevyApi.getMutualFriends(request.address)
+      setMutualFriends(result)
+    })
+  }, [])
 
   return (
     <Column
@@ -191,6 +203,43 @@ function FriendRequestPopupContent({
           ) : null}
         </Row>
       </Row>
+
+      {mutualFriends.length > 0 ? (
+        <Row
+          uiTransform={{
+            width: '100%',
+            alignItems: 'center',
+            margin: { bottom: fontSize }
+          }}
+        >
+          {mutualFriends.slice(0, 4).map((friend) => (
+            <AvatarCircle
+              key={friend.address}
+              imageSrc={friend.profilePictureUrl}
+              userId={friend.address}
+              circleColor={
+                friend.hasClaimedName
+                  ? getAddressColor(friend.address)
+                  : COLOR.TEXT_COLOR_LIGHT_GREY
+              }
+              uiTransform={{
+                width: mutualAvatarSize,
+                height: mutualAvatarSize,
+                margin: { right: -fontSize * 0.3 }
+              }}
+              isGuest={false}
+            />
+          ))}
+          <UiEntity
+            uiTransform={{ margin: { left: fontSize * 0.6 } }}
+            uiText={{
+              value: `${mutualFriends.length} Mutual`,
+              fontSize: fontSizeSmall,
+              color: COLOR.TEXT_COLOR_GREY
+            }}
+          />
+        </Row>
+      ) : null}
 
       {request.message ? (
         <UiEntity

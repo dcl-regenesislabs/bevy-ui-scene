@@ -225,6 +225,7 @@ export type BevyApiInterface = {
     AsyncGenerator<FriendshipEventUpdate>
   >
   getFriends: () => Promise<FriendData[]>
+  getMutualFriends: (address: string) => Promise<FriendData[]>
   getOnlineFriends: () => Promise<FriendStatusData[]>
   getFriendConnectivityStream: () => Promise<
     AsyncGenerator<FriendConnectivityEvent>

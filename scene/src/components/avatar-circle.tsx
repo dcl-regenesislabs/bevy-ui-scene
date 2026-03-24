@@ -6,6 +6,7 @@ import { engine, UiCanvasInformation } from '@dcl/sdk/ecs'
 import { type Color4 } from '@dcl/sdk/math'
 import { ONE_ADDRESS, ZERO_ADDRESS } from '../utils/constants'
 import { type ReactElement } from '@dcl/react-ecs'
+import { type Key } from '@dcl/sdk/react-ecs'
 import { noop } from '../utils/function-utils'
 
 export function AvatarCircle({
@@ -14,7 +15,8 @@ export function AvatarCircle({
   uiTransform,
   isGuest,
   onMouseDown = noop,
-  imageSrc
+  imageSrc,
+  key
 }: {
   userId: string
   circleColor: Color4
@@ -22,6 +24,7 @@ export function AvatarCircle({
   isGuest: boolean
   onMouseDown?: () => void
   imageSrc?: string
+  key?: Key
 }): ReactElement | null {
   const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
   if (canvasInfo === null) return null
