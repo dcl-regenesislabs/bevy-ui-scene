@@ -13,7 +13,6 @@ import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { store } from '../../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
 import { fetchFriendLocation } from '../../service/friend-location'
-import { updateHudStateAction } from '../../state/hud/actions'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 
 export function FriendListItem({
@@ -51,6 +50,14 @@ export function FriendListItem({
       }}
       onMouseLeave={onMouseLeave}
       onMouseEnter={onMouseEnter}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.PASSPORT,
+            data: friend.address.toLowerCase()
+          })
+        )
+      }}
       uiBackground={{
         color: hovered ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT
       }}
@@ -115,26 +122,6 @@ export function FriendListItem({
             alignItems: 'flex-end'
           }}
         >
-          <ButtonIcon
-            icon={{ spriteName: 'Chat', atlasName: 'context' }}
-            iconSize={menuButtonIconSize}
-            uiTransform={{
-              ...menuButtonTransform
-            }}
-            onMouseDown={() => {
-              const nameToRender = friend.hasClaimedName
-                ? friend.name
-                : getNameWithHashPostfix(friend.name, friend.address)
-              store.dispatch(
-                updateHudStateAction({
-                  chatInput:
-                    store.getState().hud.chatInput + ` @${nameToRender} `,
-                  chatOpen: true,
-                  friendsOpen: false
-                })
-              )
-            }}
-          />
           {friend.status !== 'offline' ? (
             <ButtonIcon
               icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
