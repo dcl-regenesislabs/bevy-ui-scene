@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import type {
   FriendData,
-  type FriendRequestData
+  FriendRequestData
 } from '../../service/social-service-type'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
