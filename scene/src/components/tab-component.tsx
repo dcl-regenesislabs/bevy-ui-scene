@@ -1,6 +1,6 @@
 import ReactEcs, {
   type ReactElement,
-  UiBackgroundProps,
+  type UiBackgroundProps,
   UiEntity
 } from '@dcl/react-ecs'
 import { BottomBorder } from './bottom-border'

@@ -547,7 +547,7 @@ export default class MainHud {
               store.dispatch(
                 updateHudStateAction({
                   friendsOpen: !store.getState().hud.friendsOpen,
-                  chatOpen: store.getState().hud.friendsOpen ? true : false
+                  chatOpen: !!store.getState().hud.friendsOpen
                 })
               )
               this.updateButtons()

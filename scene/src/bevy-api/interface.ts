@@ -221,9 +221,7 @@ export type BevyApiInterface = {
     Array<{ userId: string; hideAvatar: boolean; hideProfile: boolean }>
   >
   // Social / Friends
-  getFriendshipEventStream: () => Promise<
-    AsyncGenerator<FriendshipEventUpdate>
-  >
+  getFriendshipEventStream: () => Promise<AsyncGenerator<FriendshipEventUpdate>>
   getFriends: () => Promise<FriendData[]>
   getMutualFriends: (address: string) => Promise<FriendData[]>
   getOnlineFriends: () => Promise<FriendStatusData[]>

@@ -30,16 +30,13 @@ const state = {
   rememberDomain: false
 }
 
-export type TeleportPopupData =
-  | string
-  | { coordinates: string; realm?: string }
+export type TeleportPopupData = string | { coordinates: string; realm?: string }
 
 export const PopupTeleport: Popup = ({ shownPopup }): ReactElement | null => {
   if (shownPopup?.type !== HUD_POPUP_TYPE.TELEPORT) return null
 
   const data = shownPopup.data as TeleportPopupData
-  const coordString =
-    typeof data === 'string' ? data : data.coordinates
+  const coordString = typeof data === 'string' ? data : data.coordinates
   const targetRealm = typeof data === 'string' ? undefined : data.realm
 
   const [x, y] = coordString
@@ -92,11 +89,14 @@ function TeleportContent({
         setResolvedTargetRealm(effectiveTargetRealm)
 
         const isWorld =
-          targetRealm?.endsWith('.dcl.eth') ||
-          targetRealm?.endsWith('.eth')
+          targetRealm?.endsWith('.dcl.eth') || targetRealm?.endsWith('.eth')
 
         if (isWorld) {
-          await fetchWorldSceneInfo(targetRealm!, setSceneTitle, setSceneThumbnail)
+          await fetchWorldSceneInfo(
+            targetRealm!,
+            setSceneTitle,
+            setSceneThumbnail
+          )
         } else {
           await fetchMainRealmSceneInfo(
             catalystBaseURl,
@@ -115,13 +115,12 @@ function TeleportContent({
     <UiEntity
       uiTransform={{
         width: getContentScaleRatio() * 1200,
-        height: getContentScaleRatio() * 1400,
         borderRadius: BORDER_RADIUS_F,
         borderWidth: 0,
         borderColor: COLOR.WHITE,
         alignItems: 'center',
         flexDirection: 'column',
-        padding: '1%'
+        padding: { top: '1%', bottom: '5%', left: '1%', right: '1%' }
       }}
       onMouseDown={noop}
       uiBackground={{
@@ -140,7 +139,13 @@ function TeleportContent({
 
       <UiEntity
         uiText={{
-          value: `\nAre you sure you want to be teleported to <b>${worldCoordinates.x},${worldCoordinates.y}?</b>${realmChangeNeeded ? `\n\nThis will also change your realm to <b>${resolvedTargetRealm}</b>` : ''}\n\n${sceneTitle}`,
+          value: `\nAre you sure you want to be teleported to <b>${
+            worldCoordinates.x
+          },${worldCoordinates.y}?</b>${
+            realmChangeNeeded
+              ? `\n\nThis will also change your realm to <b>${resolvedTargetRealm}</b>`
+              : ''
+          }\n\n${sceneTitle}`,
           color: COLOR.WHITE,
           textWrap: 'wrap',
           fontSize: fontSizeTitle

@@ -1,4 +1,4 @@
-import ReactEcs, { ReactElement } from '@dcl/react-ecs'
+import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { noop } from '../../utils/function-utils'
 import { getFontSize } from '../../service/fontsize-system'
 import { Row } from '../layout'
