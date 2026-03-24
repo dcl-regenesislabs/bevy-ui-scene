@@ -12,6 +12,8 @@ import { truncateWithoutBreakingWords } from '../../utils/ui-utils'
 import { store } from '../../state/store'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
+import { BevyApi } from '../../bevy-api'
+import { executeTask } from '@dcl/sdk/ecs'
 
 const MONTH_NAMES = [
   'JAN',
@@ -28,7 +30,7 @@ const MONTH_NAMES = [
   'DEC'
 ]
 
-function formatRequestDate(timestamp: number): string {
+export function formatRequestDate(timestamp: number): string {
   const date = new Date(timestamp)
   return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`
 }
@@ -37,12 +39,14 @@ export function FriendRequestItem({
   friendRequest,
   onMouseEnter,
   onMouseLeave,
+  onMouseDown,
   hovered = false,
   children
 }: {
   friendRequest: FriendRequestData
   onMouseEnter?: () => void
   onMouseLeave?: () => void
+  onMouseDown?: () => void
   hovered: boolean
   children?: ReactElement | ReactElement[] | null
 }): ReactElement {
@@ -56,6 +60,7 @@ export function FriendRequestItem({
       }}
       onMouseLeave={onMouseLeave}
       onMouseEnter={onMouseEnter}
+      onMouseDown={onMouseDown}
       uiBackground={{
         color: hovered ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT
       }}
@@ -177,12 +182,14 @@ export function FriendRequestItemReceived({
   hovered,
   onMouseEnter,
   onMouseLeave,
+  onAction,
   key
 }: {
   friendRequest: FriendRequestData
   hovered?: boolean
   onMouseEnter?: Callback
   onMouseLeave?: Callback
+  onAction?: (address: string) => void
   key: Key
 }) {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
@@ -192,11 +199,34 @@ export function FriendRequestItemReceived({
       friendRequest={friendRequest}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.FRIEND_REQUEST_RECEIVED,
+            data: friendRequest
+          })
+        )
+      }}
     >
-      <PanelListButton variant={'secondary'} onMouseDown={() => {}}>
+      <PanelListButton
+        variant={'secondary'}
+        onMouseDown={() => {
+          executeTask(async () => {
+            await BevyApi.rejectFriendRequest(friendRequest.address)
+            onAction?.(friendRequest.address)
+          })
+        }}
+      >
         <Label value={'DELETE'} />
       </PanelListButton>
-      <PanelListButton onMouseDown={() => {}}>
+      <PanelListButton
+        onMouseDown={() => {
+          executeTask(async () => {
+            await BevyApi.acceptFriendRequest(friendRequest.address)
+            onAction?.(friendRequest.address)
+          })
+        }}
+      >
         <Label value={'ACCEPT'} />
       </PanelListButton>
       <PanelListButton
@@ -229,12 +259,14 @@ export function FriendRequestItemSent({
   friendRequest,
   hovered,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  onAction
 }: {
   friendRequest: FriendRequestData
   hovered?: boolean
   onMouseEnter?: Callback
   onMouseLeave?: Callback
+  onAction?: (address: string) => void
 }) {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   return (
@@ -243,8 +275,24 @@ export function FriendRequestItemSent({
       friendRequest={friendRequest}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.FRIEND_REQUEST_SENT,
+            data: friendRequest
+          })
+        )
+      }}
     >
-      <PanelListButton variant={'secondary'} onMouseDown={() => {}}>
+      <PanelListButton
+        variant={'secondary'}
+        onMouseDown={() => {
+          executeTask(async () => {
+            await BevyApi.cancelFriendRequest(friendRequest.address)
+            onAction?.(friendRequest.address)
+          })
+        }}
+      >
         <Label value={'CANCEL'} />
       </PanelListButton>
 

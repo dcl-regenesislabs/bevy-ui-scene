@@ -14,6 +14,7 @@ import {
 } from './friend-request-item'
 import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
+import { LoadingPlaceholder } from '../loading-placeholder'
 
 export function FriendRequestList() {
   const [isReceivedExpanded, setIsReceivedExpanded] = useState<boolean>(true)
@@ -23,6 +24,7 @@ export function FriendRequestList() {
     []
   )
   const [hoveredRequest, setHoveredRequest] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
   const fontSize = getFontSize({})
 
   useEffect(() => {
@@ -35,8 +37,11 @@ export function FriendRequestList() {
         b.createdAt - a.createdAt
       setSentRequests(sent.sort(byDateDesc))
       setReceivedRequests(received.sort(byDateDesc))
+      setLoading(false)
     })
   }, [])
+
+  if (loading) return <LoadingPlaceholder />
 
   return (
     <Column
@@ -82,6 +87,11 @@ export function FriendRequestList() {
                   setHoveredRequest(null)
                 }
               }}
+              onAction={(address) => {
+                setReceivedRequests((prev) =>
+                  prev.filter((r) => r.address !== address)
+                )
+              }}
             />
           ))}
         </Column>
@@ -115,6 +125,11 @@ export function FriendRequestList() {
                 if (request.address === hoveredRequest) {
                   setHoveredRequest(null)
                 }
+              }}
+              onAction={(address) => {
+                setSentRequests((prev) =>
+                  prev.filter((r) => r.address !== address)
+                )
               }}
             />
           ))}

@@ -12,6 +12,10 @@ import { PermissionRequestPopup } from '../ui-classes/main-hud/permissions-popup
 import { PopupTeleport } from '../ui-classes/main-hud/popup-teleport'
 import { MAX_ZINDEX } from '../utils/constants'
 import { PopupMarketplace } from '../ui-classes/main-hud/popup-marketplace'
+import {
+  FriendRequestReceivedPopup,
+  FriendRequestSentPopup
+} from './friends/friend-request-popup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
 export type Popup = (
@@ -28,7 +32,10 @@ const popupComponents: Record<number, Popup> = {
   [HUD_POPUP_TYPE.PROFILE_MENU as number]: ProfileMenuPopup,
   [HUD_POPUP_TYPE.ERROR as number]: ErrorPopup,
   [HUD_POPUP_TYPE.NOTIFICATIONS_MENU as number]: NotificationsMenu,
-  [HUD_POPUP_TYPE.PERMISSION_REQUEST as number]: PermissionRequestPopup
+  [HUD_POPUP_TYPE.PERMISSION_REQUEST as number]: PermissionRequestPopup,
+  [HUD_POPUP_TYPE.FRIEND_REQUEST_RECEIVED as number]:
+    FriendRequestReceivedPopup,
+  [HUD_POPUP_TYPE.FRIEND_REQUEST_SENT as number]: FriendRequestSentPopup
 }
 
 export function PopupStack(): ReactElement | null {
