@@ -174,11 +174,14 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
 
-  // Re-check friendship when popup opens or when returning from send popup
-  const popupCount = store.getState().hud.shownPopups.length
+  // Re-check friendship only when passport is the top popup
+  const popups = store.getState().hud.shownPopups
+  const topPopup = popups[popups.length - 1]
   useEffect(() => {
-    setCheckVersion((v) => v + 1)
-  }, [popupCount])
+    if (topPopup?.type === HUD_POPUP_TYPE.PASSPORT) {
+      setCheckVersion((v) => v + 1)
+    }
+  }, [popups.length])
 
   useEffect(() => {
     executeTask(async () => {
