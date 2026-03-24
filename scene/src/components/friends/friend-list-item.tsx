@@ -29,10 +29,12 @@ export function FriendListItem({
   hovered: boolean
   key: Key
 }): ReactElement {
-  const addressColor = {
-    ...(friend.nameColor ?? getAddressColor(friend.address)),
-    a: 1
-  }
+  const addressColor = friend.hasClaimedName
+    ? { ...(friend.nameColor ?? getAddressColor(friend.address)), a: 1 }
+    : COLOR.TEXT_COLOR_LIGHT_GREY
+  const displayName = friend.hasClaimedName
+    ? friend.name
+    : getNameWithHashPostfix(friend.name, friend.address)
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   const fontSize_S = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   const menuButtonTransform = {
@@ -73,7 +75,7 @@ export function FriendListItem({
         <Row uiTransform={{ position: { top: fontSize_S / 2 } }}>
           <UiEntity
             uiText={{
-              value: `<b>${friend.name}</b>`,
+              value: `<b>${displayName}</b>`,
               textAlign: 'middle-left',
               color: addressColor,
               fontSize

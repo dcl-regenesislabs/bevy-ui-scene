@@ -20,6 +20,7 @@ import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { type FriendRequestData } from '../../service/social-service-type'
 import { formatRequestDate, PanelListButton } from './friend-request-item'
+import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 import { refreshFriendRequests } from './friend-request-list'
 
 export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
@@ -106,7 +107,12 @@ function FriendRequestPopupContent({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.BODY_S
   })
-  const addressColor = getAddressColor(request.address)
+  const addressColor = request.hasClaimedName
+    ? getAddressColor(request.address)
+    : COLOR.TEXT_COLOR_LIGHT_GREY
+  const displayName = request.hasClaimedName
+    ? request.name
+    : getNameWithHashPostfix(request.name, request.address)
   const avatarSize = fontSize * 4
 
   return (
@@ -172,7 +178,7 @@ function FriendRequestPopupContent({
         <Row uiTransform={{ alignItems: 'center' }}>
           <UiEntity
             uiText={{
-              value: `<b>${request.name}</b>`,
+              value: `<b>${displayName}</b>`,
               fontSize,
               color: addressColor
             }}

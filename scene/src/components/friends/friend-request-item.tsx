@@ -14,6 +14,7 @@ import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
+import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 
 const MONTH_NAMES = [
   'JAN',
@@ -50,7 +51,12 @@ export function FriendRequestItem({
   hovered: boolean
   children?: ReactElement | ReactElement[] | null
 }): ReactElement {
-  const addressColor = getAddressColor(friendRequest.address)
+  const addressColor = friendRequest.hasClaimedName
+    ? getAddressColor(friendRequest.address)
+    : COLOR.TEXT_COLOR_LIGHT_GREY
+  const displayName = friendRequest.hasClaimedName
+    ? friendRequest.name
+    : getNameWithHashPostfix(friendRequest.name, friendRequest.address)
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   return (
     <Row
@@ -86,7 +92,7 @@ export function FriendRequestItem({
           <UiEntity
             uiText={{
               value: `<b>${truncateWithoutBreakingWords(
-                friendRequest.name,
+                displayName,
                 10
               )}</b>`,
               textAlign: 'middle-left',
