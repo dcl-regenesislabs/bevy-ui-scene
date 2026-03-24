@@ -171,14 +171,21 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   const borderRadius = getFontSize({ context: CONTEXT.DIALOG }) / 2
   const loadingAlpha = getLoadingAlphaValue()
   const [isFriend, setIsFriend] = useState<boolean>(true)
+  const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
+
+  // Re-check friendship when popup opens or when returning from send popup
+  const popupCount = store.getState().hud.shownPopups.length
+  useEffect(() => {
+    setCheckVersion((v) => v + 1)
+  }, [popupCount])
 
   useEffect(() => {
     executeTask(async () => {
       const friends = await BevyApi.getFriends()
       setIsFriend(friends.some((f) => f.address.toLowerCase() === userId))
     })
-  }, [])
+  }, [checkVersion])
 
   return (
     <PopupBackdrop>
