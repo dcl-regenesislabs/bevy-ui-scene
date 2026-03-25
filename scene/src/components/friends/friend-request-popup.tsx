@@ -21,7 +21,8 @@ import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { BORDER_RADIUS_F } from '../../utils/ui-utils'
 import { noop } from '../../utils/function-utils'
 import { store } from '../../state/store'
-import { closeLastPopupAction } from '../../state/hud/actions'
+import { closeLastPopupAction, pushPopupAction } from '../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { formatRequestDate, PanelListButton } from './friend-request-item'
@@ -43,6 +44,17 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
             await BevyApi.acceptFriendRequest(request.address)
             refreshFriendRequests()
             store.dispatch(closeLastPopupAction())
+            store.dispatch(
+              pushPopupAction({
+                type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+                data: {
+                  variant: 'accepted',
+                  address: request.address,
+                  name: request.name,
+                  hasClaimedName: request.hasClaimedName
+                }
+              })
+            )
           })
         }}
         onSecondary={() => {
@@ -50,6 +62,17 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
             await BevyApi.rejectFriendRequest(request.address)
             refreshFriendRequests()
             store.dispatch(closeLastPopupAction())
+            store.dispatch(
+              pushPopupAction({
+                type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+                data: {
+                  variant: 'rejected',
+                  address: request.address,
+                  name: request.name,
+                  hasClaimedName: request.hasClaimedName
+                }
+              })
+            )
           })
         }}
         onDismiss={() => {
@@ -70,11 +93,17 @@ export const FriendRequestSentPopup: Popup = ({ shownPopup }) => {
         primaryLabel="CANCEL REQUEST"
         secondaryLabel="BACK"
         onPrimary={() => {
-          executeTask(async () => {
-            await BevyApi.cancelFriendRequest(request.address)
-            refreshFriendRequests()
-            store.dispatch(closeLastPopupAction())
-          })
+          store.dispatch(closeLastPopupAction())
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.CANCEL_FRIEND_REQUEST,
+              data: {
+                address: request.address,
+                name: request.name,
+                hasClaimedName: request.hasClaimedName
+              }
+            })
+          )
         }}
         onSecondary={() => {
           store.dispatch(closeLastPopupAction())

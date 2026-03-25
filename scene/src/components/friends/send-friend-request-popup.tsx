@@ -15,7 +15,8 @@ import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { BORDER_RADIUS_F } from '../../utils/ui-utils'
 import { noop } from '../../utils/function-utils'
 import { store } from '../../state/store'
-import { closeLastPopupAction } from '../../state/hud/actions'
+import { closeLastPopupAction, pushPopupAction } from '../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { PanelListButton } from './friend-request-item'
@@ -35,7 +36,6 @@ export type SendFriendRequestData = {
 export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
   const data = shownPopup.data as SendFriendRequestData
   const [message, setMessage] = useState<string>('')
-  const [requestSent, setRequestSent] = useState<boolean>(false)
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
@@ -52,48 +52,6 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
     ? data.name
     : getNameWithHashPostfix(data.name, data.address)
   const avatarSize = fontSize * 4
-
-  if (requestSent) {
-    return (
-      <PopupBackdrop>
-        <Column
-          uiTransform={{
-            alignItems: 'center',
-            padding: {
-              top: fontSize * 4,
-              bottom: fontSize * 4,
-              left: fontSize * 4,
-              right: fontSize * 4
-            }
-          }}
-          onMouseDown={() => {
-            store.dispatch(closeLastPopupAction())
-          }}
-        >
-          <AvatarCircle
-            imageSrc={data.profilePictureUrl}
-            userId={data.address}
-            circleColor={addressColor}
-            uiTransform={{
-              width: avatarSize,
-              height: avatarSize,
-              margin: { bottom: fontSize }
-            }}
-            isGuest={false}
-          />
-          <UiEntity
-            uiText={{
-              value: `Friend Request Sent To <b>${displayName}</b>`,
-              fontSize: fontSizeTitle,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'middle-center',
-              textWrap: 'wrap'
-            }}
-          />
-        </Column>
-      </PopupBackdrop>
-    )
-  }
 
   return (
     <PopupBackdrop>
@@ -226,7 +184,18 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
                   message.length > 0 ? message : undefined
                 )
                 refreshFriendRequests()
-                setRequestSent(true)
+                store.dispatch(closeLastPopupAction())
+                store.dispatch(
+                  pushPopupAction({
+                    type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+                    data: {
+                      variant: 'sent',
+                      address: data.address,
+                      name: displayName,
+                      hasClaimedName: data.hasClaimedName
+                    }
+                  })
+                )
               })
             }}
           >

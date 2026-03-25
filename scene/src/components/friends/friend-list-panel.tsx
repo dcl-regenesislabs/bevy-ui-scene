@@ -2,7 +2,10 @@ import { getFontSize } from '../../service/fontsize-system'
 import ReactEcs from '@dcl/react-ecs'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
-import { type FriendStatusData } from '../../service/social-service-type'
+import {
+  type FriendshipEventUpdate,
+  type FriendStatusData
+} from '../../service/social-service-type'
 import { Column } from '../layout'
 import Icon from '../icon/Icon'
 import { getChatMaxHeight } from '../chat/chat-area'
@@ -14,6 +17,12 @@ import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { LoadingPlaceholder } from '../loading-placeholder'
 import { EmptyFriends } from './empty-friends'
+import { store } from '../../state/store'
+import { closeLastPopupAction, pushPopupAction } from '../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../state/hud/state'
+import { type FriendshipResultVariant } from './friendship-result-popup'
+import { fetchProfileData } from '../../utils/passport-promise-utils'
+import { getPlayer } from '@dcl/sdk/src/players'
 
 export function FriendListPanel(): ReactEcs.JSX.Element {
   const fontSize = getFontSize({})
@@ -59,6 +68,7 @@ export function FriendListPanel(): ReactEcs.JSX.Element {
               prev.filter((f) => f.address !== event.address)
             )
           }
+          handleFriendshipResultEvent(event)
         }
       })
     })
@@ -191,4 +201,65 @@ export function FriendListPanel(): ReactEcs.JSX.Element {
       ) : null}
     </Column>
   )
+}
+
+const FRIENDSHIP_POPUP_TYPES = new Set([
+  HUD_POPUP_TYPE.FRIEND_REQUEST_RECEIVED,
+  HUD_POPUP_TYPE.FRIEND_REQUEST_SENT,
+  HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
+  HUD_POPUP_TYPE.CONFIRM_UNFRIEND,
+  HUD_POPUP_TYPE.CANCEL_FRIEND_REQUEST,
+  HUD_POPUP_TYPE.FRIENDSHIP_RESULT
+])
+
+const EVENT_TO_VARIANT: Record<string, FriendshipResultVariant> = {
+  accept: 'accepted',
+  reject: 'rejected',
+  cancel: 'canceled'
+}
+
+function handleFriendshipResultEvent(event: FriendshipEventUpdate): void {
+  const variant = EVENT_TO_VARIANT[event.type]
+  if (variant == null) return
+
+  // Close topmost friendship popup if any
+  const popups = store.getState().hud.shownPopups
+  const topPopup = popups[popups.length - 1]
+  if (topPopup != null && FRIENDSHIP_POPUP_TYPES.has(topPopup.type)) {
+    store.dispatch(closeLastPopupAction())
+  }
+
+  // Resolve name for the event address
+  if (event.type === 'request') return // 'request' has its own popup flow
+  executeTask(async () => {
+    let name = event.address
+    let hasClaimedName = false
+
+    const player = getPlayer({ userId: event.address })
+    if (player?.name != null) {
+      name = player.name
+      hasClaimedName = !!(name.length > 0 && !name.includes('#'))
+    } else {
+      const profile = await fetchProfileData({
+        userId: event.address,
+        useCache: true
+      })
+      if (profile?.avatars?.[0] != null) {
+        name = profile.avatars[0].name ?? name
+        hasClaimedName = profile.avatars[0].hasClaimedName ?? false
+      }
+    }
+
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+        data: {
+          variant,
+          address: event.address,
+          name,
+          hasClaimedName
+        }
+      })
+    )
+  })
 }

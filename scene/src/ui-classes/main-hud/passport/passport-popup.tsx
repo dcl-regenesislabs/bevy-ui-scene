@@ -963,8 +963,12 @@ function PassportFriendButton({
         uiBackground={{
           color: isHovered ? COLOR.BLACK_TRANSPARENT : COLOR.WHITE_OPACITY_1
         }}
-        onMouseEnter={() => { setIsHovered(true); }}
-        onMouseLeave={() => { setIsHovered(false); }}
+        onMouseEnter={() => {
+          setIsHovered(true)
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false)
+        }}
         onMouseDown={() => {
           store.dispatch(
             pushPopupAction({

@@ -382,8 +382,12 @@ function FriendButton({
           alignItems: 'center',
           flexDirection: 'row'
         }}
-        onMouseEnter={() => { setIsHovered(true); }}
-        onMouseLeave={() => { setIsHovered(false); }}
+        onMouseEnter={() => {
+          setIsHovered(true)
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false)
+        }}
         onMouseDown={() => {
           store.dispatch(
             pushPopupAction({
