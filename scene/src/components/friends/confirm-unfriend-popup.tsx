@@ -1,4 +1,4 @@
-import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import ReactEcs, { UiEntity } from '@dcl/react-ecs'
 import { type Popup } from '../popup-stack'
 import { PopupBackdrop } from '../popup-backdrop'
 import { COLOR } from '../color-palette'
