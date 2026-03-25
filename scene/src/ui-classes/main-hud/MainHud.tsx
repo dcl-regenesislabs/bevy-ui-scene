@@ -555,7 +555,7 @@ export default class MainHud {
             hintText={'Friends'}
             hintFontSize={getFontSize({})}
             showHint={state.hover === MENU_ELEMENT.FRIENDS}
-            notifications={1}
+            notifications={0}
             iconSize={buttonIconSize}
             onMouseEnter={() => {
               state.hover = MENU_ELEMENT.FRIENDS

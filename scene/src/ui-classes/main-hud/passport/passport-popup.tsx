@@ -238,50 +238,12 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               color={{ ...COLOR.TEXT_COLOR_GREY, a: loadingAlpha }}
             />
           )}
-          {!state.editable && !isFriend ? (
-            <UiEntity
-              uiTransform={{
-                position: {
-                  top: getContentScaleRatio() * 16,
-                  right: getContentScaleRatio() * 16 + fontSize * 2.5
-                },
-                positionType: 'absolute',
-                height: fontSize * 2,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: fontSize / 2,
-                padding: { left: fontSize * 0.5, right: fontSize * 0.8 }
-              }}
-              uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
-              onMouseDown={() => {
-                const profileData = store.getState().hud.profileData
-                store.dispatch(
-                  pushPopupAction({
-                    type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
-                    data: {
-                      address: userId,
-                      name: profileData.name,
-                      hasClaimedName: profileData.hasClaimedName,
-                      profilePictureUrl: ''
-                    }
-                  })
-                )
-              }}
-            >
-              <Row uiTransform={{ alignItems: 'center' }}>
-                <Icon
-                  icon={{ spriteName: 'Add', atlasName: 'context' }}
-                  iconSize={fontSize}
-                />
-                <UiEntity
-                  uiText={{
-                    value: '<b>Add Friend</b>',
-                    fontSize: fontSize * 0.85,
-                    color: COLOR.TEXT_COLOR_WHITE
-                  }}
-                />
-              </Row>
-            </UiEntity>
+          {!state.editable ? (
+            <PassportFriendButton
+              isFriend={isFriend}
+              userId={userId}
+              fontSize={fontSize}
+            />
           ) : null}
           <CloseButton
             uiTransform={{
@@ -959,6 +921,115 @@ function Header({ children }: { children?: ReactElement }): ReactElement {
       }}
     >
       {children}
+    </UiEntity>
+  )
+}
+
+function PassportFriendButton({
+  isFriend,
+  userId,
+  fontSize
+}: {
+  isFriend: boolean
+  userId: string
+  fontSize: number
+}): ReactElement {
+  const [isHovered, setIsHovered] = useState<boolean>(false)
+  const profileData = store.getState().hud.profileData
+  const buttonWidth = fontSize * 9
+  const buttonTransform = {
+    position: {
+      top: getContentScaleRatio() * 16,
+      right: getContentScaleRatio() * 16 + fontSize * 2.5
+    },
+    positionType: 'absolute' as const,
+    width: buttonWidth,
+    height: fontSize * 2,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    borderRadius: fontSize / 2,
+    borderWidth: fontSize / 6,
+    padding: { left: fontSize * 0.5, right: fontSize * 0.8 }
+  }
+
+  if (isFriend) {
+    return (
+      <UiEntity
+        uiTransform={{
+          ...buttonTransform,
+
+          borderColor: isHovered ? COLOR.RED : COLOR.BLACK_TRANSPARENT
+        }}
+        uiBackground={{
+          color: isHovered ? COLOR.BLACK_TRANSPARENT : COLOR.WHITE_OPACITY_1
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onMouseDown={() => {
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.CONFIRM_UNFRIEND,
+              data: {
+                address: userId,
+                name: profileData.name,
+                hasClaimedName: profileData.hasClaimedName
+              }
+            })
+          )
+        }}
+      >
+        <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
+          <Icon
+            icon={{
+              atlasName: isHovered ? 'context' : 'icons',
+              spriteName: isHovered ? 'Unfriends' : 'FriendIcon'
+            }}
+            iconSize={fontSize}
+          />
+          <UiEntity
+            uiText={{
+              value: isHovered ? '<b>Remove Friend</b>' : '<b>Friend</b>',
+              fontSize: fontSize * 0.85,
+              color: COLOR.TEXT_COLOR_WHITE,
+              textAlign: 'middle-center'
+            }}
+          />
+        </Row>
+      </UiEntity>
+    )
+  }
+
+  return (
+    <UiEntity
+      uiTransform={buttonTransform}
+      uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
+            data: {
+              address: userId,
+              name: profileData.name,
+              hasClaimedName: profileData.hasClaimedName,
+              profilePictureUrl: ''
+            }
+          })
+        )
+      }}
+    >
+      <Row uiTransform={{ alignItems: 'center' }}>
+        <Icon
+          icon={{ spriteName: 'Add', atlasName: 'context' }}
+          iconSize={fontSize}
+        />
+        <UiEntity
+          uiText={{
+            value: '<b>Add Friend</b>',
+            fontSize: fontSize * 0.85,
+            color: COLOR.TEXT_COLOR_WHITE
+          }}
+        />
+      </Row>
     </UiEntity>
   )
 }

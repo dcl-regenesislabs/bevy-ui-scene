@@ -42,6 +42,8 @@ import {
 } from '../../../service/fontsize-system'
 import { getNameWithHashPostfix } from '../../../service/chat/chat-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
+import { BevyApi } from '../../../bevy-api'
+import Icon from '../../../components/icon/Icon'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
@@ -154,6 +156,7 @@ function ProfileContent({
             uiTransform={{ height: 1 }}
           />
         </Row>
+        <ViewPassportButton player={player} />
         {player.userId !== getPlayer()?.userId ? (
           <MentionButton player={player} />
         ) : null}
@@ -255,30 +258,7 @@ function ProfileHeader({
               }}
             />
           </Row>,
-          <UiEntity
-            key={2}
-            uiTransform={{
-              width: '80%',
-              borderColor: COLOR.WHITE_OPACITY_1,
-              borderWidth: getContentScaleRatio() * 6,
-              borderRadius: getContentScaleRatio() * 20,
-              alignSelf: 'center',
-              margin: { top: '4%' }
-            }}
-            uiText={{
-              value: 'VIEW PASSPORT',
-              fontSize: fontSizeTitleL
-            }}
-            onMouseDown={() => {
-              closeDialog()
-              store.dispatch(
-                pushPopupAction({
-                  type: HUD_POPUP_TYPE.PASSPORT,
-                  data: player.userId
-                })
-              )
-            }}
-          />
+          <FriendButton player={player} fontSize={fontSizeTitleL} />
         ]
       : [])
   ]
@@ -332,6 +312,154 @@ function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
       }}
       fontSize={fontSizeTitleL}
     />
+  )
+}
+
+function ViewPassportButton({
+  player
+}: {
+  player: GetPlayerDataRes
+}): ReactElement {
+  const fontSizeTitleL = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_L
+  })
+  return (
+    <ButtonTextIcon
+      key={'profile-button-passport-' + player.userId}
+      uiTransform={PROFILE_BUTTON_TRANSFORM}
+      value={'<b>View Passport</b>'}
+      onMouseDown={() => {
+        closeDialog()
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.PASSPORT,
+            data: player.userId
+          })
+        )
+      }}
+      icon={{
+        atlasName: 'icons',
+        spriteName: 'PassportIcon'
+      }}
+      fontSize={fontSizeTitleL}
+    />
+  )
+}
+
+function FriendButton({
+  player,
+  fontSize
+}: {
+  player: GetPlayerDataRes
+  fontSize: number
+}): ReactElement {
+  const [isFriend, setIsFriend] = useState<boolean>(false)
+  const [isHovered, setIsHovered] = useState<boolean>(false)
+
+  useEffect(() => {
+    executeTask(async () => {
+      const friends = await BevyApi.getFriends()
+      setIsFriend(
+        friends.some(
+          (f) => f.address.toLowerCase() === player.userId.toLowerCase()
+        )
+      )
+    })
+  }, [])
+
+  if (isFriend) {
+    return (
+      <UiEntity
+        uiTransform={{
+          width: '80%',
+          borderColor: isHovered ? COLOR.RED : COLOR.WHITE_OPACITY_1,
+          borderWidth: getContentScaleRatio() * 6,
+          borderRadius: getContentScaleRatio() * 20,
+          alignSelf: 'center',
+          margin: { top: '4%' },
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'row'
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onMouseDown={() => {
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.CONFIRM_UNFRIEND,
+              data: {
+                address: player.userId,
+                name: player.name,
+                hasClaimedName: !!(
+                  player.name?.length && !player.name?.includes('#')
+                )
+              }
+            })
+          )
+        }}
+      >
+        <Icon
+          iconSize={fontSize}
+          icon={{
+            atlasName: isHovered ? 'context' : 'icons',
+            spriteName: isHovered ? 'Unfriends' : 'FriendIcon'
+          }}
+          iconColor={isHovered ? COLOR.RED : undefined}
+        />
+        <UiEntity
+          uiText={{
+            value: isHovered ? '<b>Remove Friend</b>' : '<b>Friend</b>',
+            fontSize,
+            color: isHovered ? COLOR.RED : COLOR.WHITE
+          }}
+        />
+      </UiEntity>
+    )
+  }
+
+  return (
+    <UiEntity
+      uiTransform={{
+        width: '80%',
+        borderColor: COLOR.WHITE_OPACITY_1,
+        borderWidth: getContentScaleRatio() * 6,
+        borderRadius: getContentScaleRatio() * 20,
+        alignSelf: 'center',
+        margin: { top: '4%' },
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row'
+      }}
+      onMouseDown={() => {
+        closeDialog()
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
+            data: {
+              address: player.userId,
+              name: player.name,
+              hasClaimedName: !!(
+                player.name?.length && !player.name?.includes('#')
+              ),
+              profilePictureUrl: ''
+            }
+          })
+        )
+      }}
+    >
+      <Icon
+        iconSize={fontSize}
+        icon={{ atlasName: 'context', spriteName: 'Add' }}
+      />
+      <UiEntity
+        uiText={{
+          value: '<b>Add Friend</b>',
+          fontSize,
+          color: COLOR.WHITE
+        }}
+      />
+    </UiEntity>
   )
 }
 
