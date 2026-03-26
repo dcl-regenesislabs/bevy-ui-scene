@@ -36,13 +36,14 @@ export function FriendListPanel(): ReactEcs.JSX.Element {
   const [filterText, setFilterText] = useState<string>('')
   useEffect(() => {
     executeTask(async () => {
-      //  const result = await (async () => [])() //await BevyApi.getOnlineFriends()
-      const result = await BevyApi.getOnlineFriends()
+      //  const result = await (async () => [])() //await BevyApi.social.getOnlineFriends()
+      const result = await BevyApi.social.getOnlineFriends()
       setFriends(result)
       setLoading(false)
 
-      const connectivityStream = await BevyApi.getFriendConnectivityStream()
-      const friendshipStream = await BevyApi.getFriendshipEventStream()
+      const connectivityStream =
+        await BevyApi.social.getFriendConnectivityStream()
+      const friendshipStream = await BevyApi.social.getFriendshipEventStream()
 
       executeTask(async () => {
         for await (const event of connectivityStream) {
@@ -60,7 +61,7 @@ export function FriendListPanel(): ReactEcs.JSX.Element {
           console.log('[social] friendship event', event)
           if (event.type === 'accept') {
             // Someone accepted our request — re-fetch to get full profile
-            const refreshed = await BevyApi.getOnlineFriends()
+            const refreshed = await BevyApi.social.getOnlineFriends()
             setFriends(refreshed)
           } else if (event.type === 'delete') {
             // We were removed as friend

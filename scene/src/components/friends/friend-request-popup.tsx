@@ -41,7 +41,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         dismissLabel="Decide Later"
         onPrimary={() => {
           executeTask(async () => {
-            await BevyApi.acceptFriendRequest(request.address)
+            await BevyApi.social.acceptFriendRequest(request.address)
             refreshFriendRequests()
             store.dispatch(closeLastPopupAction())
             store.dispatch(
@@ -59,7 +59,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         }}
         onSecondary={() => {
           executeTask(async () => {
-            await BevyApi.rejectFriendRequest(request.address)
+            await BevyApi.social.rejectFriendRequest(request.address)
             refreshFriendRequests()
             store.dispatch(closeLastPopupAction())
             store.dispatch(
@@ -153,7 +153,7 @@ function FriendRequestPopupContent({
 
   useEffect(() => {
     executeTask(async () => {
-      const result = await BevyApi.getMutualFriends(request.address)
+      const result = await BevyApi.social.getMutualFriends(request.address)
       setMutualFriends(result)
     })
   }, [])

@@ -185,7 +185,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
 
   useEffect(() => {
     executeTask(async () => {
-      const friends = await BevyApi.getFriends()
+      const friends = await BevyApi.social.getFriends()
       setIsFriend(friends.some((f) => f.address.toLowerCase() === userId))
     })
   }, [checkVersion])

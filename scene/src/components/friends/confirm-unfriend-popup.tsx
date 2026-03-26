@@ -104,7 +104,7 @@ export const ConfirmUnfriendPopup: Popup = ({ shownPopup }) => {
             variant="primary"
             onMouseDown={() => {
               executeTask(async () => {
-                await BevyApi.deleteFriend(data.address)
+                await BevyApi.social.deleteFriend(data.address)
                 store.dispatch(closeLastPopupAction())
               })
             }}

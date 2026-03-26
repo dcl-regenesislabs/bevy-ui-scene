@@ -179,7 +179,7 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
             variant="primary"
             onMouseDown={() => {
               executeTask(async () => {
-                await BevyApi.sendFriendRequest(
+                await BevyApi.social.sendFriendRequest(
                   data.address,
                   message.length > 0 ? message : undefined
                 )

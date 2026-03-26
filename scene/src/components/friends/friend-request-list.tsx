@@ -43,8 +43,8 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
   useEffect(() => {
     executeTask(async () => {
       const [sent, received] = await Promise.all([
-        BevyApi.getSentFriendRequests(),
-        BevyApi.getReceivedFriendRequests()
+        BevyApi.social.getSentFriendRequests(),
+        BevyApi.social.getReceivedFriendRequests()
       ])
       const byDateDesc = (a: FriendRequestData, b: FriendRequestData): number =>
         b.createdAt - a.createdAt

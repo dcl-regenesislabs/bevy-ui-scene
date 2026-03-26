@@ -106,7 +106,7 @@ export const CancelFriendRequestPopup: Popup = ({ shownPopup }) => {
             variant="primary"
             onMouseDown={() => {
               executeTask(async () => {
-                await BevyApi.cancelFriendRequest(data.address)
+                await BevyApi.social.cancelFriendRequest(data.address)
                 refreshFriendRequests()
                 store.dispatch(closeLastPopupAction())
                 store.dispatch(

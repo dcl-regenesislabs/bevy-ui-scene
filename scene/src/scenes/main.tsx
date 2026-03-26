@@ -20,7 +20,7 @@ export async function init(retry: boolean): Promise<void> {
     await sleep(100)
     await waitFor(() => !!getPlayer())
     console.log('friends')
-    const friends = await BevyApi.getFriends()
+    const friends = await BevyApi.social.getFriends()
     console.log('[social] friendList', friends)
     // store.dispatch(updateHudStateAction({ loggedIn: true }))
     // gameInstance.uiController.menu?.show('settings')
