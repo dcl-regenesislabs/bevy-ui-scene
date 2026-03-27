@@ -22,6 +22,15 @@ export type FriendData = {
   nameColor?: NameColor
 }
 
+/** Returned by getBlockedUsers(). Mirrors Rust `BlockedUserData` (serde camelCase). */
+export type BlockedUserData = {
+  address: string
+  name: string
+  hasClaimedName: boolean
+  profilePictureUrl: string
+  nameColor?: NameColor
+}
+
 /** Returned by getOnlineFriends(). Mirrors Rust `FriendStatusData` (serde camelCase). */
 export type FriendStatusData = {
   address: string

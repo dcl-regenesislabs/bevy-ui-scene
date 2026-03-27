@@ -4,6 +4,7 @@ import { type WearableCategory } from '../service/categories'
 import { type ChatMessageDefinition } from '../components/chat/chat-message/ChatMessage.types'
 import { type ProfileExtra } from '../utils/passport-promise-utils'
 import type {
+  BlockedUserData,
   FriendData,
   FriendStatusData,
   FriendConnectivityEvent,
@@ -240,6 +241,9 @@ export type SocialApi = {
   rejectFriendRequest: (address: string) => Promise<void>
   cancelFriendRequest: (address: string) => Promise<void>
   deleteFriend: (address: string) => Promise<void>
+  blockUser: (address: string) => Promise<void>
+  unblockUser: (address: string) => Promise<void>
+  getBlockedUsers: () => Promise<BlockedUserData[]>
 }
 
 // system api module
