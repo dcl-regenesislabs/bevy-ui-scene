@@ -1,4 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import { FLEX_BASIS_AUTO } from '../../utils/ui-utils'
 import { store } from '../../state/store'
 import { COLOR } from '../../components/color-palette'
 import { updateHudStateAction } from '../../state/hud/actions'
@@ -135,6 +136,7 @@ function NotificationsContent(): ReactElement {
           flexDirection: 'column',
           overflow: 'scroll',
           flexGrow: 1,
+          ...FLEX_BASIS_AUTO,
           flexShrink: 1
         }}
       >

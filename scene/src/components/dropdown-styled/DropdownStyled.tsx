@@ -7,7 +7,7 @@ import ReactEcs, {
 
 import { UiCanvasInformation, engine } from '@dcl/sdk/ecs'
 import { ALMOST_WHITE, ALMOST_BLACK, ORANGE } from '../../utils/constants'
-import { getBackgroundFromAtlas } from '../../utils/ui-utils'
+import { FLEX_BASIS_AUTO, getBackgroundFromAtlas } from '../../utils/ui-utils'
 import { COLOR } from '../color-palette'
 import { isTruthy, noop } from '../../utils/function-utils'
 import { getContentScaleRatio } from '../../service/canvas-ratio'
@@ -78,6 +78,7 @@ function DropdownStyled(props: {
           width: '100%',
           height: '100%',
           flexGrow: 1,
+          ...FLEX_BASIS_AUTO,
           flexShrink: 0,
           padding: { right: fontSize * 0.3 },
           justifyContent: 'space-between',

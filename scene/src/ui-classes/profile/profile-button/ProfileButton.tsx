@@ -1,4 +1,5 @@
 import ReactEcs, { UiEntity, type UiTransformProps } from '@dcl/sdk/react-ecs'
+import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import { type ReactElement } from '@dcl/react-ecs'
 import { Row } from '../../../components/layout'
 import { AvatarCircle } from '../../../components/avatar-circle'
@@ -38,6 +39,7 @@ export function ProfileButton({
         borderRadius: 999,
         height: avatarSize * 1.1,
         flexGrow: 1,
+        ...FLEX_BASIS_AUTO,
         ...uiTransform
       }}
       uiBackground={{

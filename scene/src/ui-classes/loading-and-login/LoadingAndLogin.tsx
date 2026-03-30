@@ -263,7 +263,9 @@ export default class LoadingAndLogin {
     })
     const PARAGRAPH_FONT_SIZE: number = getFontSize({})
     const BUTTON_FONT_SIZE: number = getFontSize({})
-    const CODE_FONT_SIZE: number = getFontSize({})
+    const CODE_FONT_SIZE: number = getFontSize({
+      token: TYPOGRAPHY_TOKENS.TITLE_XL
+    })
 
     // BUTTON SIZES
     const BUTTON_WIDTH: number = canvasInfo.height * 0.3

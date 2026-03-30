@@ -51,6 +51,7 @@ import {
 import type { AtlasIcon } from '../../utils/definitions'
 import {
   formatEventTime,
+  FLEX_BASIS_AUTO,
   getBackgroundFromAtlas,
   getTimestamp,
   parseCoordinates,
@@ -1276,7 +1277,8 @@ export default class SceneInfoCard {
                   width: '100%',
                   height: 2 * BIG_TEXT,
                   flexDirection: 'row-reverse',
-                  flexGrow: 1
+                  flexGrow: 1,
+                  ...FLEX_BASIS_AUTO
                 }}
                 onMouseDown={() => {}}
                 value={'JUMP IN'}
@@ -1294,7 +1296,8 @@ export default class SceneInfoCard {
                 uiTransform={{
                   width: '100%',
                   height: 2 * BIG_TEXT,
-                  flexGrow: 1
+                  flexGrow: 1,
+                  ...FLEX_BASIS_AUTO
                 }}
                 onMouseDown={() => {
                   this.interestedOnMouseDown(event).catch(console.error)
@@ -1516,6 +1519,7 @@ export default class SceneInfoCard {
           flexDirection: 'column',
           alignItems: 'center',
           flexGrow: 1,
+          ...FLEX_BASIS_AUTO,
           justifyContent: 'center',
           ...uiTransform
         }}

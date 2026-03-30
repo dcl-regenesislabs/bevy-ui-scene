@@ -1,5 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { Column, Row } from '../layout'
+import { FLEX_BASIS_AUTO } from '../../utils/ui-utils'
 import useEffect = ReactEcs.useEffect
 import { store } from '../../state/store'
 import { updateHudStateAction } from '../../state/hud/actions'
@@ -50,6 +51,7 @@ export const ChatEmojiSuggestions = (): ReactElement => {
       uiTransform={{
         width: '100%',
         flexGrow: 1,
+        ...FLEX_BASIS_AUTO,
         flexDirection: 'column-reverse',
         positionType: 'absolute',
         position: {
