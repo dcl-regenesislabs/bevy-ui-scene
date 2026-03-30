@@ -121,7 +121,8 @@ export function WearableCategoryButton({
           height: thumbnailSize,
           position: {
             left: 6 * canvasScaleRatio
-          }
+          },
+          zIndex: 2
         }}
         uiBackground={{
           ...textureProps
