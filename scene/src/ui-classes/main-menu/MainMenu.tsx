@@ -20,6 +20,7 @@ import {
 } from '../../components/backpack/OutfitAvatar'
 import { DeleteOutfitDialog } from './backpack-page/delete-outfit-dialog'
 import { noop } from '../../utils/function-utils'
+import { FLEX_BASIS_AUTO } from '../../utils/ui-utils'
 import { BevyApi } from '../../bevy-api'
 import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
@@ -198,6 +199,7 @@ export default class MainMenu {
                 height: getMainMenuHeight() * 0.4,
                 width: getMainMenuHeight() * 0.4 * (165 / 24),
                 flexGrow: 1,
+                ...FLEX_BASIS_AUTO,
                 flexShrink: 0,
                 margin: { left: 20 },
                 justifyContent: 'flex-start',
@@ -325,7 +327,8 @@ export default class MainMenu {
                 this.activePage === 'map'
                   ? 'auto'
                   : getViewportHeight() - getMainMenuHeight(),
-              flexGrow: 1
+              flexGrow: 1,
+              ...FLEX_BASIS_AUTO
             }}
             uiBackground={{
               color: COLOR.WHITE_OPACITY_2

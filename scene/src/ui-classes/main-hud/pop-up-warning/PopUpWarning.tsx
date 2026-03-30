@@ -10,7 +10,10 @@ import {
   ALMOST_BLACK,
   ROUNDED_TEXTURE_BACKGROUND
 } from '../../../utils/constants'
-import { getBackgroundFromAtlas } from '../../../utils/ui-utils'
+import {
+  FLEX_BASIS_AUTO,
+  getBackgroundFromAtlas
+} from '../../../utils/ui-utils'
 
 export default class WarningPopUp {
   private readonly uiController: UIController
@@ -119,7 +122,8 @@ export default class WarningPopUp {
 
                 width: panelWidth * 0.8,
                 height: panelHeight * 0.4,
-                flexGrow: 1
+                flexGrow: 1,
+                ...FLEX_BASIS_AUTO
               }}
             >
               <UiEntity
@@ -155,7 +159,8 @@ export default class WarningPopUp {
                 <Label
                   uiTransform={{
                     width: '50%',
-                    flexGrow: 1
+                    flexGrow: 1,
+                    ...FLEX_BASIS_AUTO
                   }}
                   value={this.tittle ?? ''}
                   color={Color4.Black()}
@@ -171,6 +176,7 @@ export default class WarningPopUp {
                   height: 'auto',
                   maxHeight: panelHeight * 0.4,
                   flexGrow: 1,
+                  ...FLEX_BASIS_AUTO,
                   overflow: 'scroll'
                 }}
               >
@@ -182,6 +188,7 @@ export default class WarningPopUp {
                       left: this.fontSize * 0.5
                     },
                     flexGrow: 1,
+                    ...FLEX_BASIS_AUTO,
                     minHeight: this.fontSize * 4
                   }}
                   value={this.message}

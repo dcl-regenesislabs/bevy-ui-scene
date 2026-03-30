@@ -14,6 +14,7 @@ import {
 } from '../../../utils/constants'
 import type { AtlasIcon } from '../../../utils/definitions'
 import {
+  FLEX_BASIS_AUTO,
   getBackgroundFromAtlas,
   truncateWithoutBreakingWords
 } from '../../../utils/ui-utils'
@@ -506,7 +507,8 @@ export default class SceneInfo {
             padding: this.fontSize * 0.5,
             alignItems: 'flex-start',
             flexDirection: 'column',
-            flexGrow: 1
+            flexGrow: 1,
+            ...FLEX_BASIS_AUTO
           }}
         >
           <Label

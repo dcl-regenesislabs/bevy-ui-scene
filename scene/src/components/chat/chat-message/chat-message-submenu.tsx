@@ -1,4 +1,5 @@
 import type { ReactElement } from '@dcl/react-ecs'
+import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import ReactEcs, { UiEntity } from '@dcl/sdk/react-ecs'
 import { COLOR } from '../../color-palette'
 import { getFontSize } from '../../../service/fontsize-system'
@@ -52,6 +53,7 @@ export function MessageSubMenu({
         height: '5%',
         flexShrink: 0,
         flexGrow: 1,
+        ...FLEX_BASIS_AUTO,
         zIndex: MAX_ZINDEX - 1,
         borderWidth: 0,
         borderRadius: 10,

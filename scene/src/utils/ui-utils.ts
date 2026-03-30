@@ -427,6 +427,18 @@ export function parseCoordinates(
 // TODO replace old rounded texture with border radius where we can
 export const BORDER_RADIUS_F = 18
 
+/**
+ * Workaround: the SDK types don't expose flexBasisUnit, but the runtime
+ * respects it via otherProps spread. After bevy-explorer's yoga alignment
+ * change, flexBasis defaults to 0px when flexGrow > 0 and flexBasis is
+ * undefined. Spread this object to restore the old auto behavior.
+ * YGUnit.YGU_AUTO = 3
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export const FLEX_BASIS_AUTO = { flexBasis: 0, flexBasisUnit: 3 } as {
+  flexBasis: number
+}
+
 export function rotate2D(
   angle: number,
   x: number,

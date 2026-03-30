@@ -1,4 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import { PassportSection } from './passport-section'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
@@ -221,7 +222,8 @@ export function BadgesCollectionItem({
             justifyContent: 'flex-end',
             alignSelf: 'center',
             alignItems: 'center',
-            flexGrow: 1
+            flexGrow: 1,
+            ...FLEX_BASIS_AUTO
           }}
         >
           <UiEntity
@@ -267,6 +269,7 @@ function BadgeProgressBar({
         alignItems: 'center',
         justifyContent: 'flex-end',
         flexGrow: 1,
+        ...FLEX_BASIS_AUTO,
         margin: { bottom: '10%' }
       }}
     >
