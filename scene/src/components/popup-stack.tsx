@@ -20,6 +20,8 @@ import { SendFriendRequestPopup } from './friends/send-friend-request-popup'
 import { ConfirmUnfriendPopup } from './friends/confirm-unfriend-popup'
 import { CancelFriendRequestPopup } from './friends/cancel-friend-request-popup'
 import { FriendshipResultPopup } from './friends/friendship-result-popup'
+import { ConfirmBlockPopup } from './friends/confirm-block-popup'
+import { ConfirmUnblockPopup } from './friends/confirm-unblock-popup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
 export type Popup = (
@@ -43,7 +45,9 @@ const popupComponents: Record<number, Popup> = {
   [HUD_POPUP_TYPE.SEND_FRIEND_REQUEST as number]: SendFriendRequestPopup,
   [HUD_POPUP_TYPE.CONFIRM_UNFRIEND as number]: ConfirmUnfriendPopup,
   [HUD_POPUP_TYPE.CANCEL_FRIEND_REQUEST as number]: CancelFriendRequestPopup,
-  [HUD_POPUP_TYPE.FRIENDSHIP_RESULT as number]: FriendshipResultPopup
+  [HUD_POPUP_TYPE.FRIENDSHIP_RESULT as number]: FriendshipResultPopup,
+  [HUD_POPUP_TYPE.CONFIRM_BLOCK as number]: ConfirmBlockPopup,
+  [HUD_POPUP_TYPE.CONFIRM_UNBLOCK as number]: ConfirmUnblockPopup
 }
 
 export function PopupStack(): ReactElement | null {

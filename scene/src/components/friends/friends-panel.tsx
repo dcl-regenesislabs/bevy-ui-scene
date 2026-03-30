@@ -1,6 +1,6 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { COLOR } from '../color-palette'
-import { getFontSize } from '../../service/fontsize-system'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 import { getChatMaxHeight } from '../chat/chat-area'
 import { type Tab, TabComponent } from '../tab-component'
 import { store } from '../../state/store'
@@ -8,6 +8,7 @@ import { updateHudStateAction } from '../../state/hud/actions'
 import { Column } from '../layout'
 import { FriendListPanel } from './friend-list-panel'
 import { FriendRequestList } from './friend-request-list'
+import { BlockedList } from './blocked-list'
 
 const FRIENDS_TAB: Tab[] = [
   { text: '  FRIENDS ' },
@@ -16,7 +17,7 @@ const FRIENDS_TAB: Tab[] = [
 ]
 
 export default function FriendsPanel(): ReactElement {
-  const fontSize = getFontSize({})
+  const fontSize = getFontSize({ context: CONTEXT.SIDE })
 
   return (
     <Column
@@ -61,6 +62,9 @@ export default function FriendsPanel(): ReactElement {
       ) : null}
       {store.getState().hud.friendsActiveTabIndex === 1 ? (
         <FriendRequestList />
+      ) : null}
+      {store.getState().hud.friendsActiveTabIndex === 2 ? (
+        <BlockedList />
       ) : null}
     </Column>
   )

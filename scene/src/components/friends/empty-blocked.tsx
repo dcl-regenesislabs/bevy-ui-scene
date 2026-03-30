@@ -9,10 +9,13 @@ import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
 import { Column } from '../layout'
 
-export function EmptyFriends(): ReactEcs.JSX.Element {
+export function EmptyBlocked(): ReactEcs.JSX.Element {
   const fontSize = getFontSize({ context: CONTEXT.SIDE })
-  const fontSizeTitle = getFontSize({ context: CONTEXT.SIDE, token: TYPOGRAPHY_TOKENS.TITLE_M })
-  const iconSize = fontSize * 5
+  const fontSizeTitle = getFontSize({
+    context: CONTEXT.SIDE,
+    token: TYPOGRAPHY_TOKENS.TITLE_M
+  })
+  const iconSize = fontSize * 2
 
   return (
     <Column
@@ -32,18 +35,19 @@ export function EmptyFriends(): ReactEcs.JSX.Element {
           margin: { bottom: fontSize },
           borderRadius: fontSize,
           borderWidth: fontSize / 7,
-          borderColor: COLOR.WHITE
+          borderColor: COLOR.WHITE,
+          padding: fontSize * 2
         }}
       >
         <Icon
-          icon={{ spriteName: 'Friends on', atlasName: 'navbar' }}
+          icon={{ spriteName: 'BlockUser', atlasName: 'icons' }}
           iconSize={iconSize}
-          iconColor={COLOR.WHITE_OPACITY_5}
+          iconColor={COLOR.WHITE}
         />
       </UiEntity>
       <UiEntity
         uiText={{
-          value: 'Time To Make Some Friends!',
+          value: 'No Blocked Accounts',
           fontSize: fontSizeTitle,
           color: COLOR.TEXT_COLOR_WHITE
         }}
@@ -52,7 +56,7 @@ export function EmptyFriends(): ReactEcs.JSX.Element {
       <UiEntity
         uiText={{
           value:
-            "View someone's Profile or click on their name in the Chat to see the '<b>Add Friend</b>' option.",
+            "If you block someone, you will not be able to see each other in-world or exchange messages. You will also not see each other's names or messages in public chats.\nThe option to block an account is available in the menu on their Profile or when you click on their name in the Chat.",
           fontSize,
           color: COLOR.TEXT_COLOR_GREY,
           textAlign: 'middle-center',

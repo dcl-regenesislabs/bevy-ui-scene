@@ -935,6 +935,7 @@ function PassportFriendButton({
   fontSize: number
 }): ReactElement {
   const [isHovered, setIsHovered] = useState<boolean>(false)
+  const [isBlocked, setIsBlocked] = useState<boolean>(false)
   const profileData = store.getState().hud.profileData
   const buttonWidth = fontSize * 9
   const buttonTransform = {
@@ -950,6 +951,64 @@ function PassportFriendButton({
     borderRadius: fontSize / 2,
     borderWidth: fontSize / 6,
     padding: { left: fontSize * 0.5, right: fontSize * 0.8 }
+  }
+
+  useEffect(() => {
+    executeTask(async () => {
+      const blocked = await BevyApi.social.getBlockedUsers()
+      setIsBlocked(
+        blocked.some(
+          (b) => b.address.toLowerCase() === userId.toLowerCase()
+        )
+      )
+    })
+  }, [])
+
+  if (isBlocked) {
+    return (
+      <UiEntity
+        uiTransform={{
+          ...buttonTransform,
+          borderColor: isHovered ? COLOR.RED : COLOR.RED
+        }}
+        uiBackground={{
+          color: isHovered ? COLOR.RED : COLOR.BLACK_TRANSPARENT
+        }}
+        onMouseEnter={() => {
+          setIsHovered(true)
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false)
+        }}
+        onMouseDown={() => {
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.CONFIRM_UNBLOCK,
+              data: {
+                address: userId,
+                name: profileData.name,
+                hasClaimedName: profileData.hasClaimedName
+              }
+            })
+          )
+        }}
+      >
+        <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
+          <Icon
+            icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
+            iconSize={fontSize}
+          />
+          <UiEntity
+            uiText={{
+              value: isHovered ? '<b>UNBLOCK</b>' : '<b>BLOCKED</b>',
+              fontSize: fontSize * 0.85,
+              color: COLOR.TEXT_COLOR_WHITE,
+              textAlign: 'middle-center'
+            }}
+          />
+        </Row>
+      </UiEntity>
+    )
   }
 
   if (isFriend) {

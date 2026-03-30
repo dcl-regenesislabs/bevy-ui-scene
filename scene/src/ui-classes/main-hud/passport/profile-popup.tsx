@@ -160,6 +160,9 @@ function ProfileContent({
         {player.userId !== getPlayer()?.userId ? (
           <MentionButton player={player} />
         ) : null}
+        {player.userId !== getPlayer()?.userId ? (
+          <BlockUserButton player={player} />
+        ) : null}
         {/* // TODO Exit / Sign out : OwnProfileButtons({player}) */}
       </UiEntity>
     </UiEntity>
@@ -464,6 +467,44 @@ function FriendButton({
         }}
       />
     </UiEntity>
+  )
+}
+
+function BlockUserButton({
+  player
+}: {
+  player: GetPlayerDataRes
+}): ReactElement {
+  const fontSizeTitleL = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_L
+  })
+  const hasClaimedName = !!(player.name?.length && !player.name?.includes('#'))
+
+  return (
+    <ButtonTextIcon
+      key={'profile-button-block-' + player.userId}
+      uiTransform={PROFILE_BUTTON_TRANSFORM}
+      value={'<b>Block User</b>'}
+      onMouseDown={() => {
+        closeDialog()
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.CONFIRM_BLOCK,
+            data: {
+              address: player.userId,
+              name: player.name,
+              hasClaimedName
+            }
+          })
+        )
+      }}
+      icon={{
+        atlasName: 'icons',
+        spriteName: 'BlockUser'
+      }}
+      fontSize={fontSizeTitleL}
+    />
   )
 }
 
