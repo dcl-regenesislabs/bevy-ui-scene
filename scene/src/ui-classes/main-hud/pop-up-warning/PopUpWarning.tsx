@@ -10,7 +10,10 @@ import {
   ALMOST_BLACK,
   ROUNDED_TEXTURE_BACKGROUND
 } from '../../../utils/constants'
-import { FLEX_BASIS_AUTO, getBackgroundFromAtlas } from '../../../utils/ui-utils'
+import {
+  FLEX_BASIS_AUTO,
+  getBackgroundFromAtlas
+} from '../../../utils/ui-utils'
 
 export default class WarningPopUp {
   private readonly uiController: UIController

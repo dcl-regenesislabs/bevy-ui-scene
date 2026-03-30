@@ -16,7 +16,10 @@ import {
 import { cloneDeep, memoize, noop } from '../../../utils/function-utils'
 import { ResponsiveContent } from '../../main-menu/backpack-page/BackpackPage'
 import { setAvatarPreviewCameraToWearableCategory } from '../../../components/backpack/AvatarPreview'
-import { FLEX_BASIS_AUTO, getBackgroundFromAtlas } from '../../../utils/ui-utils'
+import {
+  FLEX_BASIS_AUTO,
+  getBackgroundFromAtlas
+} from '../../../utils/ui-utils'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import {
   applyMiddleEllipsis,
