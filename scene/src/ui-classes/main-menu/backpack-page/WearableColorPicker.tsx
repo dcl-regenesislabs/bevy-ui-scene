@@ -18,6 +18,7 @@ import {
   updateAvatarBase
 } from '../../../state/backpack/actions'
 import {
+  FLEX_BASIS_AUTO,
   getBackgroundFromAtlas,
   hsvToRgb,
   rgbToArray,
@@ -171,7 +172,8 @@ function ColorPickerDialog({
           maxWidth: '100%',
           flexWrap: 'wrap',
           margin: { bottom: '5%' },
-          flexGrow: 1
+          flexGrow: 1,
+          ...FLEX_BASIS_AUTO
         }}
       >
         {colorPreset.map((color: Color4, index: number) => (

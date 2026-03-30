@@ -1,4 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import { store } from '../../../state/store'
 import { NavButton } from '../../../components/nav-button/NavButton'
 import { BACKPACK_SECTION } from '../../../state/backpack/state'
@@ -265,7 +266,8 @@ export function RightSection({
         padding: { right: '1%' },
         justifyContent: 'flex-end',
         alignItems: 'center',
-        flexGrow: 1
+        flexGrow: 1,
+        ...FLEX_BASIS_AUTO
       }}
     >
       {children}

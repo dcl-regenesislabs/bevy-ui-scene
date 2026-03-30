@@ -1,4 +1,5 @@
 import { ReactEcs, type ReactElement, UiEntity } from '@dcl/react-ecs'
+import { FLEX_BASIS_AUTO } from '../../utils/ui-utils'
 import {
   HoverTargetType,
   type InputBinding,
@@ -100,6 +101,7 @@ export const HoverActionComponent = (): ReactElement | null => {
           left: pointerInfo.screenCoordinates.x - size / 2
         },
         flexGrow: 1,
+        ...FLEX_BASIS_AUTO,
         flexShrink: 0,
         zIndex: MAX_ZINDEX - 1
       }}
@@ -204,6 +206,7 @@ export function KeyIcon({
     borderRadius: fontSize * 0.6,
     flexShrink: 0,
     flexGrow: 1,
+    ...FLEX_BASIS_AUTO,
     padding: { top: -fontSize * 0.1 },
     margin: { top: fontSize * -0.15 }
   }
