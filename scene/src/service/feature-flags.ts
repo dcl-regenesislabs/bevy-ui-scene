@@ -7,6 +7,13 @@ export type FeatureFlags = {
   notifications: boolean
 }
 
+export const FEATURES: Record<string, keyof FeatureFlags> = {
+  MINIMAP: 'minimap',
+  CHAT: 'chat',
+  DISCOVER_MAP: 'discoverMap',
+  NOTIFICATIONS: 'notifications'
+} as const
+
 const DEFAULT_FLAGS: FeatureFlags = {
   minimap: true,
   chat: true,

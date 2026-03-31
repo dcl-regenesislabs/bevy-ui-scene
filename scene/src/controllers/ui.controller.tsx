@@ -40,6 +40,7 @@ import { getViewportWidth } from '../service/canvas-ratio'
 import { listenSystemAction } from '../service/system-actions-emitter'
 import { HoverActionComponent } from '../components/hover-actions/hover-action-component'
 import { SceneLoadingWindowComponent } from '../components/scene-loading-window'
+import { FEATURES, getFeatureFlag } from '../service/feature-flags'
 
 let loadingAndLogin: any = null
 
@@ -119,8 +120,10 @@ export class UIController {
 
         void this.backpackPage.init()
 
-        setupNotifications().catch(console.error)
-        initRealTimeNotifications()
+        if (getFeatureFlag(FEATURES.NOTIFICATIONS)) {
+          setupNotifications().catch(console.error)
+          initRealTimeNotifications()
+        }
       })().catch(console.error)
     })
 
@@ -150,11 +153,15 @@ export class UIController {
         {this.warningPopUpVisible && this.warningPopUp.mainUi()}
         {!this.isMainMenuVisible && renderEmotesWheel()}
 
-        {store.getState().hud.mapModeActive && BigMap()}
-        {store.getState().hud.mapModeActive && SceneCatalogPanel()}
+        {getFeatureFlag(FEATURES.DISCOVER_MAP) &&
+          store.getState().hud.mapModeActive &&
+          BigMap()}
+        {getFeatureFlag(FEATURES.DISCOVER_MAP) &&
+          store.getState().hud.mapModeActive &&
+          SceneCatalogPanel()}
 
         {this.sceneInfoCardVisible && this.sceneCard.mainUi()}
-        {NotificationToastStack()}
+        {getFeatureFlag(FEATURES.NOTIFICATIONS) && NotificationToastStack()}
         {PopupStack()}
         {HoverActionComponent()}
         {SceneLoadingWindowComponent()}

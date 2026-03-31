@@ -11,6 +11,7 @@ import { store } from 'src/state/store'
 import { fetchPlaceFromCoords } from 'src/utils/promise-utils'
 import { type ReadOnlyVector3 } from '~system/EngineApi'
 import { UIController } from './ui.controller'
+import { FEATURES, getFeatureFlag } from '../service/feature-flags'
 import { initSystemActionsEmitter } from '../service/system-actions-emitter'
 import { setupPassportPopup } from '../ui-classes/main-hud/passport/passport-popup'
 import { setupProfilePopups } from '../ui-classes/main-hud/passport/profile-popup'
@@ -77,11 +78,13 @@ export class GameController {
     }
     store.dispatch(loadSceneFromBevyApi(currentScene))
     store.dispatch(loadPlaceFromApi(undefined))
-    fetchPlaceFromCoords(explorerCoords)
-      .then((place) => {
-        store.dispatch(loadPlaceFromApi(place))
-      })
-      .catch(console.error)
+    if (getFeatureFlag(FEATURES.DISCOVER_MAP)) {
+      fetchPlaceFromCoords(explorerCoords)
+        .then((place) => {
+          store.dispatch(loadPlaceFromApi(place))
+        })
+        .catch(console.error)
+    }
     this.uiController.mainHud.sceneInfo.update().catch(console.error)
   }
 }
