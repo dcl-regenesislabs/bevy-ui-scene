@@ -280,9 +280,8 @@ export default class SceneInfo {
           }}
         >
           {this.SceneInfoHeader()}
-          {getFeatureFlag(FEATURES.MINIMAP) && store.getState().hud.minimapOpen && (
-            <MiniMapContent />
-          )}
+          {getFeatureFlag(FEATURES.MINIMAP) &&
+            store.getState().hud.minimapOpen && <MiniMapContent />}
           <UiEntity
             uiTransform={{
               display: this.isMenuOpen ? 'flex' : 'none',

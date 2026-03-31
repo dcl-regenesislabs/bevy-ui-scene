@@ -214,12 +214,7 @@ export type BevyApiInterface = {
     Array<{ userId: string; hideAvatar: boolean; hideProfile: boolean }>
   >
 
-  getFeatureFlags: () => Promise<{
-    minimap: boolean
-    chat: boolean
-    discoverMap: boolean
-    notifications: boolean
-  }>
+  getParams: () => Promise<Record<string, string>>
 }
 
 // system api module

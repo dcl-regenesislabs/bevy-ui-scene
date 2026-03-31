@@ -25,9 +25,15 @@ const resolvedFlags: FeatureFlags = { ...DEFAULT_FLAGS }
 
 export async function initFeatureFlags(): Promise<void> {
   try {
-    const runtimeFlags = await BevyApi.getFeatureFlags()
-    if (runtimeFlags != null) {
-      Object.assign(resolvedFlags, runtimeFlags)
+    const params = await BevyApi.getParams()
+    if (params?.disableFeatures != null) {
+      const disabled = params.disableFeatures.split(',')
+      for (const feature of disabled) {
+        const key = feature.trim() as keyof FeatureFlags
+        if (key in resolvedFlags) {
+          resolvedFlags[key] = false
+        }
+      }
     }
     console.log('[feature-flags] flags:', resolvedFlags)
   } catch (e) {
