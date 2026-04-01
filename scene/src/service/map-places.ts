@@ -1,6 +1,7 @@
 import { type Coords } from '@dcl/sdk/ecs'
 import { Vector3 } from '@dcl/sdk/math'
 import { getRealm } from '~system/Runtime'
+import { FEATURES, getFeatureFlag } from './feature-flags'
 import { sleep } from '../utils/dcl-utils'
 
 // TODO move types to map-definitions.ts and use already existent PlaceFromApi
@@ -99,6 +100,7 @@ export const getPlaceCategories = (): PlaceCategory[] => state.categories
 export const loadCompleteMapPlaces = async (): Promise<
   Record<string, Place>
 > => {
+  if (!getFeatureFlag(FEATURES.DISCOVER_MAP)) return state.places
   if (Date.now() - mapStorageDate < CACHE_TIME) {
     console.log('mapStoragePlaces', Object.values(mapStoragePlaces).length)
     state.places = mapStoragePlaces

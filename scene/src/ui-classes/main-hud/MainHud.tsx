@@ -20,6 +20,7 @@ import { BevyApi } from '../../bevy-api'
 import { sleep } from '../../utils/dcl-utils'
 import { listenSystemAction } from '../../service/system-actions-emitter'
 import { getFontSize } from '../../service/fontsize-system'
+import { FEATURES, getFeatureFlag } from '../../service/feature-flags'
 
 const ZERO_SIZE = {
   width: 0,
@@ -307,7 +308,9 @@ export default class MainHud {
               }
             }}
           >
-            {this.chatAndLogs.isOpen() && this.chatAndLogs.mainUi()}
+            {getFeatureFlag(FEATURES.CHAT) &&
+              this.chatAndLogs.isOpen() &&
+              this.chatAndLogs.mainUi()}
           </UiEntity>
         </UiEntity>
       </UiEntity>
@@ -380,56 +383,60 @@ export default class MainHud {
             iconSize={buttonIconSize}
           />
 
-          <ButtonIcon
-            uiTransform={buttonTransform}
-            onMouseEnter={() => {
-              this.notificationsEnter()
-            }}
-            onMouseLeave={() => {
-              this.updateButtons()
-            }}
-            onMouseDown={() => {
-              store.dispatch(
-                pushPopupAction({
-                  type: HUD_POPUP_TYPE.NOTIFICATIONS_MENU
-                })
-              )
-              console.log('clicked')
-              this.updateButtons()
-            }}
-            backgroundColor={this.bellBackground}
-            icon={this.bellIcon}
-            hintText={'Notifications'}
-            showHint={this.bellHint}
-            hintFontSize={getFontSize({})}
-            iconSize={buttonIconSize}
-            notifications={store.getState().hud.unreadNotifications}
-          />
+          {getFeatureFlag(FEATURES.NOTIFICATIONS) && (
+            <ButtonIcon
+              uiTransform={buttonTransform}
+              onMouseEnter={() => {
+                this.notificationsEnter()
+              }}
+              onMouseLeave={() => {
+                this.updateButtons()
+              }}
+              onMouseDown={() => {
+                store.dispatch(
+                  pushPopupAction({
+                    type: HUD_POPUP_TYPE.NOTIFICATIONS_MENU
+                  })
+                )
+                console.log('clicked')
+                this.updateButtons()
+              }}
+              backgroundColor={this.bellBackground}
+              icon={this.bellIcon}
+              hintText={'Notifications'}
+              showHint={this.bellHint}
+              hintFontSize={getFontSize({})}
+              iconSize={buttonIconSize}
+              notifications={store.getState().hud.unreadNotifications}
+            />
+          )}
 
           <UiEntity
             uiTransform={{ height: 1, width: '80%' }}
             uiBackground={{ color: SELECTED_BUTTON_COLOR }}
           />
 
-          <ButtonIcon
-            uiTransform={buttonTransform}
-            onMouseEnter={() => {
-              this.mapEnter()
-            }}
-            onMouseLeave={() => {
-              this.updateButtons()
-            }}
-            onMouseDown={() => {
-              this.uiController.menu?.show('map')
-              this.updateButtons()
-            }}
-            backgroundColor={this.mapBackground}
-            icon={this.mapIcon}
-            hintText={'Map'}
-            hintFontSize={getFontSize({})}
-            showHint={this.mapHint}
-            iconSize={buttonIconSize}
-          />
+          {getFeatureFlag(FEATURES.DISCOVER_MAP) && (
+            <ButtonIcon
+              uiTransform={buttonTransform}
+              onMouseEnter={() => {
+                this.mapEnter()
+              }}
+              onMouseLeave={() => {
+                this.updateButtons()
+              }}
+              onMouseDown={() => {
+                this.uiController.menu?.show('map')
+                this.updateButtons()
+              }}
+              backgroundColor={this.mapBackground}
+              icon={this.mapIcon}
+              hintText={'Map'}
+              hintFontSize={getFontSize({})}
+              showHint={this.mapHint}
+              iconSize={buttonIconSize}
+            />
+          )}
 
           <ButtonIcon
             uiTransform={buttonTransform}
@@ -527,34 +534,38 @@ export default class MainHud {
             showHint={this.voiceChatHint}
             iconSize={buttonIconSize}
           />
-          <ButtonIcon
-            uiTransform={buttonTransform}
-            onMouseEnter={() => {
-              state.hover = MENU_ELEMENT.CHAT
-            }}
-            onMouseLeave={() => {
-              if (!(state.hover > 0 && state.hover !== MENU_ELEMENT.CHAT)) {
-                state.hover = MENU_ELEMENT.NONE
+          {getFeatureFlag(FEATURES.CHAT) && (
+            <ButtonIcon
+              uiTransform={buttonTransform}
+              onMouseEnter={() => {
+                state.hover = MENU_ELEMENT.CHAT
+              }}
+              onMouseLeave={() => {
+                if (!(state.hover > 0 && state.hover !== MENU_ELEMENT.CHAT)) {
+                  state.hover = MENU_ELEMENT.NONE
+                }
+              }}
+              onMouseDown={() => {
+                this.openCloseChat()
+                this.updateButtons()
+              }}
+              backgroundColor={
+                state.hover === MENU_ELEMENT.CHAT
+                  ? SELECTED_BUTTON_COLOR
+                  : undefined
               }
-            }}
-            onMouseDown={() => {
-              this.openCloseChat()
-              this.updateButtons()
-            }}
-            backgroundColor={
-              state.hover === MENU_ELEMENT.CHAT
-                ? SELECTED_BUTTON_COLOR
-                : undefined
-            }
-            icon={
-              store.getState().hud.chatOpen ? ChatIconActive : ChatIconInactive
-            }
-            hintText={'Chat'}
-            hintFontSize={getFontSize({})}
-            showHint={state.hover === MENU_ELEMENT.CHAT}
-            notifications={this.chatAndLogs.getUnreadMessages()}
-            iconSize={buttonIconSize}
-          />
+              icon={
+                store.getState().hud.chatOpen
+                  ? ChatIconActive
+                  : ChatIconInactive
+              }
+              hintText={'Chat'}
+              hintFontSize={getFontSize({})}
+              showHint={state.hover === MENU_ELEMENT.CHAT}
+              notifications={this.chatAndLogs.getUnreadMessages()}
+              iconSize={buttonIconSize}
+            />
+          )}
 
           <ButtonIcon
             uiTransform={buttonTransform}

@@ -20,6 +20,7 @@ import {
 } from '../../../utils/ui-utils'
 import type { HomeScene, LiveSceneInfo } from 'src/bevy-api/interface'
 import { BevyApi } from 'src/bevy-api'
+import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { setHome } from 'src/state/sceneInfo/actions'
 import { getViewportHeight } from '../../../service/canvas-ratio'
 import { MiniMapContent } from '../../../components/map/mini-map-content'
@@ -279,7 +280,8 @@ export default class SceneInfo {
           }}
         >
           {this.SceneInfoHeader()}
-          {store.getState().hud.minimapOpen && <MiniMapContent />}
+          {getFeatureFlag(FEATURES.MINIMAP) &&
+            store.getState().hud.minimapOpen && <MiniMapContent />}
           <UiEntity
             uiTransform={{
               display: this.isMenuOpen ? 'flex' : 'none',

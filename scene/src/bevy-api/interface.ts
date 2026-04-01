@@ -213,6 +213,8 @@ export type BevyApiInterface = {
   getAvatarModifiers: () => Promise<
     Array<{ userId: string; hideAvatar: boolean; hideProfile: boolean }>
   >
+
+  getParams: () => Promise<Record<string, string>>
 }
 
 // system api module
