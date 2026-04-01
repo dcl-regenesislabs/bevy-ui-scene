@@ -1,0 +1,29 @@
+{
+  "acceptingUsers": true,
+  "bff": {
+    "healthy": false,
+    "publicUrl": "https://peer.decentraland.org/bff"
+  },
+  "comms": {
+    "healthy": true,
+    "protocol": "v3",
+    "fixedAdapter": "ws-room:ws-room-service.decentraland.org/rooms/bevy-ui-scene"
+  },
+  "configurations": {
+    "networkId": 0,
+    "globalScenesUrn": [],
+    "scenesUrn": [
+      "urn:decentraland:entity:bafkreic6a6y2c7g3tnnuoz624hyw322txfmk33uwitsoeru6j6ppx6k74m?=&baseUrl=https://regenesislabs.github.io/bevy-ui-scene/"
+    ],
+    "realmName": "BevyUiScene"
+  },
+  "content": {
+    "healthy": true,
+    "publicUrl": "https://peer.decentraland.org/content"
+  },
+  "lambdas": {
+    "healthy": true,
+    "publicUrl": "https://peer.decentraland.org/lambdas"
+  },
+  "healthy": true
+}

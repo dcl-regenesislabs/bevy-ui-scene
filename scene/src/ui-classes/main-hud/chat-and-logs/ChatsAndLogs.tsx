@@ -15,6 +15,7 @@ import ReactEcs, {
 } from '@dcl/sdk/react-ecs'
 import { getPlayer } from '@dcl/sdk/src/players'
 import { ONE_ADDRESS, ZERO_ADDRESS } from '../../../utils/constants'
+import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { BevyApi } from '../../../bevy-api'
 import {
   CHAT_SIDE,
@@ -122,15 +123,16 @@ const state: {
 export default class ChatAndLogs {
   pushMessage = pushMessage
   constructor() {
-    this.listenMessages().catch(console.error)
+    if (getFeatureFlag(FEATURES.CHAT)) {
+      this.listenMessages().catch(console.error)
+      initChatMembersCount().catch(console.error)
+    }
     this.listenMouseHover()
     listenSystemAction('Chat', (pressed) => {
       if (pressed) {
         focusChatInput(true)
       }
     })
-
-    initChatMembersCount().catch(console.error)
 
     store.subscribe((action, previousState: AppState) => {
       if (

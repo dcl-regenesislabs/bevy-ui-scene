@@ -1,6 +1,7 @@
 import { BevyApi } from '../bevy-api'
 import type { ExplorerSetting } from '../bevy-api/interface'
 import { GameController } from '../controllers/game.controller'
+import { initFeatureFlags } from '../service/feature-flags'
 import { loadSettingsFromExplorer } from '../state/settings/actions'
 import { store } from '../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
@@ -10,6 +11,7 @@ import { getPlayer } from '@dcl/sdk/players'
 let gameInstance: GameController
 
 export async function init(retry: boolean): Promise<void> {
+  await initFeatureFlags()
   gameInstance = new GameController()
 
   gameInstance.uiController.loadingAndLogin.startLoading()
