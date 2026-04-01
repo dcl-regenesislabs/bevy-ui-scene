@@ -28,7 +28,7 @@ export async function initFeatureFlags(): Promise<void> {
     const params = await BevyApi.getParams()
     console.log('getParams', params instanceof Map, params)
     if (params.disableFeatures != null) {
-      const disabled = decodeURIComponent(params.disableFeatures).split(',')
+      const disabled = params.disableFeatures.split(',')
 
       for (const feature of disabled) {
         const key = feature.trim() as keyof FeatureFlags
