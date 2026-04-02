@@ -319,7 +319,8 @@ export default class MainHud {
             {getFeatureFlag(FEATURES.CHAT) &&
               this.chatAndLogs.isOpen() &&
               this.chatAndLogs.mainUi()}
-            {store.getState().hud.friendsOpen && <FriendsPanel />}
+            {getFeatureFlag(FEATURES.FRIENDS) &&
+              store.getState().hud.friendsOpen && <FriendsPanel />}
           </UiEntity>
         </UiEntity>
       </UiEntity>
@@ -543,36 +544,40 @@ export default class MainHud {
             showHint={this.voiceChatHint}
             iconSize={buttonIconSize}
           />
-          <ButtonIcon
-            uiTransform={buttonTransform}
-            icon={
-              store.getState().hud.friendsOpen
-                ? FriendsIconActive
-                : FriendsIconInactive
-            }
-            onMouseDown={() => {
-              store.dispatch(
-                updateHudStateAction({
-                  friendsOpen: !store.getState().hud.friendsOpen,
-                  chatOpen: !!store.getState().hud.friendsOpen
-                })
-              )
-              this.updateButtons()
-            }}
-            hintText={'Friends'}
-            hintFontSize={getFontSize({})}
-            showHint={state.hover === MENU_ELEMENT.FRIENDS}
-            notifications={0}
-            iconSize={buttonIconSize}
-            onMouseEnter={() => {
-              state.hover = MENU_ELEMENT.FRIENDS
-            }}
-            onMouseLeave={() => {
-              if (!(state.hover > 0 && state.hover !== MENU_ELEMENT.FRIENDS)) {
-                state.hover = MENU_ELEMENT.FRIENDS
+          {getFeatureFlag(FEATURES.FRIENDS) && (
+            <ButtonIcon
+              uiTransform={buttonTransform}
+              icon={
+                store.getState().hud.friendsOpen
+                  ? FriendsIconActive
+                  : FriendsIconInactive
               }
-            }}
-          />
+              onMouseDown={() => {
+                store.dispatch(
+                  updateHudStateAction({
+                    friendsOpen: !store.getState().hud.friendsOpen,
+                    chatOpen: !!store.getState().hud.friendsOpen
+                  })
+                )
+                this.updateButtons()
+              }}
+              hintText={'Friends'}
+              hintFontSize={getFontSize({})}
+              showHint={state.hover === MENU_ELEMENT.FRIENDS}
+              notifications={0}
+              iconSize={buttonIconSize}
+              onMouseEnter={() => {
+                state.hover = MENU_ELEMENT.FRIENDS
+              }}
+              onMouseLeave={() => {
+                if (
+                  !(state.hover > 0 && state.hover !== MENU_ELEMENT.FRIENDS)
+                ) {
+                  state.hover = MENU_ELEMENT.FRIENDS
+                }
+              }}
+            />
+          )}
           {getFeatureFlag(FEATURES.CHAT) && (
             <ButtonIcon
               uiTransform={buttonTransform}

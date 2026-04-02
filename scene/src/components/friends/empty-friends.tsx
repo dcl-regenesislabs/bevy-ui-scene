@@ -11,7 +11,10 @@ import { Column } from '../layout'
 
 export function EmptyFriends(): ReactEcs.JSX.Element {
   const fontSize = getFontSize({ context: CONTEXT.SIDE })
-  const fontSizeTitle = getFontSize({ context: CONTEXT.SIDE, token: TYPOGRAPHY_TOKENS.TITLE_M })
+  const fontSizeTitle = getFontSize({
+    context: CONTEXT.SIDE,
+    token: TYPOGRAPHY_TOKENS.TITLE_M
+  })
   const iconSize = fontSize * 5
 
   return (

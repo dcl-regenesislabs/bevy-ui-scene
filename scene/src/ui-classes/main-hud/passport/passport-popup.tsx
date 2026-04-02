@@ -961,9 +961,7 @@ function PassportFriendButton({
     executeTask(async () => {
       const blocked = await BevyApi.social.getBlockedUsers()
       setIsBlocked(
-        blocked.some(
-          (b) => b.address.toLowerCase() === userId.toLowerCase()
-        )
+        blocked.some((b) => b.address.toLowerCase() === userId.toLowerCase())
       )
     })
   }, [])

@@ -35,7 +35,10 @@ export function BlockedListItem({
   const displayName = user.hasClaimedName
     ? user.name
     : getNameWithHashPostfix(user.name, user.address)
-  const fontSize = getFontSize({ context: CONTEXT.SIDE, token: TYPOGRAPHY_TOKENS.BODY })
+  const fontSize = getFontSize({
+    context: CONTEXT.SIDE,
+    token: TYPOGRAPHY_TOKENS.BODY
+  })
 
   return (
     <Row

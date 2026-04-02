@@ -5,20 +5,23 @@ export type FeatureFlags = {
   chat: boolean
   discoverMap: boolean
   notifications: boolean
+  friends: boolean
 }
 
 export const FEATURES: Record<string, keyof FeatureFlags> = {
   MINIMAP: 'minimap',
   CHAT: 'chat',
   DISCOVER_MAP: 'discoverMap',
-  NOTIFICATIONS: 'notifications'
+  NOTIFICATIONS: 'notifications',
+  FRIENDS: 'friends'
 } as const
 
 const DEFAULT_FLAGS: FeatureFlags = {
   minimap: true,
   chat: true,
   discoverMap: true,
-  notifications: true
+  notifications: true,
+  friends: true
 }
 
 const resolvedFlags: FeatureFlags = { ...DEFAULT_FLAGS }
