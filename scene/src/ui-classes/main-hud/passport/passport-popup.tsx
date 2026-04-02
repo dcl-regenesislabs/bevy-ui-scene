@@ -81,6 +81,7 @@ import {
 import { PassportSection } from './passport-section'
 import { BadgesCollection } from './badges-collection'
 import { PASSPORT_SECTIONS } from './passport-constants'
+import { PassportGallery } from './passport-gallery'
 import { Badge3dPreviewElement } from './badge-3d-preview'
 import { BadgesPreview } from './badges-preview'
 
@@ -215,7 +216,9 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
           {!state.loadingProfile
             ? [
                 store.getState().hud.passportActiveSection ===
-                PASSPORT_SECTIONS[0] ? (
+                  PASSPORT_SECTIONS[0] ||
+                store.getState().hud.passportActiveSection ===
+                  PASSPORT_SECTIONS[2] ? (
                   <UserAvatarPreviewElement
                     userId={shownPopup.data as string}
                     allowRotation={true}
@@ -369,6 +372,11 @@ function PassportContent(): ReactElement {
         {store.getState().hud.passportActiveSection === PASSPORT_SECTIONS[1] ? (
           <Column>
             <BadgesCollection badgesData={badgesData} />
+          </Column>
+        ) : null}
+        {store.getState().hud.passportActiveSection === PASSPORT_SECTIONS[2] ? (
+          <Column>
+            <PassportGallery />
           </Column>
         ) : null}
       </Column>

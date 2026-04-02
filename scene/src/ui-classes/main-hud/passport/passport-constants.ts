@@ -1,1 +1,1 @@
-export const PASSPORT_SECTIONS = ['OVERVIEW', 'BADGES']
+export const PASSPORT_SECTIONS = ['OVERVIEW', 'BADGES', 'PHOTOS']
