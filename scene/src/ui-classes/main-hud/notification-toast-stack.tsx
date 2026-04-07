@@ -8,8 +8,8 @@ import { sleep } from '../../utils/dcl-utils'
 import { fetchNotifications } from '../../utils/notifications-promise-utils'
 import { BevyApi } from '../../bevy-api'
 import { getPlayer } from '@dcl/sdk/src/players'
-import { fetchProfileData } from '../../utils/passport-promise-utils'
 import type { FriendshipEventUpdate } from '../../service/social-service-type'
+import { showErrorPopup } from '../../service/error-popup-service'
 
 export type NotificationToastStackState = {
   toasts: Notification[]
@@ -89,90 +89,40 @@ export function pushNotificationToast(notification: Notification): void {
 
 export function initFriendshipEventToasts(): void {
   executeTask(async () => {
-    const stream = await BevyApi.social.getFriendshipEventStream()
-    for await (const event of stream) {
-      if (
-        event.type === 'request' ||
-        event.type === 'accept' ||
-        event.type === 'reject'
-      ) {
-        const notification = await buildFriendshipNotification(event)
-        if (notification != null) {
-          pushNotificationToast(notification)
+    try {
+      const stream = await BevyApi.social.getFriendshipEventStream()
+      for await (const event of stream) {
+        if (event.type === 'request') {
+          pushNotificationToast(buildFriendRequestNotification(event))
         }
       }
+    } catch (error) {
+      showErrorPopup(
+        error instanceof Error ? error : new Error(String(error)),
+        'initFriendshipEventToasts'
+      )
     }
   })
 }
 
-async function buildFriendshipNotification(
-  event: FriendshipEventUpdate
-): Promise<Notification | null> {
+function buildFriendRequestNotification(
+  event: FriendshipEventUpdate & { type: 'request' }
+): Notification {
   const myPlayer = getPlayer()
   const myAddress = myPlayer?.userId ?? ''
   const myName = myPlayer?.name ?? ''
   const myHasClaimedName = !(myName.includes('#') || myName.length === 0)
 
-  if (event.type === 'request') {
-    return {
-      id: event.id,
-      type: 'social_service_friendship_request',
-      address: myAddress,
-      metadata: {
-        sender: {
-          name: event.name,
-          address: event.address,
-          hasClaimedName: event.hasClaimedName,
-          profileImageUrl: event.profilePictureUrl
-        },
-        receiver: {
-          name: myName,
-          address: myAddress,
-          hasClaimedName: myHasClaimedName,
-          profileImageUrl: ''
-        },
-        requestId: event.id
-      },
-      timestamp: String(event.createdAt),
-      read: false
-    }
-  }
-
-  // accept or reject — resolve profile
-  let name = event.address
-  let hasClaimedName = false
-  const profileImageUrl = ''
-
-  const player = getPlayer({ userId: event.address })
-  if (player?.name != null) {
-    name = player.name
-    hasClaimedName = name.length > 0 && !name.includes('#')
-  } else {
-    const profile = await fetchProfileData({
-      userId: event.address,
-      useCache: true
-    })
-    if (profile?.avatars?.[0] != null) {
-      name = profile.avatars[0].name ?? name
-      hasClaimedName = profile.avatars[0].hasClaimedName ?? false
-    }
-  }
-
-  const type =
-    event.type === 'accept'
-      ? 'social_service_friendship_accepted'
-      : 'social_service_friendship_rejected'
-
   return {
-    id: `friendship-${event.type}-${event.address}-${Date.now()}`,
-    type,
+    id: event.id,
+    type: 'social_service_friendship_request',
     address: myAddress,
     metadata: {
       sender: {
-        name,
+        name: event.name,
         address: event.address,
-        hasClaimedName,
-        profileImageUrl
+        hasClaimedName: event.hasClaimedName,
+        profileImageUrl: event.profilePictureUrl
       },
       receiver: {
         name: myName,
@@ -180,9 +130,9 @@ async function buildFriendshipNotification(
         hasClaimedName: myHasClaimedName,
         profileImageUrl: ''
       },
-      requestId: ''
+      requestId: event.id
     },
-    timestamp: String(Date.now()),
+    timestamp: String(event.createdAt),
     read: false
   }
 }
