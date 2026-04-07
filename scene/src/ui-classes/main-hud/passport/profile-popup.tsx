@@ -44,6 +44,7 @@ import { getNameWithHashPostfix } from '../../../service/chat/chat-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { BevyApi } from '../../../bevy-api'
 import Icon from '../../../components/icon/Icon'
+import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
@@ -160,7 +161,8 @@ function ProfileContent({
         {player.userId !== getPlayer()?.userId ? (
           <MentionButton player={player} />
         ) : null}
-        {player.userId !== getPlayer()?.userId ? (
+        {player.userId !== getPlayer()?.userId &&
+        getFeatureFlag(FEATURES.FRIENDS) ? (
           <BlockUserButton player={player} />
         ) : null}
         {/* // TODO Exit / Sign out : OwnProfileButtons({player}) */}
@@ -261,7 +263,9 @@ function ProfileHeader({
               }}
             />
           </Row>,
-          <FriendButton player={player} fontSize={fontSizeTitleL} />
+          ...(getFeatureFlag(FEATURES.FRIENDS)
+            ? [<FriendButton player={player} fontSize={fontSizeTitleL} />]
+            : [])
         ]
       : [])
   ]
@@ -361,6 +365,7 @@ function FriendButton({
   const [isHovered, setIsHovered] = useState<boolean>(false)
 
   useEffect(() => {
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
     executeTask(async () => {
       const friends = await BevyApi.social.getFriends()
       setIsFriend(

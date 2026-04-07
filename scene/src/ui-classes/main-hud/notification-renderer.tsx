@@ -7,6 +7,7 @@ import {
   type Notification,
   type UserProfile
 } from './notification-types'
+import type { FriendRequestData } from '../../service/social-service-type'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import {
   COLOR,
@@ -35,11 +36,13 @@ import { getFontSize } from '../../service/fontsize-system'
 
 export function NotificationItem({
   notification,
-  uiTransform
+  uiTransform,
+  onDismiss
 }: {
   notification: Notification
   key?: any
   uiTransform?: UiTransformProps
+  onDismiss?: () => void
 }): ReactElement | null {
   const [loading, setLoading] = useState(false)
   const fontSize = getFontSize({})
@@ -97,6 +100,10 @@ export function NotificationItem({
               }
             }
           })
+        } else if (isFriendshipNotification(notification)) {
+          handleFriendshipNotificationClick(
+            notification as FriendshipNotification
+          )
         } else if (notification.metadata.link) {
           store.dispatch(closeLastPopupAction())
           store.dispatch(
@@ -107,6 +114,7 @@ export function NotificationItem({
           )
         }
         setLoading(false)
+        onDismiss?.()
         // TODO handle events to offer EventInfoCard or Teleport
         console.log('notification', notification)
       }}
@@ -231,6 +239,8 @@ function getTitleFromNotification(notification: Notification): string {
       return 'Friend request accepted'
     case 'social_service_friendship_request':
       return 'Friend request received'
+    case 'social_service_friendship_rejected':
+      return 'Friend request rejected'
     case 'item_sold':
       return 'Item sold'
     default:
@@ -248,6 +258,8 @@ function getDescriptionFromNotification(notification: Notification): string {
       return `<color=${hexColor}>${protagonist.name}</color> accepted your friend request.`
     } else if (notification.type === 'social_service_friendship_request') {
       return `<color=${hexColor}>${protagonist.name}</color> wants to be your friend.`
+    } else if (notification.type === 'social_service_friendship_rejected') {
+      return `<color=${hexColor}>${protagonist.name}</color> rejected your friend request.`
     }
   }
 
@@ -325,7 +337,7 @@ function NotificationThumbnail({
     <UiEntity
       uiTransform={{
         height: fontSize * 5,
-        width: fontSize * 6,
+        width: fontSize * 5, // TODO if its friendship notification to show avatarCircle, use 5, otherwise use 6
         borderColor: COLOR.BLACK_TRANSPARENT,
         borderWidth: 0,
         borderRadius: fontSize / 2,
@@ -365,7 +377,7 @@ function GenericNotificationThumbnail({
       uiTransform={{
         positionType: 'absolute',
         width: '100%',
-        height: '100%'
+        height: '83%'
       }}
       uiBackground={
         notification.metadata.image
@@ -443,6 +455,45 @@ export function getFriendshipNotificationProtagonist(
   const me = notification.address.toLowerCase()
 
   return sender.address.toLowerCase() === me ? receiver : sender
+}
+
+function handleFriendshipNotificationClick(
+  notification: FriendshipNotification
+): void {
+  const protagonist = getFriendshipNotificationProtagonist(notification)
+
+  if (notification.type === 'social_service_friendship_request') {
+    const requestData: FriendRequestData = {
+      address: protagonist.address,
+      name: protagonist.name,
+      hasClaimedName: protagonist.hasClaimedName,
+      profilePictureUrl: protagonist.profileImageUrl,
+      createdAt: Number(notification.timestamp),
+      id: notification.metadata.requestId
+    }
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.FRIEND_REQUEST_RECEIVED,
+        data: requestData
+      })
+    )
+  } else {
+    const variant =
+      notification.type === 'social_service_friendship_accepted'
+        ? 'accepted'
+        : 'rejected'
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+        data: {
+          variant,
+          address: protagonist.address,
+          name: protagonist.name,
+          hasClaimedName: protagonist.hasClaimedName
+        }
+      })
+    )
+  }
 }
 
 export function formatTimeAgoFromTimestamp(timestamp: string): string {

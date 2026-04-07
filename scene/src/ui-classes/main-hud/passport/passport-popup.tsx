@@ -84,6 +84,7 @@ import { PASSPORT_SECTIONS } from './passport-constants'
 import { PassportGallery } from './passport-gallery'
 import { Badge3dPreviewElement } from './badge-3d-preview'
 import { BadgesPreview } from './badges-preview'
+import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -188,6 +189,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   }, [popups.length])
 
   useEffect(() => {
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
     executeTask(async () => {
       const friends = await BevyApi.social.getFriends()
       setIsFriend(friends.some((f) => f.address.toLowerCase() === userId))
@@ -244,7 +246,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               color={{ ...COLOR.TEXT_COLOR_GREY, a: loadingAlpha }}
             />
           )}
-          {!state.editable ? (
+          {!state.editable && getFeatureFlag(FEATURES.FRIENDS) ? (
             <PassportFriendButton
               isFriend={isFriend}
               userId={userId}
@@ -966,6 +968,7 @@ function PassportFriendButton({
   }
 
   useEffect(() => {
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
     executeTask(async () => {
       const blocked = await BevyApi.social.getBlockedUsers()
       setIsBlocked(

@@ -21,6 +21,7 @@ import { store } from '../state/store'
 import { PopupStack } from '../components/popup-stack'
 import { setupNotifications } from '../ui-classes/main-hud/notifications-menu'
 import {
+  initFriendshipEventToasts,
   initRealTimeNotifications,
   NotificationToastStack
 } from '../ui-classes/main-hud/notification-toast-stack'
@@ -123,6 +124,9 @@ export class UIController {
         if (getFeatureFlag(FEATURES.NOTIFICATIONS)) {
           setupNotifications().catch(console.error)
           initRealTimeNotifications()
+        }
+        if (getFeatureFlag(FEATURES.FRIENDS)) {
+          initFriendshipEventToasts()
         }
       })().catch(console.error)
     })
