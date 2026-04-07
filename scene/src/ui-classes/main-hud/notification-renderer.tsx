@@ -67,43 +67,48 @@ export function NotificationItem({
         setLoading(true)
         if (notification.type.indexOf('events') === 0) {
           executeTask(async () => {
-            const eventId =
-              notification.metadata.eventId ??
-              notification.metadata.link.replace(
-                'https://decentraland.org/jump/events?id=',
-                ''
-              )
-            store.dispatch(closeLastPopupAction())
-            const responseEvent = await BevyApi.kernelFetch({
-              url: `https://events.decentraland.org/api/events/${eventId}`
-            })
+            try {
+              const eventId =
+                notification.metadata.eventId ??
+                notification.metadata.link.replace(
+                  'https://decentraland.org/jump/events?id=',
+                  ''
+                )
+              store.dispatch(closeLastPopupAction())
+              const responseEvent = await BevyApi.kernelFetch({
+                url: `https://events.decentraland.org/api/events/${eventId}`
+              })
 
-            if (!responseEvent.ok) {
-              showErrorPopup(
-                new Error(
-                  `httpError ${responseEvent.status} ${
-                    responseEvent.statusText || responseEvent.body
-                  }`
-                ),
-                `BevyApi.kernelFetch notification event ${eventId}`
-              )
-            } else {
-              const { data } = JSON.parse(responseEvent.body)
-              const placeId = data.place_id
+              if (!responseEvent.ok) {
+                showErrorPopup(
+                  new Error(
+                    `httpError ${responseEvent.status} ${
+                      responseEvent.statusText || responseEvent.body
+                    }`
+                  ),
+                  `BevyApi.kernelFetch notification event ${eventId}`
+                )
+              } else {
+                const { data } = JSON.parse(responseEvent.body)
+                const placeId = data.place_id
 
-              if (placeId) {
-                const place = await fetchPlaceFromApi(placeId)
+                if (placeId) {
+                  const place = await fetchPlaceFromApi(placeId)
 
-                getUiController()
-                  .sceneCard.showByData(place)
-                  .catch(console.error)
+                  getUiController()
+                    .sceneCard.showByData(place)
+                    .catch(console.error)
+                }
               }
+            } finally {
+              setLoading(false)
             }
           })
         } else if (isFriendshipNotification(notification)) {
           handleFriendshipNotificationClick(
             notification as FriendshipNotification
           )
+          setLoading(false)
         } else if (notification.metadata.link) {
           store.dispatch(closeLastPopupAction())
           store.dispatch(
@@ -112,8 +117,8 @@ export function NotificationItem({
               data: notification.metadata.link
             })
           )
+          setLoading(false)
         }
-        setLoading(false)
         onDismiss?.()
         // TODO handle events to offer EventInfoCard or Teleport
         console.log('notification', notification)
