@@ -5,6 +5,7 @@ import { MainHud } from '../ui-classes/main-hud'
 import { MainMenu } from '../ui-classes/main-menu'
 
 import { MapPage } from '../ui-classes/main-menu/map-page'
+import CommunitiesPage from '../ui-classes/main-menu/communities-page/CommunitiesPage'
 import { LoadingAndLogin } from '../ui-classes/loading-and-login'
 import { PopUpWarning } from '../ui-classes/main-hud/pop-up-warning'
 import { SceneInfoCard } from '../ui-classes/scene-info-card'
@@ -65,6 +66,7 @@ export class UIController {
   public settingsPage: SettingsPage
   public backpackPage: BackpackPage
   public mapPage: MapPage
+  public communitiesPage: CommunitiesPage
 
   loadingAndLogin: LoadingAndLogin
   gameController: GameController
@@ -89,6 +91,7 @@ export class UIController {
     this.settingsPage = new SettingsPage()
     this.backpackPage = new BackpackPage()
     this.mapPage = new MapPage()
+    this.communitiesPage = new CommunitiesPage()
     this.sceneCard = new SceneInfoCard(this)
     this.warningPopUp = new PopUpWarning(this)
     this.photosPanel = new Photos(this)

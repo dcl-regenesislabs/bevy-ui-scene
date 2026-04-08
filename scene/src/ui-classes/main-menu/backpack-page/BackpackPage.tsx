@@ -51,6 +51,7 @@ import { fetchPlayerOutfitMetadata } from '../../../utils/outfits-promise-utils'
 import { waitFor } from '../../../utils/dcl-utils'
 import { BackpackAvatarPreviewElement } from './backpack-avatar-preview-element'
 import { showErrorPopup } from '../../../service/error-popup-service'
+import { COLOR } from 'src/components/color-palette'
 
 let originalAvatarJSON: string
 
@@ -237,7 +238,10 @@ export function ResponsiveContent({
         alignItems: 'flex-start',
         width: getContentWidth(),
         height: getContentHeight() * 1.1,
-        pointerFilter: 'block'
+        pointerFilter: 'block',
+        borderRadius: 0,
+        borderColor: COLOR.RED,
+        borderWidth: 1
       }}
     >
       {children}

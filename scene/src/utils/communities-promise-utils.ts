@@ -44,7 +44,8 @@ async function signedGet(url: string): Promise<any> {
   if (!result.ok) {
     throw new Error(`HTTP ${result.status}: ${result.statusText || result.body}`)
   }
-  return JSON.parse(result.body)
+  const parsed = JSON.parse(result.body)
+  return parsed.data ?? parsed
 }
 
 async function signedPost(url: string, body?: object): Promise<any> {

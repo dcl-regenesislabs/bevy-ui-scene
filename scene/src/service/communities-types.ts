@@ -49,9 +49,10 @@ export type CommunityMember = {
 }
 
 export type PaginatedResponse<T> = {
-  data: T[]
+  results: T[]
   total: number
-  offset: number
+  page: number
+  pages: number
   limit: number
 }
 
@@ -73,3 +74,7 @@ export const COMMUNITIES_BASE_URL =
   'https://social-api.decentraland.org/v1/communities'
 export const COMMUNITIES_TEST_BASE_URL =
   'https://social-api.decentraland.zone/v1/communities'
+
+export function getCommunityThumbnailUrl(communityId: string): string {
+  return `https://assets-cdn.decentraland.org/social/communities/${communityId}/raw-thumbnail.png`
+}
