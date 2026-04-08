@@ -8,12 +8,20 @@ import {
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
 import { executeTask } from '@dcl/sdk/ecs'
-import { fetchMyCommunities } from '../../../utils/communities-promise-utils'
+import {
+  fetchCommunities,
+  fetchMyCommunities
+} from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import {
   type CommunityListItem,
   getCommunityThumbnailUrl
 } from '../../../service/communities-types'
+import {
+  BROWSE_CARD_HEIGHT,
+  BROWSE_CARD_WIDTH,
+  CommunityBrowseCard
+} from './CommunityBrowseCard'
 import {
   CONTEXT,
   getFontSize,
@@ -21,7 +29,6 @@ import {
 } from '../../../service/fontsize-system'
 import {
   getContentHeight,
-  getContentScaleRatio,
   getViewportHeight
 } from '../../../service/canvas-ratio'
 import { getMainMenuHeight } from '../MainMenu'
@@ -37,18 +44,32 @@ export default class CommunitiesPage {
 function CommunitiesContent(): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.SIDE })
   const [myCommunities, setMyCommunities] = useState<CommunityListItem[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const [browseCommunities, setBrowseCommunities] = useState<
+    CommunityListItem[]
+  >([])
+  const [browseTotal, setBrowseTotal] = useState<number>(0)
+  const [loadingSidebar, setLoadingSidebar] = useState<boolean>(true)
+  const [loadingBrowse, setLoadingBrowse] = useState<boolean>(true)
 
   useEffect(() => {
     executeTask(async () => {
       try {
         const result = await fetchMyCommunities()
-        console.log('[communities] my communities', result)
         setMyCommunities(result.results)
       } catch (error) {
-        console.error('[communities] failed to load', error)
+        console.error('[communities] failed to load my communities', error)
       }
-      setLoading(false)
+      setLoadingSidebar(false)
+    })
+    executeTask(async () => {
+      try {
+        const result = await fetchCommunities({ limit: 10 })
+        setBrowseCommunities(result.results)
+        setBrowseTotal(result.total)
+      } catch (error) {
+        console.error('[communities] failed to load browse', error)
+      }
+      setLoadingBrowse(false)
     })
   }, [])
 
@@ -84,12 +105,15 @@ function CommunitiesContent(): ReactElement {
             }}
             uiText={{
               value: '<b>My Communities</b>',
-              fontSize: getFontSize({ context: CONTEXT.SIDE, token: TYPOGRAPHY_TOKENS.BODY }),
+              fontSize: getFontSize({
+                context: CONTEXT.SIDE,
+                token: TYPOGRAPHY_TOKENS.BODY
+              }),
               color: COLOR.TEXT_COLOR_WHITE,
               textAlign: 'top-left'
             }}
           />
-          {loading ? (
+          {loadingSidebar ? (
             <LoadingPlaceholder
               uiTransform={{
                 width: '100%',
@@ -162,24 +186,77 @@ function CommunitiesContent(): ReactElement {
           )}
         </Column>
 
-        {/* Right content placeholder */}
+        {/* Right content - Browse */}
         <Column
           uiTransform={{
             width: '78%',
             height: '100%',
             padding: {
               left: fontSize * 2,
-              top: fontSize * 2
+              right: fontSize * 2,
+              top: fontSize
             }
           }}
         >
           <UiEntity
+            uiTransform={{
+              width: '100%',
+              flexShrink: 0,
+              margin: { bottom: fontSize, left: -fontSize / 2 }
+            }}
             uiText={{
-              value: '<b>Browse Communities</b>',
-              fontSize: getFontSize({ context: CONTEXT.SIDE, token: TYPOGRAPHY_TOKENS.TITLE_M }),
-              color: COLOR.TEXT_COLOR_WHITE
+              value: `<b>Browse Communities  (${browseTotal ?? 0})</b>`,
+              fontSize: getFontSize({
+                context: CONTEXT.SIDE,
+                token: TYPOGRAPHY_TOKENS.BODY
+              }),
+              color: COLOR.TEXT_COLOR_WHITE,
+              textAlign: 'top-left'
             }}
           />
+          <UiEntity
+            uiTransform={{
+              width: '100%',
+              flexGrow: 1,
+              flexWrap: 'wrap',
+              flexDirection: 'row',
+              overflow: 'scroll',
+              scrollVisible: 'vertical'
+            }}
+          >
+            {loadingBrowse
+              ? Array.from({ length: 10 }).map((_, i) => (
+                  <UiEntity
+                    key={i}
+                    uiTransform={{
+                      width: BROWSE_CARD_WIDTH(),
+                      height: BROWSE_CARD_HEIGHT(),
+                      margin: {
+                        right: fontSize,
+                        bottom: fontSize
+                      }
+                    }}
+                  >
+                    <LoadingPlaceholder
+                      uiTransform={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: fontSize / 2,
+                        margin: {
+                          right: fontSize,
+                          bottom: fontSize
+                        }
+                      }}
+                    />
+                  </UiEntity>
+                ))
+              : (browseCommunities ?? []).map((community) => (
+                  <CommunityBrowseCard
+                    key={community.id}
+                    community={community}
+                  />
+                ))}
+          </UiEntity>
         </Column>
       </ResponsiveContent>
     </MainContent>

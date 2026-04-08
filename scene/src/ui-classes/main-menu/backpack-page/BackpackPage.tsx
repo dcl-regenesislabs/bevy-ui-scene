@@ -238,10 +238,7 @@ export function ResponsiveContent({
         alignItems: 'flex-start',
         width: getContentWidth(),
         height: getContentHeight() * 1.1,
-        pointerFilter: 'block',
-        borderRadius: 0,
-        borderColor: COLOR.RED,
-        borderWidth: 1
+        pointerFilter: 'block'
       }}
     >
       {children}
