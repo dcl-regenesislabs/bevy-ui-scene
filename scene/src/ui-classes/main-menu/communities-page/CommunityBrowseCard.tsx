@@ -13,6 +13,9 @@ import {
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
 import { ButtonText } from '../../../components/button-text'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 
 export const BROWSE_CARD_WIDTH = (): number => getContentScaleRatio() * 400
 export const BROWSE_CARD_HEIGHT = (): number => getContentScaleRatio() * 600
@@ -76,6 +79,14 @@ export function CommunityBrowseCard({
         flexShrink: 0
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+            data: community
+          })
+        )
+      }}
     >
       {/* Thumbnail */}
       <UiEntity

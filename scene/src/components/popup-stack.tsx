@@ -22,6 +22,7 @@ import { CancelFriendRequestPopup } from './friends/cancel-friend-request-popup'
 import { FriendshipResultPopup } from './friends/friendship-result-popup'
 import { ConfirmBlockPopup } from './friends/confirm-block-popup'
 import { ConfirmUnblockPopup } from './friends/confirm-unblock-popup'
+import { CommunityViewPopup } from '../ui-classes/main-menu/communities-page/CommunityViewPopup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
 export type Popup = (
@@ -47,7 +48,8 @@ const popupComponents: Record<number, Popup> = {
   [HUD_POPUP_TYPE.CANCEL_FRIEND_REQUEST as number]: CancelFriendRequestPopup,
   [HUD_POPUP_TYPE.FRIENDSHIP_RESULT as number]: FriendshipResultPopup,
   [HUD_POPUP_TYPE.CONFIRM_BLOCK as number]: ConfirmBlockPopup,
-  [HUD_POPUP_TYPE.CONFIRM_UNBLOCK as number]: ConfirmUnblockPopup
+  [HUD_POPUP_TYPE.CONFIRM_UNBLOCK as number]: ConfirmUnblockPopup,
+  [HUD_POPUP_TYPE.COMMUNITY_VIEW as number]: CommunityViewPopup
 }
 
 export function PopupStack(): ReactElement | null {
