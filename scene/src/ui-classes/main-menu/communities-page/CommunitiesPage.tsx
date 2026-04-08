@@ -1,9 +1,10 @@
-import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import ReactEcs, { Input, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { MainContent, ResponsiveContent } from '../backpack-page/BackpackPage'
 import {
   LeftSection,
   NavBar,
-  NavBarTitle
+  NavBarTitle,
+  RightSection
 } from '../backpack-page/BackpackNavBar'
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
@@ -32,13 +33,89 @@ import {
   getViewportHeight
 } from '../../../service/canvas-ratio'
 import { getMainMenuHeight } from '../MainMenu'
+import Icon from '../../../components/icon/Icon'
+import { debounce } from '../../../utils/dcl-utils'
+import { Color4 } from '@dcl/sdk/math'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
+
+const BROWSE_PAGE_SIZE = 10
+
+async function fetchAllBrowseCommunities(
+  onBatch: (
+    communities: CommunityListItem[],
+    total: number,
+    hasMore: boolean
+  ) => void,
+  cancelled: { current: boolean },
+  search?: string
+): Promise<void> {
+  let offset = 0
+  let hasMore = true
+
+  while (hasMore && !cancelled.current) {
+    try {
+      const result = await fetchCommunities({
+        limit: BROWSE_PAGE_SIZE,
+        offset,
+        search: search != null && search.length > 0 ? search : undefined
+      })
+      if (cancelled.current) return
+      hasMore = result.results.length === BROWSE_PAGE_SIZE
+      offset += result.results.length
+      onBatch(result.results, result.total, hasMore)
+    } catch (error) {
+      console.error('[communities] failed to load browse page', error)
+      hasMore = false
+      onBatch([], 0, false)
+    }
+  }
+}
 
 export default class CommunitiesPage {
   mainUi(): ReactElement {
     return <CommunitiesContent />
   }
+}
+
+// Cancellation token for browse loading — module-level so debounced search can cancel
+let browseCancelled = { current: false }
+
+function startBrowseLoad(
+  search: string | undefined,
+  setBrowseCommunities: (
+    fn: (prev: CommunityListItem[]) => CommunityListItem[]
+  ) => void,
+  setBrowseTotal: (n: number) => void,
+  setLoadingBrowse: (b: boolean) => void,
+  setLoadingMore: (b: boolean) => void
+): void {
+  // Cancel previous load
+  browseCancelled.current = true
+  browseCancelled = { current: false }
+  const cancelled = browseCancelled
+
+  setBrowseCommunities(() => [])
+  setLoadingBrowse(true)
+  setLoadingMore(false)
+
+  executeTask(async () => {
+    let isFirst = true
+    await fetchAllBrowseCommunities(
+      (batch, total, hasMore) => {
+        if (cancelled.current) return
+        setBrowseCommunities((prev) => [...(prev ?? []), ...batch])
+        setBrowseTotal(total)
+        if (isFirst) {
+          setLoadingBrowse(false)
+          isFirst = false
+        }
+        setLoadingMore(hasMore)
+      },
+      cancelled,
+      search
+    )
+  })
 }
 
 function CommunitiesContent(): ReactElement {
@@ -50,6 +127,18 @@ function CommunitiesContent(): ReactElement {
   const [browseTotal, setBrowseTotal] = useState<number>(0)
   const [loadingSidebar, setLoadingSidebar] = useState<boolean>(true)
   const [loadingBrowse, setLoadingBrowse] = useState<boolean>(true)
+  const [loadingMore, setLoadingMore] = useState<boolean>(false)
+  const [searchText, setSearchText] = useState<string>('')
+
+  const debouncedSearch = debounce((text: string) => {
+    startBrowseLoad(
+      text.length > 0 ? text : undefined,
+      setBrowseCommunities,
+      setBrowseTotal,
+      setLoadingBrowse,
+      setLoadingMore
+    )
+  }, 600)
 
   useEffect(() => {
     executeTask(async () => {
@@ -61,16 +150,18 @@ function CommunitiesContent(): ReactElement {
       }
       setLoadingSidebar(false)
     })
-    executeTask(async () => {
-      try {
-        const result = await fetchCommunities({ limit: 10 })
-        setBrowseCommunities(result.results)
-        setBrowseTotal(result.total)
-      } catch (error) {
-        console.error('[communities] failed to load browse', error)
-      }
-      setLoadingBrowse(false)
-    })
+
+    startBrowseLoad(
+      undefined,
+      setBrowseCommunities,
+      setBrowseTotal,
+      setLoadingBrowse,
+      setLoadingMore
+    )
+
+    return () => {
+      browseCancelled.current = true
+    }
   }, [])
 
   const listHeight =
@@ -82,6 +173,50 @@ function CommunitiesContent(): ReactElement {
         <LeftSection>
           <NavBarTitle text={'<b>Communities</b>'} />
         </LeftSection>
+        <RightSection>
+          <UiEntity
+            uiTransform={{
+              flexDirection: 'row',
+              alignItems: 'center'
+            }}
+          >
+            <Icon
+              uiTransform={{
+                alignSelf: 'center',
+                position: { right: -fontSize * 1.5 },
+                zIndex: 1
+              }}
+              icon={{ atlasName: 'icons', spriteName: 'Search' }}
+              iconSize={fontSize}
+              iconColor={COLOR.TEXT_COLOR}
+            />
+            <Input
+              uiTransform={{
+                height: getFontSize({
+                  context: CONTEXT.DIALOG,
+                  token: TYPOGRAPHY_TOKENS.NAV_BUTTON_HEIGHT
+                }),
+                width: getMainMenuHeight() * 6,
+                alignSelf: 'center',
+                borderWidth: 0,
+                borderRadius: fontSize / 2,
+                padding: {
+                  top: fontSize / 1.5,
+                  left: fontSize * 2,
+                  right: fontSize / 4
+                }
+              }}
+              uiBackground={{ color: Color4.White() }}
+              fontSize={fontSize}
+              value={searchText ?? ''}
+              placeholder={'Search communities...'}
+              onChange={(text) => {
+                setSearchText(text)
+                debouncedSearch(text)
+              }}
+            />
+          </UiEntity>
+        </RightSection>
       </NavBar>
       <ResponsiveContent>
         <Column
@@ -250,12 +385,37 @@ function CommunitiesContent(): ReactElement {
                     />
                   </UiEntity>
                 ))
-              : (browseCommunities ?? []).map((community) => (
-                  <CommunityBrowseCard
-                    key={community.id}
-                    community={community}
-                  />
-                ))}
+              : [
+                  ...(browseCommunities ?? []).map((community) => (
+                    <CommunityBrowseCard
+                      key={community.id}
+                      community={community}
+                    />
+                  )),
+                  ...(loadingMore
+                    ? Array.from({ length: 5 }).map((_, i) => (
+                        <UiEntity
+                          key={`loading-${i}`}
+                          uiTransform={{
+                            width: BROWSE_CARD_WIDTH(),
+                            height: BROWSE_CARD_HEIGHT(),
+                            margin: {
+                              right: fontSize,
+                              bottom: fontSize
+                            }
+                          }}
+                        >
+                          <LoadingPlaceholder
+                            uiTransform={{
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: fontSize / 2
+                            }}
+                          />
+                        </UiEntity>
+                      ))
+                    : [])
+                ]}
           </UiEntity>
         </Column>
       </ResponsiveContent>
