@@ -83,15 +83,15 @@ export function CommunityPostItem({
       >
         <Column
           uiTransform={{
-            width: '100%',
-            alignItems: 'flex-start'
+            alignItems: 'flex-start',
+            flexGrow: 1
           }}
         >
           <Row>
             <UiEntity
               uiText={{
                 value: `<b>${post.authorName}</b>`,
-                fontSize: fontSizeSmall,
+                fontSize: fontSize,
                 color: post.authorHasClaimedName
                   ? getAddressColor(post.authorAddress)
                   : COLOR.TEXT_COLOR_WHITE
@@ -101,7 +101,7 @@ export function CommunityPostItem({
               uiTransform={{ margin: { left: fontSize * 0.5 } }}
               uiText={{
                 value: `· ${date}`,
-                fontSize: fontSizeCaption,
+                fontSize: fontSize,
                 color: COLOR.TEXT_COLOR_GREY
               }}
             />
@@ -113,7 +113,7 @@ export function CommunityPostItem({
             }}
             uiText={{
               value: post.content,
-              fontSize: fontSizeCaption,
+              fontSize: fontSize,
               color: COLOR.TEXT_COLOR_WHITE,
               textAlign: 'top-left',
               textWrap: 'wrap'
@@ -123,22 +123,13 @@ export function CommunityPostItem({
 
         {/* Like count */}
         <UiEntity
-          uiTransform={{
-            flexGrow: 1,
-            justifyContent: 'flex-end',
-            flexDirection: 'row',
-            alignItems: 'center'
+          uiText={{
+            value: `${post.likesCount}`,
+            fontSize: fontSize,
+            color: COLOR.TEXT_COLOR_GREY,
+            textAlign: 'middle-right'
           }}
-        >
-          <UiEntity
-            uiText={{
-              value: `${post.likesCount}`,
-              fontSize: fontSizeCaption,
-              color: COLOR.TEXT_COLOR_GREY,
-              textAlign: 'middle-right'
-            }}
-          />
-        </UiEntity>
+        />
       </Row>
     </Row>
   )
