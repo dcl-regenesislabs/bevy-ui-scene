@@ -52,44 +52,49 @@ export function CommunityPostItem({
   const date = formatPostDate(post.createdAt)
 
   return (
-    <Column
+    <Row
       uiTransform={{
         width: '100%',
-        padding: { top: fontSize * 0.5, bottom: fontSize * 0.5 },
-        margin: { bottom: fontSize * 0.5 },
-        borderWidth: 0,
-        borderColor: COLOR.WHITE_OPACITY_1
+        margin: { bottom: fontSize * 0.3 },
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start'
       }}
     >
-      {/* Author row */}
+      <AvatarCircle
+        userId={post.authorAddress}
+        circleColor={getAddressColor(post.authorAddress)}
+        uiTransform={{
+          width: avatarSize,
+          height: avatarSize,
+          margin: { right: fontSize * 0.5 }
+        }}
+        isGuest={false}
+      />
       <Row
         uiTransform={{
-          width: '100%',
-          alignItems: 'center',
-          margin: { bottom: fontSize * 0.3 }
+          borderRadius: fontSize / 2,
+          alignItems: 'flex-start',
+          justifyContent: 'flex-start',
+          padding: fontSize
+        }}
+        uiBackground={{
+          color: COLOR.DARK_OPACITY_5
         }}
       >
-        <AvatarCircle
-          userId={post.authorAddress}
-          circleColor={getAddressColor(post.authorAddress)}
+        <Column
           uiTransform={{
-            width: avatarSize,
-            height: avatarSize,
-            margin: { right: fontSize * 0.5 }
-          }}
-          isGuest={false}
-        />
-        <Row
-          uiBackground={{
-            color: COLOR.DARK_OPACITY_2
+            width: '100%',
+            alignItems: 'flex-start'
           }}
         >
-          <Column>
+          <Row>
             <UiEntity
               uiText={{
                 value: `<b>${post.authorName}</b>`,
                 fontSize: fontSizeSmall,
-                color: COLOR.TEXT_COLOR_WHITE
+                color: post.authorHasClaimedName
+                  ? getAddressColor(post.authorAddress)
+                  : COLOR.TEXT_COLOR_WHITE
               }}
             />
             <UiEntity
@@ -100,42 +105,41 @@ export function CommunityPostItem({
                 color: COLOR.TEXT_COLOR_GREY
               }}
             />
-            {/* Content */}
-            <UiEntity
-              uiTransform={{
-                width: '100%',
-                margin: { left: avatarSize + fontSize * 0.5 }
-              }}
-              uiText={{
-                value: post.content,
-                fontSize: fontSizeCaption,
-                color: COLOR.TEXT_COLOR_WHITE,
-                textAlign: 'top-left',
-                textWrap: 'wrap'
-              }}
-            />
-          </Column>
+          </Row>
 
-          {/* Like count */}
           <UiEntity
             uiTransform={{
-              flexGrow: 1,
-              justifyContent: 'flex-end',
-              flexDirection: 'row',
-              alignItems: 'center'
+              width: '100%'
             }}
-          >
-            <UiEntity
-              uiText={{
-                value: `${post.likesCount}`,
-                fontSize: fontSizeCaption,
-                color: COLOR.TEXT_COLOR_GREY,
-                textAlign: 'middle-right'
-              }}
-            />
-          </UiEntity>
-        </Row>
+            uiText={{
+              value: post.content,
+              fontSize: fontSizeCaption,
+              color: COLOR.TEXT_COLOR_WHITE,
+              textAlign: 'top-left',
+              textWrap: 'wrap'
+            }}
+          />
+        </Column>
+
+        {/* Like count */}
+        <UiEntity
+          uiTransform={{
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+            flexDirection: 'row',
+            alignItems: 'center'
+          }}
+        >
+          <UiEntity
+            uiText={{
+              value: `${post.likesCount}`,
+              fontSize: fontSizeCaption,
+              color: COLOR.TEXT_COLOR_GREY,
+              textAlign: 'middle-right'
+            }}
+          />
+        </UiEntity>
       </Row>
-    </Column>
+    </Row>
   )
 }
