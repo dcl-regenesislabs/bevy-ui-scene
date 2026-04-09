@@ -5,7 +5,7 @@ import { MainHud } from '../ui-classes/main-hud'
 import { MainMenu } from '../ui-classes/main-menu'
 
 import { MapPage } from '../ui-classes/main-menu/map-page'
-import CommunitiesPage from '../ui-classes/main-menu/communities-page/CommunitiesPage'
+import CommunitiesPage from '../ui-classes/main-menu/communities-page/communities-page'
 import { LoadingAndLogin } from '../ui-classes/loading-and-login'
 import { PopUpWarning } from '../ui-classes/main-hud/pop-up-warning'
 import { SceneInfoCard } from '../ui-classes/scene-info-card'

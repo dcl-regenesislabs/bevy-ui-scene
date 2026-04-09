@@ -22,7 +22,7 @@ import { CancelFriendRequestPopup } from './friends/cancel-friend-request-popup'
 import { FriendshipResultPopup } from './friends/friendship-result-popup'
 import { ConfirmBlockPopup } from './friends/confirm-block-popup'
 import { ConfirmUnblockPopup } from './friends/confirm-unblock-popup'
-import { CommunityViewPopup } from '../ui-classes/main-menu/communities-page/CommunityViewPopup'
+import { CommunityViewPopup } from '../ui-classes/main-menu/communities-page/community-view-popup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
 export type Popup = (

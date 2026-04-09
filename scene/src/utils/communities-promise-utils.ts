@@ -6,6 +6,7 @@ import {
   type CommunityData,
   type CommunityListItem,
   type CommunityMember,
+  type CommunityPost,
   type GetCommunitiesParams,
   type GetMembersParams,
   type PaginatedResponse
@@ -136,5 +137,18 @@ export async function fetchCommunityMembers(
   const qs = parts.join('&')
   return await signedGet(
     `${base}/${communityId}/members${qs.length > 0 ? `?${qs}` : ''}`
+  )
+}
+
+// --- Posts (Announcements) ---
+
+export async function fetchCommunityPosts(
+  communityId: string,
+  offset = 0,
+  limit = 20
+): Promise<{ posts: CommunityPost[] }> {
+  const base = await resolveBaseURL()
+  return await signedGet(
+    `${base}/${communityId}/posts?offset=${offset}&limit=${limit}`
   )
 }

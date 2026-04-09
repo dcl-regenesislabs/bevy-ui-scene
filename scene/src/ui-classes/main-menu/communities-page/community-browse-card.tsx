@@ -155,7 +155,7 @@ export function CommunityBrowseCard({
       />
 
       {/* Action button */}
-      <Button
+      <UiEntity
         uiTransform={{
           borderRadius: fontSize / 2,
           width: '90%',
@@ -174,8 +174,10 @@ export function CommunityBrowseCard({
               : COLOR.BLACK_TRANSPARENT
         }}
         onMouseDown={() => {}}
-        value={`<b>${buttonLabel}</b>`}
-        fontSize={fontSizeSmall}
+        uiText={{
+          value: `<b>${buttonLabel}</b>`,
+          fontSize: fontSizeSmall
+        }}
       />
       {/*  <UiEntity
         uiTransform={{

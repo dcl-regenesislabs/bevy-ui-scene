@@ -69,6 +69,19 @@ export type GetMembersParams = {
   onlyOnline?: boolean
 }
 
+export type CommunityPost = {
+  id: string
+  communityId: string
+  authorAddress: string
+  authorName: string
+  authorProfilePictureUrl: string
+  authorHasClaimedName: boolean
+  content: string
+  createdAt: string
+  likesCount: number
+  isLikedByUser: boolean
+}
+
 // API base URLs
 export const COMMUNITIES_BASE_URL =
   'https://social-api.decentraland.org/v1/communities'

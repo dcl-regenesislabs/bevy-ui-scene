@@ -22,7 +22,7 @@ import {
   BROWSE_CARD_HEIGHT,
   BROWSE_CARD_WIDTH,
   CommunityBrowseCard
-} from './CommunityBrowseCard'
+} from './community-browse-card'
 import {
   CONTEXT,
   getFontSize,

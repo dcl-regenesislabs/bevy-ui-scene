@@ -18,11 +18,19 @@ import {
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { noop } from '../../../utils/function-utils'
+import { CommunityAnnouncements } from './community-announcements'
 
 export const CommunityViewPopup: Popup = ({ shownPopup }) => {
   const community = shownPopup.data as CommunityListItem
   if (community == null) return null
+  return <CommunityViewContent community={community} />
+}
 
+function CommunityViewContent({
+  community
+}: {
+  community: CommunityListItem
+}): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
@@ -44,7 +52,6 @@ export const CommunityViewPopup: Popup = ({ shownPopup }) => {
     community.membersCount >= 1000
       ? `${(community.membersCount / 1000).toFixed(1)}k`
       : String(community.membersCount)
-
   const isMember =
     community.role === 'member' ||
     community.role === 'moderator' ||
@@ -83,7 +90,6 @@ export const CommunityViewPopup: Popup = ({ shownPopup }) => {
               flexShrink: 0
             }}
           >
-            {/* Thumbnail */}
             <UiEntity
               uiTransform={{
                 width: thumbnailSize,
@@ -97,8 +103,6 @@ export const CommunityViewPopup: Popup = ({ shownPopup }) => {
                 texture: { src: getCommunityThumbnailUrl(community.id) }
               }}
             />
-
-            {/* Title area */}
             <Column
               uiTransform={{
                 flexGrow: 1,
@@ -148,15 +152,8 @@ export const CommunityViewPopup: Popup = ({ shownPopup }) => {
                 />
               )}
             </Column>
-
-            {/* Close button */}
             <CloseButton
-              uiTransform={{
-                position: {
-                  top: 0,
-                  right: 0
-                }
-              }}
+              uiTransform={{ position: { top: 0, right: 0 } }}
               onClick={() => {
                 store.dispatch(closeLastPopupAction())
               }}
@@ -167,10 +164,7 @@ export const CommunityViewPopup: Popup = ({ shownPopup }) => {
           <Column
             uiTransform={{
               width: '100%',
-              padding: {
-                left: fontSize * 2,
-                right: fontSize * 2
-              },
+              padding: { left: fontSize * 2, right: fontSize * 2 },
               flexShrink: 0
             }}
           >
@@ -186,7 +180,7 @@ export const CommunityViewPopup: Popup = ({ shownPopup }) => {
             />
           </Column>
 
-          {/* Tabs placeholder */}
+          {/* Tabs */}
           <Row
             uiTransform={{
               width: '100%',
@@ -219,10 +213,10 @@ export const CommunityViewPopup: Popup = ({ shownPopup }) => {
             )}
           </Row>
 
-          {/* Content area (scrollable) */}
+          {/* Content */}
           <Column
             uiTransform={{
-              width: '100%',
+              width: '70%',
               flexGrow: 1,
               padding: {
                 left: fontSize * 2,
@@ -233,13 +227,7 @@ export const CommunityViewPopup: Popup = ({ shownPopup }) => {
               scrollVisible: 'vertical'
             }}
           >
-            <UiEntity
-              uiText={{
-                value: 'Content coming soon...',
-                fontSize,
-                color: COLOR.TEXT_COLOR_GREY
-              }}
-            />
+            <CommunityAnnouncements communityId={community.id} />
           </Column>
         </UiEntity>
       </ResponsiveContent>
