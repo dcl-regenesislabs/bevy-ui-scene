@@ -28,6 +28,7 @@ import { AvatarCircle } from '../../avatar-circle'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { store } from '../../../state/store'
+import { PlayerNameComponent } from '../../player-name-component'
 import {
   type Address,
   hasClaimedName,
@@ -196,19 +197,16 @@ function ChatMessage(props: {
         }}
       >
         {!isSystemMessage(props.message) && (
-          <Label
+          <PlayerNameComponent
+            name={playerName}
+            address={props.message.player?.userId ?? ''}
+            hasClaimedName={!playerName.includes('#')}
+            textColor={props.message.addressColor}
+            fontSize={defaultFontSize}
             uiTransform={{
               width: '100%',
               height: defaultFontSize
             }}
-            value={`<b>${playerName}</b>`}
-            fontSize={defaultFontSize}
-            color={
-              isSystemMessage(props.message)
-                ? Color4.Gray()
-                : props.message.addressColor
-            }
-            textAlign={`middle-left`}
             onMouseDown={() => {
               store.dispatch(
                 pushPopupAction({

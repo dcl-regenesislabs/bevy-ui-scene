@@ -6,14 +6,13 @@ import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { Column, Row } from '../layout'
 import { COLOR } from '../color-palette'
 import { AvatarCircle } from '../avatar-circle'
-import Icon from '../icon/Icon'
 import { ButtonIcon } from '../button-icon'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { store } from '../../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
 import { fetchFriendLocation } from '../../service/friend-location'
-import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
+import { PlayerNameComponent } from '../player-name-component'
 
 export function FriendListItem({
   friend,
@@ -31,9 +30,6 @@ export function FriendListItem({
   const addressColor = friend.hasClaimedName
     ? { ...(friend.nameColor ?? getAddressColor(friend.address)), a: 1 }
     : COLOR.TEXT_COLOR_LIGHT_GREY
-  const displayName = friend.hasClaimedName
-    ? friend.name
-    : getNameWithHashPostfix(friend.name, friend.address)
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   const fontSizeS = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
   const menuButtonTransform = {
@@ -79,22 +75,14 @@ export function FriendListItem({
           justifyContent: 'center'
         }}
       >
-        <Row uiTransform={{ position: { top: fontSizeS / 2 } }}>
-          <UiEntity
-            uiText={{
-              value: `<b>${displayName}</b>`,
-              textAlign: 'middle-left',
-              color: addressColor,
-              fontSize
-            }}
-          />
-          {friend.hasClaimedName ? (
-            <Icon
-              icon={{ spriteName: 'Verified', atlasName: 'icons' }}
-              iconSize={fontSize}
-            />
-          ) : null}
-        </Row>
+        <PlayerNameComponent
+          name={friend.name}
+          address={friend.address}
+          hasClaimedName={friend.hasClaimedName}
+          nameColor={friend.nameColor}
+          fontSize={fontSize}
+          uiTransform={{ position: { top: fontSizeS / 2 } }}
+        />
 
         <UiEntity
           uiTransform={{

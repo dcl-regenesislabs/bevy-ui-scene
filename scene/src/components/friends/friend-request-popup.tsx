@@ -10,8 +10,8 @@ import { PopupBackdrop } from '../popup-backdrop'
 import { COLOR } from '../color-palette'
 import { Column, Row } from '../layout'
 import { AvatarCircle } from '../avatar-circle'
-import Icon from '../icon/Icon'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
+import { PlayerNameComponent } from '../player-name-component'
 import {
   CONTEXT,
   getFontSize,
@@ -26,7 +26,7 @@ import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { formatRequestDate, PanelListButton } from './friend-request-item'
-import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
+
 import { refreshFriendRequests } from './friend-request-list'
 
 export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
@@ -144,9 +144,6 @@ function FriendRequestPopupContent({
   const addressColor = request.hasClaimedName
     ? getAddressColor(request.address)
     : COLOR.TEXT_COLOR_LIGHT_GREY
-  const displayName = request.hasClaimedName
-    ? request.name
-    : getNameWithHashPostfix(request.name, request.address)
   const avatarSize = fontSize * 4
   const mutualAvatarSize = fontSize * 2
   const [mutualFriends, setMutualFriends] = useState<FriendData[]>([])
@@ -218,21 +215,12 @@ function FriendRequestPopupContent({
           }}
           isGuest={false}
         />
-        <Row uiTransform={{ alignItems: 'center' }}>
-          <UiEntity
-            uiText={{
-              value: `<b>${displayName}</b>`,
-              fontSize,
-              color: addressColor
-            }}
-          />
-          {request.hasClaimedName ? (
-            <Icon
-              icon={{ spriteName: 'Verified', atlasName: 'icons' }}
-              iconSize={fontSize}
-            />
-          ) : null}
-        </Row>
+        <PlayerNameComponent
+          name={request.name}
+          address={request.address}
+          hasClaimedName={request.hasClaimedName}
+          fontSize={fontSize}
+        />
       </Row>
 
       {mutualFriends.length > 0 ? (

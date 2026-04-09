@@ -4,8 +4,8 @@ import { PopupBackdrop } from '../popup-backdrop'
 import { COLOR } from '../color-palette'
 import { Column, Row } from '../layout'
 import { AvatarCircle } from '../avatar-circle'
-import Icon from '../icon/Icon'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
+import { PlayerNameComponent } from '../player-name-component'
 import {
   CONTEXT,
   getFontSize,
@@ -101,21 +101,12 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
             }}
             isGuest={false}
           />
-          <Row uiTransform={{ alignItems: 'center' }}>
-            <UiEntity
-              uiText={{
-                value: `<b>${displayName}</b>`,
-                fontSize,
-                color: addressColor
-              }}
-            />
-            {data.hasClaimedName ? (
-              <Icon
-                icon={{ spriteName: 'Verified', atlasName: 'icons' }}
-                iconSize={fontSize}
-              />
-            ) : null}
-          </Row>
+          <PlayerNameComponent
+            name={data.name}
+            address={data.address}
+            hasClaimedName={data.hasClaimedName}
+            fontSize={fontSize}
+          />
         </Row>
 
         <Input

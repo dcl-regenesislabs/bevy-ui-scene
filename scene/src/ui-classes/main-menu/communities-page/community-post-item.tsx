@@ -2,13 +2,10 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
 import { type CommunityPost } from '../../../service/communities-types'
-import {
-  CONTEXT,
-  getFontSize,
-  TYPOGRAPHY_TOKENS
-} from '../../../service/fontsize-system'
+import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
+import { PlayerNameComponent } from '../../../components/player-name-component'
 
 function formatPostDate(dateStr: string): string {
   try {
@@ -40,14 +37,6 @@ export function CommunityPostItem({
   key: string
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const fontSizeSmall = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.LABEL
-  })
-  const fontSizeCaption = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.CAPTION
-  })
   const avatarSize = fontSize * 2.5
   const date = formatPostDate(post.createdAt)
 
@@ -87,21 +76,18 @@ export function CommunityPostItem({
             flexGrow: 1
           }}
         >
-          <Row>
-            <UiEntity
-              uiText={{
-                value: `<b>${post.authorName}</b>`,
-                fontSize: fontSize,
-                color: post.authorHasClaimedName
-                  ? getAddressColor(post.authorAddress)
-                  : COLOR.TEXT_COLOR_WHITE
-              }}
+          <Row uiTransform={{ alignItems: 'center' }}>
+            <PlayerNameComponent
+              name={post.authorName}
+              address={post.authorAddress}
+              hasClaimedName={post.authorHasClaimedName}
+              fontSize={fontSize}
             />
             <UiEntity
               uiTransform={{ margin: { left: fontSize * 0.5 } }}
               uiText={{
                 value: `· ${date}`,
-                fontSize: fontSize,
+                fontSize,
                 color: COLOR.TEXT_COLOR_GREY
               }}
             />

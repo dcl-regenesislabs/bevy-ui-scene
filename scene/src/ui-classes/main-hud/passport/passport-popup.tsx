@@ -16,10 +16,7 @@ import {
 import { cloneDeep, memoize, noop } from '../../../utils/function-utils'
 import { ResponsiveContent } from '../../main-menu/backpack-page/BackpackPage'
 import { setAvatarPreviewCameraToWearableCategory } from '../../../components/backpack/AvatarPreview'
-import {
-  FLEX_BASIS_AUTO,
-  getBackgroundFromAtlas
-} from '../../../utils/ui-utils'
+import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import {
   applyMiddleEllipsis,
@@ -85,6 +82,7 @@ import { PassportGallery } from './passport-gallery'
 import { Badge3dPreviewElement } from './badge-3d-preview'
 import { BadgesPreview } from './badges-preview'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
+import { PlayerNameComponent } from '../../../components/player-name-component'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -856,32 +854,18 @@ function NameRow({
       }}
     >
       <StatusIcon fontSize={fontSize} />
-      <UiEntity
-        uiText={{
-          value: name,
-          fontSize,
-          textAlign: 'middle-left',
-          textWrap: 'nowrap'
-        }}
+      <PlayerNameComponent
+        name={name}
+        hasClaimedName={hasClaimedName}
+        fontSize={fontSize}
+        bold={false}
+        textColor={COLOR.TEXT_COLOR_WHITE}
         uiTransform={{
           alignSelf: 'flex-start',
           padding: 0,
           margin: { left: '-4%' }
         }}
       />
-      {hasClaimedName && (
-        <UiEntity
-          uiTransform={{
-            width: fontSize,
-            height: fontSize,
-            flexShrink: 0
-          }}
-          uiBackground={getBackgroundFromAtlas({
-            atlasName: 'icons',
-            spriteName: 'Verified'
-          })}
-        />
-      )}
       {CopyButton({
         fontSize,
         text: name,

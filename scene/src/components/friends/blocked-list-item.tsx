@@ -1,6 +1,6 @@
 import { type BlockedUserData } from '../../service/social-service-type'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
-import { type Key, UiEntity } from '@dcl/sdk/react-ecs'
+import { type Key } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import {
   CONTEXT,
@@ -10,11 +10,10 @@ import {
 import { Column, Row } from '../layout'
 import { COLOR } from '../color-palette'
 import { AvatarCircle } from '../avatar-circle'
-import Icon from '../icon/Icon'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { store } from '../../state/store'
-import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
+import { PlayerNameComponent } from '../player-name-component'
 
 export function BlockedListItem({
   user,
@@ -32,9 +31,6 @@ export function BlockedListItem({
   const addressColor = user.hasClaimedName
     ? { ...(user.nameColor ?? getAddressColor(user.address)), a: 1 }
     : COLOR.TEXT_COLOR_LIGHT_GREY
-  const displayName = user.hasClaimedName
-    ? user.name
-    : getNameWithHashPostfix(user.name, user.address)
   const fontSize = getFontSize({
     context: CONTEXT.SIDE,
     token: TYPOGRAPHY_TOKENS.BODY
@@ -78,22 +74,13 @@ export function BlockedListItem({
           flexGrow: 1
         }}
       >
-        <Row>
-          <UiEntity
-            uiText={{
-              value: `<b>${displayName}</b>`,
-              textAlign: 'middle-left',
-              color: addressColor,
-              fontSize
-            }}
-          />
-          {user.hasClaimedName ? (
-            <Icon
-              icon={{ spriteName: 'Verified', atlasName: 'icons' }}
-              iconSize={fontSize}
-            />
-          ) : null}
-        </Row>
+        <PlayerNameComponent
+          name={user.name}
+          address={user.address}
+          hasClaimedName={user.hasClaimedName}
+          nameColor={user.nameColor}
+          fontSize={fontSize}
+        />
       </Column>
     </Row>
   )

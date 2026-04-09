@@ -2,10 +2,7 @@ import type { Popup } from '../../../components/popup-stack'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
-import {
-  BORDER_RADIUS_F,
-  getBackgroundFromAtlas
-} from '../../../utils/ui-utils'
+import { BORDER_RADIUS_F } from '../../../utils/ui-utils'
 import { noop, setIfNot } from '../../../utils/function-utils'
 import { store } from '../../../state/store'
 import {
@@ -45,6 +42,7 @@ import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { BevyApi } from '../../../bevy-api'
 import Icon from '../../../components/icon/Icon'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
+import { PlayerNameComponent } from '../../../components/player-name-component'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
@@ -202,33 +200,21 @@ function ProfileHeader({
     <Row
       uiTransform={{
         justifyContent: 'center',
+        alignItems: 'center',
         width: '100%',
         margin: 0,
         padding: 0
       }}
     >
-      <UiEntity
-        uiTransform={{ margin: 0, padding: 0 }}
-        uiText={{
-          value: `<b>${player.name}</b>`,
-          color: nameColor,
-          fontSize: fontSizeTitleL
+      <PlayerNameComponent
+        uiTransform={{
+          width: 'auto'
         }}
+        name={player.name ?? ''}
+        address={player.userId}
+        hasClaimedName={hasClaimedName}
+        fontSize={fontSizeTitleL}
       />
-      {hasClaimedName && (
-        <UiEntity
-          uiTransform={{
-            width: getContentScaleRatio() * 50,
-            height: getContentScaleRatio() * 50,
-            flexShrink: 0,
-            alignSelf: 'center'
-          }}
-          uiBackground={getBackgroundFromAtlas({
-            atlasName: 'icons',
-            spriteName: 'Verified'
-          })}
-        />
-      )}
       <CopyButton
         fontSize={fontSizeTitleL}
         text={player.name}
