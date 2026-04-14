@@ -26,9 +26,11 @@ export function UserAvatarPreviewElement({
     setAvatarShapeDefinition(localShape)
 
     if (!getPlayer({ userId })) {
-      fetchAvatarShapeFromProfile({ userId }).then((remoteShape) => {
-        if (remoteShape) setAvatarShapeDefinition(remoteShape)
-      })
+      fetchAvatarShapeFromProfile({ userId })
+        .then((remoteShape) => {
+          if (remoteShape) setAvatarShapeDefinition(remoteShape)
+        })
+        .catch(console.error)
     }
   }, [userId])
 
@@ -72,7 +74,7 @@ async function fetchAvatarShapeFromProfile({
   try {
     const profileData = await fetchProfileData({ userId, useCache: true })
     const avatarData = profileData?.avatars?.[0]?.avatar
-    if (!avatarData) return null
+    if (avatarData == null) return null
 
     return {
       id: userId,

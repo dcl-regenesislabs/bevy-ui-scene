@@ -20,19 +20,12 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import {
-  getContentHeight,
-  getViewportHeight
-} from '../../../service/canvas-ratio'
+
 import { getMainMenuHeight } from '../MainMenu'
 import Icon from '../../../components/icon/Icon'
 import { debounce } from '../../../utils/dcl-utils'
 import { Color4 } from '@dcl/sdk/math'
-import {
-  cancelBrowseLoad,
-  CommunitiesCatalog,
-  startBrowseLoad
-} from './communities-catalog'
+import { cancelBrowseLoad, CommunitiesCatalog } from './communities-catalog'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -68,9 +61,6 @@ function CommunitiesContent(): ReactElement {
       cancelBrowseLoad()
     }
   }, [])
-
-  const listHeight =
-    getViewportHeight() - (getMainMenuHeight() - getContentHeight())
 
   return (
     <MainContent>

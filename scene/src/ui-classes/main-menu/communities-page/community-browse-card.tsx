@@ -1,6 +1,6 @@
-import ReactEcs, { Button, type ReactElement, UiEntity } from '@dcl/react-ecs'
+import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column } from '../../../components/layout'
 import {
   type CommunityListItem,
   getCommunityThumbnailUrl
@@ -12,7 +12,6 @@ import {
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
-import { ButtonText } from '../../../components/button-text'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'

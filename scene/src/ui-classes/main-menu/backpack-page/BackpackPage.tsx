@@ -51,7 +51,6 @@ import { fetchPlayerOutfitMetadata } from '../../../utils/outfits-promise-utils'
 import { waitFor } from '../../../utils/dcl-utils'
 import { BackpackAvatarPreviewElement } from './backpack-avatar-preview-element'
 import { showErrorPopup } from '../../../service/error-popup-service'
-import { COLOR } from 'src/components/color-palette'
 
 let originalAvatarJSON: string
 

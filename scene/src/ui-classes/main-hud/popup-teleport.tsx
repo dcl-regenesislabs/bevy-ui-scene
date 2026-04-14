@@ -93,7 +93,7 @@ function TeleportContent({
 
         if (isWorld) {
           await fetchWorldSceneInfo(
-            targetRealm!,
+            targetRealm ?? '',
             setSceneTitle,
             setSceneThumbnail
           )
