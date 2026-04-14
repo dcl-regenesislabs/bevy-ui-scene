@@ -16,10 +16,7 @@ import {
 import { cloneDeep, memoize, noop } from '../../../utils/function-utils'
 import { ResponsiveContent } from '../../main-menu/backpack-page/BackpackPage'
 import { setAvatarPreviewCameraToWearableCategory } from '../../../components/backpack/AvatarPreview'
-import {
-  FLEX_BASIS_AUTO,
-  getBackgroundFromAtlas
-} from '../../../utils/ui-utils'
+import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import {
   applyMiddleEllipsis,
@@ -51,6 +48,7 @@ import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
 import { CloseButton } from '../../../components/close-button'
+import { BevyApi } from '../../../bevy-api'
 import { Label } from '@dcl/sdk/react-ecs'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
 import { Column, Row } from '../../../components/layout'
@@ -80,8 +78,11 @@ import {
 import { PassportSection } from './passport-section'
 import { BadgesCollection } from './badges-collection'
 import { PASSPORT_SECTIONS } from './passport-constants'
+import { PassportGallery } from './passport-gallery'
 import { Badge3dPreviewElement } from './badge-3d-preview'
 import { BadgesPreview } from './badges-preview'
+import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
+import { PlayerNameComponent } from '../../../components/player-name-component'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -172,6 +173,26 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const borderRadius = getFontSize({ context: CONTEXT.DIALOG }) / 2
   const loadingAlpha = getLoadingAlphaValue()
+  const [isFriend, setIsFriend] = useState<boolean>(true)
+  const [checkVersion, setCheckVersion] = useState<number>(0)
+  const userId = (shownPopup.data as string).toLowerCase()
+
+  // Re-check friendship only when passport is the top popup
+  const popups = store.getState().hud.shownPopups
+  const topPopup = popups[popups.length - 1]
+  useEffect(() => {
+    if (topPopup?.type === HUD_POPUP_TYPE.PASSPORT) {
+      setCheckVersion((v) => v + 1)
+    }
+  }, [popups.length])
+
+  useEffect(() => {
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
+    executeTask(async () => {
+      const friends = await BevyApi.social.getFriends()
+      setIsFriend(friends.some((f) => f.address.toLowerCase() === userId))
+    })
+  }, [checkVersion])
 
   return (
     <PopupBackdrop>
@@ -195,7 +216,9 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
           {!state.loadingProfile
             ? [
                 store.getState().hud.passportActiveSection ===
-                PASSPORT_SECTIONS[0] ? (
+                  PASSPORT_SECTIONS[0] ||
+                store.getState().hud.passportActiveSection ===
+                  PASSPORT_SECTIONS[2] ? (
                   <UserAvatarPreviewElement
                     userId={shownPopup.data as string}
                     allowRotation={true}
@@ -221,6 +244,13 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               color={{ ...COLOR.TEXT_COLOR_GREY, a: loadingAlpha }}
             />
           )}
+          {!state.editable && getFeatureFlag(FEATURES.FRIENDS) ? (
+            <PassportFriendButton
+              isFriend={isFriend}
+              userId={userId}
+              fontSize={fontSize}
+            />
+          ) : null}
           <CloseButton
             uiTransform={{
               position: {
@@ -342,6 +372,11 @@ function PassportContent(): ReactElement {
         {store.getState().hud.passportActiveSection === PASSPORT_SECTIONS[1] ? (
           <Column>
             <BadgesCollection badgesData={badgesData} />
+          </Column>
+        ) : null}
+        {store.getState().hud.passportActiveSection === PASSPORT_SECTIONS[2] ? (
+          <Column>
+            <PassportGallery />
           </Column>
         ) : null}
       </Column>
@@ -819,32 +854,18 @@ function NameRow({
       }}
     >
       <StatusIcon fontSize={fontSize} />
-      <UiEntity
-        uiText={{
-          value: name,
-          fontSize,
-          textAlign: 'middle-left',
-          textWrap: 'nowrap'
-        }}
+      <PlayerNameComponent
+        name={name}
+        hasClaimedName={hasClaimedName}
+        fontSize={fontSize}
+        bold={false}
+        textColor={COLOR.TEXT_COLOR_WHITE}
         uiTransform={{
           alignSelf: 'flex-start',
           padding: 0,
           margin: { left: '-4%' }
         }}
       />
-      {hasClaimedName && (
-        <UiEntity
-          uiTransform={{
-            width: fontSize,
-            height: fontSize,
-            flexShrink: 0
-          }}
-          uiBackground={getBackgroundFromAtlas({
-            atlasName: 'icons',
-            spriteName: 'Verified'
-          })}
-        />
-      )}
       {CopyButton({
         fontSize,
         text: name,
@@ -898,6 +919,177 @@ function Header({ children }: { children?: ReactElement }): ReactElement {
       }}
     >
       {children}
+    </UiEntity>
+  )
+}
+
+function PassportFriendButton({
+  isFriend,
+  userId,
+  fontSize
+}: {
+  isFriend: boolean
+  userId: string
+  fontSize: number
+}): ReactElement {
+  const [isHovered, setIsHovered] = useState<boolean>(false)
+  const [isBlocked, setIsBlocked] = useState<boolean>(false)
+  const profileData = store.getState().hud.profileData
+  const buttonWidth = fontSize * 9
+  const buttonTransform = {
+    position: {
+      top: getContentScaleRatio() * 16,
+      right: getContentScaleRatio() * 16 + fontSize * 2.5
+    },
+    positionType: 'absolute' as const,
+    width: buttonWidth,
+    height: fontSize * 2,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    borderRadius: fontSize / 2,
+    borderWidth: fontSize / 6,
+    padding: { left: fontSize * 0.5, right: fontSize * 0.8 }
+  }
+
+  useEffect(() => {
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
+    executeTask(async () => {
+      const blocked = await BevyApi.social.getBlockedUsers()
+      setIsBlocked(
+        blocked.some((b) => b.address.toLowerCase() === userId.toLowerCase())
+      )
+    })
+  }, [])
+
+  if (isBlocked) {
+    return (
+      <UiEntity
+        uiTransform={{
+          ...buttonTransform,
+          borderColor: isHovered ? COLOR.RED : COLOR.RED
+        }}
+        uiBackground={{
+          color: isHovered ? COLOR.RED : COLOR.BLACK_TRANSPARENT
+        }}
+        onMouseEnter={() => {
+          setIsHovered(true)
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false)
+        }}
+        onMouseDown={() => {
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.CONFIRM_UNBLOCK,
+              data: {
+                address: userId,
+                name: profileData.name,
+                hasClaimedName: profileData.hasClaimedName
+              }
+            })
+          )
+        }}
+      >
+        <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
+          <Icon
+            icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
+            iconSize={fontSize}
+          />
+          <UiEntity
+            uiText={{
+              value: isHovered ? '<b>UNBLOCK</b>' : '<b>BLOCKED</b>',
+              fontSize: fontSize * 0.85,
+              color: COLOR.TEXT_COLOR_WHITE,
+              textAlign: 'middle-center'
+            }}
+          />
+        </Row>
+      </UiEntity>
+    )
+  }
+
+  if (isFriend) {
+    return (
+      <UiEntity
+        uiTransform={{
+          ...buttonTransform,
+
+          borderColor: isHovered ? COLOR.RED : COLOR.BLACK_TRANSPARENT
+        }}
+        uiBackground={{
+          color: isHovered ? COLOR.BLACK_TRANSPARENT : COLOR.WHITE_OPACITY_1
+        }}
+        onMouseEnter={() => {
+          setIsHovered(true)
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false)
+        }}
+        onMouseDown={() => {
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.CONFIRM_UNFRIEND,
+              data: {
+                address: userId,
+                name: profileData.name,
+                hasClaimedName: profileData.hasClaimedName
+              }
+            })
+          )
+        }}
+      >
+        <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
+          <Icon
+            icon={{
+              atlasName: isHovered ? 'context' : 'icons',
+              spriteName: isHovered ? 'Unfriends' : 'FriendIcon'
+            }}
+            iconSize={fontSize}
+          />
+          <UiEntity
+            uiText={{
+              value: isHovered ? '<b>Remove Friend</b>' : '<b>Friend</b>',
+              fontSize: fontSize * 0.85,
+              color: COLOR.TEXT_COLOR_WHITE,
+              textAlign: 'middle-center'
+            }}
+          />
+        </Row>
+      </UiEntity>
+    )
+  }
+
+  return (
+    <UiEntity
+      uiTransform={buttonTransform}
+      uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
+            data: {
+              address: userId,
+              name: profileData.name,
+              hasClaimedName: profileData.hasClaimedName,
+              profilePictureUrl: ''
+            }
+          })
+        )
+      }}
+    >
+      <Row uiTransform={{ alignItems: 'center' }}>
+        <Icon
+          icon={{ spriteName: 'Add', atlasName: 'context' }}
+          iconSize={fontSize}
+        />
+        <UiEntity
+          uiText={{
+            value: '<b>Add Friend</b>',
+            fontSize: fontSize * 0.85,
+            color: COLOR.TEXT_COLOR_WHITE
+          }}
+        />
+      </Row>
     </UiEntity>
   )
 }

@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "UI Scene shows a functional UI for the Bevy Explorer",
   "scripts": {
-    "start": "sdk-commands start",
+    "update-version": "node -e \"const {execSync} = require('child_process'); const hash = execSync('git rev-parse --short HEAD').toString().trim(); require('fs').writeFileSync('src/version.ts', 'export const COMMIT_HASH = \\x27' + hash + '\\x27\\n');\"",
+    "start": "npm run update-version && sdk-commands start",
     "deploy": "sdk-commands deploy",
-    "build": "sdk-commands build",
+    "build": "npm run update-version && sdk-commands build",
     "export-static": "sdk-commands export-static --destination static/ --realmName BevyUiScene --baseUrl https://dcl-regenesislabs.github.io/bevy-ui-scene/ --commsAdapter ws-room:ws-room-service.decentraland.org/rooms/bevy-ui-scene",
     "lint": "eslint \"./src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint --fix \"./src/**/*.{ts,tsx}\"",

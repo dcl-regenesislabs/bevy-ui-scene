@@ -1,4 +1,8 @@
-import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import ReactEcs, {
+  type ReactElement,
+  type UiBackgroundProps,
+  UiEntity
+} from '@dcl/react-ecs'
 import { BottomBorder } from './bottom-border'
 import { COLOR } from './color-palette'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
@@ -13,12 +17,14 @@ export function TabComponent({
   tabs,
   fontSize = getFontSize({ context: CONTEXT.DIALOG }),
   uiTransform,
-  onClickTab = noop
+  onClickTab = noop,
+  uiBackground = {}
 }: {
   tabs: Tab[]
   fontSize?: number
   uiTransform?: UiTransformProps
   onClickTab?: (tabIndex: number) => void
+  uiBackground?: UiBackgroundProps
 }): ReactElement {
   return (
     <UiEntity
@@ -26,6 +32,7 @@ export function TabComponent({
         flexDirection: 'row',
         ...uiTransform
       }}
+      uiBackground={uiBackground}
     >
       <BottomBorder color={COLOR.WHITE_OPACITY_1} />
       {tabs.map(({ text, active }, index) => (

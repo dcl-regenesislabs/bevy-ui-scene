@@ -18,6 +18,37 @@ cargo run --release --bin decentra-bevy  --features="console" -- --ui http://loc
 
 For more cli arg options check https://github.com/decentraland/bevy-explorer
 
+# Feature Flags
+
+Features can be disabled at runtime via the `disableFeatures` param, passed as a comma-separated list of feature names.
+
+**Usage:**
+
+- Desktop: `--params "disableFeatures=minimap,chat"`
+- Web: `?disableFeatures=minimap,chat`
+
+**Available features:**
+
+| Feature | Default | Description |
+|---|---|---|
+| `minimap` | `true` | Minimap overlay |
+| `chat` | `true` | Chat panel and sidebar button |
+| `discoverMap` | `true` | Discover map (BigMap) and related sidebar buttons |
+| `notifications` | `true` | Notification toasts and notification polling |
+| `friends` | `true` | Friends panel and sidebar button |
+
+When a feature is disabled, its UI elements are hidden and related background services (streams, polling) are not started.
+
+**Code usage:**
+
+```typescript
+import { FEATURES, getFeatureFlag } from '../service/feature-flags'
+
+if (getFeatureFlag(FEATURES.CHAT)) {
+  // render chat UI
+}
+```
+
 # Working and bundling texture spritesheets
 
 We rename the names that come from figma file, and we change to names that make more sense from a programming point of view, for example, we rename HeadIcon to category-top_head, which for example it's the exact category id coming from API.

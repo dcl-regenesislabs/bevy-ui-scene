@@ -42,6 +42,7 @@ import {
   requestPlayer
 } from '../../../service/chat-members'
 import { store } from '../../../state/store'
+import { COMMIT_HASH } from '../../../version'
 import { filterEntitiesWith, sleep } from '../../../utils/dcl-utils'
 import { type PBUiCanvasInformation } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/ui_canvas_information.gen'
 import {
@@ -338,7 +339,7 @@ function ChatContent({
         justifyContent: 'flex-start',
         alignItems: 'flex-start',
         flexDirection: 'column',
-        borderRadius: 10,
+        borderRadius: getFontSize({}) / 2,
         borderColor: COLOR.BLACK_TRANSPARENT,
         borderWidth: 0,
         opacity
@@ -467,13 +468,17 @@ function sendChatMessage(value: string): void {
               worldCoordinates: { x: Number(x), y: Number(y) }
             })
           } else if (x && !y) {
+            const _worldName = x.includes('.eth')
+              ? x
+              : `${x.replace('.dcl.eth', '')}.dcl.eth`
+
             const { acceptingUsers } = await fetch(
-              `https://worlds-content-server.decentraland.org/world/${x}/about`
+              `https://worlds-content-server.decentraland.org/world/${_worldName}/about`
             ).then(async (res) => await res.json())
 
             if (acceptingUsers) {
               await changeRealm({
-                realm: x
+                realm: _worldName
               })
             } else {
               pushMessage({
@@ -490,12 +495,14 @@ function sendChatMessage(value: string): void {
 <b>/help</b> - show this help message
 <b>/goto x,y</b> - teleport to world x,y
 <b>/goto</b> world_name.dcl.eth - teleport to realm world_name.dcl.eth
+<b>/goto</b> world_name - teleport to realm world_name.dcl.eth
 <b>/world</b> world_name.dcl.eth - teleport to realm world_name.dcl.eth
 <b>/goto</b> main - teleport to Genesis Plaza
 <b>/world</b> main - teleport to Genesis Plaza
 <b>/goto</b> genesis - teleport to Genesis Plaza
 <b>/world</b> genesis - teleport to Genesis Plaza
-<b>/reload</b> - reloads the current scene`,
+<b>/reload</b> - reloads the current scene
+build: ${COMMIT_HASH}`,
           sender_address: ONE_ADDRESS,
           channel: 'Nearby'
         }).catch(console.error)
@@ -560,7 +567,7 @@ export function scrollToBottom(): void {
 export function focusChatInput(uiFocus: boolean = false): void {
   try {
     if (uiFocus) setUiFocus({ elementId: 'chat-input' }).catch(console.error)
-    store.dispatch(updateHudStateAction({ chatOpen: true }))
+    store.dispatch(updateHudStateAction({ chatOpen: true, friendsOpen: false }))
     scrollToBottom()
   } catch (error) {
     console.error('focusChatInput error', error)
@@ -617,6 +624,7 @@ export function messageHasMentionToMe(message: string): boolean {
 }
 
 async function pushMessage(message: ChatMessageDefinition): Promise<void> {
+  console.log('pushMessage', JSON.stringify(message))
   const messageType = isSystemMessage(message)
     ? message.sender_address === ZERO_ADDRESS
       ? MESSAGE_TYPE.SYSTEM

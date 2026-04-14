@@ -20,6 +20,7 @@ import { BevyApi } from '../../bevy-api'
 import { sleep } from '../../utils/dcl-utils'
 import { listenSystemAction } from '../../service/system-actions-emitter'
 import { getFontSize } from '../../service/fontsize-system'
+import FriendsPanel from '../../components/friends/friends-panel'
 import { FEATURES, getFeatureFlag } from '../../service/feature-flags'
 
 const ZERO_SIZE = {
@@ -29,7 +30,8 @@ const ZERO_SIZE = {
 
 enum MENU_ELEMENT {
   NONE,
-  CHAT
+  CHAT,
+  FRIENDS
 }
 
 const state: { hover: MENU_ELEMENT } = {
@@ -41,7 +43,14 @@ const ChatIconInactive: AtlasIcon = {
   spriteName: 'Chat off',
   atlasName: 'navbar'
 }
-
+const FriendsIconActive: AtlasIcon = {
+  spriteName: 'Friends on',
+  atlasName: 'navbar'
+}
+const FriendsIconInactive: AtlasIcon = {
+  spriteName: 'Friends off',
+  atlasName: 'navbar'
+}
 export default class MainHud {
   public readonly isSideBarVisible: boolean = true
   private readonly uiController: UIController
@@ -72,6 +81,11 @@ export default class MainHud {
     spriteName: 'Settings off'
   }
 
+  private readonly communitiesIcon: AtlasIcon = {
+    atlasName: 'icons',
+    spriteName: 'Community'
+  }
+
   private readonly helpIcon: AtlasIcon = {
     atlasName: 'navbar',
     spriteName: 'HelpIcon Off'
@@ -92,6 +106,11 @@ export default class MainHud {
     spriteName: 'Mic off'
   }
 
+  private readonly friendsIcon: AtlasIcon = {
+    atlasName: 'navbar',
+    spriteName: 'Friends off'
+  }
+
   // private cameraIcon: {atlasName:string, spriteName:string} = {atlasName:'navbar',  spriteName:'Camera Off'}
   // private experiencesIcon: {atlasName:string, spriteName:string} = {atlasName:'navbar',  spriteName:'ExperienceIconOff'}
   private readonly emotesIcon: AtlasIcon = {
@@ -99,6 +118,7 @@ export default class MainHud {
     spriteName: 'Emote off'
   }
 
+  private communitiesHint: boolean = false
   private backpackHint: boolean = false
   private bellHint: boolean = false
   private emotesHint: boolean = false
@@ -113,6 +133,7 @@ export default class MainHud {
   // private experiencesHint: boolean = false
 
   private bellBackground: Color4 | undefined = undefined
+  private communitiesBackground: Color4 | undefined = undefined
   private backpackBackground: Color4 | undefined = undefined
   private emotesBackground: Color4 | undefined = undefined
   private exploreBackground: Color4 | undefined = undefined
@@ -193,6 +214,12 @@ export default class MainHud {
     this.mapHint = true
   }
 
+  communitiesEnter(): void {
+    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesBackground = SELECTED_BUTTON_COLOR
+    this.communitiesHint = true
+  }
+
   backpackEnter(): void {
     this.backpackIcon.spriteName = 'Backpack on'
     this.backpackBackground = SELECTED_BUTTON_COLOR
@@ -247,6 +274,9 @@ export default class MainHud {
     this.exploreIcon.spriteName = 'Explore off'
     this.exploreBackground = undefined
     this.exploreHint = false
+    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesBackground = undefined
+    this.communitiesHint = false
 
     if (!this.chatAndLogs.isOpen()) {
       // TODO review for a more reactive pattern,to have sync between menu and chat, e.g. when chat is open button icon should be "Chat On"
@@ -258,12 +288,6 @@ export default class MainHud {
       this.voiceChatBackground = undefined
     }
     this.voiceChatHint = false
-  }
-
-  openCloseChat(): void {
-    store.dispatch(
-      updateHudStateAction({ chatOpen: !store.getState().hud.chatOpen })
-    )
   }
 
   mainUi(): ReactEcs.JSX.Element | null {
@@ -311,6 +335,8 @@ export default class MainHud {
             {getFeatureFlag(FEATURES.CHAT) &&
               this.chatAndLogs.isOpen() &&
               this.chatAndLogs.mainUi()}
+            {getFeatureFlag(FEATURES.FRIENDS) &&
+              store.getState().hud.friendsOpen && <FriendsPanel />}
           </UiEntity>
         </UiEntity>
       </UiEntity>
@@ -438,6 +464,28 @@ export default class MainHud {
             />
           )}
 
+          {getFeatureFlag(FEATURES.COMMUNITIES) && (
+            <ButtonIcon
+              uiTransform={buttonTransform}
+              onMouseEnter={() => {
+                this.communitiesEnter()
+              }}
+              onMouseLeave={() => {
+                this.updateButtons()
+              }}
+              onMouseDown={() => {
+                this.uiController.menu?.show('communities')
+                this.updateButtons()
+              }}
+              backgroundColor={this.communitiesBackground}
+              icon={this.communitiesIcon}
+              hintText={'Communities'}
+              hintFontSize={getFontSize({})}
+              showHint={this.communitiesHint}
+              iconSize={buttonIconSize}
+            />
+          )}
+
           <ButtonIcon
             uiTransform={buttonTransform}
             onMouseEnter={() => {
@@ -534,6 +582,40 @@ export default class MainHud {
             showHint={this.voiceChatHint}
             iconSize={buttonIconSize}
           />
+          {getFeatureFlag(FEATURES.FRIENDS) && (
+            <ButtonIcon
+              uiTransform={buttonTransform}
+              icon={
+                store.getState().hud.friendsOpen
+                  ? FriendsIconActive
+                  : FriendsIconInactive
+              }
+              onMouseDown={() => {
+                store.dispatch(
+                  updateHudStateAction({
+                    friendsOpen: !store.getState().hud.friendsOpen,
+                    chatOpen: !!store.getState().hud.friendsOpen
+                  })
+                )
+                this.updateButtons()
+              }}
+              hintText={'Friends'}
+              hintFontSize={getFontSize({})}
+              showHint={state.hover === MENU_ELEMENT.FRIENDS}
+              notifications={0}
+              iconSize={buttonIconSize}
+              onMouseEnter={() => {
+                state.hover = MENU_ELEMENT.FRIENDS
+              }}
+              onMouseLeave={() => {
+                if (
+                  !(state.hover > 0 && state.hover !== MENU_ELEMENT.FRIENDS)
+                ) {
+                  state.hover = MENU_ELEMENT.FRIENDS
+                }
+              }}
+            />
+          )}
           {getFeatureFlag(FEATURES.CHAT) && (
             <ButtonIcon
               uiTransform={buttonTransform}
@@ -546,7 +628,12 @@ export default class MainHud {
                 }
               }}
               onMouseDown={() => {
-                this.openCloseChat()
+                store.dispatch(
+                  updateHudStateAction({
+                    chatOpen: !store.getState().hud.chatOpen,
+                    friendsOpen: false
+                  })
+                )
                 this.updateButtons()
               }}
               backgroundColor={

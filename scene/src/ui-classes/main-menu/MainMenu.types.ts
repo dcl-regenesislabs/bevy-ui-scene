@@ -1,1 +1,6 @@
-export type MenuPage = 'map' | 'backpack' | 'settings' | 'explore'
+export type MenuPage =
+  | 'map'
+  | 'backpack'
+  | 'settings'
+  | 'explore'
+  | 'communities'

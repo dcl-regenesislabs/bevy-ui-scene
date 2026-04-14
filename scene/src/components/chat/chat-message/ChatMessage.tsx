@@ -28,6 +28,7 @@ import { AvatarCircle } from '../../avatar-circle'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { store } from '../../../state/store'
+import { PlayerNameComponent } from '../../player-name-component'
 import {
   type Address,
   hasClaimedName,
@@ -42,7 +43,8 @@ import {
 const LINK_TYPE = {
   USER: 'user',
   URL: 'url',
-  LOCATION: 'location'
+  LOCATION: 'location',
+  WORLD: 'world'
 }
 
 const EMOJI_SET = new Set(emojiCompleteList.emojis.map((e) => e.emoji))
@@ -77,6 +79,7 @@ function ChatMessage(props: {
   ) => {
     if (event?.hit?.meshName) {
       const [type, value] = event?.hit?.meshName.split('::')
+      console.log('chat link value', value)
       if (type === LINK_TYPE.USER) {
         const player =
           getPlayer({ userId: value }) ??
@@ -103,6 +106,13 @@ function ChatMessage(props: {
           pushPopupAction({
             type: HUD_POPUP_TYPE.TELEPORT,
             data: value
+          })
+        )
+      } else if (type === LINK_TYPE.WORLD) {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.TELEPORT,
+            data: { coordinates: '0,0', realm: value }
           })
         )
       }
@@ -187,19 +197,16 @@ function ChatMessage(props: {
         }}
       >
         {!isSystemMessage(props.message) && (
-          <Label
+          <PlayerNameComponent
+            name={playerName}
+            address={props.message.player?.userId ?? ''}
+            hasClaimedName={!playerName.includes('#')}
+            textColor={props.message.addressColor}
+            fontSize={defaultFontSize}
             uiTransform={{
               width: '100%',
               height: defaultFontSize
             }}
-            value={`<b>${playerName}</b>`}
-            fontSize={defaultFontSize}
-            color={
-              isSystemMessage(props.message)
-                ? Color4.Gray()
-                : props.message.addressColor
-            }
-            textAlign={`middle-left`}
             onMouseDown={() => {
               store.dispatch(
                 pushPopupAction({
@@ -293,11 +300,13 @@ export const SUGGESTION_EMOJI_REGEXP = /:\w*(#\w+)?:?$/g
 export const EMOJI_MENTION_REGEXP = /:\w+(#\w+)?/g
 const URL_REGEXP = /https:\/\/[^\s"',]+/g
 const LOCATION_REGEXP = /-?\d+,\s?-?\d+/g
+const REALM_REGEXP = /\b[\w-]+\.dcl\.eth\b/g
 
 export const decorateMessageWithLinks = compose(
   replaceNameTags,
   replaceURLTags,
-  replaceLocationTags
+  replaceLocationTags,
+  replaceRealmTags
 )
 
 export function replaceLocationTags(message: string): string {
@@ -309,6 +318,13 @@ export function replaceLocationTags(message: string): string {
 export function replaceURLTags(message: string): string {
   return message.replace(URL_REGEXP, function (...[match]) {
     return `<b><color=#00B1FE><link=${LINK_TYPE.URL}::${match}>${match}</link></color></b>`
+  })
+}
+
+export function replaceRealmTags(message: string): string {
+  return message.replace(REALM_REGEXP, function (...[match]) {
+    if (match === 'world_name.dcl.eth') return match
+    return `<b><color=#00B1FE><link=${LINK_TYPE.WORLD}::${match}>${match}</link></color></b>`
   })
 }
 

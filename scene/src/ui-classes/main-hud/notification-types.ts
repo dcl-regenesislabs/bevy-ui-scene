@@ -275,10 +275,21 @@ export type Notification =
   | ItemSoldNotification
   | RewardAssignmentNotification
   | RewardInProgressNotification
+  | FriendshipRejectedNotification
+
+export type FriendshipRejectedNotification = {
+  type: 'social_service_friendship_rejected'
+  metadata: {
+    sender: UserProfile
+    receiver: UserProfile
+    requestId: string
+  }
+} & BaseNotification
 
 export type FriendshipNotification =
   | FriendshipAcceptedNotification
   | FriendshipRequestNotification
+  | FriendshipRejectedNotification
 export type EventNotification =
   | EventEndedNotification
   | EventStartedNotification
@@ -286,7 +297,8 @@ export type EventNotification =
 export function isFriendshipNotification(notification: Notification): boolean {
   return (
     notification.type === 'social_service_friendship_accepted' ||
-    notification.type === 'social_service_friendship_request'
+    notification.type === 'social_service_friendship_request' ||
+    notification.type === 'social_service_friendship_rejected'
   )
 }
 export function isRewardNotification(notification: Notification): boolean {

@@ -23,6 +23,7 @@ import { noop } from '../../utils/function-utils'
 import { FLEX_BASIS_AUTO } from '../../utils/ui-utils'
 import { BevyApi } from '../../bevy-api'
 import { CONTEXT, getFontSize } from '../../service/fontsize-system'
+import { FEATURES, getFeatureFlag } from '../../service/feature-flags'
 
 const SELECTED_BUTTON_COLOR: Color4 = { ...Color4.Gray(), a: 0.3 }
 const BUTTON_TEXT_COLOR_INACTIVE = Color4.Gray()
@@ -53,12 +54,18 @@ export default class MainMenu {
     spriteName: 'Settings off'
   }
 
+  readonly communitiesIcon: AtlasIcon = {
+    atlasName: 'icons',
+    spriteName: 'Community'
+  }
+
   private closeButtonColor: Color4 | undefined
 
   private backpackBackground: Color4 | undefined
   private mapBackground: Color4 | undefined
   private exploreBackground: Color4 | undefined
   private settingsBackground: Color4 | undefined
+  private communitiesBackground: Color4 | undefined
 
   constructor(uiController: UIController) {
     this.uiController = uiController
@@ -86,6 +93,11 @@ export default class MainMenu {
   settingsEnter(): void {
     this.settingsIcon.spriteName = 'Settings on'
     this.settingsBackground = SELECTED_BUTTON_COLOR
+  }
+
+  communitiesEnter(): void {
+    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesBackground = SELECTED_BUTTON_COLOR
   }
 
   hide(): void {
@@ -122,6 +134,8 @@ export default class MainMenu {
     this.mapBackground = undefined
     this.exploreIcon.spriteName = 'Explore off'
     this.exploreBackground = undefined
+    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesBackground = undefined
     switch (this.activePage) {
       case 'settings':
         this.settingsEnter()
@@ -134,6 +148,9 @@ export default class MainMenu {
         break
       case 'explore':
         this.exploreEnter()
+        break
+      case 'communities':
+        this.communitiesEnter()
         break
     }
   }
@@ -222,6 +239,36 @@ export default class MainMenu {
                 flexDirection: 'row'
               }}
             >
+              {getFeatureFlag(FEATURES.COMMUNITIES) && (
+                <ButtonTextIcon
+                  uiTransform={buttonTransform}
+                  onMouseEnter={() => {
+                    this.communitiesEnter()
+                  }}
+                  onMouseLeave={() => {
+                    this.updateButtons()
+                  }}
+                  onMouseDown={() => {
+                    this.show('communities')
+                  }}
+                  backgroundColor={this.communitiesBackground}
+                  icon={this.communitiesIcon}
+                  value={'<b>COMMUNITIES</b> [O]'}
+                  fontSize={BUTTON_ICON_FONT_SIZE}
+                  iconSize={ICON_SIZE}
+                  iconColor={
+                    this.activePage === 'communities'
+                      ? undefined
+                      : BUTTON_TEXT_COLOR_INACTIVE
+                  }
+                  fontColor={
+                    this.activePage === 'communities'
+                      ? undefined
+                      : BUTTON_TEXT_COLOR_INACTIVE
+                  }
+                />
+              )}
+
               <ButtonTextIcon
                 uiTransform={buttonTransform}
                 onMouseEnter={() => {
@@ -339,6 +386,8 @@ export default class MainMenu {
               this.uiController.backpackPage.render()}
             {this.activePage === 'settings' &&
               this.uiController.settingsPage.mainUi()}
+            {this.activePage === 'communities' &&
+              this.uiController.communitiesPage.mainUi()}
           </UiEntity>
           <UiEntity
             uiTransform={{

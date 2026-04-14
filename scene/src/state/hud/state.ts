@@ -59,7 +59,16 @@ export enum HUD_POPUP_TYPE {
   PROFILE_MENU,
   ERROR,
   NOTIFICATIONS_MENU,
-  PERMISSION_REQUEST
+  PERMISSION_REQUEST,
+  FRIEND_REQUEST_RECEIVED,
+  FRIEND_REQUEST_SENT,
+  SEND_FRIEND_REQUEST,
+  CONFIRM_UNFRIEND,
+  CANCEL_FRIEND_REQUEST,
+  FRIENDSHIP_RESULT,
+  CONFIRM_BLOCK,
+  CONFIRM_UNBLOCK,
+  COMMUNITY_VIEW
 }
 
 export type HUDPopup = {
@@ -107,6 +116,8 @@ export type HudState = {
     | NotAchievedAchievementItem
     | null
   passportActiveSection: (typeof PASSPORT_SECTIONS)[number]
+  friendsOpen: boolean
+  friendsActiveTabIndex: number
 }
 
 export type HudStateUpdateParams = {
@@ -145,11 +156,13 @@ export type HudStateUpdateParams = {
     | NotAchievedAchievementItem
     | null
   passportActiveSection?: (typeof PASSPORT_SECTIONS)[number]
+  friendsOpen?: boolean
+  friendsActiveTabIndex?: number
 }
 
 export const hudInitialState: HudState = {
   transitioningToMap: false,
-  chatOpen: true,
+  chatOpen: false,
   shownPopups: [],
   profileData: cloneDeep(EMPTY_PROFILE_DATA),
   names: [],
@@ -183,5 +196,7 @@ export const hudInitialState: HudState = {
     pendingAssets: null
   },
   passportSelectedBadge: null,
-  passportActiveSection: PASSPORT_SECTIONS[0]
+  passportActiveSection: PASSPORT_SECTIONS[0],
+  friendsOpen: false,
+  friendsActiveTabIndex: 1
 }

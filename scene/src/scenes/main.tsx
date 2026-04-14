@@ -5,6 +5,8 @@ import { initFeatureFlags } from '../service/feature-flags'
 import { loadSettingsFromExplorer } from '../state/settings/actions'
 import { store } from '../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
+import { sleep, waitFor } from '../utils/dcl-utils'
+import { getPlayer } from '@dcl/sdk/players'
 
 let gameInstance: GameController
 
@@ -17,10 +19,13 @@ export async function init(retry: boolean): Promise<void> {
   // gameInstance.uiController.loadingAndLogin.finishLoading()
 
   executeTask(async () => {
-    // await sleep(100)
+    await sleep(100)
+    await waitFor(() => !!getPlayer())
+
     // store.dispatch(updateHudStateAction({ loggedIn: true }))
     // gameInstance.uiController.menu?.show('settings')
-    // gameInstance.uiController.menu?.show('backpack')
+    // gameInstance.uiController.menu?.show('communities')
+
     // store.dispatch(updateHudStateAction({ realmURL: (await getRealm({})).realmInfo!.baseUrl}))
     /*  store.dispatch(
       pushPopupAction({
@@ -54,7 +59,8 @@ export async function init(retry: boolean): Promise<void> {
     /* store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.PASSPORT,
-        data: `0x598f8af1565003AE7456DaC280a18ee826Df7a2c` // 0x4b538e1e044922aec2f428ec7e17a99f44205ff9 , 0x598f8af1565003AE7456DaC280a18ee826Df7a2c , 0x235ec1cc12dbda96f014896de38f74f6e60239c0
+
+        data: `0x598f8af1565003AE7456DaC2¡80a18ee826Df7a2c` // 0x4b538e1e044922aec2f428ec7e17a99f44205ff9 , 0x598f8af1565003AE7456DaC280a18ee826Df7a2c , 0x235ec1cc12dbda96f014896de38f74f6e60239c0
       })
     ) */
     /* store.dispatch(

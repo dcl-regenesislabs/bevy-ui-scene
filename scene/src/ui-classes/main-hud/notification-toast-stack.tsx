@@ -6,6 +6,10 @@ import { executeTask } from '@dcl/sdk/ecs'
 import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { sleep } from '../../utils/dcl-utils'
 import { fetchNotifications } from '../../utils/notifications-promise-utils'
+import { BevyApi } from '../../bevy-api'
+import { getPlayer } from '@dcl/sdk/src/players'
+import type { FriendshipEventUpdate } from '../../service/social-service-type'
+import { showErrorPopup } from '../../service/error-popup-service'
 
 export type NotificationToastStackState = {
   toasts: Notification[]
@@ -33,6 +37,9 @@ export function NotificationToastStack(): ReactElement | null {
             }}
             notification={notification}
             key={notification.id}
+            onDismiss={() => {
+              removeToast(notification.id)
+            }}
           />
         )
       })}
@@ -69,9 +76,63 @@ export function initRealTimeNotifications(): void {
   })
 }
 
+function removeToast(id: string): void {
+  state.toasts = state.toasts.filter((t) => t.id !== id)
+}
+
 export function pushNotificationToast(notification: Notification): void {
   state.toasts.push({
     ...notification,
     localTimestamp: Date.now()
   })
+}
+
+export function initFriendshipEventToasts(): void {
+  executeTask(async () => {
+    try {
+      const stream = await BevyApi.social.getFriendshipEventStream()
+      for await (const event of stream) {
+        if (event.type === 'request') {
+          pushNotificationToast(buildFriendRequestNotification(event))
+        }
+      }
+    } catch (error) {
+      showErrorPopup(
+        error instanceof Error ? error : new Error(String(error)),
+        'initFriendshipEventToasts'
+      )
+    }
+  })
+}
+
+function buildFriendRequestNotification(
+  event: FriendshipEventUpdate & { type: 'request' }
+): Notification {
+  const myPlayer = getPlayer()
+  const myAddress = myPlayer?.userId ?? ''
+  const myName = myPlayer?.name ?? ''
+  const myHasClaimedName = !(myName.includes('#') || myName.length === 0)
+
+  return {
+    id: event.id,
+    type: 'social_service_friendship_request',
+    address: myAddress,
+    metadata: {
+      sender: {
+        name: event.name,
+        address: event.address,
+        hasClaimedName: event.hasClaimedName,
+        profileImageUrl: event.profilePictureUrl
+      },
+      receiver: {
+        name: myName,
+        address: myAddress,
+        hasClaimedName: myHasClaimedName,
+        profileImageUrl: ''
+      },
+      requestId: event.id
+    },
+    timestamp: String(event.createdAt),
+    read: false
+  }
 }

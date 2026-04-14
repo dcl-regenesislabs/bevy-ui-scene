@@ -4,6 +4,7 @@ import { AvatarPreviewElement } from '././AvatarPreviewElement'
 import { getPlayer } from '@dcl/sdk/players'
 import useEffect = ReactEcs.useEffect
 import { type PBAvatarShape } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/avatar_shape.gen'
+import { fetchProfileData } from '../../utils/passport-promise-utils'
 
 export function UserAvatarPreviewElement({
   uiTransform,
@@ -21,7 +22,16 @@ export function UserAvatarPreviewElement({
       getAvatarShapeDefinitionFromPlayer({ userId })
     )
   useEffect(() => {
-    setAvatarShapeDefinition(getAvatarShapeDefinitionFromPlayer({ userId }))
+    const localShape = getAvatarShapeDefinitionFromPlayer({ userId })
+    setAvatarShapeDefinition(localShape)
+
+    if (!getPlayer({ userId })) {
+      fetchAvatarShapeFromProfile({ userId })
+        .then((remoteShape) => {
+          if (remoteShape) setAvatarShapeDefinition(remoteShape)
+        })
+        .catch(console.error)
+    }
   }, [userId])
 
   return (
@@ -43,6 +53,7 @@ function getAvatarShapeDefinitionFromPlayer({
   userId: string
 }): PBAvatarShape {
   const player = getPlayer({ userId })
+
   return {
     id: userId,
     emotes: [],
@@ -52,5 +63,30 @@ function getAvatarShapeDefinitionFromPlayer({
     hairColor: player?.avatar?.hairColor,
     skinColor: player?.avatar?.skinColor,
     wearables: player?.wearables.filter((i: any) => i) ?? []
+  }
+}
+
+async function fetchAvatarShapeFromProfile({
+  userId
+}: {
+  userId: string
+}): Promise<PBAvatarShape | null> {
+  try {
+    const profileData = await fetchProfileData({ userId, useCache: true })
+    const avatarData = profileData?.avatars?.[0]?.avatar
+    if (avatarData == null) return null
+
+    return {
+      id: userId,
+      emotes: [],
+      forceRender: avatarData.forceRender ?? [],
+      bodyShape: avatarData.bodyShape,
+      eyeColor: avatarData.eyes?.color,
+      hairColor: avatarData.hair?.color,
+      skinColor: avatarData.skin?.color,
+      wearables: avatarData.wearables?.filter((i: any) => i) ?? []
+    }
+  } catch {
+    return null
   }
 }
