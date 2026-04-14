@@ -24,7 +24,7 @@ export async function init(retry: boolean): Promise<void> {
 
     // store.dispatch(updateHudStateAction({ loggedIn: true }))
     // gameInstance.uiController.menu?.show('settings')
-    gameInstance.uiController.menu?.show('communities')
+    // gameInstance.uiController.menu?.show('communities')
 
     // store.dispatch(updateHudStateAction({ realmURL: (await getRealm({})).realmInfo!.baseUrl}))
     /*  store.dispatch(

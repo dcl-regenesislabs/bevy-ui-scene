@@ -464,25 +464,27 @@ export default class MainHud {
             />
           )}
 
-          <ButtonIcon
-            uiTransform={buttonTransform}
-            onMouseEnter={() => {
-              this.communitiesEnter()
-            }}
-            onMouseLeave={() => {
-              this.updateButtons()
-            }}
-            onMouseDown={() => {
-              this.uiController.menu?.show('communities')
-              this.updateButtons()
-            }}
-            backgroundColor={this.communitiesBackground}
-            icon={this.communitiesIcon}
-            hintText={'Communities'}
-            hintFontSize={getFontSize({})}
-            showHint={this.communitiesHint}
-            iconSize={buttonIconSize}
-          />
+          {getFeatureFlag(FEATURES.COMMUNITIES) && (
+            <ButtonIcon
+              uiTransform={buttonTransform}
+              onMouseEnter={() => {
+                this.communitiesEnter()
+              }}
+              onMouseLeave={() => {
+                this.updateButtons()
+              }}
+              onMouseDown={() => {
+                this.uiController.menu?.show('communities')
+                this.updateButtons()
+              }}
+              backgroundColor={this.communitiesBackground}
+              icon={this.communitiesIcon}
+              hintText={'Communities'}
+              hintFontSize={getFontSize({})}
+              showHint={this.communitiesHint}
+              iconSize={buttonIconSize}
+            />
+          )}
 
           <ButtonIcon
             uiTransform={buttonTransform}

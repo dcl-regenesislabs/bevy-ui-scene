@@ -6,6 +6,7 @@ export type FeatureFlags = {
   discoverMap: boolean
   notifications: boolean
   friends: boolean
+  communities: boolean
 }
 
 export const FEATURES: Record<string, keyof FeatureFlags> = {
@@ -13,7 +14,8 @@ export const FEATURES: Record<string, keyof FeatureFlags> = {
   CHAT: 'chat',
   DISCOVER_MAP: 'discoverMap',
   NOTIFICATIONS: 'notifications',
-  FRIENDS: 'friends'
+  FRIENDS: 'friends',
+  COMMUNITIES: 'communities'
 } as const
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -21,7 +23,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
   chat: true,
   discoverMap: true,
   notifications: true,
-  friends: true
+  friends: true,
+  communities: false
 }
 
 const resolvedFlags: FeatureFlags = { ...DEFAULT_FLAGS }

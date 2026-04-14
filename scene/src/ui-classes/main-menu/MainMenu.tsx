@@ -23,6 +23,7 @@ import { noop } from '../../utils/function-utils'
 import { FLEX_BASIS_AUTO } from '../../utils/ui-utils'
 import { BevyApi } from '../../bevy-api'
 import { CONTEXT, getFontSize } from '../../service/fontsize-system'
+import { FEATURES, getFeatureFlag } from '../../service/feature-flags'
 
 const SELECTED_BUTTON_COLOR: Color4 = { ...Color4.Gray(), a: 0.3 }
 const BUTTON_TEXT_COLOR_INACTIVE = Color4.Gray()
@@ -238,33 +239,35 @@ export default class MainMenu {
                 flexDirection: 'row'
               }}
             >
-              <ButtonTextIcon
-                uiTransform={buttonTransform}
-                onMouseEnter={() => {
-                  this.communitiesEnter()
-                }}
-                onMouseLeave={() => {
-                  this.updateButtons()
-                }}
-                onMouseDown={() => {
-                  this.show('communities')
-                }}
-                backgroundColor={this.communitiesBackground}
-                icon={this.communitiesIcon}
-                value={'<b>COMMUNITIES</b> [O]'}
-                fontSize={BUTTON_ICON_FONT_SIZE}
-                iconSize={ICON_SIZE}
-                iconColor={
-                  this.activePage === 'communities'
-                    ? undefined
-                    : BUTTON_TEXT_COLOR_INACTIVE
-                }
-                fontColor={
-                  this.activePage === 'communities'
-                    ? undefined
-                    : BUTTON_TEXT_COLOR_INACTIVE
-                }
-              />
+              {getFeatureFlag(FEATURES.COMMUNITIES) && (
+                <ButtonTextIcon
+                  uiTransform={buttonTransform}
+                  onMouseEnter={() => {
+                    this.communitiesEnter()
+                  }}
+                  onMouseLeave={() => {
+                    this.updateButtons()
+                  }}
+                  onMouseDown={() => {
+                    this.show('communities')
+                  }}
+                  backgroundColor={this.communitiesBackground}
+                  icon={this.communitiesIcon}
+                  value={'<b>COMMUNITIES</b> [O]'}
+                  fontSize={BUTTON_ICON_FONT_SIZE}
+                  iconSize={ICON_SIZE}
+                  iconColor={
+                    this.activePage === 'communities'
+                      ? undefined
+                      : BUTTON_TEXT_COLOR_INACTIVE
+                  }
+                  fontColor={
+                    this.activePage === 'communities'
+                      ? undefined
+                      : BUTTON_TEXT_COLOR_INACTIVE
+                  }
+                />
+              )}
 
               <ButtonTextIcon
                 uiTransform={buttonTransform}
