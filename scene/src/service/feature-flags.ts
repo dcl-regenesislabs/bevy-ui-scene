@@ -23,7 +23,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   chat: true,
   discoverMap: true,
   notifications: true,
-  friends: true,
+  friends: false,
   communities: false
 }
 
