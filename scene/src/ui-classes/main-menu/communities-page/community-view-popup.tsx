@@ -192,25 +192,23 @@ function CommunityViewContent({
               flexShrink: 0
             }}
           >
-            {['ANNOUNCEMENTS', 'MEMBERS', 'PLACES', 'PHOTOS'].map(
-              (tab, i) => (
-                <UiEntity
-                  key={tab}
-                  uiTransform={{
-                    margin: { right: fontSize * 2 },
-                    borderWidth: i === 0 ? 2 : 0,
-                    borderColor: COLOR.WHITE,
-                    padding: { bottom: fontSize * 0.3 }
-                  }}
-                  uiText={{
-                    value: `<b>${tab}</b>`,
-                    fontSize: fontSizeSmall,
-                    color:
-                      i === 0 ? COLOR.TEXT_COLOR_WHITE : COLOR.TEXT_COLOR_GREY
-                  }}
-                />
-              )
-            )}
+            {['ANNOUNCEMENTS', 'MEMBERS', 'PLACES', 'PHOTOS'].map((tab, i) => (
+              <UiEntity
+                key={tab}
+                uiTransform={{
+                  margin: { right: fontSize * 2 },
+                  borderWidth: i === 0 ? 2 : 0,
+                  borderColor: COLOR.WHITE,
+                  padding: { bottom: fontSize * 0.3 }
+                }}
+                uiText={{
+                  value: `<b>${tab}</b>`,
+                  fontSize: fontSizeSmall,
+                  color:
+                    i === 0 ? COLOR.TEXT_COLOR_WHITE : COLOR.TEXT_COLOR_GREY
+                }}
+              />
+            ))}
           </Row>
 
           {/* Content */}

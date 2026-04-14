@@ -43,7 +43,9 @@ async function signedGet(url: string): Promise<any> {
     meta
   })
   if (!result.ok) {
-    throw new Error(`HTTP ${result.status}: ${result.statusText || result.body}`)
+    throw new Error(
+      `HTTP ${result.status}: ${result.statusText || result.body}`
+    )
   }
   const parsed = JSON.parse(result.body)
   return parsed.data ?? parsed
@@ -60,7 +62,9 @@ async function signedPost(url: string, body?: object): Promise<any> {
     meta
   })
   if (!result.ok) {
-    throw new Error(`HTTP ${result.status}: ${result.statusText || result.body}`)
+    throw new Error(
+      `HTTP ${result.status}: ${result.statusText || result.body}`
+    )
   }
   return result.body.length > 0 ? JSON.parse(result.body) : null
 }
@@ -75,7 +79,9 @@ async function signedDelete(url: string): Promise<void> {
     meta
   })
   if (!result.ok) {
-    throw new Error(`HTTP ${result.status}: ${result.statusText || result.body}`)
+    throw new Error(
+      `HTTP ${result.status}: ${result.statusText || result.body}`
+    )
   }
 }
 
@@ -86,7 +92,8 @@ export async function fetchCommunities(
 ): Promise<PaginatedResponse<CommunityListItem>> {
   const base = await resolveBaseURL()
   const parts: string[] = []
-  if (params.search != null) parts.push(`search=${encodeURIComponent(params.search)}`)
+  if (params.search != null)
+    parts.push(`search=${encodeURIComponent(params.search)}`)
   if (params.onlyMemberOf === true) parts.push('onlyMemberOf=true')
   if (params.offset != null) parts.push(`offset=${params.offset}`)
   if (params.limit != null) parts.push(`limit=${params.limit}`)

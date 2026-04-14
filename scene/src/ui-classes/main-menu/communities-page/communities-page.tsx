@@ -9,20 +9,12 @@ import {
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
 import { executeTask } from '@dcl/sdk/ecs'
-import {
-  fetchCommunities,
-  fetchMyCommunities
-} from '../../../utils/communities-promise-utils'
+import { fetchMyCommunities } from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import {
   type CommunityListItem,
   getCommunityThumbnailUrl
 } from '../../../service/communities-types'
-import {
-  BROWSE_CARD_HEIGHT,
-  BROWSE_CARD_WIDTH,
-  CommunityBrowseCard
-} from './community-browse-card'
 import {
   CONTEXT,
   getFontSize,
@@ -36,41 +28,13 @@ import { getMainMenuHeight } from '../MainMenu'
 import Icon from '../../../components/icon/Icon'
 import { debounce } from '../../../utils/dcl-utils'
 import { Color4 } from '@dcl/sdk/math'
+import {
+  cancelBrowseLoad,
+  CommunitiesCatalog,
+  startBrowseLoad
+} from './communities-catalog'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
-
-const BROWSE_PAGE_SIZE = 10
-
-async function fetchAllBrowseCommunities(
-  onBatch: (
-    communities: CommunityListItem[],
-    total: number,
-    hasMore: boolean
-  ) => void,
-  cancelled: { current: boolean },
-  search?: string
-): Promise<void> {
-  let offset = 0
-  let hasMore = true
-
-  while (hasMore && !cancelled.current) {
-    try {
-      const result = await fetchCommunities({
-        limit: BROWSE_PAGE_SIZE,
-        offset,
-        search: search != null && search.length > 0 ? search : undefined
-      })
-      if (cancelled.current) return
-      hasMore = result.results.length === BROWSE_PAGE_SIZE
-      offset += result.results.length
-      onBatch(result.results, result.total, hasMore)
-    } catch (error) {
-      console.error('[communities] failed to load browse page', error)
-      hasMore = false
-      onBatch([], 0, false)
-    }
-  }
-}
 
 export default class CommunitiesPage {
   mainUi(): ReactElement {
@@ -78,66 +42,15 @@ export default class CommunitiesPage {
   }
 }
 
-// Cancellation token for browse loading — module-level so debounced search can cancel
-let browseCancelled = { current: false }
-
-function startBrowseLoad(
-  search: string | undefined,
-  setBrowseCommunities: (
-    fn: (prev: CommunityListItem[]) => CommunityListItem[]
-  ) => void,
-  setBrowseTotal: (n: number) => void,
-  setLoadingBrowse: (b: boolean) => void,
-  setLoadingMore: (b: boolean) => void
-): void {
-  // Cancel previous load
-  browseCancelled.current = true
-  browseCancelled = { current: false }
-  const cancelled = browseCancelled
-
-  setBrowseCommunities(() => [])
-  setLoadingBrowse(true)
-  setLoadingMore(false)
-
-  executeTask(async () => {
-    let isFirst = true
-    await fetchAllBrowseCommunities(
-      (batch, total, hasMore) => {
-        if (cancelled.current) return
-        setBrowseCommunities((prev) => [...(prev ?? []), ...batch])
-        setBrowseTotal(total)
-        if (isFirst) {
-          setLoadingBrowse(false)
-          isFirst = false
-        }
-        setLoadingMore(hasMore)
-      },
-      cancelled,
-      search
-    )
-  })
-}
-
 function CommunitiesContent(): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.SIDE })
   const [myCommunities, setMyCommunities] = useState<CommunityListItem[]>([])
-  const [browseCommunities, setBrowseCommunities] = useState<
-    CommunityListItem[]
-  >([])
-  const [browseTotal, setBrowseTotal] = useState<number>(0)
   const [loadingSidebar, setLoadingSidebar] = useState<boolean>(true)
-  const [loadingBrowse, setLoadingBrowse] = useState<boolean>(true)
-  const [loadingMore, setLoadingMore] = useState<boolean>(false)
   const [searchText, setSearchText] = useState<string>('')
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('')
 
-  const debouncedSearch = debounce((text: string) => {
-    startBrowseLoad(
-      text.length > 0 ? text : undefined,
-      setBrowseCommunities,
-      setBrowseTotal,
-      setLoadingBrowse,
-      setLoadingMore
-    )
+  const onSearchChange = debounce((text: string) => {
+    setDebouncedSearch(text)
   }, 600)
 
   useEffect(() => {
@@ -151,16 +64,8 @@ function CommunitiesContent(): ReactElement {
       setLoadingSidebar(false)
     })
 
-    startBrowseLoad(
-      undefined,
-      setBrowseCommunities,
-      setBrowseTotal,
-      setLoadingBrowse,
-      setLoadingMore
-    )
-
     return () => {
-      browseCancelled.current = true
+      cancelBrowseLoad()
     }
   }, [])
 
@@ -212,7 +117,7 @@ function CommunitiesContent(): ReactElement {
               placeholder={'Search communities...'}
               onChange={(text) => {
                 setSearchText(text)
-                debouncedSearch(text)
+                onSearchChange(text)
               }}
             />
           </UiEntity>
@@ -333,90 +238,7 @@ function CommunitiesContent(): ReactElement {
             }
           }}
         >
-          <UiEntity
-            uiTransform={{
-              width: '100%',
-              flexShrink: 0,
-              margin: { bottom: fontSize, left: -fontSize / 2 }
-            }}
-            uiText={{
-              value: `<b>Browse Communities  (${browseTotal ?? 0})</b>`,
-              fontSize: getFontSize({
-                context: CONTEXT.SIDE,
-                token: TYPOGRAPHY_TOKENS.BODY
-              }),
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'top-left'
-            }}
-          />
-          <UiEntity
-            uiTransform={{
-              width: '100%',
-              flexGrow: 1,
-              flexWrap: 'wrap',
-              flexDirection: 'row',
-              overflow: 'scroll',
-              scrollVisible: 'vertical'
-            }}
-          >
-            {loadingBrowse
-              ? Array.from({ length: 10 }).map((_, i) => (
-                  <UiEntity
-                    key={i}
-                    uiTransform={{
-                      width: BROWSE_CARD_WIDTH(),
-                      height: BROWSE_CARD_HEIGHT(),
-                      margin: {
-                        right: fontSize,
-                        bottom: fontSize
-                      }
-                    }}
-                  >
-                    <LoadingPlaceholder
-                      uiTransform={{
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: fontSize / 2,
-                        margin: {
-                          right: fontSize,
-                          bottom: fontSize
-                        }
-                      }}
-                    />
-                  </UiEntity>
-                ))
-              : [
-                  ...(browseCommunities ?? []).map((community) => (
-                    <CommunityBrowseCard
-                      key={community.id}
-                      community={community}
-                    />
-                  )),
-                  ...(loadingMore
-                    ? Array.from({ length: 5 }).map((_, i) => (
-                        <UiEntity
-                          key={`loading-${i}`}
-                          uiTransform={{
-                            width: BROWSE_CARD_WIDTH(),
-                            height: BROWSE_CARD_HEIGHT(),
-                            margin: {
-                              right: fontSize,
-                              bottom: fontSize
-                            }
-                          }}
-                        >
-                          <LoadingPlaceholder
-                            uiTransform={{
-                              width: '100%',
-                              height: '100%',
-                              borderRadius: fontSize / 2
-                            }}
-                          />
-                        </UiEntity>
-                      ))
-                    : [])
-                ]}
-          </UiEntity>
+          <CommunitiesCatalog searchText={debouncedSearch} />
         </Column>
       </ResponsiveContent>
     </MainContent>

@@ -99,7 +99,7 @@ export function CommunityPostItem({
             }}
             uiText={{
               value: post.content,
-              fontSize: fontSize,
+              fontSize,
               color: COLOR.TEXT_COLOR_WHITE,
               textAlign: 'top-left',
               textWrap: 'wrap'
@@ -111,7 +111,7 @@ export function CommunityPostItem({
         <UiEntity
           uiText={{
             value: `${post.likesCount}`,
-            fontSize: fontSize,
+            fontSize,
             color: COLOR.TEXT_COLOR_GREY,
             textAlign: 'middle-right'
           }}

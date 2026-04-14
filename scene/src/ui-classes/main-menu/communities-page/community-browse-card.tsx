@@ -197,7 +197,7 @@ export function CommunityBrowseCard({
           fontSize: fontSizeSmall,
           color: COLOR.TEXT_COLOR_WHITE
         }}
-      />*/}
+      /> */}
     </Column>
   )
 }
