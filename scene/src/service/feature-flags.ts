@@ -1,4 +1,6 @@
 import { BevyApi } from '../bevy-api'
+import { waitFor } from '../utils/dcl-utils'
+import { getPlayer } from '@dcl/sdk/players'
 
 export type FeatureFlags = {
   minimap: boolean
@@ -23,8 +25,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
   chat: true,
   discoverMap: true,
   notifications: true,
-  friends: false,
-  communities: false
+  friends: true,
+  communities: true
 }
 
 const resolvedFlags: FeatureFlags = { ...DEFAULT_FLAGS }
@@ -43,6 +45,13 @@ export async function initFeatureFlags(): Promise<void> {
         }
       }
     }
+
+    await waitFor(() => getPlayer() !== null)
+    // TODO REVIEW for guests, consider showing UI with "only signed-in users can see this feature"
+    if (getPlayer()?.isGuest) resolvedFlags.notifications = false
+    if (getPlayer()?.isGuest) resolvedFlags.friends = false
+    if (getPlayer()?.isGuest) resolvedFlags.communities = false
+
     console.log('[feature-flags] flags:', resolvedFlags)
   } catch (e) {
     console.error(
