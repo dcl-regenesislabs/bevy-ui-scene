@@ -179,7 +179,7 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
                   'friendRequestSendingResult',
                   friendRequestSendingResult
                 )
-                fetchAndStoreFriendRequests()
+                fetchAndStoreFriendRequests().catch(console.error)
                 store.dispatch(closeLastPopupAction())
                 store.dispatch(
                   pushPopupAction({
