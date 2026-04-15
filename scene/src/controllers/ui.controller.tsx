@@ -42,7 +42,11 @@ import { getViewportWidth } from '../service/canvas-ratio'
 import { listenSystemAction } from '../service/system-actions-emitter'
 import { HoverActionComponent } from '../components/hover-actions/hover-action-component'
 import { SceneLoadingWindowComponent } from '../components/scene-loading-window'
-import { FEATURES, getFeatureFlag } from '../service/feature-flags'
+import {
+  applyGuestDisabledFeatures,
+  FEATURES,
+  getFeatureFlag
+} from '../service/feature-flags'
 
 let loadingAndLogin: any = null
 
@@ -109,6 +113,7 @@ export class UIController {
             realmURL: (await getRealm({})).realmInfo?.baseUrl ?? 'main' // TODO REVIEW
           })
         )
+        applyGuestDisabledFeatures()
         store.dispatch(
           updateHudStateAction({
             loggedIn: true

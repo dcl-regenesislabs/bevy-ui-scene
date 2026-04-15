@@ -1,5 +1,4 @@
 import { BevyApi } from '../bevy-api'
-import { waitFor } from '../utils/dcl-utils'
 import { getPlayer } from '@dcl/sdk/players'
 
 export type FeatureFlags = {
@@ -46,18 +45,23 @@ export async function initFeatureFlags(): Promise<void> {
       }
     }
 
-    await waitFor(() => getPlayer() !== null)
-    // TODO REVIEW for guests, consider showing UI with "only signed-in users can see this feature"
-    if (getPlayer()?.isGuest) resolvedFlags.notifications = false
-    if (getPlayer()?.isGuest) resolvedFlags.friends = false
-    if (getPlayer()?.isGuest) resolvedFlags.communities = false
-
     console.log('[feature-flags] flags:', resolvedFlags)
   } catch (e) {
     console.error(
       '[feature-flags] init failed, defaulting all flags to true',
       e
     )
+  }
+}
+
+export function applyGuestDisabledFeatures(): void {
+  const player = getPlayer()
+  if (player?.isGuest === true) {
+    resolvedFlags.friends = false
+    resolvedFlags.communities = false
+    resolvedFlags.notifications = false
+
+    console.log('[feature-flags] guest restrictions applied:', resolvedFlags)
   }
 }
 
