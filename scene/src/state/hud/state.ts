@@ -8,7 +8,10 @@ import {
   type NotAchievedAchievementItem
 } from '../../ui-classes/main-hud/passport/badges-types'
 import { PASSPORT_SECTIONS } from '../../ui-classes/main-hud/passport/passport-constants'
-import type { FriendRequestData } from '../../service/social-service-type'
+import type {
+  FriendRequestData,
+  FriendStatusData
+} from '../../service/social-service-type'
 
 export const HUD_STORE_ID = 'hud'
 
@@ -121,6 +124,8 @@ export type HudState = {
   friendsActiveTabIndex: number
   sentFriendRequests: FriendRequestData[]
   receivedFriendRequests: FriendRequestData[]
+  friends: FriendStatusData[]
+  friendsLoading: boolean
 }
 
 export type HudStateUpdateParams = {
@@ -163,6 +168,8 @@ export type HudStateUpdateParams = {
   friendsActiveTabIndex?: number
   sentFriendRequests?: FriendRequestData[]
   receivedFriendRequests?: FriendRequestData[]
+  friends?: FriendStatusData[]
+  friendsLoading?: boolean
 }
 
 export const hudInitialState: HudState = {
@@ -205,5 +212,7 @@ export const hudInitialState: HudState = {
   friendsOpen: false,
   friendsActiveTabIndex: 1,
   sentFriendRequests: [],
-  receivedFriendRequests: []
+  receivedFriendRequests: [],
+  friends: [],
+  friendsLoading: true
 }

@@ -18,6 +18,7 @@ import { BevyApi } from '../../bevy-api'
 import { LoadingPlaceholder } from '../loading-placeholder'
 import { store } from '../../state/store'
 import { updateHudStateAction } from '../../state/hud/actions'
+import { listenFriendshipEvent } from '../../service/friend-connectivity-service'
 
 const byDateDesc = (
   a: FriendRequestData,
@@ -77,29 +78,27 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
       setLoading(false)
     })
 
-    // Listen to friendship events for real-time updates
-    executeTask(async () => {
-      const stream = await BevyApi.social.getFriendshipEventStream()
-      for await (const event of stream) {
-        if (event.type === 'request') {
-          addReceivedFriendRequest({
-            address: event.address,
-            name: event.name,
-            hasClaimedName: event.hasClaimedName,
-            profilePictureUrl: event.profilePictureUrl,
-            createdAt: event.createdAt,
-            message: event.message,
-            id: event.id
-          })
-        } else if (
-          event.type === 'accept' ||
-          event.type === 'reject' ||
-          event.type === 'cancel'
-        ) {
-          removeFriendRequest(event.address)
-        }
+    const unsubscribe = listenFriendshipEvent((event) => {
+      if (event.type === 'request') {
+        addReceivedFriendRequest({
+          address: event.address,
+          name: event.name,
+          hasClaimedName: event.hasClaimedName,
+          profilePictureUrl: event.profilePictureUrl,
+          createdAt: event.createdAt,
+          message: event.message,
+          id: event.id
+        })
+      } else if (
+        event.type === 'accept' ||
+        event.type === 'reject' ||
+        event.type === 'cancel'
+      ) {
+        removeFriendRequest(event.address)
       }
     })
+
+    return unsubscribe
   }, [])
 
   if (loading) return <LoadingPlaceholder />
