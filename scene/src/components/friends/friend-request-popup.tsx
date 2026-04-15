@@ -27,7 +27,7 @@ import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { formatRequestDate, PanelListButton } from './friend-request-item'
 
-import { refreshFriendRequests } from './friend-request-list'
+import { removeFriendRequest } from './friend-request-list'
 
 export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
   const request = shownPopup.data as FriendRequestData
@@ -42,7 +42,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         onPrimary={() => {
           executeTask(async () => {
             await BevyApi.social.acceptFriendRequest(request.address)
-            refreshFriendRequests()
+            removeFriendRequest(request.address)
             store.dispatch(closeLastPopupAction())
             store.dispatch(
               pushPopupAction({
@@ -60,7 +60,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         onSecondary={() => {
           executeTask(async () => {
             await BevyApi.social.rejectFriendRequest(request.address)
-            refreshFriendRequests()
+            removeFriendRequest(request.address)
             store.dispatch(closeLastPopupAction())
             store.dispatch(
               pushPopupAction({

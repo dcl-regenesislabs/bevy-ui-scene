@@ -8,6 +8,7 @@ import {
   type NotAchievedAchievementItem
 } from '../../ui-classes/main-hud/passport/badges-types'
 import { PASSPORT_SECTIONS } from '../../ui-classes/main-hud/passport/passport-constants'
+import type { FriendRequestData } from '../../service/social-service-type'
 
 export const HUD_STORE_ID = 'hud'
 
@@ -118,6 +119,8 @@ export type HudState = {
   passportActiveSection: (typeof PASSPORT_SECTIONS)[number]
   friendsOpen: boolean
   friendsActiveTabIndex: number
+  sentFriendRequests: FriendRequestData[]
+  receivedFriendRequests: FriendRequestData[]
 }
 
 export type HudStateUpdateParams = {
@@ -158,6 +161,8 @@ export type HudStateUpdateParams = {
   passportActiveSection?: (typeof PASSPORT_SECTIONS)[number]
   friendsOpen?: boolean
   friendsActiveTabIndex?: number
+  sentFriendRequests?: FriendRequestData[]
+  receivedFriendRequests?: FriendRequestData[]
 }
 
 export const hudInitialState: HudState = {
@@ -198,5 +203,7 @@ export const hudInitialState: HudState = {
   passportSelectedBadge: null,
   passportActiveSection: PASSPORT_SECTIONS[0],
   friendsOpen: false,
-  friendsActiveTabIndex: 1
+  friendsActiveTabIndex: 1,
+  sentFriendRequests: [],
+  receivedFriendRequests: []
 }

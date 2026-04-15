@@ -88,11 +88,14 @@ export function pushNotificationToast(notification: Notification): void {
 }
 
 export function initFriendshipEventToasts(): void {
+  console.log('initFriendshipEventToasts')
+
   executeTask(async () => {
+    const dateinit = Date.now()
     try {
       const stream = await BevyApi.social.getFriendshipEventStream()
       for await (const event of stream) {
-        console.log('[social] friendship event', event)
+        console.log('[social] friendship event', dateinit, event)
         if (event.type === 'request') {
           pushNotificationToast(buildFriendRequestNotification(event))
         }

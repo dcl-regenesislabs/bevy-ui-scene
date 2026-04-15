@@ -18,7 +18,7 @@ import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { PanelListButton } from './friend-request-item'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
-import { refreshFriendRequests } from './friend-request-list'
+import { removeFriendRequest } from './friend-request-list'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 
 export type CancelFriendRequestData = {
@@ -107,7 +107,7 @@ export const CancelFriendRequestPopup: Popup = ({ shownPopup }) => {
             onMouseDown={() => {
               executeTask(async () => {
                 await BevyApi.social.cancelFriendRequest(data.address)
-                refreshFriendRequests()
+                removeFriendRequest(data.address)
                 store.dispatch(closeLastPopupAction())
                 store.dispatch(
                   pushPopupAction({

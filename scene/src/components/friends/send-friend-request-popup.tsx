@@ -20,7 +20,7 @@ import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { PanelListButton } from './friend-request-item'
-import { refreshFriendRequests } from './friend-request-list'
+import { fetchAndStoreFriendRequests } from './friend-request-list'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 import useState = ReactEcs.useState
 
@@ -170,11 +170,16 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
             variant="primary"
             onMouseDown={() => {
               executeTask(async () => {
-                await BevyApi.social.sendFriendRequest(
-                  data.address,
-                  message.length > 0 ? message : undefined
+                const friendRequestSendingResult =
+                  await BevyApi.social.sendFriendRequest(
+                    data.address,
+                    message.length > 0 ? message : undefined
+                  )
+                console.log(
+                  'friendRequestSendingResult',
+                  friendRequestSendingResult
                 )
-                refreshFriendRequests()
+                fetchAndStoreFriendRequests()
                 store.dispatch(closeLastPopupAction())
                 store.dispatch(
                   pushPopupAction({
