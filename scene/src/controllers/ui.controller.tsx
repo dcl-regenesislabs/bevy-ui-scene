@@ -175,7 +175,7 @@ export class UIController {
         {this.sceneInfoCardVisible && this.sceneCard.mainUi()}
         {getFeatureFlag(FEATURES.NOTIFICATIONS) && NotificationToastStack()}
         {PopupStack()}
-        {HoverActionComponent()}
+        <HoverActionComponent />
         {SceneLoadingWindowComponent()}
       </Canvas>
     )
