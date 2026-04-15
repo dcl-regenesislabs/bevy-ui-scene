@@ -20,6 +20,7 @@ import { LoadingPlaceholder } from '../loading-placeholder'
 let _refreshFn: (() => void) | null = null
 
 export function refreshFriendRequests(): void {
+  console.log('refreshFriendRequests')
   _refreshFn?.()
 }
 
@@ -46,6 +47,8 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
         BevyApi.social.getSentFriendRequests(),
         BevyApi.social.getReceivedFriendRequests()
       ])
+      console.log('sent', sent)
+      console.log('received', received)
       const byDateDesc = (a: FriendRequestData, b: FriendRequestData): number =>
         b.createdAt - a.createdAt
       setSentRequests(sent.sort(byDateDesc))
@@ -53,6 +56,46 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
       setLoading(false)
     })
   }, [fetchVersion])
+
+  // Listen to friendship events for real-time updates (once)
+  useEffect(() => {
+    executeTask(async () => {
+      const stream = await BevyApi.social.getFriendshipEventStream()
+      for await (const event of stream) {
+        if (event.type === 'request') {
+          // New incoming request — add to received list
+          setReceivedRequests((prev) => [
+            {
+              address: event.address,
+              name: event.name,
+              hasClaimedName: event.hasClaimedName,
+              profilePictureUrl: event.profilePictureUrl,
+              createdAt: event.createdAt,
+              message: event.message,
+              id: event.id
+            },
+            ...(prev ?? [])
+          ])
+        } else if (event.type === 'accept' || event.type === 'reject') {
+          // Request accepted/rejected — remove from both lists
+          setReceivedRequests((prev) =>
+            (prev ?? []).filter((r) => r.address !== event.address)
+          )
+          setSentRequests((prev) =>
+            (prev ?? []).filter((r) => r.address !== event.address)
+          )
+        } else if (event.type === 'cancel') {
+          // Request cancelled — remove from both lists
+          setReceivedRequests((prev) =>
+            (prev ?? []).filter((r) => r.address !== event.address)
+          )
+          setSentRequests((prev) =>
+            (prev ?? []).filter((r) => r.address !== event.address)
+          )
+        }
+      }
+    })
+  }, [])
 
   if (loading) return <LoadingPlaceholder />
 

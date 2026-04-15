@@ -63,8 +63,8 @@ export function FriendListPanel(): ReactEcs.JSX.Element {
             // Someone accepted our request — re-fetch to get full profile
             const refreshed = await BevyApi.social.getOnlineFriends()
             setFriends(refreshed)
-          } else if (event.type === 'delete') {
-            // We were removed as friend
+          } else if (event.type === 'delete' || event.type === 'block') {
+            // We were removed as friend, or blocked
             setFriends((prev) =>
               prev.filter((f) => f.address !== event.address)
             )

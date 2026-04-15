@@ -29,6 +29,10 @@ export function BlockedList(): ReactElement {
         if (event.type === 'block') {
           const users = await BevyApi.social.getBlockedUsers()
           setBlockedUsers(users)
+        } else if (event.type === 'delete') {
+          // Could be an unblock — refresh to be safe
+          const users = await BevyApi.social.getBlockedUsers()
+          setBlockedUsers(users)
         }
       }
     })
