@@ -89,9 +89,19 @@ function handleFriendshipResultEvent(event: FriendshipEventUpdate): void {
   const variant = EVENT_TO_VARIANT[event.type]
   if (variant == null) return
 
+  // Close the top popup only if it belongs to this same user.
+  // Otherwise an unrelated event (e.g. Bob cancels) would close a popup
+  // the user has open about someone else (e.g. Alice's request).
   const popups = store.getState().hud.shownPopups
   const topPopup = popups[popups.length - 1]
-  if (topPopup != null && FRIENDSHIP_POPUP_TYPES.has(topPopup.type)) {
+  const topPopupAddress = (topPopup?.data as { address?: string } | undefined)
+    ?.address
+  if (
+    topPopup != null &&
+    FRIENDSHIP_POPUP_TYPES.has(topPopup.type) &&
+    topPopupAddress != null &&
+    topPopupAddress.toLowerCase() === event.address.toLowerCase()
+  ) {
     store.dispatch(closeLastPopupAction())
   }
 
