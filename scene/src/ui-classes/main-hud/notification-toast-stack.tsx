@@ -92,6 +92,7 @@ export function initFriendshipEventToasts(): void {
     try {
       const stream = await BevyApi.social.getFriendshipEventStream()
       for await (const event of stream) {
+        console.log('[social] friendship event', event)
         if (event.type === 'request') {
           pushNotificationToast(buildFriendRequestNotification(event))
         }
