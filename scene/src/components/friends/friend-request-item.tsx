@@ -219,8 +219,12 @@ export function FriendRequestItemReceived({
           if (acting) return
           setActing(true)
           executeTask(async () => {
-            await BevyApi.social.rejectFriendRequest(friendRequest.address)
-            onAction?.(friendRequest.address)
+            try {
+              await BevyApi.social.rejectFriendRequest(friendRequest.address)
+              onAction?.(friendRequest.address)
+            } finally {
+              setActing(false)
+            }
           })
         }}
       >
@@ -231,8 +235,12 @@ export function FriendRequestItemReceived({
           if (acting) return
           setActing(true)
           executeTask(async () => {
-            await BevyApi.social.acceptFriendRequest(friendRequest.address)
-            onAction?.(friendRequest.address)
+            try {
+              await BevyApi.social.acceptFriendRequest(friendRequest.address)
+              onAction?.(friendRequest.address)
+            } finally {
+              setActing(false)
+            }
           })
         }}
       >
@@ -301,8 +309,12 @@ export function FriendRequestItemSent({
           if (acting) return
           setActing(true)
           executeTask(async () => {
-            await BevyApi.social.cancelFriendRequest(friendRequest.address)
-            onAction?.(friendRequest.address)
+            try {
+              await BevyApi.social.cancelFriendRequest(friendRequest.address)
+              onAction?.(friendRequest.address)
+            } finally {
+              setActing(false)
+            }
           })
         }}
       >
