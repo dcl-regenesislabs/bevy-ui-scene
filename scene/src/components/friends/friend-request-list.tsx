@@ -180,7 +180,7 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
                   setHoveredRequest(request.id)
                 }}
                 onMouseLeave={() => {
-                  if (request.address === hoveredRequest) {
+                  if (request.id === hoveredRequest) {
                     setHoveredRequest(null)
                   }
                 }}
@@ -227,12 +227,12 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
             filteredSent.map((request) => (
               <FriendRequestItemSent
                 friendRequest={request}
-                hovered={hoveredRequest === request.address}
+                hovered={hoveredRequest === request.id}
                 onMouseEnter={() => {
-                  setHoveredRequest(request.address)
+                  setHoveredRequest(request.id)
                 }}
                 onMouseLeave={() => {
-                  if (request.address === hoveredRequest) {
+                  if (request.id === hoveredRequest) {
                     setHoveredRequest(null)
                   }
                 }}
