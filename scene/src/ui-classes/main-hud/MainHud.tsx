@@ -611,7 +611,7 @@ export default class MainHud {
                 if (
                   !(state.hover > 0 && state.hover !== MENU_ELEMENT.FRIENDS)
                 ) {
-                  state.hover = MENU_ELEMENT.FRIENDS
+                  state.hover = MENU_ELEMENT.NONE
                 }
               }}
             />
