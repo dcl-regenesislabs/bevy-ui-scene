@@ -10,6 +10,7 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import { CommunityAnnouncements } from './community-announcements'
+import { CommunityMembers } from './community-members'
 import { CommunityViewHeader } from './community-view-header'
 import { PopupBigWindow } from '../../../components/popup-big-window'
 import { type Tab, TabComponent } from '../../../components/tab-component'
@@ -77,7 +78,12 @@ function CommunityViewContent({
                 scrollVisible: 'vertical'
               }}
             >
-              <CommunityAnnouncements communityId={community.id} />
+              {activeTabIndex === 0 && (
+                <CommunityAnnouncements communityId={community.id} />
+              )}
+              {activeTabIndex === 1 && (
+                <CommunityMembers communityId={community.id} />
+              )}
             </Column>
           </Column>
           <Column uiTransform={{ width: '20%' }}></Column>
