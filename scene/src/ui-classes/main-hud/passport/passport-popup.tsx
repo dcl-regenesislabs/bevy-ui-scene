@@ -83,6 +83,7 @@ import { Badge3dPreviewElement } from './badge-3d-preview'
 import { BadgesPreview } from './badges-preview'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { PlayerNameComponent } from '../../../components/player-name-component'
+import { PopupBigWindow } from '../../../components/popup-big-window'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -171,7 +172,6 @@ export function setupPassportPopup(): void {
 
 export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const borderRadius = getFontSize({ context: CONTEXT.DIALOG }) / 2
   const loadingAlpha = getLoadingAlphaValue()
   const [isFriend, setIsFriend] = useState<boolean>(true)
   const [checkVersion, setCheckVersion] = useState<number>(0)
@@ -197,22 +197,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   return (
     <PopupBackdrop>
       <ResponsiveContent>
-        <UiEntity
-          uiTransform={{
-            width: '80%',
-            height: '100%',
-            pointerFilter: 'block',
-            flexDirection: 'row',
-            borderRadius,
-            borderWidth: 0,
-            borderColor: COLOR.BLACK_TRANSPARENT
-          }}
-          onMouseDown={noop}
-          uiBackground={{
-            texture: { src: 'assets/images/menu/background.png' },
-            textureMode: 'stretch'
-          }}
-        >
+        <PopupBigWindow>
           {!state.loadingProfile
             ? [
                 store.getState().hud.passportActiveSection ===
@@ -251,33 +236,10 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               fontSize={fontSize}
             />
           ) : null}
-          <CloseButton
-            uiTransform={{
-              position: {
-                top: getContentScaleRatio() * 16,
-                right: getContentScaleRatio() * 16
-              },
-              positionType: 'absolute',
-              borderWidth: 0,
-              borderRadius,
-              borderColor: COLOR.BLACK_TRANSPARENT,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              flexGrow: 0
-            }}
-            onClick={() => {
-              closeDialog()
-            }}
-          />
-        </UiEntity>
+        </PopupBigWindow>
       </ResponsiveContent>
     </PopupBackdrop>
   )
-
-  function closeDialog(): void {
-    store.dispatch(closeLastPopupAction())
-  }
 }
 const _getVisibleProperties = memoize(getVisibleProperties)
 function getVisibleProperties(profileData: ViewAvatarData): string[] {
