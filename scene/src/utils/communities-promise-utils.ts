@@ -147,6 +147,52 @@ export async function fetchCommunityMembers(
   )
 }
 
+// --- Places ---
+
+export async function fetchCommunityPlaceIds(
+  communityId: string
+): Promise<string[]> {
+  const base = await resolveBaseURL()
+  const response: { results: Array<{ id: string }>; total: number } =
+    await signedGet(`${base}/${communityId}/places`)
+  return (response.results ?? []).map((r) => r.id)
+}
+
+// --- Photos (Camera Reel) ---
+
+export type CommunityPhoto = {
+  id: string
+  url: string
+  thumbnailUrl: string
+}
+
+const CAMERA_REEL_PLACES_BASE =
+  'https://camera-reel-service.decentraland.org/api/places'
+
+export async function fetchCommunityPhotos(
+  placeIds: string[],
+  limit = 30,
+  offset = 0
+): Promise<CommunityPhoto[]> {
+  if (placeIds.length === 0) return []
+  const result = await BevyApi.kernelFetch({
+    url: `${CAMERA_REEL_PLACES_BASE}/images?limit=${limit}&offset=${offset}`,
+    init: {
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      body: JSON.stringify({ placesIds: placeIds })
+    },
+    meta
+  })
+  if (!result.ok) {
+    throw new Error(
+      `HTTP ${result.status}: ${result.statusText || result.body}`
+    )
+  }
+  const parsed = JSON.parse(result.body)
+  return (parsed.images ?? []) as CommunityPhoto[]
+}
+
 // --- Posts (Announcements) ---
 
 export async function fetchCommunityPosts(

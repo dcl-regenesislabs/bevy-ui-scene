@@ -11,6 +11,8 @@ import {
 } from '../../../service/fontsize-system'
 import { CommunityAnnouncements } from './community-announcements'
 import { CommunityMembers } from './community-members'
+import { CommunityPlaces } from './community-places'
+import { CommunityPhotos } from './community-photos'
 import { CommunityViewHeader } from './community-view-header'
 import { PopupBigWindow } from '../../../components/popup-big-window'
 import { type Tab, TabComponent } from '../../../components/tab-component'
@@ -83,6 +85,12 @@ function CommunityViewContent({
               )}
               {activeTabIndex === 1 && (
                 <CommunityMembers communityId={community.id} />
+              )}
+              {activeTabIndex === 2 && (
+                <CommunityPlaces communityId={community.id} />
+              )}
+              {activeTabIndex === 3 && (
+                <CommunityPhotos communityId={community.id} />
               )}
             </Column>
           </Column>
