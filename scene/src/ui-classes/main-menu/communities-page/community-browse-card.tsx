@@ -172,7 +172,16 @@ export function CommunityBrowseCard({
               ? COLOR.WHITE_OPACITY_1
               : COLOR.BLACK_TRANSPARENT
         }}
-        onMouseDown={() => {}}
+        onMouseDown={() => {
+          if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.VIEW) {
+            store.dispatch(
+              pushPopupAction({
+                type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+                data: community
+              })
+            )
+          }
+        }}
         uiText={{
           value: `<b>${buttonLabel}</b>`,
           fontSize: fontSizeSmall
