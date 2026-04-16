@@ -19,6 +19,7 @@ import {
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { noop } from '../../../utils/function-utils'
 import { CommunityAnnouncements } from './community-announcements'
+import { CommunityPublicAndMembersSpan } from './community-public-and-members-span'
 
 export const CommunityViewPopup: Popup = ({ shownPopup }) => {
   const community = shownPopup.data as CommunityListItem
@@ -47,11 +48,6 @@ function CommunityViewContent({
   const scale = getContentScaleRatio()
   const borderRadius = scale * 30
   const thumbnailSize = scale * 300
-  const privacyLabel = community.privacy === 'public' ? 'Public' : 'Private'
-  const memberCount =
-    community.membersCount >= 1000
-      ? `${(community.membersCount / 1000).toFixed(1)}k`
-      : String(community.membersCount)
   const isMember =
     community.role === 'member' ||
     community.role === 'moderator' ||
@@ -107,11 +103,23 @@ function CommunityViewContent({
               uiTransform={{
                 flexGrow: 1,
                 justifyContent: 'center',
-                height: thumbnailSize
+                height: thumbnailSize,
+                borderWidth: 1,
+                borderColor: COLOR.YELLOW,
+                borderRadius: 0,
+                padding: 0,
+                margin: 0
               }}
             >
               <UiEntity
-                uiTransform={{ width: '100%' }}
+                uiTransform={{
+                  width: '100%',
+                  borderWidth: 1,
+                  borderColor: COLOR.RED,
+                  borderRadius: 0,
+                  padding: -fontSize,
+                  margin: { top: -fontSize * 2 }
+                }}
                 uiText={{
                   value: `<b>${community.name}</b>`,
                   fontSize: fontSizeTitle,
@@ -120,15 +128,12 @@ function CommunityViewContent({
                   textWrap: 'wrap'
                 }}
               />
-              <UiEntity
-                uiTransform={{ width: '100%' }}
-                uiText={{
-                  value: `${privacyLabel} | ${memberCount} Members`,
-                  fontSize: fontSizeSmall,
-                  color: COLOR.TEXT_COLOR_GREY,
-                  textAlign: 'top-left'
-                }}
+              <CommunityPublicAndMembersSpan
+                privacy={community.privacy}
+                membersCount={community.membersCount}
+                fontSize={fontSizeSmall}
               />
+
               {isMember && (
                 <UiEntity
                   uiTransform={{

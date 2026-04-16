@@ -12,6 +12,7 @@ import {
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
+import { CommunityPublicAndMembersSpan } from './community-public-and-members-span'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
@@ -38,13 +39,6 @@ function getActionLabel(community: CommunityListItem): string {
   return COMMUNITY_CARD_BUTTON_LABEL.JOIN
 }
 
-function formatMemberCount(count: number): string {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`
-  }
-  return String(count)
-}
-
 export function CommunityBrowseCard({
   community
 }: {
@@ -63,7 +57,6 @@ export function CommunityBrowseCard({
   const cardWidth = BROWSE_CARD_WIDTH()
   const cardHeight = BROWSE_CARD_HEIGHT()
   const buttonLabel = getActionLabel(community)
-  const privacyLabel = community.privacy === 'public' ? 'Public' : 'Private'
 
   return (
     <Column
@@ -137,19 +130,14 @@ export function CommunityBrowseCard({
       />
 
       {/* Privacy + Members */}
-      <UiEntity
+      <CommunityPublicAndMembersSpan
+        privacy={community.privacy}
+        membersCount={community.membersCount}
+        fontSize={fontSizeCaption}
         uiTransform={{
           width: '100%',
           flexShrink: 0,
-          margin: { top: -fontSizeSmall / 2 }
-        }}
-        uiText={{
-          value: `${privacyLabel} | ${formatMemberCount(
-            community.membersCount
-          )} Members`,
-          fontSize: fontSizeCaption,
-          color: COLOR.TEXT_COLOR_LIGHT_GREY,
-          textAlign: 'top-left'
+          margin: { top: -fontSizeSmall / 2, left: fontSizeSmall / 2 }
         }}
       />
 
