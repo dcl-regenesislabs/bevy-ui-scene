@@ -181,6 +181,7 @@ export function initFriendConnectivityService(): void {
     try {
       const stream = await BevyApi.social.getFriendConnectivityStream()
       for await (const event of stream) {
+        console.log('[social] connectivity event', event)
         mediator.publish(CHANNEL_CONNECTIVITY, event)
       }
     } catch (error) {
@@ -195,6 +196,7 @@ export function initFriendConnectivityService(): void {
     try {
       const stream = await BevyApi.social.getFriendshipEventStream()
       for await (const event of stream) {
+        console.log('[social] friendship event', event)
         mediator.publish(CHANNEL_FRIENDSHIP, event)
       }
     } catch (error) {

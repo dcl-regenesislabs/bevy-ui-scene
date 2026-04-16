@@ -36,7 +36,7 @@ export default class CommunitiesPage {
 }
 
 function CommunitiesContent(): ReactElement {
-  const fontSize = getFontSize({ context: CONTEXT.SIDE })
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const [myCommunities, setMyCommunities] = useState<CommunityListItem[]>([])
   const [loadingSidebar, setLoadingSidebar] = useState<boolean>(true)
   const [searchText, setSearchText] = useState<string>('')
