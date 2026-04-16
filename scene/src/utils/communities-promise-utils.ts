@@ -13,6 +13,9 @@ import {
 } from '../service/communities-types'
 import { getRealm } from '~system/Runtime'
 import { LOCAL_PREVIEW_REALM_NAME } from './constants'
+import { createTtlCache } from './ttl-cache'
+import { type PlaceFromApi } from '../ui-classes/scene-info-card/SceneInfoCard.types'
+import { fetchPlaceFromApi } from './promise-utils'
 
 const emptyMeta: SignedFetchMeta = {}
 const meta: string = JSON.stringify(emptyMeta)
@@ -132,30 +135,61 @@ export async function leaveCommunity(
 
 // --- Members ---
 
+const membersCache = createTtlCache<PaginatedResponse<CommunityMember>>()
+
 export async function fetchCommunityMembers(
   communityId: string,
   params: GetMembersParams = {}
 ): Promise<PaginatedResponse<CommunityMember>> {
+  const cacheKey = `${communityId}:${params.offset ?? 0}:${params.limit ?? ''}:${params.onlyOnline ?? ''}`
+  const cached = membersCache.get(cacheKey)
+  if (cached != null) return cached
   const base = await resolveBaseURL()
   const parts: string[] = []
   if (params.offset != null) parts.push(`offset=${params.offset}`)
   if (params.limit != null) parts.push(`limit=${params.limit}`)
   if (params.onlyOnline === true) parts.push('onlyOnline=true')
   const qs = parts.join('&')
-  return await signedGet(
+  const result: PaginatedResponse<CommunityMember> = await signedGet(
     `${base}/${communityId}/members${qs.length > 0 ? `?${qs}` : ''}`
   )
+  membersCache.set(cacheKey, result)
+  return result
 }
 
 // --- Places ---
 
+const placeIdsCache = createTtlCache<string[]>()
+
 export async function fetchCommunityPlaceIds(
   communityId: string
 ): Promise<string[]> {
+  const cached = placeIdsCache.get(communityId)
+  if (cached != null) return cached
   const base = await resolveBaseURL()
   const response: { results: Array<{ id: string }>; total: number } =
     await signedGet(`${base}/${communityId}/places`)
-  return (response.results ?? []).map((r) => r.id)
+  const ids = (response.results ?? []).map((r) => r.id)
+  placeIdsCache.set(communityId, ids)
+  return ids
+}
+
+const resolvedPlacesCache = createTtlCache<PlaceFromApi[]>()
+
+export async function fetchCommunityPlaces(
+  communityId: string
+): Promise<PlaceFromApi[]> {
+  const cached = resolvedPlacesCache.get(communityId)
+  if (cached != null) return cached
+  const placeIds = await fetchCommunityPlaceIds(communityId)
+  const resolved = await Promise.all(
+    placeIds.map(async (id) =>
+      await fetchPlaceFromApi(id).catch(() => null)
+    )
+  )
+  const places = resolved.filter((p): p is PlaceFromApi => p != null)
+  resolvedPlacesCache.set(communityId, places)
+  return places
 }
 
 // --- Photos (Camera Reel) ---
@@ -169,12 +203,17 @@ export type CommunityPhoto = {
 const CAMERA_REEL_PLACES_BASE =
   'https://camera-reel-service.decentraland.org/api/places'
 
+const photosCache = createTtlCache<CommunityPhoto[]>()
+
 export async function fetchCommunityPhotos(
   placeIds: string[],
   limit = 30,
   offset = 0
 ): Promise<CommunityPhoto[]> {
   if (placeIds.length === 0) return []
+  const cacheKey = `${placeIds.join(',')}:${limit}:${offset}`
+  const cached = photosCache.get(cacheKey)
+  if (cached != null) return cached
   const result = await BevyApi.kernelFetch({
     url: `${CAMERA_REEL_PLACES_BASE}/images?limit=${limit}&offset=${offset}`,
     init: {
@@ -190,18 +229,27 @@ export async function fetchCommunityPhotos(
     )
   }
   const parsed = JSON.parse(result.body)
-  return (parsed.images ?? []) as CommunityPhoto[]
+  const photos = (parsed.images ?? []) as CommunityPhoto[]
+  photosCache.set(cacheKey, photos)
+  return photos
 }
 
 // --- Posts (Announcements) ---
+
+const postsCache = createTtlCache<{ posts: CommunityPost[] }>()
 
 export async function fetchCommunityPosts(
   communityId: string,
   offset = 0,
   limit = 20
 ): Promise<{ posts: CommunityPost[] }> {
+  const cacheKey = `${communityId}:${offset}:${limit}`
+  const cached = postsCache.get(cacheKey)
+  if (cached != null) return cached
   const base = await resolveBaseURL()
-  return await signedGet(
+  const result: { posts: CommunityPost[] } = await signedGet(
     `${base}/${communityId}/posts?offset=${offset}&limit=${limit}`
   )
+  postsCache.set(cacheKey, result)
+  return result
 }

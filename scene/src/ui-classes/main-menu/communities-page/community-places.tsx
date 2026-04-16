@@ -8,8 +8,7 @@ import {
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { executeTask } from '@dcl/sdk/ecs'
-import { fetchCommunityPlaceIds } from '../../../utils/communities-promise-utils'
-import { fetchPlaceFromApi } from '../../../utils/promise-utils'
+import { fetchCommunityPlaces } from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import type { PlaceFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import Icon from '../../../components/icon/Icon'
@@ -187,11 +186,8 @@ export function CommunityPlaces({
   useEffect(() => {
     executeTask(async () => {
       try {
-        const placeIds = await fetchCommunityPlaceIds(communityId)
-        const resolved = await Promise.all(
-          placeIds.map(async (id) => await fetchPlaceFromApi(id).catch(() => null))
-        )
-        setPlaces(resolved.filter((p): p is PlaceFromApi => p != null))
+        const resolved = await fetchCommunityPlaces(communityId)
+        setPlaces(resolved)
       } catch (error) {
         console.error('[communities] failed to load places', error)
       }
