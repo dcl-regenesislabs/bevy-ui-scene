@@ -56,7 +56,7 @@ export default class MainMenu {
 
   readonly communitiesIcon: AtlasIcon = {
     atlasName: 'icons',
-    spriteName: 'Community'
+    spriteName: 'CommunitiesHudIcon'
   }
 
   private closeButtonColor: Color4 | undefined
@@ -96,7 +96,7 @@ export default class MainMenu {
   }
 
   communitiesEnter(): void {
-    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesIcon.spriteName = 'CommunitiesHudIcon'
     this.communitiesBackground = SELECTED_BUTTON_COLOR
   }
 
@@ -134,7 +134,7 @@ export default class MainMenu {
     this.mapBackground = undefined
     this.exploreIcon.spriteName = 'Explore off'
     this.exploreBackground = undefined
-    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesIcon.spriteName = 'CommunitiesHudIcon'
     this.communitiesBackground = undefined
     switch (this.activePage) {
       case 'settings':

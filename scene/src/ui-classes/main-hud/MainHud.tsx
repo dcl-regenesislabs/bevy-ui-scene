@@ -83,7 +83,7 @@ export default class MainHud {
 
   private readonly communitiesIcon: AtlasIcon = {
     atlasName: 'icons',
-    spriteName: 'Community'
+    spriteName: 'CommunitiesHudIcon'
   }
 
   private readonly helpIcon: AtlasIcon = {
@@ -215,7 +215,7 @@ export default class MainHud {
   }
 
   communitiesEnter(): void {
-    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesIcon.spriteName = 'CommunitiesHudIcon'
     this.communitiesBackground = SELECTED_BUTTON_COLOR
     this.communitiesHint = true
   }
@@ -274,7 +274,7 @@ export default class MainHud {
     this.exploreIcon.spriteName = 'Explore off'
     this.exploreBackground = undefined
     this.exploreHint = false
-    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesIcon.spriteName = 'CommunitiesHudIcon'
     this.communitiesBackground = undefined
     this.communitiesHint = false
 
