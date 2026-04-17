@@ -39,13 +39,16 @@ export type CommunityFriendInfo = {
 }
 
 export type CommunityMember = {
-  address: string
+  communityId: string
+  memberAddress: string
   name: string
   hasClaimedName: boolean
   profilePictureUrl: string
   role: CommunityMemberRole
   joinedAt: string
-  mutualFriends: number
+  friendshipStatus?: number
+  lastFriendshipAction?: string | null
+  actingUser?: string | null
 }
 
 export type PaginatedResponse<T> = {

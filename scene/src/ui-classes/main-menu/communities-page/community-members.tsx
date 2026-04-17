@@ -39,8 +39,8 @@ function CommunityMemberItem({
     token: TYPOGRAPHY_TOKENS.CAPTION
   })
   const addressColor =
-    member.hasClaimedName && member.address
-      ? getAddressColor(member.address)
+    member.hasClaimedName && member.memberAddress
+      ? getAddressColor(member.memberAddress.toLowerCase())
       : COLOR.TEXT_COLOR_LIGHT_GREY
   const badge = roleBadgeLabel(member.role)
   const avatarSize = fontSize * 2.5
@@ -51,13 +51,18 @@ function CommunityMemberItem({
         width: '50%',
         height: fontSize * 4,
         alignItems: 'center',
-        padding: { left: fontSize * 0.3, right: fontSize * 0.3 }
+        padding: { left: fontSize, right: fontSize * 2 },
+        margin: fontSize / 4,
+        borderRadius: fontSize / 2
+      }}
+      uiBackground={{
+        color: COLOR.DARK_OPACITY_5
       }}
     >
       {/* Avatar */}
       <AvatarCircle
         imageSrc={member.profilePictureUrl}
-        userId={member.address}
+        userId={member.memberAddress}
         circleColor={addressColor}
         uiTransform={{
           width: avatarSize,
@@ -76,24 +81,19 @@ function CommunityMemberItem({
       >
         <PlayerNameComponent
           name={member.name}
-          address={member.address}
+          address={member.memberAddress}
           hasClaimedName={member.hasClaimedName}
           fontSize={fontSize}
         />
         {badge != null && (
           <UiEntity
             uiTransform={{
-              borderRadius: fontSizeSmall,
-              padding: {
-                left: fontSizeSmall * 0.8,
-                right: fontSizeSmall * 0.8,
-                top: fontSizeSmall * 0.15,
-                bottom: fontSizeSmall * 0.15
-              },
+              borderRadius: fontSizeSmall / 2,
               alignSelf: 'flex-start',
-              position: { top: -fontSizeSmall * 0.3 }
+              position: { top: -fontSizeSmall * 0.3, left: fontSizeSmall },
+              padding: -fontSizeSmall / 4
             }}
-            uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+            uiBackground={{ color: COLOR.WHITE_OPACITY_1 }}
             uiText={{
               value: badge,
               fontSize: fontSizeSmall,
@@ -123,8 +123,8 @@ function CommunityMemberItem({
         uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
       >
         <Icon
-          icon={{ spriteName: 'Members', atlasName: 'icons' }}
-          iconSize={fontSizeSmall}
+          icon={{ spriteName: 'Add', atlasName: 'context' }}
+          iconSize={fontSize}
           iconColor={COLOR.WHITE}
         />
         <UiEntity
@@ -237,7 +237,7 @@ export function CommunityMembers({
       {rows.map((pair, rowIndex) => (
         <Row key={rowIndex} uiTransform={{ width: '100%' }}>
           {pair.map((member) => (
-            <CommunityMemberItem key={member.address} member={member} />
+            <CommunityMemberItem key={member.memberAddress} member={member} />
           ))}
         </Row>
       ))}
