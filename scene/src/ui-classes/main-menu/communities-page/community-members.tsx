@@ -48,7 +48,7 @@ function CommunityMemberItem({
   return (
     <Row
       uiTransform={{
-        width: '50%',
+        width: '44%',
         height: fontSize * 4,
         alignItems: 'center',
         padding: { left: fontSize, right: fontSize * 2 },

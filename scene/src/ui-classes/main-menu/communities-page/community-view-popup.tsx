@@ -17,6 +17,7 @@ import { CommunityViewHeader } from './community-view-header'
 import { PopupBigWindow } from '../../../components/popup-big-window'
 import { type Tab, TabComponent } from '../../../components/tab-component'
 import useState = ReactEcs.useState
+import { COLOR } from 'src/components/color-palette'
 
 export const CommunityViewPopup: Popup = ({ shownPopup }) => {
   const community = shownPopup.data as CommunityListItem
@@ -47,11 +48,11 @@ function CommunityViewContent({
     <PopupBackdrop>
       <ResponsiveContent>
         <PopupBigWindow>
-          <Column uiTransform={{ width: '80%' }}>
+          <Column uiTransform={{ width: '70%' }}>
             <CommunityViewHeader community={community} />
             <TabComponent
               uiTransform={{
-                width: '100%',
+                width: '90%',
                 padding: {
                   left: fontSize * 2,
                   right: fontSize * 2,
@@ -94,7 +95,12 @@ function CommunityViewContent({
               )}
             </Column>
           </Column>
-          <Column uiTransform={{ width: '20%' }}></Column>
+          <Column
+            uiTransform={{ width: '30%' }}
+            uiBackground={{
+              color: COLOR.DARK_OPACITY_5
+            }}
+          ></Column>
         </PopupBigWindow>
       </ResponsiveContent>
     </PopupBackdrop>
