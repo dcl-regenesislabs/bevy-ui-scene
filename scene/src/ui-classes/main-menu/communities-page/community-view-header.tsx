@@ -70,9 +70,6 @@ export function CommunityViewHeader({
           flexGrow: 1,
           justifyContent: 'flex-start',
           height: thumbnailSize,
-          borderWidth: 1,
-          borderColor: COLOR.YELLOW,
-          borderRadius: 0,
           padding: 0,
           margin: 0
         }}

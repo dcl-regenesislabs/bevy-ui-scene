@@ -59,64 +59,75 @@ export function CommunityPostItem({
         }}
         isGuest={false}
       />
-      <Row
+      <Column
         uiTransform={{
+          flexGrow: 1,
           borderRadius: fontSize / 2,
           alignItems: 'flex-start',
           justifyContent: 'flex-start',
-          padding: fontSize
+          padding: fontSize / 2
         }}
         uiBackground={{
           color: COLOR.DARK_OPACITY_5
         }}
       >
-        <Column
+        <Row
           uiTransform={{
-            alignItems: 'flex-start',
-            flexGrow: 1
+            alignItems: 'center'
           }}
         >
-          <Row uiTransform={{ alignItems: 'center' }}>
-            <PlayerNameComponent
-              name={post.authorName}
-              address={post.authorAddress}
-              hasClaimedName={post.authorHasClaimedName}
-              fontSize={fontSize}
-            />
+          <PlayerNameComponent
+            uiTransform={{
+              borderWidth: 0,
+              borderColor: COLOR.GREEN
+            }}
+            name={post.authorName}
+            address={post.authorAddress}
+            hasClaimedName={post.authorHasClaimedName}
+            fontSize={fontSize}
+          />
+          <UiEntity
+            uiTransform={{
+              flexGrow: 1
+            }}
+          >
             <UiEntity
-              uiTransform={{ margin: { left: fontSize * 0.5 } }}
               uiText={{
                 value: `· ${date}`,
                 fontSize,
-                color: COLOR.TEXT_COLOR_GREY
+                color: COLOR.TEXT_COLOR_LIGHT_GREY,
+                textWrap: 'nowrap',
+                textAlign: 'middle-left'
               }}
             />
-          </Row>
-
+          </UiEntity>
+          {/* Like count */}
           <UiEntity
             uiTransform={{
-              width: '100%'
+              alignSelf: 'flex-end'
             }}
             uiText={{
-              value: post.content,
+              value: `${post.likesCount}`,
               fontSize,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'top-left',
-              textWrap: 'wrap'
+              color: COLOR.TEXT_COLOR_GREY,
+              textAlign: 'middle-right'
             }}
           />
-        </Column>
+        </Row>
 
-        {/* Like count */}
         <UiEntity
+          uiTransform={{
+            width: '100%'
+          }}
           uiText={{
-            value: `${post.likesCount}`,
+            value: post.content,
             fontSize,
-            color: COLOR.TEXT_COLOR_GREY,
-            textAlign: 'middle-right'
+            color: COLOR.TEXT_COLOR_WHITE,
+            textAlign: 'top-left',
+            textWrap: 'wrap'
           }}
         />
-      </Row>
+      </Column>
     </Row>
   )
 }
