@@ -238,6 +238,22 @@ export async function fetchCommunityPhotos(
 
 const postsCache = createTtlCache<{ posts: CommunityPost[] }>()
 
+export async function likeCommunityPost(
+  communityId: string,
+  postId: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedPost(`${base}/${communityId}/posts/${postId}/like`)
+}
+
+export async function unlikeCommunityPost(
+  communityId: string,
+  postId: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedDelete(`${base}/${communityId}/posts/${postId}/like`)
+}
+
 export async function fetchCommunityPosts(
   communityId: string,
   offset = 0,
