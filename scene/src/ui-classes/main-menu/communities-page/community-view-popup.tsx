@@ -13,6 +13,7 @@ import { CommunityAnnouncements } from './community-announcements'
 import { CommunityMembers } from './community-members'
 import { CommunityPlaces } from './community-places'
 import { CommunityPhotos } from './community-photos'
+import { CommunityUpcomingEvents } from './community-upcoming-events'
 import { CommunityViewHeader } from './community-view-header'
 import { PopupBigWindow } from '../../../components/popup-big-window'
 import { type Tab, TabComponent } from '../../../components/tab-component'
@@ -100,7 +101,9 @@ function CommunityViewContent({
             uiBackground={{
               color: COLOR.DARK_OPACITY_5
             }}
-          ></Column>
+          >
+            <CommunityUpcomingEvents communityId={community.id} />
+          </Column>
         </PopupBigWindow>
       </ResponsiveContent>
     </PopupBackdrop>

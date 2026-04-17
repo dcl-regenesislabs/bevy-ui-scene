@@ -14,7 +14,10 @@ import {
 import { getRealm } from '~system/Runtime'
 import { LOCAL_PREVIEW_REALM_NAME } from './constants'
 import { createTtlCache } from './ttl-cache'
-import { type PlaceFromApi } from '../ui-classes/scene-info-card/SceneInfoCard.types'
+import {
+  type EventFromApi,
+  type PlaceFromApi
+} from '../ui-classes/scene-info-card/SceneInfoCard.types'
 import { fetchPlaceFromApi } from './promise-utils'
 
 const emptyMeta: SignedFetchMeta = {}
@@ -190,6 +193,43 @@ export async function fetchCommunityPlaces(
   const places = resolved.filter((p): p is PlaceFromApi => p != null)
   resolvedPlacesCache.set(communityId, places)
   return places
+}
+
+// --- Events ---
+
+const eventsCache = createTtlCache<EventFromApi[]>()
+const EVENTS_BASE = 'https://events.decentraland.org/api/events'
+
+export async function fetchCommunityEvents(
+  communityId: string,
+  limit = 20,
+  offset = 0
+): Promise<EventFromApi[]> {
+  const cacheKey = `${communityId}:${limit}:${offset}`
+  const cached = eventsCache.get(cacheKey)
+  if (cached != null) return cached
+  const result = await BevyApi.kernelFetch({
+    url: `${EVENTS_BASE}?community_id=${encodeURIComponent(
+      communityId
+    )}&limit=${limit}&offset=${offset}`,
+    init: {
+      headers: { 'Content-Type': 'application/json' },
+      method: 'GET'
+    },
+    meta
+  })
+  if (!result.ok) {
+    throw new Error(
+      `HTTP ${result.status}: ${result.statusText || result.body}`
+    )
+  }
+  const parsed = JSON.parse(result.body)
+  // Response shape: { data: { events: [...], total: N } }
+  const events = (parsed.data?.events ??
+    parsed.events ??
+    []) as EventFromApi[]
+  eventsCache.set(cacheKey, events)
+  return events
 }
 
 // --- Photos (Camera Reel) ---
