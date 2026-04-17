@@ -12,6 +12,9 @@ import { fetchCommunityPlaces } from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import type { PlaceFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import Icon from '../../../components/icon/Icon'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -38,6 +41,14 @@ function CommunityPlaceCard({
         width: cardWidth,
         margin: { right: fontSize * 0.5, bottom: fontSize * 0.5 },
         flexShrink: 0
+      }}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.COMMUNITY_PLACE_INFO,
+            data: place
+          })
+        )
       }}
     >
       {/* Thumbnail */}
