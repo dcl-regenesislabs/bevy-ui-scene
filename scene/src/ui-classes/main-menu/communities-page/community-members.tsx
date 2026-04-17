@@ -1,7 +1,10 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
-import { type CommunityMember } from '../../../service/communities-types'
+import {
+  type CommunityMember,
+  CommunityFriendshipStatus
+} from '../../../service/communities-types'
 import {
   CONTEXT,
   getFontSize,
@@ -15,6 +18,12 @@ import { AvatarCircle } from '../../../components/avatar-circle'
 import { PlayerNameComponent } from '../../../components/player-name-component'
 import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import Icon from '../../../components/icon/Icon'
+import { BevyApi } from '../../../bevy-api'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
+import { showErrorPopup } from '../../../service/error-popup-service'
+import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -44,6 +53,48 @@ function CommunityMemberItem({
       : COLOR.TEXT_COLOR_LIGHT_GREY
   const badge = roleBadgeLabel(member.role)
   const avatarSize = fontSize * 2.5
+
+  const [friendshipStatus, setFriendshipStatus] = useState<
+    CommunityFriendshipStatus | undefined
+  >(member.friendshipStatus)
+  const [acting, setActing] = useState<boolean>(false)
+
+  const onAccept = (): void => {
+    if (acting) return
+    const previous = friendshipStatus
+    // Optimistic: mark as friend so the button disappears.
+    setFriendshipStatus(CommunityFriendshipStatus.FRIEND)
+    setActing(true)
+    executeTask(async () => {
+      try {
+        await BevyApi.social.acceptFriendRequest(member.memberAddress)
+        // Mutate the shared object so the members cache stays consistent.
+        member.friendshipStatus = CommunityFriendshipStatus.FRIEND
+      } catch (error) {
+        setFriendshipStatus(previous)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'acceptFriendRequest'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
+
+  const onAddFriend = (): void => {
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
+        data: {
+          address: member.memberAddress,
+          name: member.name,
+          hasClaimedName: member.hasClaimedName,
+          profilePictureUrl: member.profilePictureUrl
+        }
+      })
+    )
+  }
 
   return (
     <Row
@@ -106,36 +157,51 @@ function CommunityMemberItem({
       {/* Spacer */}
       <UiEntity uiTransform={{ flexGrow: 1 }} />
 
-      {/* Action button */}
-      <UiEntity
-        uiTransform={{
-          borderRadius: fontSize / 2,
-          height: fontSize * 2,
-          padding: {
-            left: fontSize * 0.5,
-            right: fontSize * 0.6
-          },
-          flexShrink: 0,
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'row'
-        }}
-        uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
-      >
-        <Icon
-          icon={{ spriteName: 'Add', atlasName: 'context' }}
-          iconSize={fontSize}
-          iconColor={COLOR.WHITE}
-        />
+      {/* Action button — hidden if already friends */}
+      {friendshipStatus !== CommunityFriendshipStatus.FRIEND && (
         <UiEntity
-          uiText={{
-            value: '<b>ADD FRIEND</b>',
-            fontSize: fontSizeSmall,
-            color: COLOR.WHITE,
-            textWrap: 'nowrap'
+          uiTransform={{
+            borderRadius: fontSize / 2,
+            height: fontSize * 2,
+            padding: {
+              left: fontSize * 0.5,
+              right: fontSize * 0.6
+            },
+            flexShrink: 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row',
+            opacity: acting ? getLoadingAlphaValue() : 1
           }}
-        />
-      </UiEntity>
+          uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+          onMouseDown={
+            friendshipStatus === CommunityFriendshipStatus.REQUEST_RECEIVED
+              ? onAccept
+              : onAddFriend
+          }
+        >
+          <Icon
+            icon={
+              friendshipStatus === CommunityFriendshipStatus.REQUEST_RECEIVED
+                ? { spriteName: 'Check', atlasName: 'icons' }
+                : { spriteName: 'Add', atlasName: 'context' }
+            }
+            iconSize={fontSize}
+            iconColor={COLOR.WHITE}
+          />
+          <UiEntity
+            uiText={{
+              value:
+                friendshipStatus === CommunityFriendshipStatus.REQUEST_RECEIVED
+                  ? '<b>ACCEPT FRIEND</b>'
+                  : '<b>ADD FRIEND</b>',
+              fontSize: fontSizeSmall,
+              color: COLOR.WHITE,
+              textWrap: 'nowrap'
+            }}
+          />
+        </UiEntity>
+      )}
     </Row>
   )
 }

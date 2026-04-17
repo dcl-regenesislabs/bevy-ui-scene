@@ -38,6 +38,22 @@ export type CommunityFriendInfo = {
   profilePictureUrl: string
 }
 
+/**
+ * Values returned by the communities API for `friendshipStatus`.
+ * Mirror of Unity's `DCL.Communities.CommunitiesDataProvider.DTOs.FriendshipStatus`.
+ */
+export enum CommunityFriendshipStatus {
+  REQUEST_SENT = 0,
+  REQUEST_RECEIVED = 1,
+  CANCELED = 2,
+  FRIEND = 3,
+  REJECTED = 4,
+  DELETED = 5,
+  BLOCKED = 6,
+  NONE = 7,
+  BLOCKED_BY = 8
+}
+
 export type CommunityMember = {
   communityId: string
   memberAddress: string
@@ -46,7 +62,7 @@ export type CommunityMember = {
   profilePictureUrl: string
   role: CommunityMemberRole
   joinedAt: string
-  friendshipStatus?: number
+  friendshipStatus?: CommunityFriendshipStatus
   lastFriendshipAction?: string | null
   actingUser?: string | null
 }
