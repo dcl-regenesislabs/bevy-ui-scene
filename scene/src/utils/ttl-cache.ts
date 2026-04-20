@@ -12,6 +12,7 @@ export function createTtlCache<T>(ttlMs = 10 * 60 * 1000): {
   set: (key: string, value: T) => void
   invalidate: (key: string) => void
   clear: () => void
+  entries: () => Array<[string, T]>
 } {
   const entries = new Map<string, CacheEntry<T>>()
 
@@ -33,6 +34,19 @@ export function createTtlCache<T>(ttlMs = 10 * 60 * 1000): {
     },
     clear(): void {
       entries.clear()
+    },
+    /** Returns all non-expired entries as `[key, value]` pairs. */
+    entries(): Array<[string, T]> {
+      const now = Date.now()
+      const result: Array<[string, T]> = []
+      for (const [key, entry] of entries) {
+        if (now > entry.expiresAt) {
+          entries.delete(key)
+        } else {
+          result.push([key, entry.value])
+        }
+      }
+      return result
     }
   }
 }

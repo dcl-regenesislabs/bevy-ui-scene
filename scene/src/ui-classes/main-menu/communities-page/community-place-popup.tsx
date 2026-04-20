@@ -22,6 +22,7 @@ import {
   updateFavoriteStatus,
   updateLikeStatus
 } from '../../../utils/promise-utils'
+import { updateCachedCommunityPlace } from '../../../utils/communities-promise-utils'
 import { BevyApi } from '../../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import {
@@ -98,8 +99,10 @@ function CommunityPlacePopupContent({
     executeTask(async () => {
       try {
         await updateFavoriteStatus(place.id, next)
-        place.user_favorite = next
-        place.favorites = favoritesCount + (next ? 1 : -1)
+        updateCachedCommunityPlace(place.id, {
+          user_favorite: next,
+          favorites: favoritesCount + (next ? 1 : -1)
+        })
       } catch (error) {
         setIsFav(!next)
         setFavoritesCount(favoritesCount)
@@ -142,9 +145,11 @@ function CommunityPlacePopupContent({
     executeTask(async () => {
       try {
         await updateLikeStatus(place.id, apiArg)
-        place.user_like = nextIsLiked
-        place.user_dislike = nextIsDisliked
-        place.likes = nextLikes
+        updateCachedCommunityPlace(place.id, {
+          user_like: nextIsLiked,
+          user_dislike: nextIsDisliked,
+          likes: nextLikes
+        })
       } catch (error) {
         setIsLiked(prev.isLiked)
         setIsDisliked(prev.isDisliked)

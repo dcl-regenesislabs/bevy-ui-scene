@@ -195,6 +195,23 @@ export async function fetchCommunityPlaces(
   return places
 }
 
+/**
+ * Replace a cached place by id, applying a partial update.
+ * Builds a new array + new object (no mutation, safe with frozen state).
+ */
+export function updateCachedCommunityPlace(
+  id: string,
+  partial: Partial<PlaceFromApi>
+): void {
+  for (const [key, places] of resolvedPlacesCache.entries()) {
+    const idx = places.findIndex((p) => p.id === id)
+    if (idx === -1) continue
+    const next = [...places]
+    next[idx] = { ...places[idx], ...partial }
+    resolvedPlacesCache.set(key, next)
+  }
+}
+
 // --- Events ---
 
 const eventsCache = createTtlCache<EventFromApi[]>()
@@ -228,6 +245,23 @@ export async function fetchCommunityEvents(
   const events = (parsed.data?.events ?? parsed.events ?? []) as EventFromApi[]
   eventsCache.set(cacheKey, events)
   return events
+}
+
+/**
+ * Replace a cached event by id, applying a partial update.
+ * Builds a new array + new object (no mutation, safe with frozen state).
+ */
+export function updateCachedCommunityEvent(
+  id: string,
+  partial: Partial<EventFromApi>
+): void {
+  for (const [key, events] of eventsCache.entries()) {
+    const idx = events.findIndex((e) => e.id === id)
+    if (idx === -1) continue
+    const next = [...events]
+    next[idx] = { ...events[idx], ...partial }
+    eventsCache.set(key, next)
+  }
 }
 
 // --- Photos (Camera Reel) ---

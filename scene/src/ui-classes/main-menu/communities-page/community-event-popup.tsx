@@ -18,6 +18,7 @@ import { closeLastPopupAction } from '../../../state/hud/actions'
 import Icon from '../../../components/icon/Icon'
 import type { EventFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import { createAttendee, removeAttendee } from '../../../utils/promise-utils'
+import { updateCachedCommunityEvent } from '../../../utils/communities-promise-utils'
 import { executeTask } from '@dcl/sdk/ecs'
 import { copyToClipboard, openExternalUrl } from '~system/RestrictedActions'
 import { showErrorPopup } from '../../../service/error-popup-service'
@@ -108,7 +109,7 @@ function CommunityEventPopupContent({
         } else {
           await removeAttendee(event.id)
         }
-        event.attending = next
+        updateCachedCommunityEvent(event.id, { attending: next })
       } catch (error) {
         setAttending(!next)
         showErrorPopup(
