@@ -18,6 +18,7 @@ import { AvatarCircle } from '../../../components/avatar-circle'
 import { PlayerNameComponent } from '../../../components/player-name-component'
 import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import Icon from '../../../components/icon/Icon'
+import { ThinMenuButton } from '../../../components/thin-menu-button'
 import { BevyApi } from '../../../bevy-api'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
@@ -116,10 +117,25 @@ function CommunityMemberItem({
     )
   }
 
+  const openProfileMenu = (): void => {
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.PROFILE_MENU,
+        data: {
+          player: {
+            ...member,
+            userId: member.memberAddress.toLowerCase(),
+            isGuest: false
+          }
+        }
+      })
+    )
+  }
+
   return (
     <Row
       uiTransform={{
-        width: '44%',
+        width: '42%',
         height: fontSize * 4,
         alignItems: 'center',
         padding: { left: fontSize, right: fontSize * 2 },
@@ -223,6 +239,14 @@ function CommunityMemberItem({
           />
         </UiEntity>
       )}
+
+      {/* Profile menu button */}
+      <ThinMenuButton
+        fontSize={fontSize}
+        uiTransform={{ margin: { left: fontSize * 0.3 }, height: fontSize * 2 }}
+        onMouseDown={openProfileMenu}
+        backgroundColor={COLOR.WHITE_OPACITY_1}
+      />
     </Row>
   )
 }
