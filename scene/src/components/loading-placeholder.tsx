@@ -22,9 +22,10 @@ export function LoadingPlaceholder({
   return (
     <UiEntity
       uiBackground={{
-        color: { ...color, a: getLoadingAlphaValue() * color.a }
+        color
       }}
       uiTransform={{
+        opacity: getLoadingAlphaValue(),
         ...uiTransform
       }}
       uiText={uiText}
