@@ -11,6 +11,9 @@ import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { executeTask } from '@dcl/sdk/ecs'
 import { fetchCommunityEvents } from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
@@ -70,6 +73,14 @@ function EventItem({
         borderWidth: 1,
         borderColor: COLOR.RED,
         height: thumbHeight
+      }}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.COMMUNITY_EVENT_INFO,
+            data: event
+          })
+        )
       }}
     >
       <UiEntity
