@@ -251,15 +251,16 @@ function CommunityEventPopupContent({
           >
             <Icon
               icon={{
-                spriteName: attending ? 'Discord' : 'Discord',
-                atlasName: 'social' as Atlas
+                spriteName: attending ? 'ReminderOn' : 'ReminderOff',
+                atlasName: 'icons' as Atlas
               }}
               iconSize={fontSizeSmall}
               iconColor={COLOR.WHITE}
             />
+
             <UiEntity
               uiText={{
-                value: '<b>REMIND ME</b>',
+                value: attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>',
                 fontSize: fontSizeSmall,
                 color: COLOR.WHITE,
                 textWrap: 'nowrap'

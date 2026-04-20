@@ -75,6 +75,7 @@ function EventItem({
         height: thumbHeight
       }}
       onMouseDown={() => {
+        console.log('event', event)
         store.dispatch(
           pushPopupAction({
             type: HUD_POPUP_TYPE.COMMUNITY_EVENT_INFO,

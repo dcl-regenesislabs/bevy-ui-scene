@@ -582,6 +582,7 @@ export default class MainHud {
             showHint={this.voiceChatHint}
             iconSize={buttonIconSize}
           />
+
           {getFeatureFlag(FEATURES.FRIENDS) && (
             <ButtonIcon
               uiTransform={buttonTransform}
