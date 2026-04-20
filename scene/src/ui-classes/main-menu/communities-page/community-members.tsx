@@ -70,6 +70,17 @@ function CommunityMemberItem({
         await BevyApi.social.acceptFriendRequest(member.memberAddress)
         // Mutate the shared object so the members cache stays consistent.
         member.friendshipStatus = CommunityFriendshipStatus.FRIEND
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+            data: {
+              variant: 'accepted',
+              address: member.memberAddress,
+              name: member.name,
+              hasClaimedName: member.hasClaimedName
+            }
+          })
+        )
       } catch (error) {
         setFriendshipStatus(previous)
         showErrorPopup(
