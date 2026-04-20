@@ -144,7 +144,9 @@ export async function fetchCommunityMembers(
   communityId: string,
   params: GetMembersParams = {}
 ): Promise<PaginatedResponse<CommunityMember>> {
-  const cacheKey = `${communityId}:${params.offset ?? 0}:${params.limit ?? ''}:${params.onlyOnline ?? ''}`
+  const cacheKey = `${communityId}:${params.offset ?? 0}:${
+    params.limit ?? ''
+  }:${params.onlyOnline ?? ''}`
   const cached = membersCache.get(cacheKey)
   if (cached != null) return cached
   const base = await resolveBaseURL()
@@ -186,9 +188,7 @@ export async function fetchCommunityPlaces(
   if (cached != null) return cached
   const placeIds = await fetchCommunityPlaceIds(communityId)
   const resolved = await Promise.all(
-    placeIds.map(async (id) =>
-      await fetchPlaceFromApi(id).catch(() => null)
-    )
+    placeIds.map(async (id) => await fetchPlaceFromApi(id).catch(() => null))
   )
   const places = resolved.filter((p): p is PlaceFromApi => p != null)
   resolvedPlacesCache.set(communityId, places)
@@ -225,9 +225,7 @@ export async function fetchCommunityEvents(
   }
   const parsed = JSON.parse(result.body)
   // Response shape: { data: { events: [...], total: N } }
-  const events = (parsed.data?.events ??
-    parsed.events ??
-    []) as EventFromApi[]
+  const events = (parsed.data?.events ?? parsed.events ?? []) as EventFromApi[]
   eventsCache.set(cacheKey, events)
   return events
 }

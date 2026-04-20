@@ -13,6 +13,7 @@ import { fetchCommunityEvents } from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
+import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
 
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const MONTHS = [
@@ -58,24 +59,28 @@ function EventItem({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.CAPTION
   })
-  const scale = getContentScaleRatio()
-  const thumbSize = scale * 120
   const startAt = event.next_start_at ?? event.start_at
+  const thumbHeight = fontSize * 6 - fontSize / 2
   return (
     <Row
       uiTransform={{
         width: '100%',
-        alignItems: 'center',
-        margin: { bottom: fontSize * 0.6 }
+        alignItems: 'flex-start',
+        margin: { top: fontSize / 2 },
+        borderWidth: 1,
+        borderColor: COLOR.RED,
+        height: thumbHeight
       }}
     >
       <UiEntity
         uiTransform={{
-          width: thumbSize,
-          height: thumbSize,
+          width: thumbHeight * 1.5,
+          height: thumbHeight,
           borderRadius: fontSize / 2,
           flexShrink: 0,
-          margin: { right: fontSize * 0.5 }
+          margin: { right: fontSize * 0.5 },
+          borderWidth: 1,
+          borderColor: COLOR.YELLOW
         }}
         uiBackground={{
           textureMode: 'stretch',
@@ -92,21 +97,24 @@ function EventItem({
         <UiEntity
           uiTransform={{ width: '100%' }}
           uiText={{
-            value: formatEventStart(startAt),
+            value: `<b>${formatEventStart(startAt)}</b>`,
             fontSize: fontSizeSmall,
             color: COLOR.TEXT_COLOR_LIGHT_GREY,
-            textAlign: 'top-left',
-            textWrap: 'nowrap'
+            textAlign: 'top-left'
           }}
         />
         <UiEntity
-          uiTransform={{ width: '100%' }}
+          uiTransform={{
+            width: '100%',
+            margin: { top: -fontSizeSmall / 2 },
+            padding: 0
+          }}
           uiText={{
-            value: `<b>${event.name}</b>`,
-            fontSize,
+            value: `<b>${truncateWithoutBreakingWords(event.name, 55)}</b>`,
+            fontSize: fontSizeSmall,
             color: COLOR.TEXT_COLOR_WHITE,
             textAlign: 'top-left',
-            textWrap: 'nowrap'
+            textWrap: 'wrap'
           }}
         />
       </Column>

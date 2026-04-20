@@ -1,9 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
-import { CloseButton } from '../../../components/close-button'
-import { store } from '../../../state/store'
-import { closeLastPopupAction } from '../../../state/hud/actions'
 import {
   type CommunityListItem,
   getCommunityThumbnailUrl

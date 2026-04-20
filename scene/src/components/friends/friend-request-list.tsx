@@ -20,10 +20,8 @@ import { store } from '../../state/store'
 import { updateHudStateAction } from '../../state/hud/actions'
 import { listenFriendshipEvent } from '../../service/friend-connectivity-service'
 
-const byDateDesc = (
-  a: FriendRequestData,
-  b: FriendRequestData
-): number => b.createdAt - a.createdAt
+const byDateDesc = (a: FriendRequestData, b: FriendRequestData): number =>
+  b.createdAt - a.createdAt
 
 export async function fetchAndStoreFriendRequests(): Promise<void> {
   const [sent, received] = await Promise.all([

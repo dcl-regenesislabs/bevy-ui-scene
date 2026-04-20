@@ -170,14 +170,9 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
             variant="primary"
             onMouseDown={() => {
               executeTask(async () => {
-                const friendRequestSendingResult =
-                  await BevyApi.social.sendFriendRequest(
-                    data.address,
-                    message.length > 0 ? message : undefined
-                  )
-                console.log(
-                  'friendRequestSendingResult',
-                  friendRequestSendingResult
+                await BevyApi.social.sendFriendRequest(
+                  data.address,
+                  message.length > 0 ? message : undefined
                 )
                 fetchAndStoreFriendRequests().catch(console.error)
                 store.dispatch(closeLastPopupAction())

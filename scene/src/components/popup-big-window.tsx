@@ -1,7 +1,7 @@
 import { COLOR } from './color-palette'
 import { noop } from '../utils/function-utils'
 import { CONTEXT, getFontSize } from '../service/fontsize-system'
-import ReactEcs, { ReactElement, UiEntity } from '@dcl/react-ecs'
+import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { CloseButton } from './close-button'
 import { getContentScaleRatio } from '../service/canvas-ratio'
 import { closeLastPopupAction } from 'src/state/hud/actions'
@@ -11,7 +11,7 @@ export const PopupBigWindow = ({
   children = null
 }: {
   children?: ReactElement | ReactElement[] | null
-}) => {
+}): ReactElement => {
   const borderRadius = getFontSize({ context: CONTEXT.DIALOG }) / 2
 
   return (

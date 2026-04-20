@@ -2,7 +2,6 @@ import ReactEcs, { Button, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { store } from '../../../state/store'
 import {
-  closeLastPopupAction,
   HUD_ACTION,
   pushPopupAction,
   updateHudStateAction
@@ -47,7 +46,6 @@ import { ButtonIcon } from '../../../components/button-icon'
 import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
-import { CloseButton } from '../../../components/close-button'
 import { BevyApi } from '../../../bevy-api'
 import { Label } from '@dcl/sdk/react-ecs'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
