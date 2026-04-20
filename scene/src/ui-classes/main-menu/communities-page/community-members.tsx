@@ -107,6 +107,15 @@ function CommunityMemberItem({
     )
   }
 
+  const openPassport = (): void => {
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.PASSPORT,
+        data: member.memberAddress.toLowerCase()
+      })
+    )
+  }
+
   return (
     <Row
       uiTransform={{
@@ -120,6 +129,7 @@ function CommunityMemberItem({
       uiBackground={{
         color: COLOR.DARK_OPACITY_5
       }}
+      onMouseDown={openPassport}
     >
       {/* Avatar */}
       <AvatarCircle
