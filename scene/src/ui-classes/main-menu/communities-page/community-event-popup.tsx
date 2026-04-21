@@ -10,7 +10,6 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
-import { BORDER_RADIUS_F } from '../../../utils/ui-utils'
 import { noop } from '../../../utils/function-utils'
 import { store } from '../../../state/store'
 import { closeLastPopupAction } from '../../../state/hud/actions'
@@ -82,7 +81,7 @@ function CommunityEventPopupContent({
       <Column
         uiTransform={{
           width: cardWidth,
-          borderRadius: BORDER_RADIUS_F,
+          borderRadius: fontSize / 2,
           padding: 0,
           alignItems: 'flex-start'
         }}
@@ -133,9 +132,7 @@ function CommunityEventPopupContent({
               uiTransform={{
                 width: '100%',
                 margin: { left: fontSize / 2 },
-                height: fontSize,
-                borderWidth: 1,
-                borderColor: COLOR.RED
+                height: fontSize
               }}
               uiText={{
                 value: `<b>${formatEventStart(startAt)}</b>`,
@@ -150,9 +147,7 @@ function CommunityEventPopupContent({
               uiTransform={{
                 width: '100%',
                 padding: 0,
-                margin: { top: -fontSizeTitle / 2, bottom: -fontSizeTitle / 2 },
-                borderWidth: 1,
-                borderColor: COLOR.YELLOW
+                margin: { top: -fontSizeTitle / 2, bottom: -fontSizeTitle / 2 }
               }}
               uiText={{
                 value: `<b>${event.name}</b>`,
@@ -168,9 +163,7 @@ function CommunityEventPopupContent({
               <UiEntity
                 uiTransform={{
                   width: '100%',
-                  margin: { left: fontSize / 2 },
-                  borderWidth: 1,
-                  borderColor: COLOR.GREEN
+                  margin: { left: fontSize / 2 }
                 }}
                 uiText={{
                   value: `Hosted by <b>${event.user_name}</b>`,
@@ -185,7 +178,7 @@ function CommunityEventPopupContent({
               event={event}
               uiTransform={{
                 margin: {
-                  left: fontSize / 2
+                  left: fontSize
                 }
               }}
             />

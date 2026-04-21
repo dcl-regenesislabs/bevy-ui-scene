@@ -16,7 +16,8 @@ import { copyToClipboard, openExternalUrl } from '~system/RestrictedActions'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import type { Atlas } from '../../../utils/definitions'
 import useState = ReactEcs.useState
-import { UiTransformProps } from '@dcl/sdk/react-ecs'
+import { type UiTransformProps } from '@dcl/sdk/react-ecs'
+import { ButtonTextIcon } from '../../../components/button-text-icon'
 
 /** Format ISO timestamp as YYYYMMDDTHHmmssZ (Google Calendar format). */
 function toCalendarDate(iso: string): string {
@@ -41,6 +42,22 @@ export function CommunityEventActionsRow({
 
   const startAt = event.next_start_at ?? event.start_at
   const finishAt = event.next_finish_at ?? event.finish_at
+
+  const buttonPadding = {
+    left: fontSize * 0.6,
+    right: fontSize * 0.8,
+    top: fontSize * 0.3,
+    bottom: fontSize * 0.3
+  }
+  const buttonBaseTransform: UiTransformProps = {
+    borderRadius: fontSize / 2,
+    borderWidth: 1,
+    borderColor: COLOR.WHITE,
+    padding: buttonPadding,
+    margin: { right: fontSize * 0.5 },
+    flexGrow: 0,
+    width: 'auto'
+  }
 
   const toggleReminder = (): void => {
     if (toggling) return
@@ -78,20 +95,13 @@ export function CommunityEventActionsRow({
   }
 
   const onShareX = (): void => {
-    const text = `Check out ${event.name}, an event in Decentraland!`
+    const text = `Check out "${event.name}" \n\n An event in @Decentraland!\n\n`
     const url = event.url ?? ''
     void openExternalUrl({
       url: `https://x.com/intent/post?text=${encodeURIComponent(
         text
       )}&hashtags=DCLEvent&url=${encodeURIComponent(url)}`
     })
-  }
-
-  const onCopyLink = (): void => {
-    const text = `Check out ${event.name}, an event in Decentraland! ${
-      event.url ?? ''
-    } #DCLEvent`
-    copyToClipboard({ text }).catch(console.error)
   }
 
   return (
@@ -102,144 +112,86 @@ export function CommunityEventActionsRow({
       }}
     >
       {/* REMIND ME */}
-      <Row
+      <ButtonTextIcon
+        value={attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>'}
+        icon={{
+          spriteName: attending ? 'ReminderOn' : 'ReminderOff',
+          atlasName: 'icons' as Atlas
+        }}
+        iconColor={COLOR.WHITE}
+        fontColor={COLOR.WHITE}
+        fontSize={fontSizeSmall}
+        backgroundColor={
+          attending ? COLOR.BLACK_TRANSPARENT : COLOR.BUTTON_PRIMARY
+        }
         uiTransform={{
-          borderRadius: fontSize / 2,
-          borderWidth: 1,
-          borderColor: COLOR.WHITE,
-          flexGrow: 0,
-          padding: {
-            left: fontSize * 0.6,
-            right: fontSize * 0.8,
-            top: fontSize * 0.3,
-            bottom: fontSize * 0.3
-          },
-          alignItems: 'center',
-          margin: { right: fontSize * 0.5 },
+          ...buttonBaseTransform,
           opacity: toggling ? getLoadingAlphaValue() : 1
         }}
-        uiBackground={{
-          color: attending ? COLOR.BUTTON_PRIMARY : COLOR.BLACK_TRANSPARENT
-        }}
         onMouseDown={toggleReminder}
-      >
-        <Icon
-          icon={{
-            spriteName: attending ? 'ReminderOn' : 'ReminderOff',
-            atlasName: 'icons' as Atlas
-          }}
-          iconSize={fontSizeSmall}
-          iconColor={COLOR.WHITE}
-        />
-        <UiEntity
-          uiText={{
-            value: attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>',
-            fontSize: fontSizeSmall,
-            color: COLOR.WHITE,
-            textWrap: 'nowrap'
-          }}
-        />
-      </Row>
+      />
 
       {/* Add to calendar */}
-      <IconActionButton
-        fontSize={fontSize}
-        spriteName="CalendarIcn"
-        atlasName="icons"
-        onClick={onAddToCalendar}
+      <ButtonTextIcon
+        value="ADD TO CALENDAR"
+        icon={{ spriteName: 'CalendarIcn', atlasName: 'icons' }}
+        iconColor={COLOR.WHITE}
+        fontSize={fontSizeSmall}
+        backgroundColor={COLOR.BLACK_TRANSPARENT}
+        uiTransform={{
+          ...buttonBaseTransform
+        }}
+        onMouseDown={onAddToCalendar}
       />
 
       {/* Share */}
       <ShareButton
         fontSize={fontSize}
+        fontSizeSmall={fontSizeSmall}
+        uiTransform={buttonBaseTransform}
         onShareX={onShareX}
-        onCopyLink={onCopyLink}
+        onCopyLink={() => {
+          copyToClipboard({ text: event.url }).catch(console.error)
+        }}
       />
     </Row>
   )
 }
 
-function IconActionButton({
-  fontSize,
-  spriteName,
-  atlasName,
-  onClick
-}: {
-  fontSize: number
-  spriteName: string
-  atlasName: Atlas
-  onClick: () => void
-}): ReactElement {
-  const size = fontSize * 2.2
-  return (
-    <UiEntity
-      uiTransform={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: { right: fontSize * 0.3 },
-        borderWidth: 1,
-        borderColor: COLOR.WHITE
-      }}
-      uiBackground={{ color: COLOR.BLACK_TRANSPARENT }}
-      onMouseDown={onClick}
-    >
-      <Icon
-        icon={{ spriteName, atlasName }}
-        iconSize={fontSize}
-        iconColor={COLOR.WHITE}
-      />
-    </UiEntity>
-  )
-}
-
 function ShareButton({
   fontSize,
+  fontSizeSmall,
+  uiTransform,
   onShareX,
   onCopyLink
 }: {
   fontSize: number
+  fontSizeSmall: number
+  uiTransform?: UiTransformProps
   onShareX: () => void
   onCopyLink: () => void
 }): ReactElement {
   const [open, setOpen] = useState<boolean>(false)
-  const fontSizeSmall = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.LABEL
-  })
-  const size = fontSize * 2.2
   return (
     <UiEntity uiTransform={{ flexDirection: 'column' }}>
-      <UiEntity
+      <ButtonTextIcon
+        value="SHARE"
+        icon={{ spriteName: 'Share', atlasName: 'context' }}
+        iconColor={COLOR.WHITE}
+        fontSize={fontSizeSmall}
+        backgroundColor={open ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT}
         uiTransform={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderWidth: 1,
-          borderColor: COLOR.WHITE
-        }}
-        uiBackground={{
-          color: open ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT
+          ...uiTransform
         }}
         onMouseDown={() => {
           setOpen(!open)
         }}
-      >
-        <Icon
-          icon={{ spriteName: 'Share', atlasName: 'context' }}
-          iconSize={fontSize}
-          iconColor={COLOR.WHITE}
-        />
-      </UiEntity>
+      />
       {open && (
         <Column
           uiTransform={{
             positionType: 'absolute',
-            position: { top: size + fontSize * 0.3, right: 0 },
+            position: { top: fontSize * 2.5, right: 0 },
             padding: fontSize * 0.5,
             borderRadius: fontSize / 2,
             alignItems: 'flex-start'
