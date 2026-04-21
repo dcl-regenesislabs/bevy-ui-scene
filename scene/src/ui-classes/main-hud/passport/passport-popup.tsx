@@ -47,7 +47,6 @@ import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
 import { BevyApi } from '../../../bevy-api'
-import { Label } from '@dcl/sdk/react-ecs'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
 import { Column, Row } from '../../../components/layout'
 import useState = ReactEcs.useState
@@ -66,7 +65,6 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { waitFor } from '../../../utils/dcl-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import {
@@ -82,6 +80,7 @@ import { BadgesPreview } from './badges-preview'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { PlayerNameComponent } from '../../../components/player-name-component'
 import { PopupBigWindow } from '../../../components/popup-big-window'
+import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -170,7 +169,6 @@ export function setupPassportPopup(): void {
 
 export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const loadingAlpha = getLoadingAlphaValue()
   const [isFriend, setIsFriend] = useState<boolean>(true)
   const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
@@ -220,12 +218,30 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               ]
             : null}
           {state.loadingProfile && (
-            <Label
-              uiTransform={{ padding: fontSize }}
-              value={'Loading Avatar Passport ...'}
-              fontSize={fontSize}
-              color={{ ...COLOR.TEXT_COLOR_GREY, a: loadingAlpha }}
-            />
+            <Row
+              uiTransform={{
+                width: '100%',
+                height: '100%',
+                padding: fontSize,
+                alignItems: 'center'
+              }}
+            >
+              <LoadingPlaceholder
+                uiTransform={{
+                  width: '30%',
+                  height: '90%',
+                  borderRadius: fontSize / 2,
+                  margin: { right: fontSize }
+                }}
+              />
+              <LoadingPlaceholder
+                uiTransform={{
+                  flexGrow: 1,
+                  height: '90%',
+                  borderRadius: fontSize / 2
+                }}
+              />
+            </Row>
           )}
           {!state.editable && getFeatureFlag(FEATURES.FRIENDS) ? (
             <PassportFriendButton
