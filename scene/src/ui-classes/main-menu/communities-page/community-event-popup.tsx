@@ -1,4 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import { Label } from '@dcl/sdk/react-ecs'
+import useState = ReactEcs.useState
 import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
@@ -9,12 +11,15 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { noop } from '../../../utils/function-utils'
 import { store } from '../../../state/store'
 import { closeLastPopupAction } from '../../../state/hud/actions'
 import type { EventFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import { CommunityEventActionsRow } from './community-event-actions-row'
+import {
+  handleMarkdownLinkClick,
+  markdownToUiTextValue
+} from '../../../service/markdown'
 
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const MONTHS = [
@@ -70,11 +75,16 @@ function CommunityEventPopupContent({
     token: TYPOGRAPHY_TOKENS.LABEL
   })
 
-  const scale = getContentScaleRatio()
   const cardWidth = fontSize * 36
   const heroHeight = cardWidth * 0.45
 
   const startAt = event.next_start_at ?? event.start_at
+
+  // Convert markdown only once per popup mount — not on every render — so
+  // bevy-explorer doesn't rebuild the text entity (which loses link hit state).
+  const [renderedDescription] = useState<string>(
+    markdownToUiTextValue(event.description ?? '')
+  )
 
   return (
     <PopupBackdrop>
@@ -210,20 +220,17 @@ function CommunityEventPopupContent({
           <Column
             uiTransform={{
               width: '100%',
-              height: fontSize * 32,
-              overflow: 'scroll',
-              scrollVisible: 'vertical'
+              height: fontSize * 32
             }}
           >
-            <UiEntity
+            <Label
               uiTransform={{ width: '100%' }}
-              uiText={{
-                value: event.description ?? '',
-                fontSize: fontSizeSmall,
-                color: COLOR.TEXT_COLOR_WHITE,
-                textAlign: 'top-left',
-                textWrap: 'wrap'
-              }}
+              value={renderedDescription}
+              fontSize={fontSizeSmall}
+              color={COLOR.TEXT_COLOR_WHITE}
+              textAlign="top-left"
+              textWrap="wrap"
+              onMouseDown={handleMarkdownLinkClick}
             />
           </Column>
         </Column>

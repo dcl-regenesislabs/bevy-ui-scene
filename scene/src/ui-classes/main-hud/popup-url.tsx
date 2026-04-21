@@ -82,7 +82,8 @@ export const PopupUrl: Popup = ({ shownPopup }) => {
               width: getContentScaleRatio() * 400,
               borderRadius: BORDER_RADIUS_F / 2,
               borderWidth: 0,
-              borderColor: Color4.White()
+              borderColor: Color4.White(),
+              height: fontSize * 2
             }}
             value={'CANCEL'}
             variant={'secondary'}
@@ -99,7 +100,8 @@ export const PopupUrl: Popup = ({ shownPopup }) => {
               width: getContentScaleRatio() * 400,
               borderRadius: BORDER_RADIUS_F / 2,
               borderWidth: 0,
-              borderColor: Color4.White()
+              borderColor: Color4.White(),
+              height: fontSize * 2
             }}
             value={'CONTINUE'}
             variant={'primary'}
