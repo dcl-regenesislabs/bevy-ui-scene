@@ -20,9 +20,29 @@
 				"h": 48
 			}
 		},
-		"Facebook.png": {
+		"EventsIcn.png": {
 			"frame": {
 				"x": 51,
+				"y": 1,
+				"w": 24,
+				"h": 24
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 24,
+				"h": 24
+			},
+			"sourceSize": {
+				"w": 24,
+				"h": 24
+			}
+		},
+		"Facebook.png": {
+			"frame": {
+				"x": 77,
 				"y": 1,
 				"w": 50,
 				"h": 48
@@ -82,7 +102,7 @@
 		},
 		"Link.png": {
 			"frame": {
-				"x": 103,
+				"x": 129,
 				"y": 1,
 				"w": 48,
 				"h": 48
@@ -122,8 +142,8 @@
 		},
 		"ReminderOff.png": {
 			"frame": {
-				"x": 153,
-				"y": 1,
+				"x": 151,
+				"y": 51,
 				"w": 24,
 				"h": 24
 			},
@@ -142,8 +162,8 @@
 		},
 		"ReminderOn.png": {
 			"frame": {
-				"x": 153,
-				"y": 27,
+				"x": 151,
+				"y": 77,
 				"w": 24,
 				"h": 24
 			},

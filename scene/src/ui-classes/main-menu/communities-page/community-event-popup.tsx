@@ -189,8 +189,7 @@ function CommunityEventPopupContent({
               uiTransform={{
                 margin: {
                   left: fontSize,
-                  top: fontSize / 2,
-                  bottom: -fontSize / 2
+                  top: fontSize / 2
                 },
                 padding: { bottom: -fontSize / 2 }
               }}

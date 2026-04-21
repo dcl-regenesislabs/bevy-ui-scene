@@ -130,11 +130,10 @@ export function CommunityEventActionsRow({
         }}
         onMouseDown={toggleReminder}
       />
-
       {/* Add to calendar */}
       <ButtonTextIcon
         value="ADD TO CALENDAR"
-        icon={{ spriteName: 'CalendarIcn', atlasName: 'icons' }}
+        icon={{ spriteName: 'EventsIcn', atlasName: 'social' }}
         iconColor={COLOR.WHITE}
         fontSize={fontSizeSmall}
         backgroundColor={COLOR.BLACK_TRANSPARENT}
