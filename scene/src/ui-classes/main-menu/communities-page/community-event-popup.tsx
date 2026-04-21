@@ -2,7 +2,7 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column } from '../../../components/layout'
 import { CloseButton } from '../../../components/close-button'
 import {
   CONTEXT,
@@ -10,20 +10,12 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { BORDER_RADIUS_F } from '../../../utils/ui-utils'
 import { noop } from '../../../utils/function-utils'
 import { store } from '../../../state/store'
 import { closeLastPopupAction } from '../../../state/hud/actions'
-import Icon from '../../../components/icon/Icon'
 import type { EventFromApi } from '../../scene-info-card/SceneInfoCard.types'
-import { createAttendee, removeAttendee } from '../../../utils/promise-utils'
-import { updateCachedCommunityEvent } from '../../../utils/communities-promise-utils'
-import { executeTask } from '@dcl/sdk/ecs'
-import { copyToClipboard, openExternalUrl } from '~system/RestrictedActions'
-import { showErrorPopup } from '../../../service/error-popup-service'
-import type { Atlas } from '../../../utils/definitions'
-import useState = ReactEcs.useState
+import { CommunityEventActionsRow } from './community-event-actions-row'
 
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const MONTHS = [
@@ -58,11 +50,6 @@ function formatEventStart(startAt: string): string {
   }
 }
 
-/** Format ISO timestamp as YYYYMMDDTHHmmssZ (Google Calendar format). */
-function toCalendarDate(iso: string): string {
-  return iso.replace(/[-:.]/g, '').replace(/\.\d+Z$/, 'Z')
-}
-
 export const CommunityEventPopup: Popup = ({ shownPopup }) => {
   const event = shownPopup.data as EventFromApi
   if (event == null) return null
@@ -83,71 +70,12 @@ function CommunityEventPopupContent({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.LABEL
   })
-  const fontSizeCaption = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.CAPTION
-  })
+
   const scale = getContentScaleRatio()
-  const cardWidth = scale * 900
+  const cardWidth = fontSize * 36
   const heroHeight = cardWidth * 0.45
 
-  const [attending, setAttending] = useState<boolean>(event.attending ?? false)
-  const [toggling, setToggling] = useState<boolean>(false)
-
   const startAt = event.next_start_at ?? event.start_at
-  const finishAt = event.next_finish_at ?? event.finish_at
-
-  const toggleReminder = (): void => {
-    if (toggling) return
-    const next = !attending
-    setAttending(next)
-    setToggling(true)
-    executeTask(async () => {
-      try {
-        if (next) {
-          await createAttendee(event.id)
-        } else {
-          await removeAttendee(event.id)
-        }
-        updateCachedCommunityEvent(event.id, { attending: next })
-      } catch (error) {
-        setAttending(!next)
-        showErrorPopup(
-          error instanceof Error ? error : new Error(String(error)),
-          next ? 'createAttendee' : 'removeAttendee'
-        )
-      } finally {
-        setToggling(false)
-      }
-    })
-  }
-
-  const onAddToCalendar = (): void => {
-    const title = encodeURIComponent(event.name)
-    const details = encodeURIComponent(event.description ?? '')
-    const location = encodeURIComponent(event.url ?? '')
-    const dates = `${toCalendarDate(startAt)}/${toCalendarDate(finishAt)}`
-    void openExternalUrl({
-      url: `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`
-    })
-  }
-
-  const onShareX = (): void => {
-    const text = `Check out ${event.name}, an event in Decentraland!`
-    const url = event.url ?? ''
-    void openExternalUrl({
-      url: `https://x.com/intent/post?text=${encodeURIComponent(
-        text
-      )}&hashtags=DCLEvent&url=${encodeURIComponent(url)}`
-    })
-  }
-
-  const onCopyLink = (): void => {
-    const text = `Check out ${event.name}, an event in Decentraland! ${
-      event.url ?? ''
-    } #DCLEvent`
-    copyToClipboard({ text }).catch(console.error)
-  }
 
   return (
     <PopupBackdrop>
@@ -155,7 +83,7 @@ function CommunityEventPopupContent({
         uiTransform={{
           width: cardWidth,
           borderRadius: BORDER_RADIUS_F,
-          padding: fontSize * 1.5,
+          padding: 0,
           alignItems: 'flex-start'
         }}
         uiBackground={{ color: COLOR.URL_POPUP_BACKGROUND }}
@@ -164,13 +92,14 @@ function CommunityEventPopupContent({
         <CloseButton
           uiTransform={{
             position: { top: fontSize, right: fontSize },
-            positionType: 'absolute'
+            positionType: 'absolute',
+            zIndex: 1
           }}
+          fontSize={fontSize}
           onClick={() => {
             store.dispatch(closeLastPopupAction())
           }}
         />
-
         {/* Hero image */}
         <UiEntity
           uiTransform={{
@@ -185,280 +114,124 @@ function CommunityEventPopupContent({
             texture: { src: event.image }
           }}
         />
-
-        {/* Date */}
-        <UiEntity
-          uiTransform={{ width: '100%', margin: { bottom: fontSize * 0.3 } }}
-          uiText={{
-            value: formatEventStart(startAt),
-            fontSize: fontSizeSmall,
-            color: COLOR.TEXT_COLOR_LIGHT_GREY,
-            textAlign: 'top-left'
+        <Column
+          uiTransform={{
+            width: '100%',
+            alignItems: 'flex-end',
+            justifyContent: 'flex-end',
+            positionType: 'absolute',
+            position: { top: 0 },
+            height: heroHeight
           }}
-        />
+        >
+          <Column
+            uiTransform={{ width: '100%' }}
+            uiBackground={{ color: COLOR.DARK_OPACITY_8 }}
+          >
+            {/* Date */}
+            <UiEntity
+              uiTransform={{
+                width: '100%',
+                margin: { left: fontSize / 2 },
+                height: fontSize,
+                borderWidth: 1,
+                borderColor: COLOR.RED
+              }}
+              uiText={{
+                value: `<b>${formatEventStart(startAt)}</b>`,
+                fontSize: fontSizeSmall,
+                color: COLOR.TEXT_COLOR_LIGHT_GREY,
+                textAlign: 'top-left'
+              }}
+            />
 
-        {/* Title */}
-        <UiEntity
-          uiTransform={{ width: '100%', margin: { bottom: fontSize * 0.3 } }}
-          uiText={{
-            value: `<b>${event.name}</b>`,
-            fontSize: fontSizeTitle,
-            color: COLOR.TEXT_COLOR_WHITE,
-            textAlign: 'top-left',
-            textWrap: 'wrap'
+            {/* Title */}
+            <UiEntity
+              uiTransform={{
+                width: '100%',
+                padding: 0,
+                margin: { top: -fontSizeTitle / 2, bottom: -fontSizeTitle / 2 },
+                borderWidth: 1,
+                borderColor: COLOR.YELLOW
+              }}
+              uiText={{
+                value: `<b>${event.name}</b>`,
+                fontSize: fontSizeTitle,
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left',
+                textWrap: 'wrap'
+              }}
+            />
+
+            {/* Hosted by */}
+            {event.user_name != null && event.user_name.length > 0 && (
+              <UiEntity
+                uiTransform={{
+                  width: '100%',
+                  margin: { left: fontSize / 2 },
+                  borderWidth: 1,
+                  borderColor: COLOR.GREEN
+                }}
+                uiText={{
+                  value: `Hosted by <b>${event.user_name}</b>`,
+                  fontSize: fontSizeSmall,
+                  color: COLOR.TEXT_COLOR_LIGHT_GREY,
+                  textAlign: 'top-left'
+                }}
+              />
+            )}
+            {/* Actions row */}
+            <CommunityEventActionsRow
+              event={event}
+              uiTransform={{
+                margin: {
+                  left: fontSize / 2
+                }
+              }}
+            />
+          </Column>
+        </Column>
+        <Column
+          uiTransform={{
+            width: '100%',
+            alignItems: 'flex-start',
+            padding: fontSize
           }}
-        />
-
-        {/* Hosted by */}
-        {event.user_name != null && event.user_name.length > 0 && (
+        >
+          {/* Description */}
           <UiEntity
-            uiTransform={{ width: '100%', margin: { bottom: fontSize } }}
+            uiTransform={{
+              width: '100%',
+              margin: { bottom: fontSize * 0.3 }
+            }}
             uiText={{
-              value: `Hosted by <b>${event.user_name}</b>`,
+              value: '<b>DESCRIPTION</b>',
               fontSize: fontSizeSmall,
               color: COLOR.TEXT_COLOR_LIGHT_GREY,
               textAlign: 'top-left'
             }}
           />
-        )}
-
-        {/* Actions row */}
-        <Row
-          uiTransform={{
-            alignItems: 'center',
-            margin: { bottom: fontSize }
-          }}
-        >
-          {/* REMIND ME */}
-          <Row
+          <Column
             uiTransform={{
-              borderRadius: fontSize / 2,
-              borderWidth: 1,
-              borderColor: COLOR.WHITE,
-              padding: {
-                left: fontSize * 0.6,
-                right: fontSize * 0.8,
-                top: fontSize * 0.3,
-                bottom: fontSize * 0.3
-              },
-              alignItems: 'center',
-              margin: { right: fontSize * 0.5 },
-              opacity: toggling ? getLoadingAlphaValue() : 1
+              width: '100%',
+              height: fontSize * 32,
+              overflow: 'scroll',
+              scrollVisible: 'vertical'
             }}
-            uiBackground={{
-              color: attending ? COLOR.BUTTON_PRIMARY : COLOR.BLACK_TRANSPARENT
-            }}
-            onMouseDown={toggleReminder}
           >
-            <Icon
-              icon={{
-                spriteName: attending ? 'ReminderOn' : 'ReminderOff',
-                atlasName: 'icons' as Atlas
-              }}
-              iconSize={fontSizeSmall}
-              iconColor={COLOR.WHITE}
-            />
-
             <UiEntity
+              uiTransform={{ width: '100%' }}
               uiText={{
-                value: attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>',
+                value: event.description ?? '',
                 fontSize: fontSizeSmall,
-                color: COLOR.WHITE,
-                textWrap: 'nowrap'
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left',
+                textWrap: 'wrap'
               }}
             />
-          </Row>
-
-          {/* Add to calendar */}
-          <IconActionButton
-            fontSize={fontSize}
-            spriteName="CalendarIcn"
-            atlasName="icons"
-            onClick={onAddToCalendar}
-          />
-
-          {/* Share */}
-          <ShareButton
-            fontSize={fontSize}
-            onShareX={onShareX}
-            onCopyLink={onCopyLink}
-          />
-        </Row>
-
-        {/* Description */}
-        <UiEntity
-          uiTransform={{
-            width: '100%',
-            margin: { bottom: fontSize * 0.3 }
-          }}
-          uiText={{
-            value: '<b>DESCRIPTION</b>',
-            fontSize: fontSizeSmall,
-            color: COLOR.TEXT_COLOR_LIGHT_GREY,
-            textAlign: 'top-left'
-          }}
-        />
-        <Column
-          uiTransform={{
-            width: '100%',
-            height: scale * 220,
-            overflow: 'scroll',
-            scrollVisible: 'vertical'
-          }}
-        >
-          <UiEntity
-            uiTransform={{ width: '100%' }}
-            uiText={{
-              value: event.description ?? '',
-              fontSize: fontSizeCaption,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'top-left',
-              textWrap: 'wrap'
-            }}
-          />
+          </Column>
         </Column>
       </Column>
     </PopupBackdrop>
-  )
-}
-
-function IconActionButton({
-  fontSize,
-  spriteName,
-  atlasName,
-  onClick
-}: {
-  fontSize: number
-  spriteName: string
-  atlasName: Atlas
-  onClick: () => void
-}): ReactElement {
-  const size = fontSize * 2.2
-  return (
-    <UiEntity
-      uiTransform={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: { right: fontSize * 0.3 },
-        borderWidth: 1,
-        borderColor: COLOR.WHITE
-      }}
-      uiBackground={{ color: COLOR.BLACK_TRANSPARENT }}
-      onMouseDown={onClick}
-    >
-      <Icon
-        icon={{ spriteName, atlasName }}
-        iconSize={fontSize}
-        iconColor={COLOR.WHITE}
-      />
-    </UiEntity>
-  )
-}
-
-function ShareButton({
-  fontSize,
-  onShareX,
-  onCopyLink
-}: {
-  fontSize: number
-  onShareX: () => void
-  onCopyLink: () => void
-}): ReactElement {
-  const [open, setOpen] = useState<boolean>(false)
-  const fontSizeSmall = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.LABEL
-  })
-  const size = fontSize * 2.2
-  return (
-    <UiEntity uiTransform={{ flexDirection: 'column' }}>
-      <UiEntity
-        uiTransform={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderWidth: 1,
-          borderColor: COLOR.WHITE
-        }}
-        uiBackground={{
-          color: open ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT
-        }}
-        onMouseDown={() => {
-          setOpen(!open)
-        }}
-      >
-        <Icon
-          icon={{ spriteName: 'Share', atlasName: 'context' }}
-          iconSize={fontSize}
-          iconColor={COLOR.WHITE}
-        />
-      </UiEntity>
-      {open && (
-        <Column
-          uiTransform={{
-            positionType: 'absolute',
-            position: { top: size + fontSize * 0.3, right: 0 },
-            padding: fontSize * 0.5,
-            borderRadius: fontSize / 2,
-            alignItems: 'flex-start'
-          }}
-          uiBackground={{ color: COLOR.BLACK_POPUP_BACKGROUND }}
-        >
-          <Row
-            uiTransform={{
-              alignItems: 'center',
-              padding: fontSize * 0.3
-            }}
-            onMouseDown={() => {
-              setOpen(false)
-              onShareX()
-            }}
-          >
-            <Icon
-              icon={{ spriteName: 'Twitter', atlasName: 'social' }}
-              iconSize={fontSizeSmall}
-              iconColor={COLOR.WHITE}
-            />
-            <UiEntity
-              uiText={{
-                value: ' Share on X',
-                fontSize: fontSizeSmall,
-                color: COLOR.WHITE,
-                textWrap: 'nowrap'
-              }}
-            />
-          </Row>
-          <Row
-            uiTransform={{
-              alignItems: 'center',
-              padding: fontSize * 0.3
-            }}
-            onMouseDown={() => {
-              setOpen(false)
-              onCopyLink()
-            }}
-          >
-            <Icon
-              icon={{ spriteName: 'Link', atlasName: 'social' }}
-              iconSize={fontSizeSmall}
-              iconColor={COLOR.WHITE}
-            />
-            <UiEntity
-              uiText={{
-                value: ' Copy link',
-                fontSize: fontSizeSmall,
-                color: COLOR.WHITE,
-                textWrap: 'nowrap'
-              }}
-            />
-          </Row>
-        </Column>
-      )}
-    </UiEntity>
   )
 }
