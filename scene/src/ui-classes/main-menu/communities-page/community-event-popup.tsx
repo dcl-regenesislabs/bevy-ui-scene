@@ -147,7 +147,7 @@ function CommunityEventPopupContent({
               uiTransform={{
                 width: '100%',
                 padding: 0,
-                margin: { top: -fontSizeTitle / 2, bottom: -fontSizeTitle / 2 }
+                margin: { top: -fontSize / 2, bottom: -fontSizeTitle / 2 }
               }}
               uiText={{
                 value: `<b>${event.name}</b>`,
@@ -178,8 +178,11 @@ function CommunityEventPopupContent({
               event={event}
               uiTransform={{
                 margin: {
-                  left: fontSize
-                }
+                  left: fontSize,
+                  top: fontSize / 2,
+                  bottom: -fontSize / 2
+                },
+                padding: { bottom: -fontSize / 2 }
               }}
             />
           </Column>
