@@ -28,6 +28,7 @@ import { Color4 } from '@dcl/sdk/math'
 import { cancelBrowseLoad, CommunitiesCatalog } from './communities-catalog'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
+import { BottomBorder, TopBorder } from '../../../components/bottom-border'
 
 export default class CommunitiesPage {
   mainUi(): ReactElement {
@@ -130,15 +131,46 @@ function CommunitiesContent(): ReactElement {
           <UiEntity
             uiTransform={{
               width: '100%',
+              padding: 0,
+              flexShrink: 0,
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: COLOR.RED
+            }}
+          >
+            <UiEntity
+              uiText={{
+                value: `<b>Invites & Requests</b>`,
+                fontSize,
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left'
+              }}
+            />
+            <UiEntity uiTransform={{ flexGrow: 1 }} />
+            <Icon
+              icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
+              iconColor={COLOR.LINK_COLOR}
+              iconSize={fontSize}
+            />
+            <BottomBorder
+              color={COLOR.WHITE_OPACITY_1}
+              uiTransform={{
+                height: 1,
+                width: '111%',
+                margin: { left: -fontSize }
+              }}
+            />
+          </UiEntity>
+
+          <UiEntity
+            uiTransform={{
+              width: '100%',
               margin: { bottom: fontSize },
               flexShrink: 0
             }}
             uiText={{
               value: '<b>My Communities</b>',
-              fontSize: getFontSize({
-                context: CONTEXT.SIDE,
-                token: TYPOGRAPHY_TOKENS.BODY
-              }),
+              fontSize,
               color: COLOR.TEXT_COLOR_WHITE,
               textAlign: 'top-left'
             }}
