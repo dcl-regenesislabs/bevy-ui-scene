@@ -70,9 +70,7 @@ function EventItem({
         width: '100%',
         alignItems: 'flex-start',
         margin: { top: fontSize / 2 },
-        borderWidth: 1,
-        borderColor: COLOR.RED,
-        height: thumbHeight
+        height: thumbHeight + fontSize / 2
       }}
       onMouseDown={() => {
         console.log('event', event)
@@ -87,12 +85,11 @@ function EventItem({
       <UiEntity
         uiTransform={{
           width: thumbHeight * 1.5,
-          height: thumbHeight,
+          height: thumbHeight - fontSize,
           borderRadius: fontSize / 2,
           flexShrink: 0,
-          margin: { right: fontSize * 0.5 },
-          borderWidth: 1,
-          borderColor: COLOR.YELLOW
+          flexGrow: 0,
+          margin: { right: fontSize * 0.5 }
         }}
         uiBackground={{
           textureMode: 'stretch',
@@ -102,7 +99,7 @@ function EventItem({
       <Column
         uiTransform={{
           flexGrow: 1,
-          flexShrink: 1,
+          flexShrink: 0,
           alignItems: 'flex-start'
         }}
       >
