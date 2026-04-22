@@ -9,7 +9,10 @@ import {
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
 import { executeTask } from '@dcl/sdk/ecs'
-import { fetchMyCommunities } from '../../../utils/communities-promise-utils'
+import {
+  fetchMyCommunities,
+  fetchUserInviteRequests
+} from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import {
   type CommunityListItem,
@@ -25,10 +28,15 @@ import { getMainMenuHeight } from '../MainMenu'
 import Icon from '../../../components/icon/Icon'
 import { debounce } from '../../../utils/dcl-utils'
 import { Color4 } from '@dcl/sdk/math'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { cancelBrowseLoad, CommunitiesCatalog } from './communities-catalog'
+import { CommunityInvitesAndRequests } from './community-invites-and-requests'
+import { CommunityMyCommunities } from './community-my-communities'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
-import { BottomBorder, TopBorder } from '../../../components/bottom-border'
+import { BottomBorder } from '../../../components/bottom-border'
 
 export default class CommunitiesPage {
   mainUi(): ReactElement {
@@ -38,14 +46,33 @@ export default class CommunitiesPage {
 
 function CommunitiesContent(): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeCaption = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.CAPTION
+  })
   const [myCommunities, setMyCommunities] = useState<CommunityListItem[]>([])
   const [loadingSidebar, setLoadingSidebar] = useState<boolean>(true)
   const [searchText, setSearchText] = useState<string>('')
   const [debouncedSearch, setDebouncedSearch] = useState<string>('')
+  const [view, setView] = useState<'catalog' | 'invites' | 'my-communities'>(
+    'catalog'
+  )
+  const [pendingInvitesCount, setPendingInvitesCount] = useState<number>(0)
 
   const onSearchChange = debounce((text: string) => {
     setDebouncedSearch(text)
   }, 600)
+
+  const refreshPendingInvites = (): void => {
+    executeTask(async () => {
+      try {
+        const invites = await fetchUserInviteRequests('invite')
+        setPendingInvitesCount(invites.length)
+      } catch (error) {
+        console.error('[communities] failed to load pending invites', error)
+      }
+    })
+  }
 
   useEffect(() => {
     executeTask(async () => {
@@ -57,6 +84,7 @@ function CommunitiesContent(): ReactElement {
       }
       setLoadingSidebar(false)
     })
+    refreshPendingInvites()
 
     return () => {
       cancelBrowseLoad()
@@ -133,9 +161,10 @@ function CommunitiesContent(): ReactElement {
               width: '100%',
               padding: 0,
               flexShrink: 0,
-              alignItems: 'center',
-              borderWidth: 1,
-              borderColor: COLOR.RED
+              alignItems: 'center'
+            }}
+            onMouseDown={() => {
+              setView('invites')
             }}
           >
             <UiEntity
@@ -147,6 +176,23 @@ function CommunitiesContent(): ReactElement {
               }}
             />
             <UiEntity uiTransform={{ flexGrow: 1 }} />
+            {pendingInvitesCount > 0 && (
+              <UiEntity
+                uiTransform={{
+                  borderRadius: 99,
+                  height: fontSize,
+                  width: fontSize
+                }}
+                uiBackground={{
+                  color: COLOR.LINK_COLOR
+                }}
+                uiText={{
+                  value: `${pendingInvitesCount}`,
+                  fontSize: fontSizeCaption
+                }}
+              />
+            )}
+
             <Icon
               icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
               iconColor={COLOR.LINK_COLOR}
@@ -173,6 +219,9 @@ function CommunitiesContent(): ReactElement {
               fontSize,
               color: COLOR.TEXT_COLOR_WHITE,
               textAlign: 'top-left'
+            }}
+            onMouseDown={() => {
+              setView('my-communities')
             }}
           />
           {loadingSidebar ? (
@@ -206,6 +255,14 @@ function CommunitiesContent(): ReactElement {
                         top: fontSize * 0.3,
                         bottom: fontSize * 0.3
                       }
+                    }}
+                    onMouseDown={() => {
+                      store.dispatch(
+                        pushPopupAction({
+                          type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+                          data: community
+                        })
+                      )
                     }}
                   >
                     <UiEntity
@@ -248,7 +305,7 @@ function CommunitiesContent(): ReactElement {
           )}
         </Column>
 
-        {/* Right content - Browse */}
+        {/* Right content - Browse or Invites & Requests */}
         <Column
           uiTransform={{
             width: '78%',
@@ -260,7 +317,26 @@ function CommunitiesContent(): ReactElement {
             }
           }}
         >
-          <CommunitiesCatalog searchText={debouncedSearch} />
+          {view === 'catalog' && (
+            <CommunitiesCatalog searchText={debouncedSearch} />
+          )}
+          {view === 'invites' && (
+            <CommunityInvitesAndRequests
+              onBack={() => {
+                setView('catalog')
+                refreshPendingInvites()
+              }}
+            />
+          )}
+          {view === 'my-communities' && (
+            <CommunityMyCommunities
+              communities={myCommunities}
+              loading={loadingSidebar}
+              onBack={() => {
+                setView('catalog')
+              }}
+            />
+          )}
         </Column>
       </ResponsiveContent>
     </MainContent>

@@ -101,11 +101,40 @@ export type CommunityPost = {
   isLikedByUser: boolean
 }
 
+/** POST /communities/{id}/requests — type of invite/request to create */
+export type InviteRequestAction = 'invite' | 'request_to_join'
+
+/** PATCH /communities/{id}/requests/{requestId} — intention body */
+export type InviteRequestIntention = 'accepted' | 'rejected' | 'cancelled'
+
+/** Entry returned by GET /members/{address}/requests?type=… */
+export type UserInviteRequest = {
+  id: string
+  communityId: string
+  memberAddress: string
+  type: InviteRequestAction
+  status: string
+  name: string
+  description: string
+  ownerAddress: string
+  ownerName: string
+  role: CommunityMemberRole
+  privacy: CommunityPrivacy
+  active: boolean
+  membersCount: number
+  friends?: CommunityFriendInfo[]
+  thumbnailUrl?: string
+}
+
 // API base URLs
 export const COMMUNITIES_BASE_URL =
   'https://social-api.decentraland.org/v1/communities'
 export const COMMUNITIES_TEST_BASE_URL =
   'https://social-api.decentraland.zone/v1/communities'
+export const MEMBERS_BASE_URL =
+  'https://social-api.decentraland.org/v1/members'
+export const MEMBERS_TEST_BASE_URL =
+  'https://social-api.decentraland.zone/v1/members'
 
 export function getCommunityThumbnailUrl(communityId: string): string {
   return `https://assets-cdn.decentraland.org/social/communities/${communityId}/raw-thumbnail.png`

@@ -36,7 +36,7 @@ function CommunityViewContent({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.LABEL
   })
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(1)
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(0)
 
   const COMMUNITY_TABS: Tab[] = [
     { text: '  ANNOUNCEMENTS  ' },

@@ -3,13 +3,18 @@ import type { SignedFetchMeta } from '../bevy-api/interface'
 import {
   COMMUNITIES_BASE_URL,
   COMMUNITIES_TEST_BASE_URL,
+  MEMBERS_BASE_URL,
+  MEMBERS_TEST_BASE_URL,
   type CommunityData,
   type CommunityListItem,
   type CommunityMember,
   type CommunityPost,
   type GetCommunitiesParams,
   type GetMembersParams,
-  type PaginatedResponse
+  type InviteRequestAction,
+  type InviteRequestIntention,
+  type PaginatedResponse,
+  type UserInviteRequest
 } from '../service/communities-types'
 import { getRealm } from '~system/Runtime'
 import { LOCAL_PREVIEW_REALM_NAME } from './constants'
@@ -19,12 +24,14 @@ import {
   type PlaceFromApi
 } from '../ui-classes/scene-info-card/SceneInfoCard.types'
 import { fetchPlaceFromApi } from './promise-utils'
+import { getPlayer } from '@dcl/sdk/src/players'
 
 const emptyMeta: SignedFetchMeta = {}
 const meta: string = JSON.stringify(emptyMeta)
 
 const state = {
   baseURL: COMMUNITIES_BASE_URL,
+  membersBaseURL: MEMBERS_BASE_URL,
   initialized: false
 }
 
@@ -33,10 +40,16 @@ async function resolveBaseURL(): Promise<string> {
     const { realmInfo } = await getRealm({})
     if (realmInfo?.realmName === LOCAL_PREVIEW_REALM_NAME) {
       state.baseURL = COMMUNITIES_TEST_BASE_URL
+      state.membersBaseURL = MEMBERS_TEST_BASE_URL
     }
     state.initialized = true
   }
   return state.baseURL
+}
+
+async function resolveMembersBaseURL(): Promise<string> {
+  await resolveBaseURL()
+  return state.membersBaseURL
 }
 
 async function signedGet(url: string): Promise<any> {
@@ -81,6 +94,23 @@ async function signedDelete(url: string): Promise<void> {
     init: {
       headers: { 'Content-Type': 'application/json' },
       method: 'DELETE'
+    },
+    meta
+  })
+  if (!result.ok) {
+    throw new Error(
+      `HTTP ${result.status}: ${result.statusText || result.body}`
+    )
+  }
+}
+
+async function signedPatch(url: string, body?: object): Promise<void> {
+  const result = await BevyApi.kernelFetch({
+    url,
+    init: {
+      headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH',
+      body: body != null ? JSON.stringify(body) : undefined
     },
     meta
   })
@@ -340,4 +370,37 @@ export async function fetchCommunityPosts(
   )
   postsCache.set(cacheKey, result)
   return result
+}
+
+// --- Invites & requests ---
+
+/**
+ * GET /members/{me}/requests?type=invite|request_to_join
+ * Returns the communities that have invited me (when `type='invite'`) or
+ * the ones I've requested to join (when `type='request_to_join'`).
+ */
+export async function fetchUserInviteRequests(
+  type: InviteRequestAction
+): Promise<UserInviteRequest[]> {
+  const membersBase = await resolveMembersBaseURL()
+  const address = (getPlayer()?.userId ?? '').toLowerCase()
+  if (address.length === 0) return []
+  const response: { results: UserInviteRequest[]; total: number } =
+    await signedGet(`${membersBase}/${address}/requests?type=${type}`)
+  return response.results ?? []
+}
+
+/**
+ * PATCH /communities/{communityId}/requests/{requestId}
+ * Used to accept/reject an invite, or cancel a request I sent.
+ */
+export async function manageInviteRequest(
+  communityId: string,
+  requestId: string,
+  intention: InviteRequestIntention
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedPatch(`${base}/${communityId}/requests/${requestId}`, {
+    intention
+  })
 }
