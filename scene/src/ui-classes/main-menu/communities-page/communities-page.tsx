@@ -222,19 +222,65 @@ function CommunitiesContent(): ReactElement {
           <UiEntity
             uiTransform={{
               width: '100%',
-              margin: { bottom: fontSize },
-              flexShrink: 0
+              padding: 0,
+              flexShrink: 0,
+              alignItems: 'center'
             }}
-            uiText={{
-              value: '<b>My Communities</b>',
-              fontSize,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'top-left'
+            onMouseDown={() => {
+              setView('catalog')
+            }}
+          >
+            <UiEntity
+              uiText={{
+                value: '<b>Browse Communities</b>',
+                fontSize,
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left'
+              }}
+            />
+            <UiEntity uiTransform={{ flexGrow: 1 }} />
+            <Icon
+              icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
+              iconColor={COLOR.LINK_COLOR}
+              iconSize={fontSize}
+            />
+            <BottomBorder
+              color={COLOR.WHITE_OPACITY_1}
+              uiTransform={{
+                height: 1,
+                width: '111%',
+                margin: { left: -fontSize }
+              }}
+            />
+          </UiEntity>
+
+          <UiEntity
+            uiTransform={{
+              width: '100%',
+              padding: 0,
+              margin: { bottom: fontSize },
+              flexShrink: 0,
+              alignItems: 'center'
             }}
             onMouseDown={() => {
               setView('my-communities')
             }}
-          />
+          >
+            <UiEntity
+              uiText={{
+                value: '<b>My Communities</b>',
+                fontSize,
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left'
+              }}
+            />
+            <UiEntity uiTransform={{ flexGrow: 1 }} />
+            <Icon
+              icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
+              iconColor={COLOR.LINK_COLOR}
+              iconSize={fontSize}
+            />
+          </UiEntity>
           {loadingSidebar ? (
             <LoadingPlaceholder
               uiTransform={{
