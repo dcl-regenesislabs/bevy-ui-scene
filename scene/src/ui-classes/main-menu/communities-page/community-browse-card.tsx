@@ -3,6 +3,7 @@ import { COLOR } from '../../../components/color-palette'
 import { Column } from '../../../components/layout'
 import {
   type CommunityListItem,
+  type CommunityMemberRole,
   getCommunityThumbnailUrl
 } from '../../../service/communities-types'
 import {
@@ -16,6 +17,15 @@ import { CommunityPublicAndMembersSpan } from './community-public-and-members-sp
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
+import {
+  joinCommunity,
+  sendInviteOrRequestToJoin
+} from '../../../utils/communities-promise-utils'
+import { getPlayer } from '@dcl/sdk/players'
+import { executeTask } from '@dcl/sdk/ecs'
+import { showErrorPopup } from '../../../service/error-popup-service'
+import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
+import useState = ReactEcs.useState
 
 export const BROWSE_CARD_WIDTH = (): number => getContentScaleRatio() * 400
 export const BROWSE_CARD_HEIGHT = (): number => getContentScaleRatio() * 600
@@ -23,18 +33,22 @@ export const BROWSE_CARD_HEIGHT = (): number => getContentScaleRatio() * 600
 const COMMUNITY_CARD_BUTTON_LABEL = {
   VIEW: 'VIEW',
   REQUEST_TO_JOIN: 'REQUEST TO JOIN',
+  REQUESTED: 'REQUESTED',
   JOIN: 'JOIN'
 }
-function getActionLabel(community: CommunityListItem): string {
-  if (
-    community.role === 'member' ||
-    community.role === 'moderator' ||
-    community.role === 'owner'
-  ) {
+
+function getActionLabel(
+  role: CommunityMemberRole,
+  privacy: CommunityListItem['privacy'],
+  requested: boolean
+): string {
+  if (role === 'member' || role === 'moderator' || role === 'owner') {
     return COMMUNITY_CARD_BUTTON_LABEL.VIEW
   }
-  if (community.privacy === 'private') {
-    return COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN
+  if (privacy === 'private') {
+    return requested
+      ? COMMUNITY_CARD_BUTTON_LABEL.REQUESTED
+      : COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN
   }
   return COMMUNITY_CARD_BUTTON_LABEL.JOIN
 }
@@ -56,7 +70,71 @@ export function CommunityBrowseCard({
   })
   const cardWidth = BROWSE_CARD_WIDTH()
   const cardHeight = BROWSE_CARD_HEIGHT()
-  const buttonLabel = getActionLabel(community)
+  const [role, setRole] = useState<CommunityMemberRole>(community.role)
+  const [requested, setRequested] = useState<boolean>(false)
+  const [acting, setActing] = useState<boolean>(false)
+  const buttonLabel = getActionLabel(role, community.privacy, requested)
+
+  const onButtonClick = (): void => {
+    if (acting) return
+    if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.VIEW) {
+      store.dispatch(
+        pushPopupAction({
+          type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+          data: community
+        })
+      )
+      return
+    }
+    if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.REQUESTED) {
+      // Already requested — no action.
+      return
+    }
+    if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.JOIN) {
+      const previous = role
+      setRole('member') // optimistic
+      setActing(true)
+      executeTask(async () => {
+        try {
+          await joinCommunity(community.id)
+          // Mutate the prop so the catalog cache stays consistent.
+          community.role = 'member'
+        } catch (error) {
+          setRole(previous)
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            'joinCommunity'
+          )
+        } finally {
+          setActing(false)
+        }
+      })
+      return
+    }
+    if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN) {
+      const myAddress = (getPlayer()?.userId ?? '').toLowerCase()
+      if (myAddress.length === 0) return
+      setRequested(true) // optimistic
+      setActing(true)
+      executeTask(async () => {
+        try {
+          await sendInviteOrRequestToJoin(
+            community.id,
+            myAddress,
+            'request_to_join'
+          )
+        } catch (error) {
+          setRequested(false)
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            'requestToJoinCommunity'
+          )
+        } finally {
+          setActing(false)
+        }
+      })
+    }
+  }
 
   return (
     <Column
@@ -152,7 +230,8 @@ export function CommunityBrowseCard({
             buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.JOIN
               ? COLOR.BLACK_TRANSPARENT
               : COLOR.WHITE,
-          margin: { top: fontSizeSmall / 2 }
+          margin: { top: fontSizeSmall / 2 },
+          opacity: acting ? getLoadingAlphaValue() : 1
         }}
         uiBackground={{
           color:
@@ -160,16 +239,7 @@ export function CommunityBrowseCard({
               ? COLOR.WHITE_OPACITY_1
               : COLOR.BLACK_TRANSPARENT
         }}
-        onMouseDown={() => {
-          if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.VIEW) {
-            store.dispatch(
-              pushPopupAction({
-                type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
-                data: community
-              })
-            )
-          }
-        }}
+        onMouseDown={onButtonClick}
         uiText={{
           value: `<b>${buttonLabel}</b>`,
           fontSize: fontSizeSmall

@@ -404,3 +404,20 @@ export async function manageInviteRequest(
     intention
   })
 }
+
+/**
+ * POST /communities/{communityId}/requests
+ * Sends an invite to another address (`action='invite'`) or requests to join
+ * a private community for the current user (`action='request_to_join'`).
+ */
+export async function sendInviteOrRequestToJoin(
+  communityId: string,
+  targetedAddress: string,
+  action: InviteRequestAction
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedPost(`${base}/${communityId}/requests`, {
+    targetedAddress,
+    type: action
+  })
+}
