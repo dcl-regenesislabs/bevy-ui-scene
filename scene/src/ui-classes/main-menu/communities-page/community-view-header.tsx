@@ -3,6 +3,7 @@ import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
 import {
   type CommunityListItem,
+  type CommunityMemberRole,
   getCommunityThumbnailUrl
 } from '../../../service/communities-types'
 import {
@@ -12,6 +13,22 @@ import {
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { CommunityPublicAndMembersSpan } from './community-public-and-members-span'
+import { ButtonTextIcon } from '../../../components/button-text-icon'
+import { executeTask } from '@dcl/sdk/ecs'
+import { getPlayer } from '@dcl/sdk/players'
+import {
+  fetchUserInviteRequests,
+  invalidateUserInviteRequestsCache,
+  joinCommunity,
+  leaveCommunity,
+  manageInviteRequest,
+  sendInviteOrRequestToJoin
+} from '../../../utils/communities-promise-utils'
+import { showErrorPopup } from '../../../service/error-popup-service'
+import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
+import { notifyCommunitiesChanged } from '../../../service/communities-events'
+import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 
 export function CommunityViewHeader({
   community
@@ -30,10 +47,145 @@ export function CommunityViewHeader({
   const scale = getContentScaleRatio()
   const borderRadius = scale * 30
   const thumbnailSize = scale * 300
+
+  const [role, setRole] = useState<CommunityMemberRole>(community.role)
+  const [requestId, setRequestId] = useState<string | null>(null)
+  const [acting, setActing] = useState<boolean>(false)
+  const [hovering, setHovering] = useState<boolean>(false)
+
   const isMember =
-    community.role === 'member' ||
-    community.role === 'moderator' ||
-    community.role === 'owner'
+    role === 'member' || role === 'moderator' || role === 'owner'
+  const requested = requestId != null
+
+  // On mount, look up whether the user has an open `request_to_join` for
+  // this community so the button starts as "CANCEL REQUEST" instead of
+  // "REQUEST TO JOIN" when reopening the popup.
+  useEffect(() => {
+    if (isMember || community.privacy !== 'private') return
+    executeTask(async () => {
+      try {
+        const requests = await fetchUserInviteRequests('request_to_join')
+        const match = requests.find((r) => r.communityId === community.id)
+        if (match != null) setRequestId(match.id)
+      } catch (error) {
+        console.error('[communities] failed to load my requests', error)
+      }
+    })
+  }, [])
+
+  const onJoin = (): void => {
+    if (acting) return
+    const previous = role
+    setRole('member')
+    setActing(true)
+    executeTask(async () => {
+      try {
+        await joinCommunity(community.id)
+        community.role = 'member'
+        notifyCommunitiesChanged()
+      } catch (error) {
+        setRole(previous)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'joinCommunity'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
+
+  const onLeave = (): void => {
+    if (acting) return
+    const previous = role
+    const myAddress = (getPlayer()?.userId ?? '').toLowerCase()
+    if (myAddress.length === 0) return
+    setRole('none')
+    setHovering(false)
+    setActing(true)
+    executeTask(async () => {
+      try {
+        await leaveCommunity(community.id, myAddress)
+        community.role = 'none'
+        notifyCommunitiesChanged()
+      } catch (error) {
+        setRole(previous)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'leaveCommunity'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
+
+  const onRequestToJoin = (): void => {
+    if (acting) return
+    const myAddress = (getPlayer()?.userId ?? '').toLowerCase()
+    if (myAddress.length === 0) return
+    setActing(true)
+    executeTask(async () => {
+      try {
+        await sendInviteOrRequestToJoin(
+          community.id,
+          myAddress,
+          'request_to_join'
+        )
+        invalidateUserInviteRequestsCache()
+        // Look up the freshly-created request id so the button can offer
+        // "CANCEL REQUEST" without waiting for the user to reopen.
+        try {
+          const requests = await fetchUserInviteRequests('request_to_join')
+          const match = requests.find((r) => r.communityId === community.id)
+          setRequestId(match?.id ?? 'pending')
+        } catch {
+          // If we can't resolve the id, fall back to a placeholder so the
+          // UI still flips to "CANCEL REQUEST" — the cancel call would
+          // require a real id, so we'll re-fetch on click.
+          setRequestId('pending')
+        }
+        notifyCommunitiesChanged()
+      } catch (error) {
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'requestToJoinCommunity'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
+
+  const onCancelRequest = (): void => {
+    if (acting || requestId == null) return
+    const previousId = requestId
+    setRequestId(null)
+    setActing(true)
+    executeTask(async () => {
+      try {
+        // If we only have the placeholder, resolve the real id first.
+        let idToCancel = previousId
+        if (idToCancel === 'pending') {
+          const requests = await fetchUserInviteRequests('request_to_join')
+          const match = requests.find((r) => r.communityId === community.id)
+          if (match == null) return
+          idToCancel = match.id
+        }
+        await manageInviteRequest(community.id, idToCancel, 'cancelled')
+        invalidateUserInviteRequestsCache()
+        notifyCommunitiesChanged()
+      } catch (error) {
+        setRequestId(previousId)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'cancelRequestToJoin'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
 
   return (
     <Row
@@ -114,26 +266,100 @@ export function CommunityViewHeader({
             }}
           />
         </UiEntity>
-
-        {/*{isMember && (
-          <UiEntity
-            uiTransform={{
-              padding: {
-                left: fontSize,
-                right: fontSize,
-                top: fontSize * 0.3,
-                bottom: fontSize * 0.3
-              },
-              alignSelf: 'flex-start',
-              margin: { top: fontSize * 0.5 }
-            }}
-            uiText={{
-              value: '<b>JOINED</b>',
-              fontSize: fontSizeSmall,
-              color: COLOR.TEXT_COLOR_WHITE
-            }}
-          />
-        )}*/}
+        <Row
+          uiTransform={{
+            width: 'auto',
+            flexGrow: 0,
+            positionType: 'absolute',
+            position: { top: 0, right: 0 }
+          }}
+        >
+          {isMember ? (
+            <ButtonTextIcon
+              value={hovering ? '<b>LEAVE</b>' : '<b>JOINED</b>'}
+              icon={
+                hovering
+                  ? { spriteName: 'LogoutIcon', atlasName: 'icons' }
+                  : { spriteName: 'Check', atlasName: 'icons' }
+              }
+              fontSize={fontSizeSmall}
+              fontColor={COLOR.WHITE}
+              iconColor={COLOR.WHITE}
+              backgroundColor={
+                hovering ? COLOR.BUTTON_PRIMARY : COLOR.BLACK_TRANSPARENT
+              }
+              uiTransform={{
+                borderWidth: fontSize / 10,
+                borderColor: COLOR.WHITE,
+                borderRadius: fontSize / 2,
+                padding: {
+                  left: fontSize * 0.6,
+                  right: fontSize * 0.8,
+                  top: fontSize * 0.3,
+                  bottom: fontSize * 0.3
+                },
+                opacity: acting ? getLoadingAlphaValue() : 1
+              }}
+              onMouseEnter={() => {
+                setHovering(true)
+              }}
+              onMouseLeave={() => {
+                setHovering(false)
+              }}
+              onMouseDown={onLeave}
+            />
+          ) : community.privacy === 'private' ? (
+            <ButtonTextIcon
+              value={
+                requested ? '<b>CANCEL REQUEST</b>' : '<b>REQUEST TO JOIN</b>'
+              }
+              icon={
+                requested
+                  ? { spriteName: 'CloseIcon', atlasName: 'icons' }
+                  : { spriteName: 'Add', atlasName: 'context' }
+              }
+              fontSize={fontSizeSmall}
+              fontColor={COLOR.WHITE}
+              iconColor={COLOR.WHITE}
+              backgroundColor={
+                requested ? COLOR.BLACK_TRANSPARENT : COLOR.BUTTON_PRIMARY
+              }
+              uiTransform={{
+                borderWidth: fontSize / 10,
+                borderColor: COLOR.WHITE,
+                borderRadius: fontSize / 2,
+                padding: {
+                  left: fontSize * 0.6,
+                  right: fontSize * 0.8,
+                  top: fontSize * 0.3,
+                  bottom: fontSize * 0.3
+                },
+                opacity: acting ? getLoadingAlphaValue() : 1
+              }}
+              onMouseDown={requested ? onCancelRequest : onRequestToJoin}
+            />
+          ) : (
+            <ButtonTextIcon
+              value="<b>JOIN</b>"
+              icon={{ spriteName: 'Add', atlasName: 'context' }}
+              fontSize={fontSizeSmall}
+              fontColor={COLOR.WHITE}
+              iconColor={COLOR.WHITE}
+              backgroundColor={COLOR.BUTTON_PRIMARY}
+              uiTransform={{
+                borderRadius: fontSize / 2,
+                padding: {
+                  left: fontSize * 0.6,
+                  right: fontSize * 0.8,
+                  top: fontSize * 0.3,
+                  bottom: fontSize * 0.3
+                },
+                opacity: acting ? getLoadingAlphaValue() : 1
+              }}
+              onMouseDown={onJoin}
+            />
+          )}
+        </Row>
       </Column>
     </Row>
   )

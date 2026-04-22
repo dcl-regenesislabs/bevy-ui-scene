@@ -374,20 +374,33 @@ export async function fetchCommunityPosts(
 
 // --- Invites & requests ---
 
+const userRequestsCache = createTtlCache<UserInviteRequest[]>(60 * 1000)
+
+/** Drop the cached `fetchUserInviteRequests` results so the next call re-hits the API. */
+export function invalidateUserInviteRequestsCache(): void {
+  userRequestsCache.clear()
+}
+
 /**
  * GET /members/{me}/requests?type=invite|request_to_join
  * Returns the communities that have invited me (when `type='invite'`) or
  * the ones I've requested to join (when `type='request_to_join'`).
+ *
+ * Cached for 60 s; call `invalidateUserInviteRequestsCache()` after a write.
  */
 export async function fetchUserInviteRequests(
   type: InviteRequestAction
 ): Promise<UserInviteRequest[]> {
+  const cached = userRequestsCache.get(type)
+  if (cached != null) return cached
   const membersBase = await resolveMembersBaseURL()
   const address = (getPlayer()?.userId ?? '').toLowerCase()
   if (address.length === 0) return []
   const response: { results: UserInviteRequest[]; total: number } =
     await signedGet(`${membersBase}/${address}/requests?type=${type}`)
-  return response.results ?? []
+  const list = response.results ?? []
+  userRequestsCache.set(type, list)
+  return list
 }
 
 /**

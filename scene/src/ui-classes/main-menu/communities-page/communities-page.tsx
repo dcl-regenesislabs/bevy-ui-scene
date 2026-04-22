@@ -34,6 +34,7 @@ import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { cancelBrowseLoad, CommunitiesCatalog } from './communities-catalog'
 import { CommunityInvitesAndRequests } from './community-invites-and-requests'
 import { CommunityMyCommunities } from './community-my-communities'
+import { listenCommunitiesChanged } from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { BottomBorder } from '../../../components/bottom-border'
@@ -97,8 +98,14 @@ function CommunitiesContent(): ReactElement {
     })
     refreshPendingInvites()
 
+    const unsubscribe = listenCommunitiesChanged(() => {
+      refreshMyCommunities()
+      refreshPendingInvites()
+    })
+
     return () => {
       cancelBrowseLoad()
+      unsubscribe()
     }
   }, [])
 

@@ -18,14 +18,19 @@ import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import {
+  fetchUserInviteRequests,
+  invalidateUserInviteRequestsCache,
   joinCommunity,
+  manageInviteRequest,
   sendInviteOrRequestToJoin
 } from '../../../utils/communities-promise-utils'
 import { getPlayer } from '@dcl/sdk/players'
 import { executeTask } from '@dcl/sdk/ecs'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
+import { notifyCommunitiesChanged } from '../../../service/communities-events'
 import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 
 export const BROWSE_CARD_WIDTH = (): number => getContentScaleRatio() * 400
 export const BROWSE_CARD_HEIGHT = (): number => getContentScaleRatio() * 600
@@ -34,21 +39,24 @@ const COMMUNITY_CARD_BUTTON_LABEL = {
   VIEW: 'VIEW',
   REQUEST_TO_JOIN: 'REQUEST TO JOIN',
   REQUESTED: 'REQUESTED',
+  CANCEL_REQUEST: 'CANCEL REQUEST',
   JOIN: 'JOIN'
 }
 
 function getActionLabel(
   role: CommunityMemberRole,
   privacy: CommunityListItem['privacy'],
-  requested: boolean
+  requested: boolean,
+  hovering: boolean
 ): string {
   if (role === 'member' || role === 'moderator' || role === 'owner') {
     return COMMUNITY_CARD_BUTTON_LABEL.VIEW
   }
   if (privacy === 'private') {
-    return requested
-      ? COMMUNITY_CARD_BUTTON_LABEL.REQUESTED
-      : COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN
+    if (!requested) return COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN
+    return hovering
+      ? COMMUNITY_CARD_BUTTON_LABEL.CANCEL_REQUEST
+      : COMMUNITY_CARD_BUTTON_LABEL.REQUESTED
   }
   return COMMUNITY_CARD_BUTTON_LABEL.JOIN
 }
@@ -71,9 +79,35 @@ export function CommunityBrowseCard({
   const cardWidth = BROWSE_CARD_WIDTH()
   const cardHeight = BROWSE_CARD_HEIGHT()
   const [role, setRole] = useState<CommunityMemberRole>(community.role)
-  const [requested, setRequested] = useState<boolean>(false)
+  const [requestId, setRequestId] = useState<string | null>(null)
   const [acting, setActing] = useState<boolean>(false)
-  const buttonLabel = getActionLabel(role, community.privacy, requested)
+  const [hovering, setHovering] = useState<boolean>(false)
+  const requested = requestId != null
+  const buttonLabel = getActionLabel(
+    role,
+    community.privacy,
+    requested,
+    hovering
+  )
+
+  // Persist pending-request state across catalog mounts. Only relevant for
+  // private communities the user isn't a member of.
+  useEffect(() => {
+    const isMember =
+      community.role === 'member' ||
+      community.role === 'moderator' ||
+      community.role === 'owner'
+    if (isMember || community.privacy !== 'private') return
+    executeTask(async () => {
+      try {
+        const requests = await fetchUserInviteRequests('request_to_join')
+        const match = requests.find((r) => r.communityId === community.id)
+        if (match != null) setRequestId(match.id)
+      } catch (error) {
+        console.error('[communities] failed to load my requests', error)
+      }
+    })
+  }, [])
 
   const onButtonClick = (): void => {
     if (acting) return
@@ -86,19 +120,15 @@ export function CommunityBrowseCard({
       )
       return
     }
-    if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.REQUESTED) {
-      // Already requested — no action.
-      return
-    }
     if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.JOIN) {
       const previous = role
-      setRole('member') // optimistic
+      setRole('member')
       setActing(true)
       executeTask(async () => {
         try {
           await joinCommunity(community.id)
-          // Mutate the prop so the catalog cache stays consistent.
           community.role = 'member'
+          notifyCommunitiesChanged()
         } catch (error) {
           setRole(previous)
           showErrorPopup(
@@ -114,7 +144,6 @@ export function CommunityBrowseCard({
     if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN) {
       const myAddress = (getPlayer()?.userId ?? '').toLowerCase()
       if (myAddress.length === 0) return
-      setRequested(true) // optimistic
       setActing(true)
       executeTask(async () => {
         try {
@@ -123,11 +152,53 @@ export function CommunityBrowseCard({
             myAddress,
             'request_to_join'
           )
+          invalidateUserInviteRequestsCache()
+          // Resolve the new request id so the button can offer cancel.
+          try {
+            const requests = await fetchUserInviteRequests('request_to_join')
+            const match = requests.find((r) => r.communityId === community.id)
+            setRequestId(match?.id ?? 'pending')
+          } catch {
+            setRequestId('pending')
+          }
+          notifyCommunitiesChanged()
         } catch (error) {
-          setRequested(false)
           showErrorPopup(
             error instanceof Error ? error : new Error(String(error)),
             'requestToJoinCommunity'
+          )
+        } finally {
+          setActing(false)
+        }
+      })
+      return
+    }
+    if (
+      buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.REQUESTED ||
+      buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.CANCEL_REQUEST
+    ) {
+      const previousId = requestId
+      if (previousId == null) return
+      setRequestId(null)
+      setHovering(false)
+      setActing(true)
+      executeTask(async () => {
+        try {
+          let idToCancel = previousId
+          if (idToCancel === 'pending') {
+            const requests = await fetchUserInviteRequests('request_to_join')
+            const match = requests.find((r) => r.communityId === community.id)
+            if (match == null) return
+            idToCancel = match.id
+          }
+          await manageInviteRequest(community.id, idToCancel, 'cancelled')
+          invalidateUserInviteRequestsCache()
+          notifyCommunitiesChanged()
+        } catch (error) {
+          setRequestId(previousId)
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            'cancelRequestToJoin'
           )
         } finally {
           setActing(false)
@@ -237,9 +308,25 @@ export function CommunityBrowseCard({
           color:
             buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.JOIN
               ? COLOR.WHITE_OPACITY_1
+              : buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.CANCEL_REQUEST
+              ? COLOR.BUTTON_PRIMARY
               : COLOR.BLACK_TRANSPARENT
         }}
         onMouseDown={onButtonClick}
+        onMouseEnter={
+          requested
+            ? () => {
+                setHovering(true)
+              }
+            : undefined
+        }
+        onMouseLeave={
+          requested
+            ? () => {
+                setHovering(false)
+              }
+            : undefined
+        }
         uiText={{
           value: `<b>${buttonLabel}</b>`,
           fontSize: fontSizeSmall

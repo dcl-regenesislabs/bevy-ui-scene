@@ -15,6 +15,7 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
+import { listenCommunitiesChanged } from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -121,15 +122,26 @@ export function CommunitiesCatalog({
 
   useEffect(() => {
     startBrowseLoad(
-      undefined,
+      currentSearch.length > 0 ? currentSearch : undefined,
       setBrowseCommunities,
       setBrowseTotal,
       setLoadingBrowse,
       setLoadingMore
     )
 
+    const unsubscribe = listenCommunitiesChanged(() => {
+      startBrowseLoad(
+        currentSearch.length > 0 ? currentSearch : undefined,
+        setBrowseCommunities,
+        setBrowseTotal,
+        setLoadingBrowse,
+        setLoadingMore
+      )
+    })
+
     return () => {
       cancelBrowseLoad()
+      unsubscribe()
     }
   }, [])
 

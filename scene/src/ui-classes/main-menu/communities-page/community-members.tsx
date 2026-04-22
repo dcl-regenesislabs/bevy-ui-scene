@@ -274,7 +274,12 @@ export function CommunityMembers({
     executeTask(async () => {
       try {
         const result = await fetchCommunityMembers(communityId, { limit: 50 })
-        setMembers(result.results ?? [])
+        // Sort: claimed-name members first; preserve original order otherwise.
+        const sorted = [...(result.results ?? [])].sort((a, b) => {
+          if (a.hasClaimedName === b.hasClaimedName) return 0
+          return a.hasClaimedName ? -1 : 1
+        })
+        setMembers(sorted)
       } catch (error) {
         console.error('[communities] failed to load members', error)
       }
