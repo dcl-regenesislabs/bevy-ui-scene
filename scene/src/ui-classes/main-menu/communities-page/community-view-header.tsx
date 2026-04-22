@@ -95,17 +95,27 @@ export function CommunityViewHeader({
         <UiEntity
           uiTransform={{
             width: '100%',
-            position: { left: fontSize / 2 }
+            position: { left: fontSize / 2 },
+            height: fontSize * 5,
+            overflow: 'scroll',
+            scrollVisible: 'vertical'
           }}
-          uiText={{
-            value: `${community.description}`,
-            fontSize: fontSizeSmall,
-            color: COLOR.TEXT_COLOR_WHITE,
-            textAlign: 'top-left',
-            textWrap: 'wrap'
-          }}
-        />
-        {isMember && (
+        >
+          <UiEntity
+            uiTransform={{
+              width: '100%'
+            }}
+            uiText={{
+              value: `${community.description}`,
+              fontSize: fontSizeSmall,
+              color: COLOR.TEXT_COLOR_WHITE,
+              textAlign: 'top-left',
+              textWrap: 'wrap'
+            }}
+          />
+        </UiEntity>
+
+        {/*{isMember && (
           <UiEntity
             uiTransform={{
               padding: {
@@ -123,7 +133,7 @@ export function CommunityViewHeader({
               color: COLOR.TEXT_COLOR_WHITE
             }}
           />
-        )}
+        )}*/}
       </Column>
     </Row>
   )
