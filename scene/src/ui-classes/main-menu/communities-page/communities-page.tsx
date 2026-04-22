@@ -74,6 +74,17 @@ function CommunitiesContent(): ReactElement {
     })
   }
 
+  const refreshMyCommunities = (): void => {
+    executeTask(async () => {
+      try {
+        const result = await fetchMyCommunities()
+        setMyCommunities(result.results)
+      } catch (error) {
+        console.error('[communities] failed to refresh my communities', error)
+      }
+    })
+  }
+
   useEffect(() => {
     executeTask(async () => {
       try {
@@ -326,6 +337,11 @@ function CommunitiesContent(): ReactElement {
                 setView('catalog')
                 refreshPendingInvites()
               }}
+              onInviteAccepted={() => {
+                refreshPendingInvites()
+                refreshMyCommunities()
+              }}
+              onInviteRejected={refreshPendingInvites}
             />
           )}
           {view === 'my-communities' && (

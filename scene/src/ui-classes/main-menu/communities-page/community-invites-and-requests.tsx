@@ -13,8 +13,12 @@ import {
 } from '../../../utils/communities-promise-utils'
 import {
   getCommunityThumbnailUrl,
+  type CommunityListItem,
   type UserInviteRequest
 } from '../../../service/communities-types'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import Icon from '../../../components/icon/Icon'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
@@ -25,9 +29,13 @@ import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
 export function CommunityInvitesAndRequests({
-  onBack
+  onBack,
+  onInviteAccepted,
+  onInviteRejected
 }: {
   onBack: () => void
+  onInviteAccepted?: () => void
+  onInviteRejected?: () => void
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeTitle = getFontSize({
@@ -137,6 +145,7 @@ export function CommunityInvitesAndRequests({
                   try {
                     await manageInviteRequest(invite.communityId, id, 'accepted')
                     removeFromList('invites', id)
+                    onInviteAccepted?.()
                   } catch (error) {
                     showErrorPopup(
                       error instanceof Error
@@ -152,6 +161,7 @@ export function CommunityInvitesAndRequests({
                   try {
                     await manageInviteRequest(invite.communityId, id, 'rejected')
                     removeFromList('invites', id)
+                    onInviteRejected?.()
                   } catch (error) {
                     showErrorPopup(
                       error instanceof Error
@@ -256,6 +266,30 @@ function InviteCard({
       ? item.thumbnailUrl
       : null) ?? getCommunityThumbnailUrl(item.communityId)
 
+  const openCommunityView = (): void => {
+    // Adapt UserInviteRequest → CommunityListItem so the popup can render it.
+    const community: CommunityListItem = {
+      id: item.communityId,
+      name: item.name,
+      description: item.description,
+      thumbnailUrl: thumbUrl,
+      ownerAddress: item.ownerAddress,
+      ownerName: item.ownerName,
+      privacy: item.privacy,
+      visibility: 'all',
+      role: item.role,
+      membersCount: item.membersCount,
+      active: item.active,
+      friends: item.friends ?? []
+    }
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+        data: community
+      })
+    )
+  }
+
   return (
     <Column
       uiTransform={{
@@ -267,6 +301,7 @@ function InviteCard({
         opacity: acting ? getLoadingAlphaValue() : 1
       }}
       uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+      onMouseDown={openCommunityView}
     >
       {/* Thumbnail */}
       <UiEntity
