@@ -21,9 +21,13 @@ import {
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import { notifyCommunitiesChanged } from '../../../service/communities-events'
-import { createCommunity } from '../../../utils/communities-promise-utils'
+import {
+  createCommunity,
+  updateCommunity
+} from '../../../utils/communities-promise-utils'
 import {
   CommunityModerationError,
+  type CommunityListItem,
   type CommunityPrivacy,
   type CommunityVisibility
 } from '../../../service/communities-types'
@@ -109,7 +113,11 @@ function FieldHelp({
   )
 }
 
-const CreateCommunityContent = (): ReactElement => {
+const CommunityFormContent = ({
+  editing
+}: {
+  editing?: CommunityListItem
+}): ReactElement => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
@@ -124,10 +132,17 @@ const CreateCommunityContent = (): ReactElement => {
     token: TYPOGRAPHY_TOKENS.CAPTION
   })
 
-  const [name, setName] = useState<string>('')
-  const [description, setDescription] = useState<string>('')
-  const [privacy, setPrivacy] = useState<CommunityPrivacy>('public')
-  const [visibility, setVisibility] = useState<CommunityVisibility>('all')
+  const isEdit = editing != null
+  const [name, setName] = useState<string>(editing?.name ?? '')
+  const [description, setDescription] = useState<string>(
+    editing?.description ?? ''
+  )
+  const [privacy, setPrivacy] = useState<CommunityPrivacy>(
+    editing?.privacy ?? 'public'
+  )
+  const [visibility, setVisibility] = useState<CommunityVisibility>(
+    editing?.visibility ?? 'all'
+  )
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [issues, setIssues] = useState<{ name?: string; description?: string }>(
     {}
@@ -135,26 +150,48 @@ const CreateCommunityContent = (): ReactElement => {
 
   const trimmedName = name.trim()
   const trimmedDescription = description.trim()
+  const hasChanges =
+    !isEdit ||
+    trimmedName !== editing.name ||
+    trimmedDescription !== editing.description ||
+    privacy !== editing.privacy ||
+    visibility !== editing.visibility
   const canSubmit =
     !submitting &&
     trimmedName.length > 0 &&
     trimmedDescription.length > 0 &&
-    trimmedDescription.length <= DESCRIPTION_MAX
+    trimmedDescription.length <= DESCRIPTION_MAX &&
+    hasChanges
 
-  const onCreate = (): void => {
+  const onSubmit = (): void => {
     if (!canSubmit) return
     setIssues({})
     setSubmitting(true)
     executeTask(async () => {
       try {
-        await createCommunity({
-          name: trimmedName,
-          description: trimmedDescription,
-          privacy,
-          visibility
-        })
+        if (isEdit) {
+          await updateCommunity(editing.id, {
+            name: trimmedName,
+            description: trimmedDescription,
+            privacy,
+            visibility
+          })
+        } else {
+          await createCommunity({
+            name: trimmedName,
+            description: trimmedDescription,
+            privacy,
+            visibility
+          })
+        }
         notifyCommunitiesChanged()
+        // Close the form. On edit, also close the underlying community-view
+        // popup so the next open reads fresh data — we can't mutate the
+        // frozen popup payload in place.
         store.dispatch(closeLastPopupAction())
+        if (isEdit) {
+          store.dispatch(closeLastPopupAction())
+        }
       } catch (error) {
         if (error instanceof CommunityModerationError) {
           setIssues({
@@ -164,7 +201,7 @@ const CreateCommunityContent = (): ReactElement => {
         } else {
           showErrorPopup(
             error instanceof Error ? error : new Error(String(error)),
-            'createCommunity'
+            isEdit ? 'updateCommunity' : 'createCommunity'
           )
         }
       } finally {
@@ -188,7 +225,7 @@ const CreateCommunityContent = (): ReactElement => {
           margin: { bottom: fontSize * 1.5 }
         }}
         uiText={{
-          value: '<b>Create a Community</b>',
+          value: isEdit ? '<b>Edit Community</b>' : '<b>Create a Community</b>',
           fontSize: fontSizeTitle,
           color: COLOR.WHITE,
           textAlign: 'top-left'
@@ -387,11 +424,11 @@ const CreateCommunityContent = (): ReactElement => {
           }}
           uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
           uiText={{
-            value: '<b>CREATE</b>',
+            value: isEdit ? '<b>SAVE CHANGES</b>' : '<b>CREATE</b>',
             fontSize,
             color: COLOR.WHITE
           }}
-          onMouseDown={onCreate}
+          onMouseDown={onSubmit}
         />
       </Row>
 
@@ -434,8 +471,10 @@ const CreateCommunityContent = (): ReactElement => {
   )
 }
 
-export const CreateCommunityPopup: Popup = () => {
+export const CreateCommunityPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  // When `data` is provided, the form opens in edit mode.
+  const editing = shownPopup.data as CommunityListItem | undefined
   return (
     <PopupBackdrop>
       <UiEntity
@@ -456,7 +495,7 @@ export const CreateCommunityPopup: Popup = () => {
         uiBackground={{ color: POPUP_BACKGROUND }}
         onMouseDown={noop}
       >
-        <CreateCommunityContent />
+        <CommunityFormContent editing={editing} />
       </UiEntity>
     </PopupBackdrop>
   )

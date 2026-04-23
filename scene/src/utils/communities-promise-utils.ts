@@ -134,7 +134,8 @@ async function signedPatch(url: string, body?: object): Promise<void> {
  */
 async function signedMultipartTextOnly(
   url: string,
-  fields: Record<string, string>
+  fields: Record<string, string>,
+  method: 'POST' | 'PUT' = 'POST'
 ): Promise<any> {
   const boundary = `----dcl${Date.now()}${Math.floor(Math.random() * 1e9)}`
   const parts: string[] = []
@@ -154,7 +155,7 @@ async function signedMultipartTextOnly(
       headers: {
         'Content-Type': `multipart/form-data; boundary=${boundary}`
       },
-      method: 'POST',
+      method,
       body
     },
     meta
@@ -207,8 +208,42 @@ export async function createCommunity(
   if (request.placeIds != null && request.placeIds.length > 0) {
     fields.placeIds = JSON.stringify(request.placeIds)
   }
-  const response = await signedMultipartTextOnly(base, fields)
+  const response = await signedMultipartTextOnly(base, fields, 'POST')
   return (response?.data ?? response) as CommunityData
+}
+
+/**
+ * PUT /communities/{id} — owner-only edit. Same multipart contract as
+ * create; throws `CommunityModerationError` on policy rejection.
+ */
+export async function updateCommunity(
+  communityId: string,
+  request: CreateCommunityRequest
+): Promise<CommunityData> {
+  const base = await resolveBaseURL()
+  const fields: Record<string, string> = {
+    name: request.name,
+    description: request.description,
+    privacy: request.privacy,
+    visibility: request.visibility
+  }
+  if (request.placeIds != null && request.placeIds.length > 0) {
+    fields.placeIds = JSON.stringify(request.placeIds)
+  }
+  const response = await signedMultipartTextOnly(
+    `${base}/${communityId}`,
+    fields,
+    'PUT'
+  )
+  return (response?.data ?? response) as CommunityData
+}
+
+/**
+ * DELETE /communities/{id} — owner-only.
+ */
+export async function deleteCommunity(communityId: string): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedDelete(`${base}/${communityId}`)
 }
 
 

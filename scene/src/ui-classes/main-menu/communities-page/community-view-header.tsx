@@ -14,8 +14,12 @@ import {
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { CommunityPublicAndMembersSpan } from './community-public-and-members-span'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
+import { ThinMenuButton } from '../../../components/thin-menu-button'
 import { executeTask } from '@dcl/sdk/ecs'
 import { getPlayer } from '@dcl/sdk/players'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import {
   fetchUserInviteRequests,
   invalidateUserInviteRequestsCache,
@@ -52,10 +56,31 @@ export function CommunityViewHeader({
   const [requestId, setRequestId] = useState<string | null>(null)
   const [acting, setActing] = useState<boolean>(false)
   const [hovering, setHovering] = useState<boolean>(false)
+  const [ownerMenuOpen, setOwnerMenuOpen] = useState<boolean>(false)
 
+  const isOwner = role === 'owner'
   const isMember =
     role === 'member' || role === 'moderator' || role === 'owner'
   const requested = requestId != null
+
+  const onEdit = (): void => {
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.CREATE_COMMUNITY,
+        data: community
+      })
+    )
+  }
+
+  const onDelete = (): void => {
+    setOwnerMenuOpen(false)
+    store.dispatch(
+      pushPopupAction({
+        type: HUD_POPUP_TYPE.CONFIRM_DELETE_COMMUNITY,
+        data: community
+      })
+    )
+  }
 
   // On mount, look up whether the user has an open `request_to_join` for
   // this community so the button starts as "CANCEL REQUEST" instead of
@@ -274,7 +299,76 @@ export function CommunityViewHeader({
             position: { top: 0, right: 0 }
           }}
         >
-          {isMember ? (
+          {isOwner ? (
+            <Row uiTransform={{ width: 'auto', alignItems: 'center' }}>
+              <ButtonTextIcon
+                value="<b>EDIT</b>"
+                icon={{ spriteName: 'Edit', atlasName: 'icons' }}
+                fontSize={fontSizeSmall}
+                fontColor={COLOR.WHITE}
+                iconColor={COLOR.WHITE}
+                backgroundColor={COLOR.BLACK_TRANSPARENT}
+                uiTransform={{
+                  borderWidth: fontSize / 10,
+                  borderColor: COLOR.WHITE,
+                  borderRadius: fontSize / 2,
+                  padding: {
+                    left: fontSize * 0.6,
+                    right: fontSize * 0.8,
+                    top: fontSize * 0.3,
+                    bottom: fontSize * 0.3
+                  },
+                  margin: { right: fontSize * 0.4 }
+                }}
+                onMouseDown={onEdit}
+              />
+              <UiEntity uiTransform={{ width: 'auto' }}>
+                <ThinMenuButton
+                  fontSize={fontSize}
+                  backgroundColor={COLOR.BLACK_TRANSPARENT}
+                  uiTransform={{
+                    borderWidth: fontSize / 10,
+                    borderColor: COLOR.WHITE,
+                    borderRadius: fontSize / 2
+                  }}
+                  onMouseDown={() => {
+                    setOwnerMenuOpen(!ownerMenuOpen)
+                  }}
+                />
+                {ownerMenuOpen && (
+                  <UiEntity
+                    uiTransform={{
+                      positionType: 'absolute',
+                      position: { top: fontSize * 2.4, right: 0 },
+                      borderRadius: fontSize / 2,
+                      padding: fontSize * 0.4,
+                      zIndex: 10
+                    }}
+                    uiBackground={{ color: COLOR.URL_POPUP_BACKGROUND }}
+                  >
+                    <UiEntity
+                      uiTransform={{
+                        padding: {
+                          left: fontSize,
+                          right: fontSize,
+                          top: fontSize * 0.5,
+                          bottom: fontSize * 0.5
+                        },
+                        borderRadius: fontSize / 2
+                      }}
+                      uiText={{
+                        value: '<b>Delete Community</b>',
+                        fontSize: fontSizeSmall,
+                        color: COLOR.BUTTON_PRIMARY,
+                        textWrap: 'nowrap'
+                      }}
+                      onMouseDown={onDelete}
+                    />
+                  </UiEntity>
+                )}
+              </UiEntity>
+            </Row>
+          ) : isMember ? (
             <ButtonTextIcon
               value={hovering ? '<b>LEAVE</b>' : '<b>JOINED</b>'}
               icon={

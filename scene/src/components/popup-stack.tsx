@@ -26,6 +26,7 @@ import { CommunityViewPopup } from '../ui-classes/main-menu/communities-page/com
 import { CommunityPlacePopup } from '../ui-classes/main-menu/communities-page/community-place-popup'
 import { CommunityEventPopup } from '../ui-classes/main-menu/communities-page/community-event-popup'
 import { CreateCommunityPopup } from '../ui-classes/main-menu/communities-page/create-community-popup'
+import { ConfirmDeleteCommunityPopup } from '../ui-classes/main-menu/communities-page/confirm-delete-community-popup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
 export type Popup = (
@@ -55,7 +56,9 @@ const popupComponents: Record<number, Popup> = {
   [HUD_POPUP_TYPE.COMMUNITY_VIEW as number]: CommunityViewPopup,
   [HUD_POPUP_TYPE.COMMUNITY_PLACE_INFO as number]: CommunityPlacePopup,
   [HUD_POPUP_TYPE.COMMUNITY_EVENT_INFO as number]: CommunityEventPopup,
-  [HUD_POPUP_TYPE.CREATE_COMMUNITY as number]: CreateCommunityPopup
+  [HUD_POPUP_TYPE.CREATE_COMMUNITY as number]: CreateCommunityPopup,
+  [HUD_POPUP_TYPE.CONFIRM_DELETE_COMMUNITY as number]:
+    ConfirmDeleteCommunityPopup
 }
 
 export function PopupStack(): ReactElement | null {
