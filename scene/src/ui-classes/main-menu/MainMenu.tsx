@@ -253,7 +253,7 @@ export default class MainMenu {
                   }}
                   backgroundColor={this.communitiesBackground}
                   icon={this.communitiesIcon}
-                  value={'<b>COMMUNITIES</b> [O]'}
+                  value={'<b>COMMUNITIES</b>'}
                   fontSize={BUTTON_ICON_FONT_SIZE}
                   iconSize={ICON_SIZE}
                   iconColor={
@@ -310,7 +310,7 @@ export default class MainMenu {
                 }}
                 backgroundColor={this.backpackBackground}
                 icon={this.backpackIcon}
-                value={'<b>BACKPACK</b> [B]'}
+                value={'<b>BACKPACK</b>'}
                 fontSize={BUTTON_ICON_FONT_SIZE}
                 iconSize={ICON_SIZE}
                 iconColor={
@@ -338,7 +338,7 @@ export default class MainMenu {
                 }}
                 backgroundColor={this.settingsBackground}
                 icon={this.settingsIcon}
-                value={'<b>SETTINGS</b> [P]'}
+                value={'<b>SETTINGS</b>'}
                 fontSize={BUTTON_ICON_FONT_SIZE}
                 iconSize={ICON_SIZE}
                 iconColor={

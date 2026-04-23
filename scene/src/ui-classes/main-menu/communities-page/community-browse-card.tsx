@@ -252,10 +252,7 @@ export function CommunityBrowseCard({
           overflow: 'hidden'
         }}
         uiText={{
-          value: `<b>${truncateWithoutBreakingWords(
-            community.name + ' ' + community.name,
-            31
-          )}</b>`,
+          value: `<b>${truncateWithoutBreakingWords(community.name, 31)}</b>`,
           fontSize: fontSizeSmall,
           textWrap: 'nowrap',
           color: COLOR.TEXT_COLOR_WHITE,
