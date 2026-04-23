@@ -3,12 +3,15 @@ import type { SignedFetchMeta } from '../bevy-api/interface'
 import {
   COMMUNITIES_BASE_URL,
   COMMUNITIES_TEST_BASE_URL,
+  CommunityModerationError,
   MEMBERS_BASE_URL,
   MEMBERS_TEST_BASE_URL,
   type CommunityData,
   type CommunityListItem,
   type CommunityMember,
+  type CommunityModerationResponse,
   type CommunityPost,
+  type CreateCommunityRequest,
   type GetCommunitiesParams,
   type GetMembersParams,
   type InviteRequestAction,
@@ -121,7 +124,93 @@ async function signedPatch(url: string, body?: object): Promise<void> {
   }
 }
 
+/**
+ * Send a multipart/form-data POST built from a record of text fields.
+ * BevyApi.kernelFetch's body is a string, so we hand-build the body here
+ * (no binary file part — see CreateCommunityRequest).
+ *
+ * Throws `CommunityModerationError` when the backend responds with HTTP 400
+ * and a `moderationData` payload (per-field issues).
+ */
+async function signedMultipartTextOnly(
+  url: string,
+  fields: Record<string, string>
+): Promise<any> {
+  const boundary = `----dcl${Date.now()}${Math.floor(Math.random() * 1e9)}`
+  const parts: string[] = []
+  for (const [name, value] of Object.entries(fields)) {
+    parts.push(
+      `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="${name}"\r\n\r\n` +
+        `${value}\r\n`
+    )
+  }
+  parts.push(`--${boundary}--\r\n`)
+  const body = parts.join('')
+
+  const result = await BevyApi.kernelFetch({
+    url,
+    init: {
+      headers: {
+        'Content-Type': `multipart/form-data; boundary=${boundary}`
+      },
+      method: 'POST',
+      body
+    },
+    meta
+  })
+
+  if (!result.ok) {
+    if (result.status === 400 && result.body.length > 0) {
+      try {
+        const parsed = JSON.parse(result.body)
+        const moderation: CommunityModerationResponse | undefined =
+          parsed.moderationData ?? parsed.data?.moderationData
+        const issues = moderation?.data?.issues
+        if (issues != null) {
+          throw new CommunityModerationError(
+            moderation?.message ??
+              'This content violates the Community Content Policy.',
+            issues
+          )
+        }
+      } catch (parseError) {
+        if (parseError instanceof CommunityModerationError) throw parseError
+      }
+    }
+    throw new Error(
+      `HTTP ${result.status}: ${result.statusText || result.body}`
+    )
+  }
+  return result.body.length > 0 ? JSON.parse(result.body) : null
+}
+
 // --- Communities CRUD ---
+
+/**
+ * POST /communities — create a new community.
+ *
+ * Returns the new `CommunityData` on success. Throws
+ * `CommunityModerationError` if the backend's content-policy check rejects
+ * any field (the caller can render per-field messages from `error.issues`).
+ */
+export async function createCommunity(
+  request: CreateCommunityRequest
+): Promise<CommunityData> {
+  const base = await resolveBaseURL()
+  const fields: Record<string, string> = {
+    name: request.name,
+    description: request.description,
+    privacy: request.privacy,
+    visibility: request.visibility
+  }
+  if (request.placeIds != null && request.placeIds.length > 0) {
+    fields.placeIds = JSON.stringify(request.placeIds)
+  }
+  const response = await signedMultipartTextOnly(base, fields)
+  return (response?.data ?? response) as CommunityData
+}
+
 
 export async function fetchCommunities(
   params: GetCommunitiesParams = {}

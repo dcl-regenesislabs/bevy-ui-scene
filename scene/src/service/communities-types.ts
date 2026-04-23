@@ -139,3 +139,45 @@ export const MEMBERS_TEST_BASE_URL =
 export function getCommunityThumbnailUrl(communityId: string): string {
   return `https://assets-cdn.decentraland.org/social/communities/${communityId}/raw-thumbnail.png`
 }
+
+/**
+ * Body for `POST /communities` — see unity-explorer
+ * `CommunitiesDataProvider.CreateCommunity`. Backend accepts these fields
+ * as multipart/form-data; we send the same names but as text-only parts
+ * (BevyApi.kernelFetch can't carry the binary `thumbnail` part yet).
+ */
+export type CreateCommunityRequest = {
+  name: string
+  description: string
+  privacy: CommunityPrivacy
+  visibility: CommunityVisibility
+  /** Optional — list of place ids the owner wants to associate. */
+  placeIds?: string[]
+}
+
+/**
+ * Per-field issues returned by the social API when content moderation rejects
+ * a create/update. Mirror of `CommunityModerationIssues` in unity-explorer.
+ */
+export type CommunityModerationIssues = {
+  name?: string[]
+  description?: string[]
+  image?: string[]
+}
+
+export type CommunityModerationResponse = {
+  error?: string
+  message?: string
+  communityContentValidationUnavailable?: boolean
+  data?: { issues?: CommunityModerationIssues }
+}
+
+/** Thrown by `createCommunity` when the backend rejects content. */
+export class CommunityModerationError extends Error {
+  readonly issues: CommunityModerationIssues
+  constructor(message: string, issues: CommunityModerationIssues) {
+    super(message)
+    this.name = 'CommunityModerationError'
+    this.issues = issues
+  }
+}

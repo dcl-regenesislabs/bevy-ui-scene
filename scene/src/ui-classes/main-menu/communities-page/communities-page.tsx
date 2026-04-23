@@ -174,6 +174,43 @@ function CommunitiesContent(): ReactElement {
           }}
           uiBackground={{ color: COLOR.DARK_OPACITY_2 }}
         >
+          {/* Create community CTA */}
+          <UiEntity
+            uiTransform={{
+              width: '100%',
+              height: fontSize * 2.4,
+              borderRadius: fontSize / 2,
+              borderWidth: 1,
+              borderColor: COLOR.WHITE_OPACITY_5,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              margin: { top: fontSize, bottom: fontSize }
+            }}
+            onMouseDown={() => {
+              store.dispatch(
+                pushPopupAction({
+                  type: HUD_POPUP_TYPE.CREATE_COMMUNITY
+                })
+              )
+            }}
+          >
+            <Icon
+              icon={{ atlasName: 'context', spriteName: 'Add' }}
+              iconSize={fontSize}
+              iconColor={COLOR.WHITE}
+            />
+            <UiEntity
+              uiTransform={{ margin: { left: fontSize * 0.4 } }}
+              uiText={{
+                value: '<b>CREATE A COMMUNITY</b>',
+                fontSize: fontSizeCaption,
+                color: COLOR.WHITE
+              }}
+            />
+          </UiEntity>
+
           <UiEntity
             uiTransform={{
               width: '100%',
