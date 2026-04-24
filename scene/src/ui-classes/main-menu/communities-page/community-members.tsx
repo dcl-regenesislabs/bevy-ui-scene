@@ -20,6 +20,7 @@ import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import Icon from '../../../components/icon/Icon'
 import { ThinMenuButton } from '../../../components/thin-menu-button'
 import { BevyApi } from '../../../bevy-api'
+import { getPlayer } from '@dcl/sdk/players'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
@@ -59,6 +60,9 @@ function CommunityMemberItem({
     CommunityFriendshipStatus | undefined
   >(member.friendshipStatus)
   const [acting, setActing] = useState<boolean>(false)
+  const isSelf =
+    (getPlayer()?.userId ?? '').toLowerCase() ===
+    member.memberAddress.toLowerCase()
 
   const onAccept = (): void => {
     if (acting) return
@@ -194,8 +198,9 @@ function CommunityMemberItem({
       {/* Spacer */}
       <UiEntity uiTransform={{ flexGrow: 1 }} />
 
-      {/* Action button — hidden if already friends */}
-      {friendshipStatus !== CommunityFriendshipStatus.FRIEND && (
+      {/* Action button — hidden when looking at our own row or when we're
+          already friends. */}
+      {!isSelf && friendshipStatus !== CommunityFriendshipStatus.FRIEND && (
         <UiEntity
           uiTransform={{
             borderRadius: fontSize / 2,

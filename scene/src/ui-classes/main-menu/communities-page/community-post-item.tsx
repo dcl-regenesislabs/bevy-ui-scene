@@ -1,7 +1,10 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
-import { type CommunityPost } from '../../../service/communities-types'
+import {
+  type CommunityMemberRole,
+  type CommunityPost
+} from '../../../service/communities-types'
 import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
@@ -9,11 +12,14 @@ import { PlayerNameComponent } from '../../../components/player-name-component'
 import Icon from '../../../components/icon/Icon'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { executeTask } from '@dcl/sdk/ecs'
+import { getPlayer } from '@dcl/sdk/players'
 import {
+  deleteCommunityPost,
   likeCommunityPost,
   unlikeCommunityPost
 } from '../../../utils/communities-promise-utils'
 import { showErrorPopup } from '../../../service/error-popup-service'
+import { noop } from '../../../utils/function-utils'
 import useState = ReactEcs.useState
 
 function formatPostDate(dateStr: string): string {
@@ -40,9 +46,13 @@ function formatPostDate(dateStr: string): string {
 }
 
 export function CommunityPostItem({
-  post
+  post,
+  viewerRole = 'unknown',
+  onDeleted = noop
 }: {
   post: CommunityPost
+  viewerRole?: CommunityMemberRole
+  onDeleted?: (postId: string) => void
   key: string
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
@@ -51,6 +61,31 @@ export function CommunityPostItem({
   const [isLiked, setIsLiked] = useState<boolean>(post.isLikedByUser)
   const [likesCount, setLikesCount] = useState<number>(post.likesCount)
   const [liking, setLiking] = useState<boolean>(false)
+  const [deleting, setDeleting] = useState<boolean>(false)
+  // Delete is allowed for owners/moderators of the community, and for the
+  // post's author on their own posts. Mirrors unity-explorer behavior plus
+  // the explicit owner+moderator gate the user asked for.
+  const myAddress = (getPlayer()?.userId ?? '').toLowerCase()
+  const isAuthor = post.authorAddress.toLowerCase() === myAddress
+  const canDelete =
+    viewerRole === 'owner' || viewerRole === 'moderator' || isAuthor
+
+  const onDelete = (): void => {
+    if (deleting) return
+    setDeleting(true)
+    executeTask(async () => {
+      try {
+        await deleteCommunityPost(post.communityId, post.id)
+        onDeleted(post.id)
+      } catch (error) {
+        setDeleting(false)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'deleteCommunityPost'
+        )
+      }
+    })
+  }
 
   const toggleLike = (): void => {
     if (liking) return
@@ -173,6 +208,23 @@ export function CommunityPostItem({
               }}
             />
           </Row>
+          {/* Delete (owner/mod or author) */}
+          {canDelete && (
+            <UiEntity
+              uiTransform={{
+                width: 'auto',
+                margin: { left: fontSize * 0.5 },
+                opacity: deleting ? getLoadingAlphaValue() : 1
+              }}
+              onMouseDown={onDelete}
+            >
+              <Icon
+                icon={{ spriteName: 'Delete', atlasName: 'icons' }}
+                iconSize={fontSize}
+                iconColor={COLOR.WHITE}
+              />
+            </UiEntity>
+          )}
         </Row>
 
         <UiEntity

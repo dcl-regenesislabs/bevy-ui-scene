@@ -32,7 +32,6 @@ import {
   type CommunityVisibility
 } from '../../../service/communities-types'
 import { noop } from '../../../utils/function-utils'
-import Icon from '../../../components/icon/Icon'
 import useState = ReactEcs.useState
 
 const POPUP_BACKGROUND = Color4.fromHexString('#52247AFF')
@@ -231,31 +230,6 @@ const CommunityFormContent = ({
           textAlign: 'top-left'
         }}
       />
-
-      {/* Profile picture (display-only — file upload not yet supported) */}
-      <FieldLabel text="PROFILE PICTURE" fontSize={fontSizeSmall} />
-      <FieldHelp
-        text="PNG or JPG | 512x512 px | 500KB max"
-        fontSize={fontSizeCaption}
-      />
-      <UiEntity
-        uiTransform={{
-          width: fontSize * 6,
-          height: fontSize * 6,
-          borderRadius: fontSize / 2,
-          borderWidth: 1,
-          borderColor: COLOR.WHITE_OPACITY_5,
-          margin: { bottom: fontSize },
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        <Icon
-          icon={{ atlasName: 'icons', spriteName: 'Edit' }}
-          iconSize={fontSize}
-          iconColor={COLOR.WHITE_OPACITY_5}
-        />
-      </UiEntity>
 
       {/* Name */}
       <FieldLabel text="COMMUNITY NAME" required fontSize={fontSizeSmall} />

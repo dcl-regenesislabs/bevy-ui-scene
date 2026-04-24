@@ -19,6 +19,7 @@ import { PopupBigWindow } from '../../../components/popup-big-window'
 import { type Tab, TabComponent } from '../../../components/tab-component'
 import useState = ReactEcs.useState
 import { COLOR } from 'src/components/color-palette'
+import useEffect = ReactEcs.useEffect
 
 export const CommunityViewPopup: Popup = ({ shownPopup }) => {
   const community = shownPopup.data as CommunityListItem
@@ -44,6 +45,10 @@ function CommunityViewContent({
     { text: '  PLACES  ' },
     { text: '  PHOTOS  ' }
   ]
+
+  useEffect(() => {
+    console.log('community view', community)
+  }, [])
 
   return (
     <PopupBackdrop>
@@ -83,7 +88,10 @@ function CommunityViewContent({
               }}
             >
               {activeTabIndex === 0 && (
-                <CommunityAnnouncements communityId={community.id} />
+                <CommunityAnnouncements
+                  communityId={community.id}
+                  viewerRole={community.role}
+                />
               )}
               {activeTabIndex === 1 && (
                 <CommunityMembers communityId={community.id} />

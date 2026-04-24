@@ -125,14 +125,14 @@ async function signedPatch(url: string, body?: object): Promise<void> {
 }
 
 /**
- * Send a multipart/form-data POST built from a record of text fields.
- * BevyApi.kernelFetch's body is a string, so we hand-build the body here
- * (no binary file part — see CreateCommunityRequest).
+ * Send a `multipart/form-data` request built from a record of text fields.
+ * Text-only — `BevyApi.kernelFetch.body` is a `string`, so a binary file
+ * part isn't sent (the backend's optional `thumbnail` part is skipped).
  *
  * Throws `CommunityModerationError` when the backend responds with HTTP 400
  * and a `moderationData` payload (per-field issues).
  */
-async function signedMultipartTextOnly(
+async function signedMultipart(
   url: string,
   fields: Record<string, string>,
   method: 'POST' | 'PUT' = 'POST'
@@ -195,10 +195,9 @@ async function signedMultipartTextOnly(
  * `CommunityModerationError` if the backend's content-policy check rejects
  * any field (the caller can render per-field messages from `error.issues`).
  */
-export async function createCommunity(
+function buildCommunityFields(
   request: CreateCommunityRequest
-): Promise<CommunityData> {
-  const base = await resolveBaseURL()
+): Record<string, string> {
   const fields: Record<string, string> = {
     name: request.name,
     description: request.description,
@@ -208,7 +207,18 @@ export async function createCommunity(
   if (request.placeIds != null && request.placeIds.length > 0) {
     fields.placeIds = JSON.stringify(request.placeIds)
   }
-  const response = await signedMultipartTextOnly(base, fields, 'POST')
+  return fields
+}
+
+export async function createCommunity(
+  request: CreateCommunityRequest
+): Promise<CommunityData> {
+  const base = await resolveBaseURL()
+  const response = await signedMultipart(
+    base,
+    buildCommunityFields(request),
+    'POST'
+  )
   return (response?.data ?? response) as CommunityData
 }
 
@@ -221,18 +231,9 @@ export async function updateCommunity(
   request: CreateCommunityRequest
 ): Promise<CommunityData> {
   const base = await resolveBaseURL()
-  const fields: Record<string, string> = {
-    name: request.name,
-    description: request.description,
-    privacy: request.privacy,
-    visibility: request.visibility
-  }
-  if (request.placeIds != null && request.placeIds.length > 0) {
-    fields.placeIds = JSON.stringify(request.placeIds)
-  }
-  const response = await signedMultipartTextOnly(
+  const response = await signedMultipart(
     `${base}/${communityId}`,
-    fields,
+    buildCommunityFields(request),
     'PUT'
   )
   return (response?.data ?? response) as CommunityData
@@ -463,6 +464,52 @@ export async function fetchCommunityPhotos(
 // --- Posts (Announcements) ---
 
 const postsCache = createTtlCache<{ posts: CommunityPost[] }>()
+
+/** Drop the cached posts for `communityId` so the next fetch re-hits the API. */
+export function invalidateCommunityPostsCache(communityId: string): void {
+  for (const [key] of postsCache.entries()) {
+    if (key.startsWith(`${communityId}:`)) postsCache.invalidate(key)
+  }
+}
+
+/**
+ * POST /communities/{id}/posts — owner/moderator only.
+ * Returns the freshly created post.
+ */
+export async function createCommunityPost(
+  communityId: string,
+  content: string
+): Promise<CommunityPost> {
+  const base = await resolveBaseURL()
+  const response = await signedPost(`${base}/${communityId}/posts`, {
+    content
+  })
+  invalidateCommunityPostsCache(communityId)
+  // The backend's POST response omits the like fields (and may omit the
+  // community id too), so merge in zero/false defaults — otherwise the
+  // freshly-prepended post renders `undefined` likes and NaN on toggle.
+  const created: Partial<CommunityPost> = response?.data ?? response ?? {}
+  const post: CommunityPost = {
+    ...(created as CommunityPost),
+    communityId: created.communityId ?? communityId,
+    likesCount: created.likesCount ?? 0,
+    isLikedByUser: created.isLikedByUser ?? false
+  }
+  return post
+}
+
+/**
+ * DELETE /communities/{id}/posts/{postId} — owner can delete any, the
+ * author can delete their own; per-row gating is up to the caller.
+ */
+export async function deleteCommunityPost(
+  communityId: string,
+  postId: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedDelete(`${base}/${communityId}/posts/${postId}`)
+  invalidateCommunityPostsCache(communityId)
+}
 
 export async function likeCommunityPost(
   communityId: string,
