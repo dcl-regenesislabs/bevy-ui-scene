@@ -47,10 +47,33 @@ const FRIENDSHIP_POPUP_TYPES = new Set<HUD_POPUP_TYPE>([
   HUD_POPUP_TYPE.FRIEND_REQUEST_RECEIVED,
   HUD_POPUP_TYPE.FRIEND_REQUEST_SENT,
   HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
-  HUD_POPUP_TYPE.CONFIRM_UNFRIEND,
-  HUD_POPUP_TYPE.CANCEL_FRIEND_REQUEST,
   HUD_POPUP_TYPE.FRIENDSHIP_RESULT
 ])
+
+/**
+ * True for popups that "belong" to a friendship flow with a specific
+ * counterpart — used to auto-close when an unrelated friendship event
+ * arrives. Covers the legacy dedicated popups above as well as the new
+ * generic CONFIRM popup tagged `category: 'friendship'`.
+ */
+function isFriendshipPopupForAddress(
+  popup: { type: HUD_POPUP_TYPE; data?: unknown } | undefined,
+  address: string
+): boolean {
+  if (popup == null) return false
+  const target = address.toLowerCase()
+  const popupAddress = (popup.data as { address?: string } | undefined)?.address
+  if (popupAddress == null) return false
+  if (popupAddress.toLowerCase() !== target) return false
+  if (FRIENDSHIP_POPUP_TYPES.has(popup.type)) return true
+  if (popup.type === HUD_POPUP_TYPE.CONFIRM) {
+    return (
+      (popup.data as { category?: string } | undefined)?.category ===
+      'friendship'
+    )
+  }
+  return false
+}
 
 const EVENT_TO_VARIANT: Record<string, FriendshipResultVariant> = {
   accept: 'accepted',
@@ -94,14 +117,7 @@ function handleFriendshipResultEvent(event: FriendshipEventUpdate): void {
   // the user has open about someone else (e.g. Alice's request).
   const popups = store.getState().hud.shownPopups
   const topPopup = popups[popups.length - 1]
-  const topPopupAddress = (topPopup?.data as { address?: string } | undefined)
-    ?.address
-  if (
-    topPopup != null &&
-    FRIENDSHIP_POPUP_TYPES.has(topPopup.type) &&
-    topPopupAddress != null &&
-    topPopupAddress.toLowerCase() === event.address.toLowerCase()
-  ) {
+  if (isFriendshipPopupForAddress(topPopup, event.address)) {
     store.dispatch(closeLastPopupAction())
   }
 

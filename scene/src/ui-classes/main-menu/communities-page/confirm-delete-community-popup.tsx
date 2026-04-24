@@ -160,11 +160,7 @@ export const ConfirmDeleteCommunityPopup: Popup = ({ shownPopup }) => {
               margin: { left: fontSize * 0.5 },
               alignItems: 'center',
               justifyContent: 'center',
-              opacity: submitting
-                ? getLoadingAlphaValue()
-                : canDelete
-                ? 1
-                : 0.4
+              opacity: submitting ? getLoadingAlphaValue() : canDelete ? 1 : 0.4
             }}
             uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
             uiText={{

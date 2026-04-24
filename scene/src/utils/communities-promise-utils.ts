@@ -247,7 +247,6 @@ export async function deleteCommunity(communityId: string): Promise<void> {
   await signedDelete(`${base}/${communityId}`)
 }
 
-
 export async function fetchCommunities(
   params: GetCommunitiesParams = {}
 ): Promise<PaginatedResponse<CommunityListItem>> {

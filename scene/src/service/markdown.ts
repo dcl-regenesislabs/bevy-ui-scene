@@ -56,10 +56,7 @@ export function markdownToUiTextValue(md: string): string {
     (_match, text: string) => `<i>${text}</i>`
   )
   // 4) Strikethrough.
-  out = out.replace(
-    /~~([^~]+)~~/g,
-    (_match, text: string) => `<s>${text}</s>`
-  )
+  out = out.replace(/~~([^~]+)~~/g, (_match, text: string) => `<s>${text}</s>`)
   return out
 }
 

@@ -20,6 +20,7 @@ import {
 } from '../../../utils/communities-promise-utils'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import { noop } from '../../../utils/function-utils'
+import { showConfirmPopup } from '../../../components/confirm-popup'
 import useState = ReactEcs.useState
 
 function formatPostDate(dateStr: string): string {
@@ -61,7 +62,6 @@ export function CommunityPostItem({
   const [isLiked, setIsLiked] = useState<boolean>(post.isLikedByUser)
   const [likesCount, setLikesCount] = useState<number>(post.likesCount)
   const [liking, setLiking] = useState<boolean>(false)
-  const [deleting, setDeleting] = useState<boolean>(false)
   // Delete is allowed for owners/moderators of the community, and for the
   // post's author on their own posts. Mirrors unity-explorer behavior plus
   // the explicit owner+moderator gate the user asked for.
@@ -71,18 +71,18 @@ export function CommunityPostItem({
     viewerRole === 'owner' || viewerRole === 'moderator' || isAuthor
 
   const onDelete = (): void => {
-    if (deleting) return
-    setDeleting(true)
-    executeTask(async () => {
-      try {
+    showConfirmPopup({
+      title: 'Delete this announcement?',
+      message: 'This action cannot be undone.',
+      icon: {
+        spriteName: 'Delete',
+        atlasName: 'icons',
+        backgroundColor: COLOR.BUTTON_PRIMARY
+      },
+      confirmLabel: 'DELETE',
+      onConfirm: async () => {
         await deleteCommunityPost(post.communityId, post.id)
         onDeleted(post.id)
-      } catch (error) {
-        setDeleting(false)
-        showErrorPopup(
-          error instanceof Error ? error : new Error(String(error)),
-          'deleteCommunityPost'
-        )
       }
     })
   }
@@ -213,8 +213,7 @@ export function CommunityPostItem({
             <UiEntity
               uiTransform={{
                 width: 'auto',
-                margin: { left: fontSize * 0.5 },
-                opacity: deleting ? getLoadingAlphaValue() : 1
+                margin: { left: fontSize * 0.5 }
               }}
               onMouseDown={onDelete}
             >

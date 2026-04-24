@@ -143,14 +143,16 @@ export function CommunityInvitesAndRequests({
               onPrimary={(id) => {
                 executeTask(async () => {
                   try {
-                    await manageInviteRequest(invite.communityId, id, 'accepted')
+                    await manageInviteRequest(
+                      invite.communityId,
+                      id,
+                      'accepted'
+                    )
                     removeFromList('invites', id)
                     onInviteAccepted?.()
                   } catch (error) {
                     showErrorPopup(
-                      error instanceof Error
-                        ? error
-                        : new Error(String(error)),
+                      error instanceof Error ? error : new Error(String(error)),
                       'acceptInvite'
                     )
                   }
@@ -159,14 +161,16 @@ export function CommunityInvitesAndRequests({
               onSecondary={(id) => {
                 executeTask(async () => {
                   try {
-                    await manageInviteRequest(invite.communityId, id, 'rejected')
+                    await manageInviteRequest(
+                      invite.communityId,
+                      id,
+                      'rejected'
+                    )
                     removeFromList('invites', id)
                     onInviteRejected?.()
                   } catch (error) {
                     showErrorPopup(
-                      error instanceof Error
-                        ? error
-                        : new Error(String(error)),
+                      error instanceof Error ? error : new Error(String(error)),
                       'rejectInvite'
                     )
                   }
@@ -218,9 +222,7 @@ export function CommunityInvitesAndRequests({
                     removeFromList('requests', id)
                   } catch (error) {
                     showErrorPopup(
-                      error instanceof Error
-                        ? error
-                        : new Error(String(error)),
+                      error instanceof Error ? error : new Error(String(error)),
                       'cancelRequest'
                     )
                   }

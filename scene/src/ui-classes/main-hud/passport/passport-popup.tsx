@@ -47,6 +47,7 @@ import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
 import { BevyApi } from '../../../bevy-api'
+import { showConfirmPopup } from '../../../components/confirm-popup'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
 import { Column, Row } from '../../../components/layout'
 import useState = ReactEcs.useState
@@ -954,16 +955,20 @@ function PassportFriendButton({
           setIsHovered(false)
         }}
         onMouseDown={() => {
-          store.dispatch(
-            pushPopupAction({
-              type: HUD_POPUP_TYPE.CONFIRM_UNBLOCK,
-              data: {
-                address: userId,
-                name: profileData.name,
-                hasClaimedName: profileData.hasClaimedName
-              }
-            })
-          )
+          showConfirmPopup({
+            title: `Are you sure you want to unblock\n<b>${profileData.name}</b>?`,
+            message:
+              'If you unblock someone, you will see their avatar in-world, and you will be able to send friend requests and messages to each other in public or private chats.',
+            icon: {
+              spriteName: 'BlockUser',
+              atlasName: 'icons',
+              backgroundColor: COLOR.RED
+            },
+            confirmLabel: 'UNBLOCK',
+            onConfirm: async () => {
+              await BevyApi.social.unblockUser(userId)
+            }
+          })
         }}
       >
         <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
@@ -1002,16 +1007,20 @@ function PassportFriendButton({
           setIsHovered(false)
         }}
         onMouseDown={() => {
-          store.dispatch(
-            pushPopupAction({
-              type: HUD_POPUP_TYPE.CONFIRM_UNFRIEND,
-              data: {
-                address: userId,
-                name: profileData.name,
-                hasClaimedName: profileData.hasClaimedName
-              }
-            })
-          )
+          showConfirmPopup({
+            title: `Are you sure you want to unfriend <b>${profileData.name}</b>?`,
+            icon: {
+              spriteName: 'Unfriends',
+              atlasName: 'context',
+              backgroundColor: COLOR.RED
+            },
+            confirmLabel: 'UNFRIEND',
+            category: 'friendship',
+            address: userId,
+            onConfirm: async () => {
+              await BevyApi.social.deleteFriend(userId)
+            }
+          })
         }}
       >
         <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>

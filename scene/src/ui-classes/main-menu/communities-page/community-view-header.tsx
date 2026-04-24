@@ -59,8 +59,7 @@ export function CommunityViewHeader({
   const [ownerMenuOpen, setOwnerMenuOpen] = useState<boolean>(false)
 
   const isOwner = role === 'owner'
-  const isMember =
-    role === 'member' || role === 'moderator' || role === 'owner'
+  const isMember = role === 'member' || role === 'moderator' || role === 'owner'
   const requested = requestId != null
 
   const onEdit = (): void => {

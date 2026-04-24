@@ -1,8 +1,4 @@
-import ReactEcs, {
-  Input,
-  type ReactElement,
-  UiEntity
-} from '@dcl/react-ecs'
+import ReactEcs, { Input, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { Color4 } from '@dcl/sdk/math'
 import { executeTask } from '@dcl/sdk/ecs'
 import { type Popup } from '../../../components/popup-stack'
@@ -56,11 +52,13 @@ const PRIVACY_OPTIONS = [
 const VISIBILITY_OPTIONS = [
   {
     value: 'all' as CommunityVisibility,
-    label: "Discoverable — Listed in 'Browse Communities' section and search results"
+    label:
+      "Discoverable — Listed in 'Browse Communities' section and search results"
   },
   {
     value: 'unlisted' as CommunityVisibility,
-    label: 'Not discoverable — Hidden from search; joinable only via invite link'
+    label:
+      'Not discoverable — Hidden from search; joinable only via invite link'
   }
 ]
 
@@ -80,7 +78,9 @@ function FieldLabel({
         margin: { bottom: fontSize * 0.3 }
       }}
       uiText={{
-        value: required ? `<b>${text}</b> <color=#FD2D58>*</color>` : `<b>${text}</b>`,
+        value: required
+          ? `<b>${text}</b> <color=#FD2D58>*</color>`
+          : `<b>${text}</b>`,
         fontSize,
         color: SECTION_LABEL_COLOR,
         textAlign: 'top-left'
@@ -390,11 +390,7 @@ const CommunityFormContent = ({
             borderRadius: fontSize / 2,
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: submitting
-              ? getLoadingAlphaValue()
-              : canSubmit
-              ? 1
-              : 0.4
+            opacity: submitting ? getLoadingAlphaValue() : canSubmit ? 1 : 0.4
           }}
           uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
           uiText={{

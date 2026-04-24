@@ -131,8 +131,7 @@ export const COMMUNITIES_BASE_URL =
   'https://social-api.decentraland.org/v1/communities'
 export const COMMUNITIES_TEST_BASE_URL =
   'https://social-api.decentraland.zone/v1/communities'
-export const MEMBERS_BASE_URL =
-  'https://social-api.decentraland.org/v1/members'
+export const MEMBERS_BASE_URL = 'https://social-api.decentraland.org/v1/members'
 export const MEMBERS_TEST_BASE_URL =
   'https://social-api.decentraland.zone/v1/members'
 
