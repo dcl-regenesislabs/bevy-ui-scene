@@ -17,6 +17,7 @@ import { showErrorPopup } from './error-popup-service'
 import { fetchProfileData } from '../utils/passport-promise-utils'
 import { type FriendshipResultVariant } from '../components/friends/friendship-result-popup'
 import { createMediator } from '../utils/function-utils'
+import { sleep } from '../utils/dcl-utils'
 
 const CHANNEL_CONNECTIVITY = 'friend-connectivity'
 const CHANNEL_FRIENDSHIP = 'friendship-event'
@@ -103,6 +104,26 @@ function removeFriend(address: string): void {
   )
 }
 
+/**
+ * Wait for the bevy-side social client to finish its initial sync. Without
+ * this, an early `getOnlineFriends()` call returns an empty list and the
+ * scene never re-fetches — offline friends in particular would be missing
+ * because the connectivity stream only emits transitions, not the initial
+ * offline state.
+ */
+async function waitForSocialReady(timeoutMs = 10_000): Promise<boolean> {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    try {
+      if (await BevyApi.social.getSocialInitialized()) return true
+    } catch {
+      // ignore — keep polling until timeout
+    }
+    await sleep(250)
+  }
+  return false
+}
+
 async function refreshFriends(): Promise<void> {
   const friends = await BevyApi.social.getOnlineFriends()
   store.dispatch(updateHudStateAction({ friends, friendsLoading: false }))
@@ -184,6 +205,7 @@ export function initFriendConnectivityService(): void {
 
   executeTask(async () => {
     try {
+      await waitForSocialReady()
       await refreshFriends()
     } catch (error) {
       showErrorPopup(
