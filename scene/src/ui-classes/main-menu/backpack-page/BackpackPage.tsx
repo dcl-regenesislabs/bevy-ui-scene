@@ -236,8 +236,7 @@ export function ResponsiveContent({
         justifyContent: 'center',
         alignItems: 'flex-start',
         width: getContentWidth(),
-        height: getContentHeight() * 1.1,
-        pointerFilter: 'block'
+        height: getContentHeight() * 1.1
       }}
     >
       {children}

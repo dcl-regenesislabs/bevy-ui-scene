@@ -26,6 +26,7 @@ import {
   initRealTimeNotifications,
   NotificationToastStack
 } from '../ui-classes/main-hud/notification-toast-stack'
+import { initFriendConnectivityService } from '../service/friend-connectivity-service'
 import { updateHudStateAction } from '../state/hud/actions'
 import { listenPermissionRequests } from '../ui-classes/main-hud/permissions-popups/permissions-popup-service'
 import { getRealm } from '~system/Runtime'
@@ -42,7 +43,11 @@ import { getViewportWidth } from '../service/canvas-ratio'
 import { listenSystemAction } from '../service/system-actions-emitter'
 import { HoverActionComponent } from '../components/hover-actions/hover-action-component'
 import { SceneLoadingWindowComponent } from '../components/scene-loading-window'
-import { FEATURES, getFeatureFlag } from '../service/feature-flags'
+import {
+  applyGuestDisabledFeatures,
+  FEATURES,
+  getFeatureFlag
+} from '../service/feature-flags'
 
 let loadingAndLogin: any = null
 
@@ -109,6 +114,7 @@ export class UIController {
             realmURL: (await getRealm({})).realmInfo?.baseUrl ?? 'main' // TODO REVIEW
           })
         )
+        applyGuestDisabledFeatures()
         store.dispatch(
           updateHudStateAction({
             loggedIn: true
@@ -130,6 +136,7 @@ export class UIController {
         }
         if (getFeatureFlag(FEATURES.FRIENDS)) {
           initFriendshipEventToasts()
+          initFriendConnectivityService()
         }
       })().catch(console.error)
     })
@@ -170,7 +177,7 @@ export class UIController {
         {this.sceneInfoCardVisible && this.sceneCard.mainUi()}
         {getFeatureFlag(FEATURES.NOTIFICATIONS) && NotificationToastStack()}
         {PopupStack()}
-        {HoverActionComponent()}
+        <HoverActionComponent />
         {SceneLoadingWindowComponent()}
       </Canvas>
     )

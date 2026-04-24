@@ -16,43 +16,88 @@ import {
 import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { LoadingPlaceholder } from '../loading-placeholder'
+import { store } from '../../state/store'
+import { updateHudStateAction } from '../../state/hud/actions'
+import { listenFriendshipEvent } from '../../service/friend-connectivity-service'
 
-let _refreshFn: (() => void) | null = null
+const byDateDesc = (a: FriendRequestData, b: FriendRequestData): number =>
+  b.createdAt - a.createdAt
 
-export function refreshFriendRequests(): void {
-  _refreshFn?.()
+export async function fetchAndStoreFriendRequests(): Promise<void> {
+  const [sent, received] = await Promise.all([
+    BevyApi.social.getSentFriendRequests(),
+    BevyApi.social.getReceivedFriendRequests()
+  ])
+  store.dispatch(
+    updateHudStateAction({
+      sentFriendRequests: sent.sort(byDateDesc),
+      receivedFriendRequests: received.sort(byDateDesc)
+    })
+  )
+}
+
+export function removeFriendRequest(address: string): void {
+  const state = store.getState().hud
+  store.dispatch(
+    updateHudStateAction({
+      sentFriendRequests: state.sentFriendRequests.filter(
+        (r) => r.address !== address
+      ),
+      receivedFriendRequests: state.receivedFriendRequests.filter(
+        (r) => r.address !== address
+      )
+    })
+  )
+}
+
+export function addReceivedFriendRequest(request: FriendRequestData): void {
+  const current = store.getState().hud.receivedFriendRequests
+  store.dispatch(
+    updateHudStateAction({
+      receivedFriendRequests: [request, ...current]
+    })
+  )
 }
 
 export function FriendRequestList(): ReactEcs.JSX.Element {
   const [isReceivedExpanded, setIsReceivedExpanded] = useState<boolean>(true)
   const [isSentExpanded, setIsSentExpanded] = useState<boolean>(true)
-  const [sentRequests, setSentRequests] = useState<FriendRequestData[]>([])
-  const [receivedRequests, setReceivedRequests] = useState<FriendRequestData[]>(
-    []
-  )
   const [hoveredRequest, setHoveredRequest] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
-  const [fetchVersion, setFetchVersion] = useState<number>(0)
   const [filterText, setFilterText] = useState<string>('')
   const fontSize = getFontSize({})
 
-  _refreshFn = () => {
-    setFetchVersion((v) => v + 1)
-  }
+  const sentRequests = store.getState().hud.sentFriendRequests ?? []
+  const receivedRequests = store.getState().hud.receivedFriendRequests ?? []
 
   useEffect(() => {
     executeTask(async () => {
-      const [sent, received] = await Promise.all([
-        BevyApi.social.getSentFriendRequests(),
-        BevyApi.social.getReceivedFriendRequests()
-      ])
-      const byDateDesc = (a: FriendRequestData, b: FriendRequestData): number =>
-        b.createdAt - a.createdAt
-      setSentRequests(sent.sort(byDateDesc))
-      setReceivedRequests(received.sort(byDateDesc))
+      await fetchAndStoreFriendRequests()
       setLoading(false)
     })
-  }, [fetchVersion])
+
+    const unsubscribe = listenFriendshipEvent((event) => {
+      if (event.type === 'request') {
+        addReceivedFriendRequest({
+          address: event.address,
+          name: event.name,
+          hasClaimedName: event.hasClaimedName,
+          profilePictureUrl: event.profilePictureUrl,
+          createdAt: event.createdAt,
+          message: event.message,
+          id: event.id
+        })
+      } else if (
+        event.type === 'accept' ||
+        event.type === 'reject' ||
+        event.type === 'cancel'
+      ) {
+        removeFriendRequest(event.address)
+      }
+    })
+
+    return unsubscribe
+  }, [])
 
   if (loading) return <LoadingPlaceholder />
 
@@ -133,14 +178,12 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
                   setHoveredRequest(request.id)
                 }}
                 onMouseLeave={() => {
-                  if (request.address === hoveredRequest) {
+                  if (request.id === hoveredRequest) {
                     setHoveredRequest(null)
                   }
                 }}
                 onAction={(address) => {
-                  setReceivedRequests((prev) =>
-                    prev.filter((r) => r.address !== address)
-                  )
+                  removeFriendRequest(address)
                 }}
               />
             ))
@@ -182,19 +225,17 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
             filteredSent.map((request) => (
               <FriendRequestItemSent
                 friendRequest={request}
-                hovered={hoveredRequest === request.address}
+                hovered={hoveredRequest === request.id}
                 onMouseEnter={() => {
-                  setHoveredRequest(request.address)
+                  setHoveredRequest(request.id)
                 }}
                 onMouseLeave={() => {
-                  if (request.address === hoveredRequest) {
+                  if (request.id === hoveredRequest) {
                     setHoveredRequest(null)
                   }
                 }}
                 onAction={(address) => {
-                  setSentRequests((prev) =>
-                    prev.filter((r) => r.address !== address)
-                  )
+                  removeFriendRequest(address)
                 }}
               />
             ))

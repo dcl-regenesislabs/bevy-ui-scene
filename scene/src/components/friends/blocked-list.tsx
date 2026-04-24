@@ -7,6 +7,7 @@ import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 import { Column } from '../layout'
 import { BlockedListItem } from './blocked-list-item'
 import { EmptyBlocked } from './empty-blocked'
+import { listenFriendshipEvent } from '../../service/friend-connectivity-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -23,15 +24,17 @@ export function BlockedList(): ReactElement {
       setLoaded(true)
     })
 
-    executeTask(async () => {
-      const stream = await BevyApi.social.getFriendshipEventStream()
-      for await (const event of stream) {
-        if (event.type === 'block') {
+    const unsubscribe = listenFriendshipEvent((event) => {
+      // `block` adds; `delete` may be an unblock. Refresh in both cases.
+      if (event.type === 'block' || event.type === 'delete') {
+        executeTask(async () => {
           const users = await BevyApi.social.getBlockedUsers()
           setBlockedUsers(users)
-        }
+        })
       }
     })
+
+    return unsubscribe
   }, [])
 
   if (!loaded) {

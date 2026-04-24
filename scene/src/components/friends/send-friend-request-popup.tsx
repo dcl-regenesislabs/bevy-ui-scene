@@ -20,7 +20,7 @@ import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { PanelListButton } from './friend-request-item'
-import { refreshFriendRequests } from './friend-request-list'
+import { fetchAndStoreFriendRequests } from './friend-request-list'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 import useState = ReactEcs.useState
 
@@ -174,7 +174,7 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
                   data.address,
                   message.length > 0 ? message : undefined
                 )
-                refreshFriendRequests()
+                fetchAndStoreFriendRequests().catch(console.error)
                 store.dispatch(closeLastPopupAction())
                 store.dispatch(
                   pushPopupAction({

@@ -1,0 +1,253 @@
+import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
+import { COLOR } from '../../../components/color-palette'
+import { Column, Row } from '../../../components/layout'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
+import { getContentScaleRatio } from '../../../service/canvas-ratio'
+import { executeTask } from '@dcl/sdk/ecs'
+import { fetchCommunityPlaces } from '../../../utils/communities-promise-utils'
+import { LoadingPlaceholder } from '../../../components/loading-placeholder'
+import type { PlaceFromApi } from '../../scene-info-card/SceneInfoCard.types'
+import Icon from '../../../components/icon/Icon'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
+import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
+
+function CommunityPlaceCard({
+  place
+}: {
+  place: PlaceFromApi
+  key: string
+}): ReactElement {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeSmall = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.CAPTION
+  })
+  const scale = getContentScaleRatio()
+  const cardWidth = scale * 280
+  const imageHeight = cardWidth * 0.65
+  const likePercent =
+    place.like_rate != null ? `${Math.round(place.like_rate * 100)}%` : '0%'
+
+  return (
+    <Column
+      uiTransform={{
+        width: cardWidth,
+        margin: { right: fontSize * 0.5, bottom: fontSize * 0.5 },
+        flexShrink: 0
+      }}
+      onMouseDown={() => {
+        store.dispatch(
+          pushPopupAction({
+            type: HUD_POPUP_TYPE.COMMUNITY_PLACE_INFO,
+            data: place
+          })
+        )
+      }}
+    >
+      {/* Thumbnail */}
+      <UiEntity
+        uiTransform={{
+          width: cardWidth,
+          height: imageHeight,
+          borderRadius: fontSize / 2,
+          flexShrink: 0
+        }}
+        uiBackground={{
+          textureMode: 'stretch',
+          texture: { src: place.image }
+        }}
+      >
+        {/* User count badge */}
+        {place.user_count > 0 && (
+          <Row
+            uiTransform={{
+              positionType: 'absolute',
+              position: { top: fontSizeSmall * 0.5, left: fontSizeSmall * 0.5 },
+              borderRadius: fontSizeSmall,
+              padding: {
+                left: fontSizeSmall * 0.5,
+                right: fontSizeSmall * 0.5,
+                top: fontSizeSmall * 0.2,
+                bottom: fontSizeSmall * 0.2
+              },
+              alignItems: 'center'
+            }}
+            uiBackground={{ color: COLOR.BLACK_POPUP_BACKGROUND }}
+          >
+            <UiEntity
+              uiTransform={{
+                width: fontSizeSmall * 0.6,
+                height: fontSizeSmall * 0.6,
+                borderRadius: fontSizeSmall,
+                margin: { right: fontSizeSmall * 0.3 }
+              }}
+              uiBackground={{ color: COLOR.GREEN }}
+            />
+            <Icon
+              icon={{ spriteName: 'Members', atlasName: 'icons' }}
+              iconSize={fontSizeSmall}
+              iconColor={COLOR.WHITE}
+            />
+            <UiEntity
+              uiText={{
+                value: `${place.user_count}`,
+                fontSize: fontSizeSmall,
+                color: COLOR.WHITE
+              }}
+            />
+          </Row>
+        )}
+        {/* Featured badge */}
+        {place.highlighted && (
+          <UiEntity
+            uiTransform={{
+              positionType: 'absolute',
+              position: {
+                top: fontSizeSmall * 0.5,
+                right: fontSizeSmall * 0.5
+              },
+              borderRadius: fontSizeSmall,
+              padding: {
+                left: fontSizeSmall * 0.5,
+                right: fontSizeSmall * 0.5,
+                top: fontSizeSmall * 0.2,
+                bottom: fontSizeSmall * 0.2
+              }
+            }}
+            uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+            uiText={{
+              value: 'Featured',
+              fontSize: fontSizeSmall,
+              color: COLOR.WHITE
+            }}
+          />
+        )}
+      </UiEntity>
+
+      {/* Name */}
+      <UiEntity
+        uiTransform={{
+          width: '100%',
+          margin: { top: fontSizeSmall * 0.3 }
+        }}
+        uiText={{
+          value: `<b>${place.title}</b>`,
+          fontSize,
+          color: COLOR.TEXT_COLOR_WHITE,
+          textAlign: 'top-left',
+          textWrap: 'nowrap'
+        }}
+      />
+
+      {/* Like + Coords */}
+      <Row
+        uiTransform={{
+          width: '100%',
+          alignItems: 'center',
+          margin: { top: -fontSizeSmall * 0.3 }
+        }}
+      >
+        <Icon
+          icon={{ spriteName: 'LikeOn', atlasName: 'icons' }}
+          iconSize={fontSizeSmall}
+          iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
+        />
+        <UiEntity
+          uiText={{
+            value: likePercent,
+            fontSize: fontSizeSmall,
+            color: COLOR.TEXT_COLOR_LIGHT_GREY
+          }}
+          uiTransform={{ margin: { right: fontSize * 0.5 } }}
+        />
+        <Icon
+          icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
+          iconSize={fontSizeSmall}
+          iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
+        />
+        <UiEntity
+          uiText={{
+            value: place.base_position,
+            fontSize: fontSizeSmall,
+            color: COLOR.TEXT_COLOR_LIGHT_GREY
+          }}
+        />
+      </Row>
+    </Column>
+  )
+}
+
+export function CommunityPlaces({
+  communityId
+}: {
+  communityId: string
+}): ReactElement {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const scale = getContentScaleRatio()
+  const [places, setPlaces] = useState<PlaceFromApi[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    executeTask(async () => {
+      try {
+        const resolved = await fetchCommunityPlaces(communityId)
+        setPlaces(resolved)
+      } catch (error) {
+        console.error('[communities] failed to load places', error)
+      }
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) {
+    return (
+      <Row uiTransform={{ width: '100%', flexWrap: 'wrap' }}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <UiEntity
+            key={i}
+            uiTransform={{
+              width: scale * 280,
+              height: scale * 220,
+              margin: { right: fontSize * 0.5, bottom: fontSize * 0.5 }
+            }}
+          >
+            <LoadingPlaceholder
+              uiTransform={{
+                width: '100%',
+                height: '100%',
+                borderRadius: fontSize / 2
+              }}
+            />
+          </UiEntity>
+        ))}
+      </Row>
+    )
+  }
+
+  if (places.length === 0) {
+    return (
+      <UiEntity
+        uiText={{
+          value: 'No places yet',
+          fontSize,
+          color: COLOR.TEXT_COLOR_GREY
+        }}
+      />
+    )
+  }
+
+  return (
+    <Row uiTransform={{ width: '100%', flexWrap: 'wrap' }}>
+      {places.map((place) => (
+        <CommunityPlaceCard key={place.id} place={place} />
+      ))}
+    </Row>
+  )
+}

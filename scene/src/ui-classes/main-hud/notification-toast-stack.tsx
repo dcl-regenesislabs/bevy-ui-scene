@@ -6,10 +6,9 @@ import { executeTask } from '@dcl/sdk/ecs'
 import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { sleep } from '../../utils/dcl-utils'
 import { fetchNotifications } from '../../utils/notifications-promise-utils'
-import { BevyApi } from '../../bevy-api'
 import { getPlayer } from '@dcl/sdk/src/players'
 import type { FriendshipEventUpdate } from '../../service/social-service-type'
-import { showErrorPopup } from '../../service/error-popup-service'
+import { listenFriendshipEvent } from '../../service/friend-connectivity-service'
 
 export type NotificationToastStackState = {
   toasts: Notification[]
@@ -88,19 +87,9 @@ export function pushNotificationToast(notification: Notification): void {
 }
 
 export function initFriendshipEventToasts(): void {
-  executeTask(async () => {
-    try {
-      const stream = await BevyApi.social.getFriendshipEventStream()
-      for await (const event of stream) {
-        if (event.type === 'request') {
-          pushNotificationToast(buildFriendRequestNotification(event))
-        }
-      }
-    } catch (error) {
-      showErrorPopup(
-        error instanceof Error ? error : new Error(String(error)),
-        'initFriendshipEventToasts'
-      )
+  listenFriendshipEvent((event) => {
+    if (event.type === 'request') {
+      pushNotificationToast(buildFriendRequestNotification(event))
     }
   })
 }

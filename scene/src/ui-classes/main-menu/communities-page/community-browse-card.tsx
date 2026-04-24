@@ -3,6 +3,7 @@ import { COLOR } from '../../../components/color-palette'
 import { Column } from '../../../components/layout'
 import {
   type CommunityListItem,
+  type CommunityMemberRole,
   getCommunityThumbnailUrl
 } from '../../../service/communities-types'
 import {
@@ -12,9 +13,24 @@ import {
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
+import { CommunityPublicAndMembersSpan } from './community-public-and-members-span'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
+import {
+  fetchUserInviteRequests,
+  invalidateUserInviteRequestsCache,
+  joinCommunity,
+  manageInviteRequest,
+  sendInviteOrRequestToJoin
+} from '../../../utils/communities-promise-utils'
+import { getPlayer } from '@dcl/sdk/players'
+import { executeTask } from '@dcl/sdk/ecs'
+import { showErrorPopup } from '../../../service/error-popup-service'
+import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
+import { notifyCommunitiesChanged } from '../../../service/communities-events'
+import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 
 export const BROWSE_CARD_WIDTH = (): number => getContentScaleRatio() * 400
 export const BROWSE_CARD_HEIGHT = (): number => getContentScaleRatio() * 600
@@ -22,27 +38,27 @@ export const BROWSE_CARD_HEIGHT = (): number => getContentScaleRatio() * 600
 const COMMUNITY_CARD_BUTTON_LABEL = {
   VIEW: 'VIEW',
   REQUEST_TO_JOIN: 'REQUEST TO JOIN',
+  REQUESTED: 'REQUESTED',
+  CANCEL_REQUEST: 'CANCEL REQUEST',
   JOIN: 'JOIN'
 }
-function getActionLabel(community: CommunityListItem): string {
-  if (
-    community.role === 'member' ||
-    community.role === 'moderator' ||
-    community.role === 'owner'
-  ) {
+
+function getActionLabel(
+  role: CommunityMemberRole,
+  privacy: CommunityListItem['privacy'],
+  requested: boolean,
+  hovering: boolean
+): string {
+  if (role === 'member' || role === 'moderator' || role === 'owner') {
     return COMMUNITY_CARD_BUTTON_LABEL.VIEW
   }
-  if (community.privacy === 'private') {
-    return COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN
+  if (privacy === 'private') {
+    if (!requested) return COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN
+    return hovering
+      ? COMMUNITY_CARD_BUTTON_LABEL.CANCEL_REQUEST
+      : COMMUNITY_CARD_BUTTON_LABEL.REQUESTED
   }
   return COMMUNITY_CARD_BUTTON_LABEL.JOIN
-}
-
-function formatMemberCount(count: number): string {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`
-  }
-  return String(count)
 }
 
 export function CommunityBrowseCard({
@@ -62,8 +78,134 @@ export function CommunityBrowseCard({
   })
   const cardWidth = BROWSE_CARD_WIDTH()
   const cardHeight = BROWSE_CARD_HEIGHT()
-  const buttonLabel = getActionLabel(community)
-  const privacyLabel = community.privacy === 'public' ? 'Public' : 'Private'
+  const [role, setRole] = useState<CommunityMemberRole>(community.role)
+  const [requestId, setRequestId] = useState<string | null>(null)
+  const [acting, setActing] = useState<boolean>(false)
+  const [hovering, setHovering] = useState<boolean>(false)
+  const requested = requestId != null
+  const buttonLabel = getActionLabel(
+    role,
+    community.privacy,
+    requested,
+    hovering
+  )
+
+  // Persist pending-request state across catalog mounts. Only relevant for
+  // private communities the user isn't a member of.
+  useEffect(() => {
+    const isMember =
+      community.role === 'member' ||
+      community.role === 'moderator' ||
+      community.role === 'owner'
+    if (isMember || community.privacy !== 'private') return
+    executeTask(async () => {
+      try {
+        const requests = await fetchUserInviteRequests('request_to_join')
+        const match = requests.find((r) => r.communityId === community.id)
+        if (match != null) setRequestId(match.id)
+      } catch (error) {
+        console.error('[communities] failed to load my requests', error)
+      }
+    })
+  }, [])
+
+  const onButtonClick = (): void => {
+    if (acting) return
+    if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.VIEW) {
+      store.dispatch(
+        pushPopupAction({
+          type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+          data: community
+        })
+      )
+      return
+    }
+    if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.JOIN) {
+      const previous = role
+      setRole('member')
+      setActing(true)
+      executeTask(async () => {
+        try {
+          await joinCommunity(community.id)
+          community.role = 'member'
+          notifyCommunitiesChanged()
+        } catch (error) {
+          setRole(previous)
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            'joinCommunity'
+          )
+        } finally {
+          setActing(false)
+        }
+      })
+      return
+    }
+    if (buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.REQUEST_TO_JOIN) {
+      const myAddress = (getPlayer()?.userId ?? '').toLowerCase()
+      if (myAddress.length === 0) return
+      setActing(true)
+      executeTask(async () => {
+        try {
+          await sendInviteOrRequestToJoin(
+            community.id,
+            myAddress,
+            'request_to_join'
+          )
+          invalidateUserInviteRequestsCache()
+          // Resolve the new request id so the button can offer cancel.
+          try {
+            const requests = await fetchUserInviteRequests('request_to_join')
+            const match = requests.find((r) => r.communityId === community.id)
+            setRequestId(match?.id ?? 'pending')
+          } catch {
+            setRequestId('pending')
+          }
+          notifyCommunitiesChanged()
+        } catch (error) {
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            'requestToJoinCommunity'
+          )
+        } finally {
+          setActing(false)
+        }
+      })
+      return
+    }
+    if (
+      buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.REQUESTED ||
+      buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.CANCEL_REQUEST
+    ) {
+      const previousId = requestId
+      if (previousId == null) return
+      setRequestId(null)
+      setHovering(false)
+      setActing(true)
+      executeTask(async () => {
+        try {
+          let idToCancel = previousId
+          if (idToCancel === 'pending') {
+            const requests = await fetchUserInviteRequests('request_to_join')
+            const match = requests.find((r) => r.communityId === community.id)
+            if (match == null) return
+            idToCancel = match.id
+          }
+          await manageInviteRequest(community.id, idToCancel, 'cancelled')
+          invalidateUserInviteRequestsCache()
+          notifyCommunitiesChanged()
+        } catch (error) {
+          setRequestId(previousId)
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            'cancelRequestToJoin'
+          )
+        } finally {
+          setActing(false)
+        }
+      })
+    }
+  }
 
   return (
     <Column
@@ -110,10 +252,7 @@ export function CommunityBrowseCard({
           overflow: 'hidden'
         }}
         uiText={{
-          value: `<b>${truncateWithoutBreakingWords(
-            community.name + ' ' + community.name,
-            31
-          )}</b>`,
+          value: `<b>${truncateWithoutBreakingWords(community.name, 31)}</b>`,
           fontSize: fontSizeSmall,
           textWrap: 'nowrap',
           color: COLOR.TEXT_COLOR_WHITE,
@@ -137,19 +276,14 @@ export function CommunityBrowseCard({
       />
 
       {/* Privacy + Members */}
-      <UiEntity
+      <CommunityPublicAndMembersSpan
+        privacy={community.privacy}
+        membersCount={community.membersCount}
+        fontSize={fontSizeCaption}
         uiTransform={{
           width: '100%',
           flexShrink: 0,
-          margin: { top: -fontSizeSmall / 2 }
-        }}
-        uiText={{
-          value: `${privacyLabel} | ${formatMemberCount(
-            community.membersCount
-          )} Members`,
-          fontSize: fontSizeCaption,
-          color: COLOR.TEXT_COLOR_LIGHT_GREY,
-          textAlign: 'top-left'
+          margin: { top: -fontSizeSmall / 2, left: fontSizeSmall / 2 }
         }}
       />
 
@@ -164,15 +298,32 @@ export function CommunityBrowseCard({
             buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.JOIN
               ? COLOR.BLACK_TRANSPARENT
               : COLOR.WHITE,
-          margin: { top: fontSizeSmall / 2 }
+          margin: { top: fontSizeSmall / 2 },
+          opacity: acting ? getLoadingAlphaValue() : 1
         }}
         uiBackground={{
           color:
             buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.JOIN
               ? COLOR.WHITE_OPACITY_1
+              : buttonLabel === COMMUNITY_CARD_BUTTON_LABEL.CANCEL_REQUEST
+              ? COLOR.BUTTON_PRIMARY
               : COLOR.BLACK_TRANSPARENT
         }}
-        onMouseDown={() => {}}
+        onMouseDown={onButtonClick}
+        onMouseEnter={
+          requested
+            ? () => {
+                setHovering(true)
+              }
+            : undefined
+        }
+        onMouseLeave={
+          requested
+            ? () => {
+                setHovering(false)
+              }
+            : undefined
+        }
         uiText={{
           value: `<b>${buttonLabel}</b>`,
           fontSize: fontSizeSmall

@@ -26,8 +26,9 @@ import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { formatRequestDate, PanelListButton } from './friend-request-item'
+import { showConfirmPopup } from '../confirm-popup'
 
-import { refreshFriendRequests } from './friend-request-list'
+import { removeFriendRequest } from './friend-request-list'
 
 export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
   const request = shownPopup.data as FriendRequestData
@@ -42,7 +43,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         onPrimary={() => {
           executeTask(async () => {
             await BevyApi.social.acceptFriendRequest(request.address)
-            refreshFriendRequests()
+            removeFriendRequest(request.address)
             store.dispatch(closeLastPopupAction())
             store.dispatch(
               pushPopupAction({
@@ -60,7 +61,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         onSecondary={() => {
           executeTask(async () => {
             await BevyApi.social.rejectFriendRequest(request.address)
-            refreshFriendRequests()
+            removeFriendRequest(request.address)
             store.dispatch(closeLastPopupAction())
             store.dispatch(
               pushPopupAction({
@@ -94,16 +95,33 @@ export const FriendRequestSentPopup: Popup = ({ shownPopup }) => {
         secondaryLabel="BACK"
         onPrimary={() => {
           store.dispatch(closeLastPopupAction())
-          store.dispatch(
-            pushPopupAction({
-              type: HUD_POPUP_TYPE.CANCEL_FRIEND_REQUEST,
-              data: {
-                address: request.address,
-                name: request.name,
-                hasClaimedName: request.hasClaimedName
-              }
-            })
-          )
+          showConfirmPopup({
+            title: `Are you sure you want to cancel the friend request to <b>${request.name}</b>?`,
+            icon: {
+              spriteName: 'CloseIcon',
+              atlasName: 'icons',
+              backgroundColor: COLOR.BUTTON_PRIMARY
+            },
+            confirmLabel: 'CANCEL REQUEST',
+            cancelLabel: 'BACK',
+            category: 'friendship',
+            address: request.address,
+            onConfirm: async () => {
+              await BevyApi.social.cancelFriendRequest(request.address)
+              removeFriendRequest(request.address)
+              store.dispatch(
+                pushPopupAction({
+                  type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+                  data: {
+                    variant: 'canceled',
+                    address: request.address,
+                    name: request.name,
+                    hasClaimedName: request.hasClaimedName
+                  }
+                })
+              )
+            }
+          })
         }}
         onSecondary={() => {
           store.dispatch(closeLastPopupAction())

@@ -1,4 +1,5 @@
 import { BevyApi } from '../bevy-api'
+import { getPlayer } from '@dcl/sdk/players'
 
 export type FeatureFlags = {
   minimap: boolean
@@ -23,8 +24,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
   chat: true,
   discoverMap: true,
   notifications: true,
-  friends: false,
-  communities: false
+  friends: true,
+  communities: true
 }
 
 const resolvedFlags: FeatureFlags = { ...DEFAULT_FLAGS }
@@ -43,12 +44,24 @@ export async function initFeatureFlags(): Promise<void> {
         }
       }
     }
+
     console.log('[feature-flags] flags:', resolvedFlags)
   } catch (e) {
     console.error(
       '[feature-flags] init failed, defaulting all flags to true',
       e
     )
+  }
+}
+
+export function applyGuestDisabledFeatures(): void {
+  const player = getPlayer()
+  if (player?.isGuest === true) {
+    resolvedFlags.friends = false
+    resolvedFlags.communities = false
+    resolvedFlags.notifications = false
+
+    console.log('[feature-flags] guest restrictions applied:', resolvedFlags)
   }
 }
 

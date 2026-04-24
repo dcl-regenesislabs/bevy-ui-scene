@@ -17,12 +17,14 @@ export function PopupBackdrop({
         width: '100%',
         height: '100%',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        pointerFilter: 'block'
       }}
       uiBackground={{
         color: COLOR.DARK_OPACITY_9
       }}
       onMouseDown={() => {
+        console.log('close popup2)')
         store.dispatch(closeLastPopupAction())
       }}
     >

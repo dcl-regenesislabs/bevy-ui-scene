@@ -8,6 +8,10 @@ import {
   type NotAchievedAchievementItem
 } from '../../ui-classes/main-hud/passport/badges-types'
 import { PASSPORT_SECTIONS } from '../../ui-classes/main-hud/passport/passport-constants'
+import type {
+  FriendRequestData,
+  FriendStatusData
+} from '../../service/social-service-type'
 
 export const HUD_STORE_ID = 'hud'
 
@@ -63,12 +67,13 @@ export enum HUD_POPUP_TYPE {
   FRIEND_REQUEST_RECEIVED,
   FRIEND_REQUEST_SENT,
   SEND_FRIEND_REQUEST,
-  CONFIRM_UNFRIEND,
-  CANCEL_FRIEND_REQUEST,
   FRIENDSHIP_RESULT,
-  CONFIRM_BLOCK,
-  CONFIRM_UNBLOCK,
-  COMMUNITY_VIEW
+  COMMUNITY_VIEW,
+  COMMUNITY_PLACE_INFO,
+  COMMUNITY_EVENT_INFO,
+  CREATE_COMMUNITY,
+  CONFIRM_DELETE_COMMUNITY,
+  CONFIRM
 }
 
 export type HUDPopup = {
@@ -118,6 +123,10 @@ export type HudState = {
   passportActiveSection: (typeof PASSPORT_SECTIONS)[number]
   friendsOpen: boolean
   friendsActiveTabIndex: number
+  sentFriendRequests: FriendRequestData[]
+  receivedFriendRequests: FriendRequestData[]
+  friends: FriendStatusData[]
+  friendsLoading: boolean
 }
 
 export type HudStateUpdateParams = {
@@ -158,6 +167,10 @@ export type HudStateUpdateParams = {
   passportActiveSection?: (typeof PASSPORT_SECTIONS)[number]
   friendsOpen?: boolean
   friendsActiveTabIndex?: number
+  sentFriendRequests?: FriendRequestData[]
+  receivedFriendRequests?: FriendRequestData[]
+  friends?: FriendStatusData[]
+  friendsLoading?: boolean
 }
 
 export const hudInitialState: HudState = {
@@ -198,5 +211,9 @@ export const hudInitialState: HudState = {
   passportSelectedBadge: null,
   passportActiveSection: PASSPORT_SECTIONS[0],
   friendsOpen: false,
-  friendsActiveTabIndex: 1
+  friendsActiveTabIndex: 0,
+  sentFriendRequests: [],
+  receivedFriendRequests: [],
+  friends: [],
+  friendsLoading: true
 }

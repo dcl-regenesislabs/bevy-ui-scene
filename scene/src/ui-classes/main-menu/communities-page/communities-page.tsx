@@ -9,7 +9,10 @@ import {
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
 import { executeTask } from '@dcl/sdk/ecs'
-import { fetchMyCommunities } from '../../../utils/communities-promise-utils'
+import {
+  fetchMyCommunities,
+  fetchUserInviteRequests
+} from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import {
   type CommunityListItem,
@@ -25,9 +28,16 @@ import { getMainMenuHeight } from '../MainMenu'
 import Icon from '../../../components/icon/Icon'
 import { debounce } from '../../../utils/dcl-utils'
 import { Color4 } from '@dcl/sdk/math'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { cancelBrowseLoad, CommunitiesCatalog } from './communities-catalog'
+import { CommunityInvitesAndRequests } from './community-invites-and-requests'
+import { CommunityMyCommunities } from './community-my-communities'
+import { listenCommunitiesChanged } from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
+import { BottomBorder } from '../../../components/bottom-border'
 
 export default class CommunitiesPage {
   mainUi(): ReactElement {
@@ -36,15 +46,45 @@ export default class CommunitiesPage {
 }
 
 function CommunitiesContent(): ReactElement {
-  const fontSize = getFontSize({ context: CONTEXT.SIDE })
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeCaption = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.CAPTION
+  })
   const [myCommunities, setMyCommunities] = useState<CommunityListItem[]>([])
   const [loadingSidebar, setLoadingSidebar] = useState<boolean>(true)
   const [searchText, setSearchText] = useState<string>('')
   const [debouncedSearch, setDebouncedSearch] = useState<string>('')
+  const [view, setView] = useState<'catalog' | 'invites' | 'my-communities'>(
+    'catalog'
+  )
+  const [pendingInvitesCount, setPendingInvitesCount] = useState<number>(0)
 
   const onSearchChange = debounce((text: string) => {
     setDebouncedSearch(text)
   }, 600)
+
+  const refreshPendingInvites = (): void => {
+    executeTask(async () => {
+      try {
+        const invites = await fetchUserInviteRequests('invite')
+        setPendingInvitesCount(invites.length)
+      } catch (error) {
+        console.error('[communities] failed to load pending invites', error)
+      }
+    })
+  }
+
+  const refreshMyCommunities = (): void => {
+    executeTask(async () => {
+      try {
+        const result = await fetchMyCommunities()
+        setMyCommunities(result.results)
+      } catch (error) {
+        console.error('[communities] failed to refresh my communities', error)
+      }
+    })
+  }
 
   useEffect(() => {
     executeTask(async () => {
@@ -56,9 +96,16 @@ function CommunitiesContent(): ReactElement {
       }
       setLoadingSidebar(false)
     })
+    refreshPendingInvites()
+
+    const unsubscribe = listenCommunitiesChanged(() => {
+      refreshMyCommunities()
+      refreshPendingInvites()
+    })
 
     return () => {
       cancelBrowseLoad()
+      unsubscribe()
     }
   }, [])
 
@@ -127,22 +174,157 @@ function CommunitiesContent(): ReactElement {
           }}
           uiBackground={{ color: COLOR.DARK_OPACITY_2 }}
         >
+          {/* Create community CTA */}
           <UiEntity
             uiTransform={{
               width: '100%',
+              height: fontSize * 2.4,
+              borderRadius: fontSize / 2,
+              borderWidth: 1,
+              borderColor: COLOR.WHITE_OPACITY_5,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              margin: { top: fontSize, bottom: fontSize }
+            }}
+            onMouseDown={() => {
+              store.dispatch(
+                pushPopupAction({
+                  type: HUD_POPUP_TYPE.CREATE_COMMUNITY
+                })
+              )
+            }}
+          >
+            <Icon
+              icon={{ atlasName: 'context', spriteName: 'Add' }}
+              iconSize={fontSize}
+              iconColor={COLOR.WHITE}
+            />
+            <UiEntity
+              uiTransform={{ margin: { left: fontSize * 0.4 } }}
+              uiText={{
+                value: '<b>CREATE A COMMUNITY</b>',
+                fontSize: fontSizeCaption,
+                color: COLOR.WHITE
+              }}
+            />
+          </UiEntity>
+
+          <UiEntity
+            uiTransform={{
+              width: '100%',
+              padding: 0,
+              flexShrink: 0,
+              alignItems: 'center'
+            }}
+            onMouseDown={() => {
+              setView('invites')
+            }}
+          >
+            <UiEntity
+              uiText={{
+                value: `<b>Invites & Requests</b>`,
+                fontSize,
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left'
+              }}
+            />
+            <UiEntity uiTransform={{ flexGrow: 1 }} />
+            {pendingInvitesCount > 0 && (
+              <UiEntity
+                uiTransform={{
+                  borderRadius: 99,
+                  height: fontSize,
+                  width: fontSize
+                }}
+                uiBackground={{
+                  color: COLOR.LINK_COLOR
+                }}
+                uiText={{
+                  value: `${pendingInvitesCount}`,
+                  fontSize: fontSizeCaption
+                }}
+              />
+            )}
+
+            <Icon
+              icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
+              iconColor={COLOR.LINK_COLOR}
+              iconSize={fontSize}
+            />
+            <BottomBorder
+              color={COLOR.WHITE_OPACITY_1}
+              uiTransform={{
+                height: 1,
+                width: '111%',
+                margin: { left: -fontSize }
+              }}
+            />
+          </UiEntity>
+
+          <UiEntity
+            uiTransform={{
+              width: '100%',
+              padding: 0,
+              flexShrink: 0,
+              alignItems: 'center'
+            }}
+            onMouseDown={() => {
+              setView('catalog')
+            }}
+          >
+            <UiEntity
+              uiText={{
+                value: '<b>Browse Communities</b>',
+                fontSize,
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left'
+              }}
+            />
+            <UiEntity uiTransform={{ flexGrow: 1 }} />
+            <Icon
+              icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
+              iconColor={COLOR.LINK_COLOR}
+              iconSize={fontSize}
+            />
+            <BottomBorder
+              color={COLOR.WHITE_OPACITY_1}
+              uiTransform={{
+                height: 1,
+                width: '111%',
+                margin: { left: -fontSize }
+              }}
+            />
+          </UiEntity>
+
+          <UiEntity
+            uiTransform={{
+              width: '100%',
+              padding: 0,
               margin: { bottom: fontSize },
-              flexShrink: 0
+              flexShrink: 0,
+              alignItems: 'center'
             }}
-            uiText={{
-              value: '<b>My Communities</b>',
-              fontSize: getFontSize({
-                context: CONTEXT.SIDE,
-                token: TYPOGRAPHY_TOKENS.BODY
-              }),
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'top-left'
+            onMouseDown={() => {
+              setView('my-communities')
             }}
-          />
+          >
+            <UiEntity
+              uiText={{
+                value: '<b>My Communities</b>',
+                fontSize,
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left'
+              }}
+            />
+            <UiEntity uiTransform={{ flexGrow: 1 }} />
+            <Icon
+              icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
+              iconColor={COLOR.LINK_COLOR}
+              iconSize={fontSize}
+            />
+          </UiEntity>
           {loadingSidebar ? (
             <LoadingPlaceholder
               uiTransform={{
@@ -174,6 +356,14 @@ function CommunitiesContent(): ReactElement {
                         top: fontSize * 0.3,
                         bottom: fontSize * 0.3
                       }
+                    }}
+                    onMouseDown={() => {
+                      store.dispatch(
+                        pushPopupAction({
+                          type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+                          data: community
+                        })
+                      )
                     }}
                   >
                     <UiEntity
@@ -216,7 +406,7 @@ function CommunitiesContent(): ReactElement {
           )}
         </Column>
 
-        {/* Right content - Browse */}
+        {/* Right content - Browse or Invites & Requests */}
         <Column
           uiTransform={{
             width: '78%',
@@ -228,7 +418,31 @@ function CommunitiesContent(): ReactElement {
             }
           }}
         >
-          <CommunitiesCatalog searchText={debouncedSearch} />
+          {view === 'catalog' && (
+            <CommunitiesCatalog searchText={debouncedSearch} />
+          )}
+          {view === 'invites' && (
+            <CommunityInvitesAndRequests
+              onBack={() => {
+                setView('catalog')
+                refreshPendingInvites()
+              }}
+              onInviteAccepted={() => {
+                refreshPendingInvites()
+                refreshMyCommunities()
+              }}
+              onInviteRejected={refreshPendingInvites}
+            />
+          )}
+          {view === 'my-communities' && (
+            <CommunityMyCommunities
+              communities={myCommunities}
+              loading={loadingSidebar}
+              onBack={() => {
+                setView('catalog')
+              }}
+            />
+          )}
         </Column>
       </ResponsiveContent>
     </MainContent>

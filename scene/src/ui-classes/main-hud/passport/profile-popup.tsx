@@ -19,6 +19,7 @@ import { CopyButton } from '../../../components/copy-button'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
 import { BottomBorder } from '../../../components/bottom-border'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
+import { showConfirmPopup } from '../../../components/confirm-popup'
 import { type GetPlayerDataRes } from '../../../utils/definitions'
 import { createOrGetAvatarsTracker } from '../../../service/avatar-tracker'
 import {
@@ -383,18 +384,20 @@ function FriendButton({
           setIsHovered(false)
         }}
         onMouseDown={() => {
-          store.dispatch(
-            pushPopupAction({
-              type: HUD_POPUP_TYPE.CONFIRM_UNFRIEND,
-              data: {
-                address: player.userId,
-                name: player.name,
-                hasClaimedName: !!(
-                  player.name?.length && !player.name?.includes('#')
-                )
-              }
-            })
-          )
+          showConfirmPopup({
+            title: `Are you sure you want to unfriend <b>${player.name}</b>?`,
+            icon: {
+              spriteName: 'Unfriends',
+              atlasName: 'context',
+              backgroundColor: COLOR.RED
+            },
+            confirmLabel: 'UNFRIEND',
+            category: 'friendship',
+            address: player.userId,
+            onConfirm: async () => {
+              await BevyApi.social.deleteFriend(player.userId)
+            }
+          })
         }}
       >
         <Icon
@@ -470,7 +473,6 @@ function BlockUserButton({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_L
   })
-  const hasClaimedName = !!(player.name?.length && !player.name?.includes('#'))
 
   return (
     <ButtonTextIcon
@@ -479,16 +481,20 @@ function BlockUserButton({
       value={'<b>Block User</b>'}
       onMouseDown={() => {
         closeDialog()
-        store.dispatch(
-          pushPopupAction({
-            type: HUD_POPUP_TYPE.CONFIRM_BLOCK,
-            data: {
-              address: player.userId,
-              name: player.name,
-              hasClaimedName
-            }
-          })
-        )
+        showConfirmPopup({
+          title: `Are you sure you want to block\n<b>${player.name}</b>?`,
+          message:
+            "If you block someone in Decentraland, you will no longer see their avatar in-world, and you will not be able to send friend requests or messages to each other. You will also not see each other's names or messages in public chats.",
+          icon: {
+            spriteName: 'BlockUser',
+            atlasName: 'icons',
+            backgroundColor: COLOR.RED
+          },
+          confirmLabel: 'BLOCK',
+          onConfirm: async () => {
+            await BevyApi.social.blockUser(player.userId)
+          }
+        })
       }}
       icon={{
         atlasName: 'icons',

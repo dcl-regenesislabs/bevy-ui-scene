@@ -3,12 +3,12 @@ import type { Callback, UiTransformProps } from '@dcl/sdk/react-ecs'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { Color4 } from '@dcl/sdk/math'
 import Icon from './icon/Icon'
-import { getFontSize } from '../service/fontsize-system'
+import { CONTEXT, getFontSize } from '../service/fontsize-system'
 
 export function CloseButton({
   uiTransform,
   onClick = noop,
-  fontSize = getFontSize({})
+  fontSize = getFontSize({ context: CONTEXT.DIALOG })
 }: {
   uiTransform?: UiTransformProps
   onClick: Callback

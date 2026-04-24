@@ -15,6 +15,7 @@ import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
+import { showConfirmPopup } from '../confirm-popup'
 
 const MONTH_NAMES = [
   'JAN',
@@ -217,10 +218,20 @@ export function FriendRequestItemReceived({
         variant={'secondary'}
         onMouseDown={() => {
           if (acting) return
-          setActing(true)
-          executeTask(async () => {
-            await BevyApi.social.rejectFriendRequest(friendRequest.address)
-            onAction?.(friendRequest.address)
+          showConfirmPopup({
+            title: `Reject friend request from <b>${friendRequest.name}</b>?`,
+            icon: {
+              spriteName: 'CloseIcon',
+              atlasName: 'icons',
+              backgroundColor: COLOR.BUTTON_PRIMARY
+            },
+            confirmLabel: 'REJECT',
+            category: 'friendship',
+            address: friendRequest.address,
+            onConfirm: async () => {
+              await BevyApi.social.rejectFriendRequest(friendRequest.address)
+              onAction?.(friendRequest.address)
+            }
           })
         }}
       >
@@ -231,8 +242,12 @@ export function FriendRequestItemReceived({
           if (acting) return
           setActing(true)
           executeTask(async () => {
-            await BevyApi.social.acceptFriendRequest(friendRequest.address)
-            onAction?.(friendRequest.address)
+            try {
+              await BevyApi.social.acceptFriendRequest(friendRequest.address)
+              onAction?.(friendRequest.address)
+            } finally {
+              setActing(false)
+            }
           })
         }}
       >
@@ -279,7 +294,6 @@ export function FriendRequestItemSent({
 }): ReactElement {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
   const fontSizeS = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
-  const [acting, setActing] = useState<boolean>(false)
   return (
     <FriendRequestItem
       hovered={!!hovered}
@@ -298,11 +312,21 @@ export function FriendRequestItemSent({
       <PanelListButton
         variant={'secondary'}
         onMouseDown={() => {
-          if (acting) return
-          setActing(true)
-          executeTask(async () => {
-            await BevyApi.social.cancelFriendRequest(friendRequest.address)
-            onAction?.(friendRequest.address)
+          showConfirmPopup({
+            title: `Cancel friend request to <b>${friendRequest.name}</b>?`,
+            icon: {
+              spriteName: 'CloseIcon',
+              atlasName: 'icons',
+              backgroundColor: COLOR.BUTTON_PRIMARY
+            },
+            confirmLabel: 'CANCEL REQUEST',
+            cancelLabel: 'BACK',
+            category: 'friendship',
+            address: friendRequest.address,
+            onConfirm: async () => {
+              await BevyApi.social.cancelFriendRequest(friendRequest.address)
+              onAction?.(friendRequest.address)
+            }
           })
         }}
       >

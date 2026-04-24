@@ -45,7 +45,7 @@ export function PlayerNameComponent({
 
   return (
     <Row
-      uiTransform={{ alignItems: 'center', ...uiTransform }}
+      uiTransform={{ alignItems: 'center', width: 'auto', ...uiTransform }}
       onMouseDown={onMouseDown}
     >
       <UiEntity

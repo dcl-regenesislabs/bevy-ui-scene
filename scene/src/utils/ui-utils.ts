@@ -5,6 +5,7 @@ import backpackJson from '../../assets/images/atlas/backpack.json'
 import iconsJson from '../../assets/images/atlas/icons.json'
 import map2Json from '../../assets/images/atlas/map2.json'
 import emojisJson from '../../assets/images/atlas/emojis.json'
+import socialJson from '../../assets/images/atlas/social.json'
 import { navbarJson } from '../json/navbar-data'
 import { contextJson } from '../json/context-data'
 import { toggleJson } from '../json/toggle-data'
@@ -12,7 +13,7 @@ import { profileJson } from '../json/profile-data'
 import { voiceChatJson } from '../json/voice-chat-data'
 import { getPlayer } from '@dcl/sdk/src/players'
 import { mapJson } from '../json/map-data'
-import { socialJson } from '../json/social-data'
+
 import infoPanelJson from '../../assets/images/atlas/info-panel.json'
 import emotesJson from '../../assets/images/atlas/emotes.json'
 import { memoize } from './function-utils'
@@ -54,7 +55,7 @@ export function getUvs(
       parsedJson = voiceChatJson
       break
     case 'social':
-      parsedJson = socialJson
+      parsedJson = socialJson as AtlasData
       break
     case 'info-panel':
       parsedJson = infoPanelJson as AtlasData

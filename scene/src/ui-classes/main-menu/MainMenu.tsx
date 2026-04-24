@@ -56,7 +56,7 @@ export default class MainMenu {
 
   readonly communitiesIcon: AtlasIcon = {
     atlasName: 'icons',
-    spriteName: 'Community'
+    spriteName: 'CommunitiesHudIcon'
   }
 
   private closeButtonColor: Color4 | undefined
@@ -96,7 +96,7 @@ export default class MainMenu {
   }
 
   communitiesEnter(): void {
-    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesIcon.spriteName = 'CommunitiesHudIcon'
     this.communitiesBackground = SELECTED_BUTTON_COLOR
   }
 
@@ -134,7 +134,7 @@ export default class MainMenu {
     this.mapBackground = undefined
     this.exploreIcon.spriteName = 'Explore off'
     this.exploreBackground = undefined
-    this.communitiesIcon.spriteName = 'Community'
+    this.communitiesIcon.spriteName = 'CommunitiesHudIcon'
     this.communitiesBackground = undefined
     switch (this.activePage) {
       case 'settings':
@@ -253,7 +253,7 @@ export default class MainMenu {
                   }}
                   backgroundColor={this.communitiesBackground}
                   icon={this.communitiesIcon}
-                  value={'<b>COMMUNITIES</b> [O]'}
+                  value={'<b>COMMUNITIES</b>'}
                   fontSize={BUTTON_ICON_FONT_SIZE}
                   iconSize={ICON_SIZE}
                   iconColor={
@@ -310,7 +310,7 @@ export default class MainMenu {
                 }}
                 backgroundColor={this.backpackBackground}
                 icon={this.backpackIcon}
-                value={'<b>BACKPACK</b> [B]'}
+                value={'<b>BACKPACK</b>'}
                 fontSize={BUTTON_ICON_FONT_SIZE}
                 iconSize={ICON_SIZE}
                 iconColor={
@@ -338,7 +338,7 @@ export default class MainMenu {
                 }}
                 backgroundColor={this.settingsBackground}
                 icon={this.settingsIcon}
-                value={'<b>SETTINGS</b> [P]'}
+                value={'<b>SETTINGS</b>'}
                 fontSize={BUTTON_ICON_FONT_SIZE}
                 iconSize={ICON_SIZE}
                 iconColor={

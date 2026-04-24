@@ -2,7 +2,6 @@ import ReactEcs, { Button, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { store } from '../../../state/store'
 import {
-  closeLastPopupAction,
   HUD_ACTION,
   pushPopupAction,
   updateHudStateAction
@@ -47,9 +46,8 @@ import { ButtonIcon } from '../../../components/button-icon'
 import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
-import { CloseButton } from '../../../components/close-button'
 import { BevyApi } from '../../../bevy-api'
-import { Label } from '@dcl/sdk/react-ecs'
+import { showConfirmPopup } from '../../../components/confirm-popup'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
 import { Column, Row } from '../../../components/layout'
 import useState = ReactEcs.useState
@@ -68,7 +66,6 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { waitFor } from '../../../utils/dcl-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import {
@@ -83,6 +80,8 @@ import { Badge3dPreviewElement } from './badge-3d-preview'
 import { BadgesPreview } from './badges-preview'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { PlayerNameComponent } from '../../../components/player-name-component'
+import { PopupBigWindow } from '../../../components/popup-big-window'
+import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -171,8 +170,6 @@ export function setupPassportPopup(): void {
 
 export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const borderRadius = getFontSize({ context: CONTEXT.DIALOG }) / 2
-  const loadingAlpha = getLoadingAlphaValue()
   const [isFriend, setIsFriend] = useState<boolean>(true)
   const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
@@ -197,22 +194,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   return (
     <PopupBackdrop>
       <ResponsiveContent>
-        <UiEntity
-          uiTransform={{
-            width: '80%',
-            height: '100%',
-            pointerFilter: 'block',
-            flexDirection: 'row',
-            borderRadius,
-            borderWidth: 0,
-            borderColor: COLOR.BLACK_TRANSPARENT
-          }}
-          onMouseDown={noop}
-          uiBackground={{
-            texture: { src: 'assets/images/menu/background.png' },
-            textureMode: 'stretch'
-          }}
-        >
+        <PopupBigWindow>
           {!state.loadingProfile
             ? [
                 store.getState().hud.passportActiveSection ===
@@ -237,12 +219,30 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               ]
             : null}
           {state.loadingProfile && (
-            <Label
-              uiTransform={{ padding: fontSize }}
-              value={'Loading Avatar Passport ...'}
-              fontSize={fontSize}
-              color={{ ...COLOR.TEXT_COLOR_GREY, a: loadingAlpha }}
-            />
+            <Row
+              uiTransform={{
+                width: '100%',
+                height: '100%',
+                padding: fontSize,
+                alignItems: 'center'
+              }}
+            >
+              <LoadingPlaceholder
+                uiTransform={{
+                  width: '30%',
+                  height: '90%',
+                  borderRadius: fontSize / 2,
+                  margin: { right: fontSize }
+                }}
+              />
+              <LoadingPlaceholder
+                uiTransform={{
+                  flexGrow: 1,
+                  height: '90%',
+                  borderRadius: fontSize / 2
+                }}
+              />
+            </Row>
           )}
           {!state.editable && getFeatureFlag(FEATURES.FRIENDS) ? (
             <PassportFriendButton
@@ -251,33 +251,10 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               fontSize={fontSize}
             />
           ) : null}
-          <CloseButton
-            uiTransform={{
-              position: {
-                top: getContentScaleRatio() * 16,
-                right: getContentScaleRatio() * 16
-              },
-              positionType: 'absolute',
-              borderWidth: 0,
-              borderRadius,
-              borderColor: COLOR.BLACK_TRANSPARENT,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              flexGrow: 0
-            }}
-            onClick={() => {
-              closeDialog()
-            }}
-          />
-        </UiEntity>
+        </PopupBigWindow>
       </ResponsiveContent>
     </PopupBackdrop>
   )
-
-  function closeDialog(): void {
-    store.dispatch(closeLastPopupAction())
-  }
 }
 const _getVisibleProperties = memoize(getVisibleProperties)
 function getVisibleProperties(profileData: ViewAvatarData): string[] {
@@ -978,16 +955,20 @@ function PassportFriendButton({
           setIsHovered(false)
         }}
         onMouseDown={() => {
-          store.dispatch(
-            pushPopupAction({
-              type: HUD_POPUP_TYPE.CONFIRM_UNBLOCK,
-              data: {
-                address: userId,
-                name: profileData.name,
-                hasClaimedName: profileData.hasClaimedName
-              }
-            })
-          )
+          showConfirmPopup({
+            title: `Are you sure you want to unblock\n<b>${profileData.name}</b>?`,
+            message:
+              'If you unblock someone, you will see their avatar in-world, and you will be able to send friend requests and messages to each other in public or private chats.',
+            icon: {
+              spriteName: 'BlockUser',
+              atlasName: 'icons',
+              backgroundColor: COLOR.RED
+            },
+            confirmLabel: 'UNBLOCK',
+            onConfirm: async () => {
+              await BevyApi.social.unblockUser(userId)
+            }
+          })
         }}
       >
         <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
@@ -1026,16 +1007,20 @@ function PassportFriendButton({
           setIsHovered(false)
         }}
         onMouseDown={() => {
-          store.dispatch(
-            pushPopupAction({
-              type: HUD_POPUP_TYPE.CONFIRM_UNFRIEND,
-              data: {
-                address: userId,
-                name: profileData.name,
-                hasClaimedName: profileData.hasClaimedName
-              }
-            })
-          )
+          showConfirmPopup({
+            title: `Are you sure you want to unfriend <b>${profileData.name}</b>?`,
+            icon: {
+              spriteName: 'Unfriends',
+              atlasName: 'context',
+              backgroundColor: COLOR.RED
+            },
+            confirmLabel: 'UNFRIEND',
+            category: 'friendship',
+            address: userId,
+            onConfirm: async () => {
+              await BevyApi.social.deleteFriend(userId)
+            }
+          })
         }}
       >
         <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
