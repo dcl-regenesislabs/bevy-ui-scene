@@ -14,6 +14,7 @@ import {
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { CommunityPublicAndMembersSpan } from './community-public-and-members-span'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
+import Icon from '../../../components/icon/Icon'
 import { ThinMenuButton } from '../../../components/thin-menu-button'
 import { executeTask } from '@dcl/sdk/ecs'
 import { getPlayer } from '@dcl/sdk/players'
@@ -345,24 +346,35 @@ export function CommunityViewHeader({
                     }}
                     uiBackground={{ color: COLOR.URL_POPUP_BACKGROUND }}
                   >
-                    <UiEntity
+                    <Row
                       uiTransform={{
+                        width: 'auto',
                         padding: {
                           left: fontSize,
                           right: fontSize,
                           top: fontSize * 0.5,
                           bottom: fontSize * 0.5
                         },
-                        borderRadius: fontSize / 2
-                      }}
-                      uiText={{
-                        value: '<b>Delete Community</b>',
-                        fontSize: fontSizeSmall,
-                        color: COLOR.BUTTON_PRIMARY,
-                        textWrap: 'nowrap'
+                        borderRadius: fontSize / 2,
+                        alignItems: 'center'
                       }}
                       onMouseDown={onDelete}
-                    />
+                    >
+                      <Icon
+                        icon={{ spriteName: 'Delete', atlasName: 'icons' }}
+                        iconSize={fontSizeSmall}
+                        iconColor={COLOR.BUTTON_PRIMARY}
+                        uiTransform={{ margin: { right: fontSize * 0.4 } }}
+                      />
+                      <UiEntity
+                        uiText={{
+                          value: '<b>Delete Community</b>',
+                          fontSize: fontSizeSmall,
+                          color: COLOR.BUTTON_PRIMARY,
+                          textWrap: 'nowrap'
+                        }}
+                      />
+                    </Row>
                   </UiEntity>
                 )}
               </UiEntity>

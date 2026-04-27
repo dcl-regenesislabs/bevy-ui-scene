@@ -250,7 +250,8 @@ function ProfileHeader({
               }}
             />
           </Row>,
-          ...(getFeatureFlag(FEATURES.FRIENDS)
+          ...(getFeatureFlag(FEATURES.FRIENDS) &&
+          player.userId !== getPlayer()?.userId
             ? [<FriendButton player={player} fontSize={fontSizeTitleL} />]
             : [])
         ]
