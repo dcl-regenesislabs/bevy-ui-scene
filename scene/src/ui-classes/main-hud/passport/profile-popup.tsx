@@ -164,6 +164,9 @@ function ProfileContent({
         getFeatureFlag(FEATURES.FRIENDS) ? (
           <BlockUserButton player={player} />
         ) : null}
+        {player.userId !== getPlayer()?.userId ? (
+          <ReportUserButton player={player} />
+        ) : null}
         {/* // TODO Exit / Sign out : OwnProfileButtons({player}) */}
       </UiEntity>
     </UiEntity>
@@ -480,6 +483,8 @@ function BlockUserButton({
       key={'profile-button-block-' + player.userId}
       uiTransform={PROFILE_BUTTON_TRANSFORM}
       value={'<b>Block User</b>'}
+      fontColor={COLOR.BUTTON_PRIMARY}
+      iconColor={COLOR.BUTTON_PRIMARY}
       onMouseDown={() => {
         closeDialog()
         showConfirmPopup({
@@ -500,6 +505,56 @@ function BlockUserButton({
       icon={{
         atlasName: 'icons',
         spriteName: 'BlockUser'
+      }}
+      fontSize={fontSizeTitleL}
+    />
+  )
+}
+
+/**
+ * Stub: there's no general report endpoint wired yet — surfaces a confirm
+ * and logs the address. Replace `onConfirm` body when one is available.
+ */
+function ReportUserButton({
+  player
+}: {
+  player: GetPlayerDataRes
+}): ReactElement {
+  const fontSizeTitleL = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_L
+  })
+
+  return (
+    <ButtonTextIcon
+      key={'profile-button-report-' + player.userId}
+      uiTransform={PROFILE_BUTTON_TRANSFORM}
+      value={'<b>Report</b>'}
+      fontColor={COLOR.BUTTON_PRIMARY}
+      iconColor={COLOR.BUTTON_PRIMARY}
+      onMouseDown={() => {
+        closeDialog()
+        showConfirmPopup({
+          title: `Report <b>${player.name}</b>?`,
+          message:
+            'Reports help moderators take action against users that break Decentraland Community Guidelines.',
+          icon: {
+            spriteName: 'Warning',
+            atlasName: 'icons',
+            backgroundColor: COLOR.BUTTON_PRIMARY
+          },
+          confirmLabel: 'REPORT',
+          onConfirm: async () => {
+            await Promise.resolve()
+            console.log('[profile] report submitted (stub)', {
+              address: player.userId
+            })
+          }
+        })
+      }}
+      icon={{
+        atlasName: 'icons',
+        spriteName: 'Warning'
       }}
       fontSize={fontSizeTitleL}
     />

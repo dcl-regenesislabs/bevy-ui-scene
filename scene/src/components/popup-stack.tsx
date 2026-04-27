@@ -23,6 +23,7 @@ import { CommunityPlacePopup } from '../ui-classes/main-menu/communities-page/co
 import { CommunityEventPopup } from '../ui-classes/main-menu/communities-page/community-event-popup'
 import { CreateCommunityPopup } from '../ui-classes/main-menu/communities-page/create-community-popup'
 import { ConfirmDeleteCommunityPopup } from '../ui-classes/main-menu/communities-page/confirm-delete-community-popup'
+import { CommunityMemberMenuPopup } from '../ui-classes/main-menu/communities-page/community-member-menu-popup'
 import { ConfirmPopup } from './confirm-popup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
@@ -52,7 +53,8 @@ const popupComponents: Record<number, Popup> = {
   [HUD_POPUP_TYPE.CREATE_COMMUNITY as number]: CreateCommunityPopup,
   [HUD_POPUP_TYPE.CONFIRM_DELETE_COMMUNITY as number]:
     ConfirmDeleteCommunityPopup,
-  [HUD_POPUP_TYPE.CONFIRM as number]: ConfirmPopup
+  [HUD_POPUP_TYPE.CONFIRM as number]: ConfirmPopup,
+  [HUD_POPUP_TYPE.COMMUNITY_MEMBER_MENU as number]: CommunityMemberMenuPopup
 }
 
 export function PopupStack(): ReactElement | null {

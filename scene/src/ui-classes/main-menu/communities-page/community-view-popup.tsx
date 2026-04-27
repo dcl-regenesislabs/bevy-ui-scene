@@ -94,7 +94,10 @@ function CommunityViewContent({
                 />
               )}
               {activeTabIndex === 1 && (
-                <CommunityMembers communityId={community.id} />
+                <CommunityMembers
+                  communityId={community.id}
+                  viewerRole={community.role}
+                />
               )}
               {activeTabIndex === 2 && (
                 <CommunityPlaces communityId={community.id} />

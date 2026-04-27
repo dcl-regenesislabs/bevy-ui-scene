@@ -290,6 +290,64 @@ export async function leaveCommunity(
   await signedDelete(`${base}/${communityId}/members/${userId}`)
 }
 
+/** Drop the cached members of `communityId` so the next fetch re-hits the API. */
+export function invalidateCommunityMembersCache(communityId: string): void {
+  for (const [key] of membersCache.entries()) {
+    if (key.startsWith(`${communityId}:`)) membersCache.invalidate(key)
+  }
+}
+
+/**
+ * DELETE /communities/{id}/members/{address} — owner/moderator action.
+ * (Same endpoint as `leaveCommunity`; the backend distinguishes by caller
+ * identity vs. target address.)
+ */
+export async function kickMember(
+  communityId: string,
+  address: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedDelete(`${base}/${communityId}/members/${address}`)
+  invalidateCommunityMembersCache(communityId)
+}
+
+/** POST /communities/{id}/members/{address}/bans — owner/moderator action. */
+export async function banMember(
+  communityId: string,
+  address: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedPost(`${base}/${communityId}/members/${address}/bans`)
+  invalidateCommunityMembersCache(communityId)
+}
+
+/** DELETE /communities/{id}/members/{address}/bans — owner/moderator action. */
+export async function unbanMember(
+  communityId: string,
+  address: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedDelete(`${base}/${communityId}/members/${address}/bans`)
+  invalidateCommunityMembersCache(communityId)
+}
+
+/**
+ * PATCH /communities/{id}/members/{address} — change a member's role.
+ * Owner-only:
+ *   - 'moderator' to promote a member
+ *   - 'member' to demote a moderator
+ *   - 'owner' to transfer ownership (the previous owner becomes a member)
+ */
+export async function setMemberRole(
+  communityId: string,
+  address: string,
+  role: 'owner' | 'moderator' | 'member'
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedPatch(`${base}/${communityId}/members/${address}`, { role })
+  invalidateCommunityMembersCache(communityId)
+}
+
 // --- Members ---
 
 const membersCache = createTtlCache<PaginatedResponse<CommunityMember>>()

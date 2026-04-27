@@ -3,6 +3,7 @@ import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
 import {
   type CommunityMember,
+  type CommunityMemberRole,
   CommunityFriendshipStatus
 } from '../../../service/communities-types'
 import {
@@ -13,6 +14,7 @@ import {
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { executeTask } from '@dcl/sdk/ecs'
 import { fetchCommunityMembers } from '../../../utils/communities-promise-utils'
+import { listenCommunitiesChanged } from '../../../service/communities-events'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { PlayerNameComponent } from '../../../components/player-name-component'
@@ -36,9 +38,13 @@ function roleBadgeLabel(role: string): string | null {
 }
 
 function CommunityMemberItem({
-  member
+  member,
+  viewerRole,
+  communityId
 }: {
   member: CommunityMember
+  viewerRole: CommunityMemberRole
+  communityId: string
   key: string
 }): ReactElement {
   const fontSize = getFontSize({
@@ -124,14 +130,8 @@ function CommunityMemberItem({
   const openProfileMenu = (): void => {
     store.dispatch(
       pushPopupAction({
-        type: HUD_POPUP_TYPE.PROFILE_MENU,
-        data: {
-          player: {
-            ...member,
-            userId: member.memberAddress.toLowerCase(),
-            isGuest: false
-          }
-        }
+        type: HUD_POPUP_TYPE.COMMUNITY_MEMBER_MENU,
+        data: { member, viewerRole, communityId }
       })
     )
   }
@@ -266,16 +266,18 @@ function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 export function CommunityMembers({
-  communityId
+  communityId,
+  viewerRole
 }: {
   communityId: string
+  viewerRole: CommunityMemberRole
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const scale = getContentScaleRatio()
   const [members, setMembers] = useState<CommunityMember[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  useEffect(() => {
+  const refetch = (): void => {
     executeTask(async () => {
       try {
         const result = await fetchCommunityMembers(communityId, { limit: 50 })
@@ -290,6 +292,13 @@ export function CommunityMembers({
       }
       setLoading(false)
     })
+  }
+
+  useEffect(() => {
+    refetch()
+    // Re-fetch on any community-changed event (kick / ban / role change).
+    const unsubscribe = listenCommunitiesChanged(refetch)
+    return unsubscribe
   }, [])
 
   if (loading) {
@@ -358,7 +367,12 @@ export function CommunityMembers({
       {rows.map((pair, rowIndex) => (
         <Row key={rowIndex} uiTransform={{ width: '100%' }}>
           {pair.map((member) => (
-            <CommunityMemberItem key={member.memberAddress} member={member} />
+            <CommunityMemberItem
+              key={member.memberAddress}
+              member={member}
+              viewerRole={viewerRole}
+              communityId={communityId}
+            />
           ))}
         </Row>
       ))}
