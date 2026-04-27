@@ -6,7 +6,6 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { executeTask } from '@dcl/sdk/ecs'
 import { fetchCommunityPlaces } from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
@@ -29,8 +28,7 @@ function CommunityPlaceCard({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.CAPTION
   })
-  const scale = getContentScaleRatio()
-  const cardWidth = scale * 280
+  const cardWidth = fontSize * 14
   const imageHeight = cardWidth * 0.65
   const likePercent =
     place.like_rate != null ? `${Math.round(place.like_rate * 100)}%` : '0%'
@@ -61,7 +59,7 @@ function CommunityPlaceCard({
         }}
         uiBackground={{
           textureMode: 'stretch',
-          texture: { src: place.image }
+          texture: { src: place.image ?? '' }
         }}
       >
         {/* User count badge */}
@@ -138,7 +136,7 @@ function CommunityPlaceCard({
           margin: { top: fontSizeSmall * 0.3 }
         }}
         uiText={{
-          value: `<b>${place.title}</b>`,
+          value: `<b>${place.title ?? ''}</b>`,
           fontSize,
           color: COLOR.TEXT_COLOR_WHITE,
           textAlign: 'top-left',
@@ -174,7 +172,7 @@ function CommunityPlaceCard({
         />
         <UiEntity
           uiText={{
-            value: place.base_position,
+            value: place.base_position ?? '',
             fontSize: fontSizeSmall,
             color: COLOR.TEXT_COLOR_LIGHT_GREY
           }}
@@ -190,7 +188,7 @@ export function CommunityPlaces({
   communityId: string
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const scale = getContentScaleRatio()
+
   const [places, setPlaces] = useState<PlaceFromApi[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -213,8 +211,8 @@ export function CommunityPlaces({
           <UiEntity
             key={i}
             uiTransform={{
-              width: scale * 280,
-              height: scale * 220,
+              width: fontSize * 280,
+              height: fontSize * 220,
               margin: { right: fontSize * 0.5, bottom: fontSize * 0.5 }
             }}
           >

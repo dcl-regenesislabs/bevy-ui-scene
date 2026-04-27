@@ -36,7 +36,8 @@ import { showErrorPopup } from '../../../service/error-popup-service'
 import { Vector2 } from '@dcl/sdk/math'
 import useState = ReactEcs.useState
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string | null | undefined): string {
+  if (dateStr == null) return ''
   try {
     const d = new Date(dateStr)
     const day = String(d.getDate()).padStart(2, '0')
@@ -258,7 +259,7 @@ function CommunityPlacePopupContent({
             }}
             uiBackground={{
               textureMode: 'stretch',
-              texture: { src: place.image }
+              texture: { src: place.image ?? '' }
             }}
           />
 
@@ -271,7 +272,7 @@ function CommunityPlacePopupContent({
           >
             <UiEntity
               uiText={{
-                value: `<b>${place.title}</b>`,
+                value: `<b>${place.title ?? ''}</b>`,
                 fontSize: fontSizeTitle,
                 color: COLOR.TEXT_COLOR_WHITE,
                 textAlign: 'top-left'
@@ -488,7 +489,7 @@ function CommunityPlacePopupContent({
             />
             <UiEntity
               uiText={{
-                value: `${place.positions.length}`,
+                value: `${place.positions?.length ?? 0}`,
                 fontSize: fontSizeCaption,
                 color: COLOR.TEXT_COLOR_WHITE,
                 textAlign: 'top-left'

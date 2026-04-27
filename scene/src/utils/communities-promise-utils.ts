@@ -27,7 +27,6 @@ import {
   type EventFromApi,
   type PlaceFromApi
 } from '../ui-classes/scene-info-card/SceneInfoCard.types'
-import { fetchPlaceFromApi } from './promise-utils'
 import { getPlayer } from '@dcl/sdk/src/players'
 
 const emptyMeta: SignedFetchMeta = {}
@@ -412,35 +411,46 @@ export async function fetchCommunityMembers(
 
 // --- Places ---
 
-const placeIdsCache = createTtlCache<string[]>()
-
-export async function fetchCommunityPlaceIds(
-  communityId: string
-): Promise<string[]> {
-  const cached = placeIdsCache.get(communityId)
-  if (cached != null) return cached
-  const base = await resolveBaseURL()
-  const response: { results: Array<{ id: string }>; total: number } =
-    await signedGet(`${base}/${communityId}/places`)
-  const ids = (response.results ?? []).map((r) => r.id)
-  placeIdsCache.set(communityId, ids)
-  return ids
-}
-
 const resolvedPlacesCache = createTtlCache<PlaceFromApi[]>()
 
+/**
+ * GET /communities/{id}/places returns the full `PlaceFromApi` objects
+ * inline — no second roundtrip needed. (The earlier implementation tossed
+ * everything but `id` and re-fetched via the global places endpoint, which
+ * fails for worlds because their ids are world-names like `chiri.dcl.eth`,
+ * not the place UUIDs that endpoint expects.)
+ */
 export async function fetchCommunityPlaces(
   communityId: string
 ): Promise<PlaceFromApi[]> {
   const cached = resolvedPlacesCache.get(communityId)
   if (cached != null) return cached
-  const placeIds = await fetchCommunityPlaceIds(communityId)
-  const resolved = await Promise.all(
-    placeIds.map(async (id) => await fetchPlaceFromApi(id).catch(() => null))
+  const base = await resolveBaseURL()
+  const response: { results: PlaceFromApi[]; total: number } = await signedGet(
+    `${base}/${communityId}/places`
   )
-  const places = resolved.filter((p): p is PlaceFromApi => p != null)
+  // The community endpoint returns every linked place id including deleted /
+  // disabled ones (the linkage is not cleaned up server-side). Unity renders
+  // those as blank cards; we drop them so only real places show.
+  const places = (response.results ?? []).filter(
+    (p) =>
+      p != null &&
+      !p.disabled &&
+      typeof p.title === 'string' &&
+      p.title.length > 0 &&
+      typeof p.image === 'string' &&
+      p.image.length > 0
+  )
   resolvedPlacesCache.set(communityId, places)
   return places
+}
+
+/** Place ids associated with a community — resolved from `fetchCommunityPlaces`. */
+export async function fetchCommunityPlaceIds(
+  communityId: string
+): Promise<string[]> {
+  const places = await fetchCommunityPlaces(communityId)
+  return places.map((p) => p.id)
 }
 
 /**
