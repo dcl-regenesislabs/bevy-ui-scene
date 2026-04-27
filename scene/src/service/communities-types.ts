@@ -107,6 +107,21 @@ export type InviteRequestAction = 'invite' | 'request_to_join'
 /** PATCH /communities/{id}/requests/{requestId} — intention body */
 export type InviteRequestIntention = 'accepted' | 'rejected' | 'cancelled'
 
+/**
+ * Entry returned by GET /communities/{id}/requests?type=invite — pending
+ * invites this community has sent to other addresses.
+ */
+export type CommunityInviteEntry = {
+  id: string
+  communityId: string
+  memberAddress: string
+  name: string
+  hasClaimedName: boolean
+  profilePictureUrl: string
+  status: string
+  createdAt?: string
+}
+
 /** Entry returned by GET /members/{address}/requests?type=… */
 export type UserInviteRequest = {
   id: string

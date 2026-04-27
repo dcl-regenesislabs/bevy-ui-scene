@@ -2,6 +2,7 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
 import {
+  type CommunityInviteEntry,
   type CommunityMember,
   type CommunityMemberRole,
   CommunityFriendshipStatus
@@ -13,8 +14,17 @@ import {
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { executeTask } from '@dcl/sdk/ecs'
-import { fetchCommunityMembers } from '../../../utils/communities-promise-utils'
-import { listenCommunitiesChanged } from '../../../service/communities-events'
+import {
+  fetchCommunityBans,
+  fetchCommunityInvites,
+  fetchCommunityMembers,
+  manageInviteRequest,
+  unbanMember
+} from '../../../utils/communities-promise-utils'
+import {
+  listenCommunitiesChanged,
+  notifyCommunitiesChanged
+} from '../../../service/communities-events'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { PlayerNameComponent } from '../../../components/player-name-component'
@@ -28,6 +38,8 @@ import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
+import { showConfirmPopup } from '../../../components/confirm-popup'
+import { NavButton } from '../../../components/nav-button/NavButton'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -273,6 +285,60 @@ export function CommunityMembers({
   viewerRole: CommunityMemberRole
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeSmall = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.LABEL
+  })
+  const isAdmin = viewerRole === 'owner' || viewerRole === 'moderator'
+  const [activeSubTab, setActiveSubTab] = useState<number>(0)
+
+  const SUBTABS = ['MEMBERS', 'INVITED', 'BANNED']
+
+  return (
+    <Column uiTransform={{ width: '100%' }}>
+      {isAdmin && (
+        <Row
+          uiTransform={{
+            width: '100%',
+            margin: { bottom: fontSize },
+            flexShrink: 0
+          }}
+        >
+          {SUBTABS.map((label, i) => (
+            <UiEntity key={label}>
+              <NavButton
+                text={label}
+                active={activeSubTab === i}
+                fontSize={fontSizeSmall}
+                onClick={() => {
+                  setActiveSubTab(i)
+                }}
+              />
+            </UiEntity>
+          ))}
+        </Row>
+      )}
+      {activeSubTab === 0 && (
+        <MembersList communityId={communityId} viewerRole={viewerRole} />
+      )}
+      {isAdmin && activeSubTab === 1 && (
+        <InvitedList communityId={communityId} />
+      )}
+      {isAdmin && activeSubTab === 2 && (
+        <BannedList communityId={communityId} />
+      )}
+    </Column>
+  )
+}
+
+function MembersList({
+  communityId,
+  viewerRole
+}: {
+  communityId: string
+  viewerRole: CommunityMemberRole
+}): ReactElement {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const scale = getContentScaleRatio()
   const [members, setMembers] = useState<CommunityMember[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -375,6 +441,280 @@ export function CommunityMembers({
             />
           ))}
         </Row>
+      ))}
+    </Column>
+  )
+}
+
+// --- Invited / Banned helpers ---
+
+function EmptyState({
+  iconName,
+  label
+}: {
+  iconName: string
+  label: string
+}): ReactElement {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeTitle = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.TITLE_M
+  })
+  const iconSize = fontSize * 5
+  return (
+    <Column
+      uiTransform={{
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: { top: fontSize * 4 }
+      }}
+    >
+      <Icon
+        icon={{ spriteName: iconName, atlasName: 'icons' }}
+        iconSize={iconSize}
+        iconColor={COLOR.WHITE_OPACITY_5}
+      />
+      <UiEntity
+        uiTransform={{ margin: { top: fontSize } }}
+        uiText={{
+          value: `<b>${label}</b>`,
+          fontSize: fontSizeTitle,
+          color: COLOR.TEXT_COLOR_WHITE
+        }}
+      />
+    </Column>
+  )
+}
+
+function ListLoadingPlaceholder(): ReactElement {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const scale = getContentScaleRatio()
+  return (
+    <Column uiTransform={{ width: '100%' }}>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Row
+          key={i}
+          uiTransform={{ width: '100%', margin: { bottom: fontSize * 0.5 } }}
+        >
+          <LoadingPlaceholder
+            uiTransform={{
+              width: '100%',
+              height: scale * 70,
+              borderRadius: fontSize / 2
+            }}
+          />
+        </Row>
+      ))}
+    </Column>
+  )
+}
+
+/**
+ * Compact row used by Invited / Banned lists — avatar + name on the left,
+ * a single action button on the right.
+ */
+function CompactMemberRow({
+  address,
+  name,
+  hasClaimedName,
+  profilePictureUrl,
+  actionLabel,
+  onAction
+}: {
+  address: string
+  name: string
+  hasClaimedName: boolean
+  profilePictureUrl?: string
+  actionLabel: string
+  onAction: () => void
+  key: string
+}): ReactElement {
+  const fontSize = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.BODY
+  })
+  const fontSizeSmall = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.CAPTION
+  })
+  const avatarSize = fontSize * 2.5
+  const addressColor = hasClaimedName
+    ? getAddressColor(address.toLowerCase())
+    : COLOR.TEXT_COLOR_LIGHT_GREY
+  return (
+    <Row
+      uiTransform={{
+        width: '100%',
+        height: fontSize * 4,
+        alignItems: 'center',
+        padding: { left: fontSize, right: fontSize },
+        margin: { bottom: fontSize / 4 },
+        borderRadius: fontSize / 2
+      }}
+      uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+    >
+      <AvatarCircle
+        imageSrc={profilePictureUrl}
+        userId={address}
+        circleColor={addressColor}
+        uiTransform={{
+          width: avatarSize,
+          height: avatarSize,
+          flexShrink: 0
+        }}
+        isGuest={false}
+      />
+      <UiEntity uiTransform={{ margin: { left: fontSize * 0.5 } }}>
+        <PlayerNameComponent
+          name={name}
+          address={address}
+          hasClaimedName={hasClaimedName}
+          fontSize={fontSize}
+        />
+      </UiEntity>
+      <UiEntity uiTransform={{ flexGrow: 1 }} />
+      <UiEntity
+        uiTransform={{
+          height: fontSize * 2,
+          padding: { left: fontSize, right: fontSize },
+          borderRadius: fontSize / 2,
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+        uiText={{
+          value: `<b>${actionLabel}</b>`,
+          fontSize: fontSizeSmall,
+          color: COLOR.WHITE,
+          textWrap: 'nowrap'
+        }}
+        onMouseDown={onAction}
+      />
+    </Row>
+  )
+}
+
+function InvitedList({ communityId }: { communityId: string }): ReactElement {
+  const [invites, setInvites] = useState<CommunityInviteEntry[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+
+  const refetch = (): void => {
+    executeTask(async () => {
+      try {
+        const result = await fetchCommunityInvites(communityId, { limit: 50 })
+        setInvites(result.results ?? [])
+      } catch (error) {
+        console.error('[communities] failed to load invites', error)
+      }
+      setLoading(false)
+    })
+  }
+
+  useEffect(() => {
+    refetch()
+    const unsubscribe = listenCommunitiesChanged(refetch)
+    return unsubscribe
+  }, [])
+
+  const onCancelInvite = (entry: CommunityInviteEntry): void => {
+    showConfirmPopup({
+      title: `Cancel invite to <b>${entry.name}</b>?`,
+      icon: {
+        spriteName: 'CloseIcon',
+        atlasName: 'icons',
+        backgroundColor: COLOR.BUTTON_PRIMARY
+      },
+      confirmLabel: 'CANCEL INVITE',
+      cancelLabel: 'BACK',
+      onConfirm: async () => {
+        await manageInviteRequest(communityId, entry.id, 'cancelled')
+        notifyCommunitiesChanged()
+      }
+    })
+  }
+
+  if (loading) return <ListLoadingPlaceholder />
+  if (invites.length === 0)
+    return <EmptyState iconName="Envelope" label="No Invites" />
+
+  return (
+    <Column uiTransform={{ width: '100%' }}>
+      {invites.map((entry) => (
+        <CompactMemberRow
+          key={entry.id}
+          address={entry.memberAddress}
+          name={entry.name}
+          hasClaimedName={entry.hasClaimedName}
+          profilePictureUrl={entry.profilePictureUrl}
+          actionLabel="CANCEL INVITE"
+          onAction={() => {
+            onCancelInvite(entry)
+          }}
+        />
+      ))}
+    </Column>
+  )
+}
+
+function BannedList({ communityId }: { communityId: string }): ReactElement {
+  const [banned, setBanned] = useState<CommunityMember[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+
+  const refetch = (): void => {
+    executeTask(async () => {
+      try {
+        const result = await fetchCommunityBans(communityId, { limit: 50 })
+        setBanned(result.results ?? [])
+      } catch (error) {
+        console.error('[communities] failed to load bans', error)
+      }
+      setLoading(false)
+    })
+  }
+
+  useEffect(() => {
+    refetch()
+    const unsubscribe = listenCommunitiesChanged(refetch)
+    return unsubscribe
+  }, [])
+
+  const onUnban = (member: CommunityMember): void => {
+    showConfirmPopup({
+      title: `Unban <b>${member.name}</b>?`,
+      message: 'They will be allowed to re-join the community.',
+      icon: {
+        spriteName: 'BlockUser',
+        atlasName: 'icons',
+        backgroundColor: COLOR.BUTTON_PRIMARY
+      },
+      confirmLabel: 'UNBAN',
+      onConfirm: async () => {
+        await unbanMember(communityId, member.memberAddress)
+        notifyCommunitiesChanged()
+      }
+    })
+  }
+
+  if (loading) return <ListLoadingPlaceholder />
+  if (banned.length === 0)
+    return <EmptyState iconName="BlockUser" label="No Banned Users" />
+
+  return (
+    <Column uiTransform={{ width: '100%' }}>
+      {banned.map((member) => (
+        <CompactMemberRow
+          key={member.memberAddress}
+          address={member.memberAddress}
+          name={member.name}
+          hasClaimedName={member.hasClaimedName}
+          profilePictureUrl={member.profilePictureUrl}
+          actionLabel="UNBAN"
+          onAction={() => {
+            onUnban(member)
+          }}
+        />
       ))}
     </Column>
   )

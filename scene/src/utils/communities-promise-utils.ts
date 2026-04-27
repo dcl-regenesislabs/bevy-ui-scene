@@ -7,6 +7,7 @@ import {
   MEMBERS_BASE_URL,
   MEMBERS_TEST_BASE_URL,
   type CommunityData,
+  type CommunityInviteEntry,
   type CommunityListItem,
   type CommunityMember,
   type CommunityModerationResponse,
@@ -351,6 +352,41 @@ export async function setMemberRole(
 // --- Members ---
 
 const membersCache = createTtlCache<PaginatedResponse<CommunityMember>>()
+
+/**
+ * GET /communities/{id}/bans — owner/moderator action. Returns the
+ * banned users in member-shaped DTOs (same fields as `CommunityMember`).
+ */
+export async function fetchCommunityBans(
+  communityId: string,
+  params: GetMembersParams = {}
+): Promise<PaginatedResponse<CommunityMember>> {
+  const base = await resolveBaseURL()
+  const parts: string[] = []
+  if (params.offset != null) parts.push(`offset=${params.offset}`)
+  if (params.limit != null) parts.push(`limit=${params.limit}`)
+  const qs = parts.join('&')
+  return await signedGet(
+    `${base}/${communityId}/bans${qs.length > 0 ? `?${qs}` : ''}`
+  )
+}
+
+/**
+ * GET /communities/{id}/requests?type=invite — owner/moderator action.
+ * Returns pending invites this community has sent to other addresses.
+ */
+export async function fetchCommunityInvites(
+  communityId: string,
+  params: GetMembersParams = {}
+): Promise<PaginatedResponse<CommunityInviteEntry>> {
+  const base = await resolveBaseURL()
+  const parts: string[] = ['type=invite']
+  if (params.offset != null) parts.push(`offset=${params.offset}`)
+  if (params.limit != null) parts.push(`limit=${params.limit}`)
+  return await signedGet(
+    `${base}/${communityId}/requests?${parts.join('&')}`
+  )
+}
 
 export async function fetchCommunityMembers(
   communityId: string,
