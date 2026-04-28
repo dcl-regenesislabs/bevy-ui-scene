@@ -23,6 +23,7 @@ import {
 import { getRealm } from '~system/Runtime'
 import { LOCAL_PREVIEW_REALM_NAME } from './constants'
 import { createTtlCache } from './ttl-cache'
+import { createMediator } from './function-utils'
 import {
   type EventFromApi,
   type PlaceFromApi
@@ -467,6 +468,25 @@ export function updateCachedCommunityPlace(
     const next = [...places]
     next[idx] = { ...places[idx], ...partial }
     resolvedPlacesCache.set(key, next)
+  }
+  placeMediator.publish(`place:${id}`, partial)
+}
+
+const placeMediator = createMediator()
+
+/**
+ * Subscribe to per-place mutations. Fires whenever
+ * `updateCachedCommunityPlace(placeId, partial)` is called for the same id.
+ * Returns an unsubscribe — call it from `useEffect` cleanup.
+ */
+export function listenPlaceChanged(
+  placeId: string,
+  fn: (partial: Partial<PlaceFromApi>) => void
+): () => void {
+  const channel = `place:${placeId}`
+  placeMediator.subscribe(channel, fn)
+  return () => {
+    placeMediator.unsubscribe(channel, fn)
   }
 }
 

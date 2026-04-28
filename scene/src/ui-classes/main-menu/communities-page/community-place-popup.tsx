@@ -22,9 +22,15 @@ import {
   updateFavoriteStatus,
   updateLikeStatus
 } from '../../../utils/promise-utils'
-import { updateCachedCommunityPlace } from '../../../utils/communities-promise-utils'
+import {
+  listenPlaceChanged,
+  updateCachedCommunityPlace
+} from '../../../utils/communities-promise-utils'
 import { BevyApi } from '../../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
+import { AvatarCircle } from '../../../components/avatar-circle'
+import { ZERO_ADDRESS } from '../../../utils/constants'
+import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import {
   changeRealm,
   copyToClipboard,
@@ -35,6 +41,7 @@ import { currentRealmProviderIsWorld } from '../../../service/realm-change'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import { Vector2 } from '@dcl/sdk/math'
 import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 
 function formatDate(dateStr: string | null | undefined): string {
   if (dateStr == null) return ''
@@ -60,6 +67,10 @@ function CommunityPlacePopupContent({
   place: PlaceFromApi
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeAction = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.POPUP_TITLE
+  })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_L
@@ -72,8 +83,9 @@ function CommunityPlacePopupContent({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.CAPTION
   })
-  const scale = getContentScaleRatio()
-  const thumbnailSize = scale * 260
+
+  const thumbnailWidth = fontSize * 27
+  const thumbnailHeight = thumbnailWidth * 0.75
 
   const [isFav, setIsFav] = useState<boolean>(place.user_favorite ?? false)
   const [isLiked, setIsLiked] = useState<boolean>(place.user_like ?? false)
@@ -81,14 +93,45 @@ function CommunityPlacePopupContent({
     place.user_dislike ?? false
   )
   const [likesCount, setLikesCount] = useState<number>(place.likes)
+  const [dislikesCount, setDislikesCount] = useState<number>(place.dislikes)
   const [favoritesCount, setFavoritesCount] = useState<number>(place.favorites)
   const [updatingFav, setUpdatingFav] = useState<boolean>(false)
   const [updatingLike, setUpdatingLike] = useState<boolean>(false)
   const [shareOpen, setShareOpen] = useState<boolean>(false)
+  const [isHome, setIsHome] = useState<boolean>(false)
+
+  // Resolve whether this place's base parcel is the user's current home.
+  useEffect(() => {
+    const target = parseCoordinates(place.base_position)
+    if (target == null) return
+    executeTask(async () => {
+      try {
+        const home = await BevyApi.getHomeScene()
+        setIsHome(home.parcel.x === target.x && home.parcel.y === target.y)
+      } catch {
+        // No-op: leave the icon as outline if we can't read the home.
+      }
+    })
+  }, [])
+
+  // Stay in sync with cache mutations from elsewhere (e.g. another popup of
+  // the same place reopened over a stale dispatch payload).
+  useEffect(() => {
+    return listenPlaceChanged(place.id, (partial) => {
+      if (partial.user_favorite !== undefined) setIsFav(partial.user_favorite)
+      if (partial.favorites !== undefined) setFavoritesCount(partial.favorites)
+      if (partial.user_like !== undefined) setIsLiked(partial.user_like)
+      if (partial.user_dislike !== undefined) {
+        setIsDisliked(partial.user_dislike)
+      }
+      if (partial.likes !== undefined) setLikesCount(partial.likes)
+      if (partial.dislikes !== undefined) setDislikesCount(partial.dislikes)
+    })
+  }, [])
 
   const likeRate =
-    likesCount + place.dislikes > 0
-      ? Math.round((likesCount / (likesCount + place.dislikes)) * 100)
+    likesCount + dislikesCount > 0
+      ? Math.round((likesCount / (likesCount + dislikesCount)) * 100)
       : 0
 
   const toggleFav = (): void => {
@@ -122,26 +165,36 @@ function CommunityPlacePopupContent({
     const prev = {
       isLiked,
       isDisliked,
-      likesCount
+      likesCount,
+      dislikesCount
     }
     let nextIsLiked = isLiked
     let nextIsDisliked = isDisliked
     let nextLikes = likesCount
+    let nextDislikes = dislikesCount
     let apiArg: boolean | null
     if (target === 'like') {
       nextIsLiked = !isLiked
-      nextIsDisliked = false
       nextLikes = likesCount + (nextIsLiked ? 1 : -1)
+      // Toggling like also clears any pre-existing dislike.
+      if (isDisliked) {
+        nextIsDisliked = false
+        nextDislikes = Math.max(0, dislikesCount - 1)
+      }
       apiArg = nextIsLiked ? true : null
     } else {
       nextIsDisliked = !isDisliked
-      nextIsLiked = false
-      if (isLiked) nextLikes = Math.max(0, likesCount - 1)
+      nextDislikes = dislikesCount + (nextIsDisliked ? 1 : -1)
+      if (isLiked) {
+        nextIsLiked = false
+        nextLikes = Math.max(0, likesCount - 1)
+      }
       apiArg = nextIsDisliked ? false : null
     }
     setIsLiked(nextIsLiked)
     setIsDisliked(nextIsDisliked)
-    setLikesCount(nextLikes)
+    setLikesCount(Math.max(0, nextLikes))
+    setDislikesCount(Math.max(0, nextDislikes))
     setUpdatingLike(true)
     executeTask(async () => {
       try {
@@ -149,12 +202,14 @@ function CommunityPlacePopupContent({
         updateCachedCommunityPlace(place.id, {
           user_like: nextIsLiked,
           user_dislike: nextIsDisliked,
-          likes: nextLikes
+          likes: Math.max(0, nextLikes),
+          dislikes: Math.max(0, nextDislikes)
         })
       } catch (error) {
         setIsLiked(prev.isLiked)
         setIsDisliked(prev.isDisliked)
         setLikesCount(prev.likesCount)
+        setDislikesCount(prev.dislikesCount)
         showErrorPopup(
           error instanceof Error ? error : new Error(String(error)),
           'updateLikeStatus'
@@ -173,6 +228,7 @@ function CommunityPlacePopupContent({
       realm: 'http://realm-provider-ea.decentraland.org/main',
       parcel
     })
+    setIsHome(true)
   }
 
   const jumpIn = (): void => {
@@ -223,7 +279,7 @@ function CommunityPlacePopupContent({
     <PopupBackdrop>
       <Column
         uiTransform={{
-          width: getContentScaleRatio() * 1400,
+          width: getContentScaleRatio() * 2222,
           borderRadius: BORDER_RADIUS_F,
           padding: fontSize * 1.5
         }}
@@ -251,8 +307,8 @@ function CommunityPlacePopupContent({
           {/* Thumbnail */}
           <UiEntity
             uiTransform={{
-              width: thumbnailSize,
-              height: thumbnailSize,
+              width: thumbnailWidth,
+              height: thumbnailHeight,
               borderRadius: fontSize,
               flexShrink: 0,
               margin: { right: fontSize }
@@ -279,47 +335,80 @@ function CommunityPlacePopupContent({
               }}
             />
             {place.contact_name != null && place.contact_name.length > 0 && (
-              <UiEntity
-                uiTransform={{ margin: { top: fontSize * 0.2 } }}
-                uiText={{
-                  value: `created by ${place.contact_name}`,
-                  fontSize: fontSizeCaption,
-                  color: COLOR.TEXT_COLOR_LIGHT_GREY,
-                  textAlign: 'top-left'
+              <Row
+                uiTransform={{
+                  width: 'auto',
+                  alignItems: 'center',
+                  margin: { top: -fontSize * 0.5, left: fontSize }
                 }}
-              />
+              >
+                <AvatarCircle
+                  userId={place.creator_address ?? ZERO_ADDRESS}
+                  circleColor={getAddressColor(
+                    (place.creator_address ?? ZERO_ADDRESS).toLowerCase()
+                  )}
+                  uiTransform={{
+                    width: fontSize * 1.6,
+                    height: fontSize * 1.6
+                  }}
+                  isGuest={false}
+                />
+                <UiEntity
+                  uiText={{
+                    value: `created by <b><color=#FFFFFF>${place.contact_name}</color></b>`,
+                    fontSize,
+                    color: COLOR.TEXT_COLOR_LIGHT_GREY,
+                    textAlign: 'middle-left'
+                  }}
+                />
+              </Row>
             )}
 
             {/* Stats: views + like rate */}
             <Row
               uiTransform={{
                 alignItems: 'center',
-                margin: { top: fontSize * 0.5, bottom: fontSize * 0.5 }
+                margin: {
+                  top: fontSize * 2,
+                  bottom: fontSize * 0.5,
+                  left: fontSize
+                }
               }}
             >
               <Icon
-                icon={{ spriteName: 'ViewIcn', atlasName: 'icons' }}
-                iconSize={fontSizeCaption}
-                iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
+                uiTransform={{
+                  width: fontSize,
+                  height: fontSize * 0.75,
+                  flexShrink: 0,
+                  flexGrow: 0
+                }}
+                icon={{ spriteName: 'PreviewIcn', atlasName: 'map2' }}
+                iconSize={fontSize}
+                iconColor={COLOR.WHITE}
               />
               <UiEntity
-                uiTransform={{ margin: { right: fontSize * 0.8 } }}
+                uiTransform={{
+                  margin: { right: fontSize * 0.8, left: -fontSize / 2 }
+                }}
                 uiText={{
                   value: ` ${place.user_visits ?? 0}`,
-                  fontSize: fontSizeCaption,
-                  color: COLOR.TEXT_COLOR_LIGHT_GREY
+                  fontSize,
+                  color: COLOR.WHITE
                 }}
               />
               <Icon
                 icon={{ spriteName: 'Like', atlasName: 'icons' }}
-                iconSize={fontSizeCaption}
-                iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
+                iconSize={fontSize}
+                iconColor={COLOR.WHITE}
               />
               <UiEntity
+                uiTransform={{
+                  margin: { right: fontSize * 0.8, left: -fontSize / 2 }
+                }}
                 uiText={{
                   value: ` ${likeRate}%`,
-                  fontSize: fontSizeCaption,
-                  color: COLOR.TEXT_COLOR_LIGHT_GREY
+                  fontSize,
+                  color: COLOR.WHITE
                 }}
               />
             </Row>
@@ -332,45 +421,40 @@ function CommunityPlacePopupContent({
               }}
             >
               <ActionIconButton
-                fontSize={fontSize}
+                fontSize={fontSizeAction}
                 spriteName={isLiked ? 'Like solid' : 'Like'}
-                active={isLiked}
                 pulsing={updatingLike}
                 onClick={() => {
                   setLike('like')
                 }}
               />
               <ActionIconButton
-                fontSize={fontSize}
+                fontSize={fontSizeAction}
                 spriteName={isDisliked ? 'Dislike solid' : 'Dislike'}
-                active={isDisliked}
                 pulsing={updatingLike}
                 onClick={() => {
                   setLike('dislike')
                 }}
               />
               <ActionIconButton
-                fontSize={fontSize}
+                fontSize={fontSizeAction}
                 spriteName={isFav ? 'HeartOnOutlined' : 'HeartOffOutlined'}
                 atlasName="toggles"
-                active={isFav}
                 pulsing={updatingFav}
                 onClick={toggleFav}
               />
               <ActionIconButton
-                fontSize={fontSize}
-                spriteName="House"
+                fontSize={fontSizeAction}
+                spriteName={isHome ? 'Home' : 'HomeOutline'}
                 atlasName="icons"
-                active={false}
                 pulsing={false}
                 onClick={setHome}
               />
               <UiEntity uiTransform={{ flexDirection: 'column' }}>
                 <ActionIconButton
-                  fontSize={fontSize}
+                  fontSize={fontSizeAction}
                   spriteName="Share"
                   atlasName="context"
-                  active={shareOpen}
                   pulsing={false}
                   onClick={() => {
                     setShareOpen(!shareOpen)
@@ -378,7 +462,7 @@ function CommunityPlacePopupContent({
                 />
                 {shareOpen && (
                   <ShareMenu
-                    fontSize={fontSize}
+                    fontSize={fontSizeAction}
                     fontSizeSmall={fontSizeSmall}
                     onShareX={onShareX}
                     onCopyLink={onCopyLink}
@@ -402,13 +486,13 @@ function CommunityPlacePopupContent({
             >
               <Icon
                 icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
-                iconSize={fontSizeSmall}
+                iconSize={fontSizeAction}
                 iconColor={COLOR.WHITE}
               />
               <UiEntity
                 uiText={{
                   value: '<b>JUMP IN</b>',
-                  fontSize: fontSizeSmall,
+                  fontSize: fontSizeAction,
                   color: COLOR.WHITE,
                   textWrap: 'nowrap'
                 }}
@@ -427,7 +511,7 @@ function CommunityPlacePopupContent({
           <UiEntity
             uiText={{
               value: '<b>DESCRIPTION</b>',
-              fontSize: fontSizeSmall,
+              fontSize: fontSize,
               color: COLOR.TEXT_COLOR_LIGHT_GREY,
               textAlign: 'top-left'
             }}
@@ -436,7 +520,7 @@ function CommunityPlacePopupContent({
           <UiEntity
             uiText={{
               value: place.description ?? '',
-              fontSize: fontSizeCaption,
+              fontSize: fontSize,
               color: COLOR.TEXT_COLOR_WHITE,
               textAlign: 'top-left',
               textWrap: 'wrap'
@@ -452,93 +536,95 @@ function CommunityPlacePopupContent({
             margin: { bottom: fontSize }
           }}
         >
-          <Column uiTransform={{ width: '50%' }}>
+          <Column>
             <UiEntity
               uiText={{
                 value: '<b>LOCATION</b>',
-                fontSize: fontSizeSmall,
+                fontSize: fontSize,
                 color: COLOR.TEXT_COLOR_LIGHT_GREY,
                 textAlign: 'top-left'
               }}
               uiTransform={{ width: '100%' }}
             />
-            <Row uiTransform={{ alignItems: 'center' }}>
+            <Row
+              uiTransform={{
+                margin: { left: fontSize / 2 }
+              }}
+            >
               <Icon
                 icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
-                iconSize={fontSizeCaption}
+                iconSize={fontSize}
                 iconColor={COLOR.TEXT_COLOR_WHITE}
               />
               <UiEntity
                 uiText={{
                   value: ` ${place.base_position}`,
-                  fontSize: fontSizeCaption,
+                  fontSize: fontSize,
                   color: COLOR.TEXT_COLOR_WHITE
                 }}
               />
             </Row>
           </Column>
-          <Column uiTransform={{ width: '50%' }}>
+          <Column>
             <UiEntity
               uiText={{
                 value: '<b>PARCELS</b>',
-                fontSize: fontSizeSmall,
+                fontSize,
                 color: COLOR.TEXT_COLOR_LIGHT_GREY,
                 textAlign: 'top-left'
               }}
               uiTransform={{ width: '100%' }}
             />
-            <UiEntity
-              uiText={{
-                value: `${place.positions?.length ?? 0}`,
-                fontSize: fontSizeCaption,
-                color: COLOR.TEXT_COLOR_WHITE,
-                textAlign: 'top-left'
+            <Row
+              uiTransform={{
+                margin: { left: fontSize / 2 }
               }}
-              uiTransform={{ width: '100%' }}
-            />
+            >
+              <Icon
+                icon={{ spriteName: 'ParcelsIcn', atlasName: 'map2' }}
+                iconSize={fontSize}
+                iconColor={COLOR.TEXT_COLOR_WHITE}
+              />
+              <UiEntity
+                uiText={{
+                  value: `${place.positions?.length ?? 0}`,
+                  fontSize: fontSize,
+                  color: COLOR.TEXT_COLOR_WHITE,
+                  textAlign: 'top-left'
+                }}
+                uiTransform={{ width: '100%' }}
+              />
+            </Row>
           </Column>
-        </Row>
 
-        {/* Separator */}
-        <UiEntity
-          uiTransform={{
-            width: '100%',
-            height: 1,
-            margin: { bottom: fontSize }
-          }}
-          uiBackground={{ color: COLOR.WHITE_OPACITY_1 }}
-        />
-
-        {/* Favorites + Updated */}
-        <Row uiTransform={{ width: '100%' }}>
-          <Column uiTransform={{ width: '50%', alignItems: 'center' }}>
+          <Column>
             <UiEntity
               uiText={{
                 value: '<b>FAVORITES</b>',
-                fontSize: fontSizeSmall,
+                fontSize,
                 color: COLOR.TEXT_COLOR_LIGHT_GREY
               }}
             />
             <UiEntity
               uiText={{
                 value: `${favoritesCount}`,
-                fontSize: fontSizeCaption,
+                fontSize,
                 color: COLOR.TEXT_COLOR_WHITE
               }}
             />
           </Column>
-          <Column uiTransform={{ width: '50%', alignItems: 'center' }}>
+          <Column>
             <UiEntity
               uiText={{
                 value: '<b>UPDATED</b>',
-                fontSize: fontSizeSmall,
+                fontSize,
                 color: COLOR.TEXT_COLOR_LIGHT_GREY
               }}
             />
             <UiEntity
               uiText={{
                 value: formatDate(place.updated_at),
-                fontSize: fontSizeCaption,
+                fontSize,
                 color: COLOR.TEXT_COLOR_WHITE
               }}
             />
@@ -553,31 +639,29 @@ function ActionIconButton({
   fontSize,
   spriteName,
   atlasName = 'icons',
-  active,
   pulsing,
   onClick
 }: {
   fontSize: number
   spriteName: string
   atlasName?: Atlas
-  active: boolean
   pulsing: boolean
   onClick: () => void
 }): ReactElement {
-  const size = fontSize * 2.2
+  const size = fontSize * 2
   return (
     <UiEntity
       uiTransform={{
-        width: size,
+        width: size * 2,
         height: size,
-        borderRadius: size / 2,
+        borderRadius: fontSize / 2,
         justifyContent: 'center',
         alignItems: 'center',
         margin: { right: fontSize * 0.3 },
         opacity: pulsing ? getLoadingAlphaValue() : 1
       }}
       uiBackground={{
-        color: active ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT
+        color: COLOR.WHITE_OPACITY_0
       }}
       onMouseDown={onClick}
     >

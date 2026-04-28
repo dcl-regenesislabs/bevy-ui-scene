@@ -9,6 +9,7 @@ import {
 import { executeTask } from '@dcl/sdk/ecs'
 import {
   fetchCommunityPlaces,
+  listenPlaceChanged,
   updateCachedCommunityPlace
 } from '../../../utils/communities-promise-utils'
 import { updateLikeStatus } from '../../../utils/promise-utils'
@@ -85,6 +86,18 @@ function CommunityPlaceCard({
       }
     })
   }
+
+  // Pick up like / dislike / fav mutations triggered from the place popup
+  // (or anywhere else that calls `updateCachedCommunityPlace`) so the card
+  // doesn't stay stale after the popup closes.
+  useEffect(() => {
+    return listenPlaceChanged(place.id, (partial) => {
+      if (partial.user_like !== undefined) setIsLiked(partial.user_like)
+      if (partial.likes !== undefined) setLikes(partial.likes)
+      if (partial.dislikes !== undefined) setDislikes(partial.dislikes)
+      if (partial.like_rate !== undefined) setLikeRate(partial.like_rate)
+    })
+  }, [])
 
   return (
     <Column

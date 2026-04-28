@@ -70,6 +70,7 @@ export const COLOR = {
   WHITE_OPACITY_2: Color4.create(1, 1, 1, 0.2),
   WHITE_OPACITY_5: Color4.create(1, 1, 1, 0.5),
   WHITE_OPACITY_1: Color4.create(1, 1, 1, 0.1),
+  WHITE_OPACITY_0: Color4.create(1, 1, 1, 0.02),
   TEXT_COLOR,
   TEXT_COLOR_WHITE: Color4.fromHexString('#f4f4f4'),
   TEXT_COLOR_GREY: Color4.fromHexString('#889AA4FF'),
