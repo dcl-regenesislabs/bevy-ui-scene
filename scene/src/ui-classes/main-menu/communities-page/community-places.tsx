@@ -32,6 +32,10 @@ function CommunityPlaceCard({
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeSmall = getFontSize({
     context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.BODY_S
+  })
+  const fontSizeCaption = getFontSize({
+    context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.CAPTION
   })
   const cardWidth = fontSize * 14
@@ -183,11 +187,11 @@ function CommunityPlaceCard({
       <UiEntity
         uiTransform={{
           width: '100%',
-          margin: { top: fontSizeSmall * 0.3 }
+          margin: { top: -fontSizeSmall * 0.3 }
         }}
         uiText={{
           value: `<b>${place.title ?? ''}</b>`,
-          fontSize,
+          fontSize: fontSizeSmall,
           color: COLOR.TEXT_COLOR_WHITE,
           textAlign: 'top-left',
           textWrap: 'nowrap'
@@ -199,7 +203,7 @@ function CommunityPlaceCard({
         uiTransform={{
           width: '100%',
           alignItems: 'center',
-          margin: { top: -fontSizeSmall * 0.3, left: fontSizeSmall }
+          margin: { top: fontSizeCaption, left: fontSizeCaption }
         }}
       >
         <Row
@@ -207,7 +211,8 @@ function CommunityPlaceCard({
             width: 'auto',
             alignItems: 'center',
             opacity: updatingLike ? getLoadingAlphaValue() : 1,
-            margin: { right: fontSize * 0.5 }
+            margin: { right: fontSizeCaption * 0.5 },
+            flexShrink: 0
           }}
         >
           <Icon
@@ -215,33 +220,40 @@ function CommunityPlaceCard({
               spriteName: isLiked ? 'Like solid' : 'Like',
               atlasName: 'icons'
             }}
-            iconSize={fontSizeSmall}
-            iconColor={
-              isLiked ? COLOR.BUTTON_PRIMARY : COLOR.TEXT_COLOR_LIGHT_GREY
-            }
+            iconSize={fontSizeCaption}
+            iconColor={COLOR.WHITE}
           />
           <UiEntity
             uiText={{
-              value: likePercent,
-              fontSize: fontSizeSmall,
-              color: isLiked
-                ? COLOR.BUTTON_PRIMARY
-                : COLOR.TEXT_COLOR_LIGHT_GREY
+              value: `<b>${likePercent}</b>`,
+              fontSize: fontSizeCaption,
+              color: COLOR.WHITE
             }}
           />
         </Row>
-        <Icon
-          icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
-          iconSize={fontSizeSmall}
-          iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
-        />
-        <UiEntity
-          uiText={{
-            value: place.base_position ?? '',
-            fontSize: fontSizeSmall,
-            color: COLOR.TEXT_COLOR_LIGHT_GREY
+        <Row
+          uiTransform={{
+            flexGrow: 0,
+            flexShrink: 0,
+            width: 'auto',
+            borderRadius: fontSizeCaption / 2,
+            padding: { left: fontSizeCaption, right: fontSizeCaption }
           }}
-        />
+          uiBackground={{ color: COLOR.WHITE_OPACITY_1 }}
+        >
+          <Icon
+            icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
+            iconSize={fontSizeCaption}
+            iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
+          />
+          <UiEntity
+            uiText={{
+              value: place.base_position ?? '',
+              fontSize: fontSizeCaption,
+              color: COLOR.TEXT_COLOR_LIGHT_GREY
+            }}
+          />
+        </Row>
       </Row>
     </Column>
   )
