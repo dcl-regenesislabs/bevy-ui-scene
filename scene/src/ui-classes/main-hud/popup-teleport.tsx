@@ -16,6 +16,7 @@ import useState = ReactEcs.useState
 import { fetchJsonOrTryFallback } from '../../utils/promise-utils'
 import {
   CATALYST_BASE_URL_FALLBACK,
+  MAIN_REALM_URL,
   WORLDS_CONTENT_SERVER_URL
 } from '../../utils/constants'
 import { executeTask } from '@dcl/sdk/ecs'
@@ -78,8 +79,7 @@ function TeleportContent({
         const catalystBaseURl =
           realm.realmInfo?.baseUrl ?? CATALYST_BASE_URL_FALLBACK
 
-        const MAIN_REALM = 'https://realm-provider.decentraland.org/main'
-        const effectiveTargetRealm = targetRealm ?? MAIN_REALM
+        const effectiveTargetRealm = targetRealm ?? MAIN_REALM_URL
         const currentRealm =
           realm.realmInfo?.realmName ?? realm.realmInfo?.baseUrl ?? ''
         const isOnDifferentRealm =

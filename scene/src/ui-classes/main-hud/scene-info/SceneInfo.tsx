@@ -9,6 +9,7 @@ import type { UIController } from '../../../controllers/ui.controller'
 import {
   ALMOST_WHITE,
   ALPHA_BLACK_PANEL,
+  MAIN_REALM_URL,
   ROUNDED_TEXTURE_BACKGROUND,
   UNSELECTED_TEXT_WHITE
 } from '../../../utils/constants'
@@ -223,7 +224,7 @@ export default class SceneInfo {
   }
 
   async setHome(realm?: string, position?: Vector3 | undefined): Promise<void> {
-    const newRealm = realm ?? 'http://realm-provider-ea.decentraland.org/main'
+    const newRealm = realm ?? MAIN_REALM_URL
     const newParcel =
       Vector2.create(position?.x, position?.z) ?? Vector2.create(0, 0)
     this.home = { realm: newRealm, parcel: newParcel }
