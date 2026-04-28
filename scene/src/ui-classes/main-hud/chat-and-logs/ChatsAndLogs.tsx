@@ -14,7 +14,11 @@ import ReactEcs, {
   type UiTransformProps
 } from '@dcl/sdk/react-ecs'
 import { getPlayer } from '@dcl/sdk/src/players'
-import { ONE_ADDRESS, ZERO_ADDRESS } from '../../../utils/constants'
+import {
+  MAIN_REALM_URL,
+  ONE_ADDRESS,
+  ZERO_ADDRESS
+} from '../../../utils/constants'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { BevyApi } from '../../../bevy-api'
 import {
@@ -452,7 +456,7 @@ function sendChatMessage(value: string): void {
             value.trim() === '/goto main'
           ) {
             await changeRealm({
-              realm: 'https://realm-provider-ea.decentraland.org/main'
+              realm: MAIN_REALM_URL
             })
             await sleep(1000)
             await teleportTo({
@@ -511,7 +515,7 @@ build: ${COMMIT_HASH}`,
           const [, world] = value.trim().split(' ')
           if (world === 'genesis' || world === 'main') {
             await changeRealm({
-              realm: 'https://realm-provider-ea.decentraland.org/main'
+              realm: MAIN_REALM_URL
             })
             await sleep(1000)
             await teleportTo({

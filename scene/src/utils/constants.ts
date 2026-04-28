@@ -589,6 +589,7 @@ export const MAX_ZINDEX = 98303
 export const CATALYST_BASE_URL_FALLBACK = 'https://peer.decentraland.org'
 export const WORLDS_CONTENT_SERVER_URL =
   'https://worlds-content-server.decentraland.org'
+export const MAIN_REALM_URL = 'https://realm-provider-ea.decentraland.org/main'
 export const LOCAL_STORAGE_OUTFITS_KEY = 'outfits'
 export const DOUBLE_CLICK_DELAY = 400
 export const LOCAL_PREVIEW_REALM_NAME = 'LocalPreview'
