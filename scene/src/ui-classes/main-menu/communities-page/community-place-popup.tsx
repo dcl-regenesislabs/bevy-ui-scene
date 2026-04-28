@@ -503,10 +503,16 @@ function CommunityPlacePopupContent({
         </Row>
 
         {/* Description */}
+        <Column></Column>
         <Column
           uiTransform={{
             width: '100%',
-            margin: { top: fontSize, bottom: fontSize }
+            margin: { top: fontSize, bottom: fontSize },
+            borderRadius: fontSize,
+            padding: fontSize
+          }}
+          uiBackground={{
+            color: COLOR.DARK_OPACITY_5
           }}
         >
           <UiEntity
@@ -528,109 +534,108 @@ function CommunityPlacePopupContent({
             }}
             uiTransform={{ width: '100%' }}
           />
-        </Column>
 
-        {/* Location + Parcels */}
-        <Row
-          uiTransform={{
-            width: '100%',
-            margin: { bottom: fontSize }
-          }}
-        >
-          <Column>
-            <UiEntity
-              uiText={{
-                value: '<b>LOCATION</b>',
-                fontSize: fontSize,
-                color: COLOR.TEXT_COLOR_LIGHT_GREY,
-                textAlign: 'top-left'
-              }}
-              uiTransform={{ width: '100%' }}
-            />
-            <Row
-              uiTransform={{
-                margin: { left: fontSize / 2 }
-              }}
-            >
-              <Icon
-                icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
-                iconSize={fontSize}
-                iconColor={COLOR.TEXT_COLOR_WHITE}
-              />
+          <Row
+            uiTransform={{
+              width: '100%',
+              margin: { top: fontSize * 2 }
+            }}
+          >
+            <Column uiTransform={{ margin: { right: fontSize } }}>
               <UiEntity
                 uiText={{
-                  value: ` ${place.base_position}`,
+                  value: '<b>LOCATION</b>',
                   fontSize: fontSize,
-                  color: COLOR.TEXT_COLOR_WHITE
-                }}
-              />
-            </Row>
-          </Column>
-          <Column>
-            <UiEntity
-              uiText={{
-                value: '<b>PARCELS</b>',
-                fontSize,
-                color: COLOR.TEXT_COLOR_LIGHT_GREY,
-                textAlign: 'top-left'
-              }}
-              uiTransform={{ width: '100%' }}
-            />
-            <Row
-              uiTransform={{
-                margin: { left: fontSize / 2 }
-              }}
-            >
-              <Icon
-                icon={{ spriteName: 'ParcelsIcn', atlasName: 'map2' }}
-                iconSize={fontSize}
-                iconColor={COLOR.TEXT_COLOR_WHITE}
-              />
-              <UiEntity
-                uiText={{
-                  value: `${place.positions?.length ?? 0}`,
-                  fontSize: fontSize,
-                  color: COLOR.TEXT_COLOR_WHITE,
+                  color: COLOR.TEXT_COLOR_LIGHT_GREY,
                   textAlign: 'top-left'
                 }}
                 uiTransform={{ width: '100%' }}
               />
-            </Row>
-          </Column>
+              <Row
+                uiTransform={{
+                  margin: { left: fontSize / 2 }
+                }}
+              >
+                <Icon
+                  icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
+                  iconSize={fontSize}
+                  iconColor={COLOR.TEXT_COLOR_WHITE}
+                />
+                <UiEntity
+                  uiText={{
+                    value: ` ${place.base_position}`,
+                    fontSize: fontSize,
+                    color: COLOR.TEXT_COLOR_WHITE
+                  }}
+                />
+              </Row>
+            </Column>
+            <Column uiTransform={{ margin: { right: fontSize } }}>
+              <UiEntity
+                uiText={{
+                  value: '<b>PARCELS</b>',
+                  fontSize,
+                  color: COLOR.TEXT_COLOR_LIGHT_GREY,
+                  textAlign: 'top-left'
+                }}
+                uiTransform={{ width: '100%' }}
+              />
+              <Row
+                uiTransform={{
+                  margin: { left: fontSize / 2 }
+                }}
+              >
+                <Icon
+                  icon={{ spriteName: 'ParcelsIcn', atlasName: 'map2' }}
+                  iconSize={fontSize}
+                  iconColor={COLOR.TEXT_COLOR_WHITE}
+                />
+                <UiEntity
+                  uiText={{
+                    value: `${place.positions?.length ?? 0}`,
+                    fontSize: fontSize,
+                    color: COLOR.TEXT_COLOR_WHITE,
+                    textAlign: 'top-left'
+                  }}
+                  uiTransform={{ width: '100%' }}
+                />
+              </Row>
+            </Column>
 
-          <Column>
-            <UiEntity
-              uiText={{
-                value: '<b>FAVORITES</b>',
-                fontSize,
-                color: COLOR.TEXT_COLOR_LIGHT_GREY
-              }}
-            />
-            <UiEntity
-              uiText={{
-                value: `${favoritesCount}`,
-                fontSize,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-            />
-          </Column>
-          <Column>
-            <UiEntity
-              uiText={{
-                value: '<b>UPDATED</b>',
-                fontSize,
-                color: COLOR.TEXT_COLOR_LIGHT_GREY
-              }}
-            />
-            <UiEntity
-              uiText={{
-                value: formatDate(place.updated_at),
-                fontSize,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-            />
-          </Column>
-        </Row>
+            <Column uiTransform={{ margin: { right: fontSize } }}>
+              <UiEntity
+                uiText={{
+                  value: '<b>FAVORITES</b>',
+                  fontSize,
+                  color: COLOR.TEXT_COLOR_LIGHT_GREY
+                }}
+              />
+              <UiEntity
+                uiText={{
+                  value: `${favoritesCount}`,
+                  fontSize,
+                  color: COLOR.TEXT_COLOR_WHITE
+                }}
+              />
+            </Column>
+            <Column>
+              <UiEntity
+                uiText={{
+                  value: '<b>UPDATED</b>',
+                  fontSize,
+                  color: COLOR.TEXT_COLOR_LIGHT_GREY
+                }}
+              />
+              <UiEntity
+                uiText={{
+                  value: formatDate(place.updated_at),
+                  fontSize,
+                  color: COLOR.TEXT_COLOR_WHITE
+                }}
+              />
+            </Column>
+          </Row>
+        </Column>
       </Column>
     </PopupBackdrop>
   )
