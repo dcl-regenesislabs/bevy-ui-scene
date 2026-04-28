@@ -39,7 +39,7 @@ import {
 } from '~system/RestrictedActions'
 import { currentRealmProviderIsWorld } from '../../../service/realm-change'
 import { showErrorPopup } from '../../../service/error-popup-service'
-import { Vector2 } from '@dcl/sdk/math'
+import { type Color4, Vector2 } from '@dcl/sdk/math'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -441,6 +441,7 @@ function CommunityPlacePopupContent({
                 spriteName={isFav ? 'HeartOnOutlined' : 'HeartOffOutlined'}
                 atlasName="toggles"
                 pulsing={updatingFav}
+                iconColor={isFav ? COLOR.RED : COLOR.WHITE}
                 onClick={toggleFav}
               />
               <ActionIconButton
@@ -640,12 +641,14 @@ function ActionIconButton({
   spriteName,
   atlasName = 'icons',
   pulsing,
+  iconColor = COLOR.WHITE,
   onClick
 }: {
   fontSize: number
   spriteName: string
   atlasName?: Atlas
   pulsing: boolean
+  iconColor?: Color4
   onClick: () => void
 }): ReactElement {
   const size = fontSize * 2
@@ -668,7 +671,7 @@ function ActionIconButton({
       <Icon
         icon={{ spriteName, atlasName }}
         iconSize={fontSize}
-        iconColor={COLOR.WHITE}
+        iconColor={iconColor}
       />
     </UiEntity>
   )
