@@ -244,13 +244,13 @@ function CommunityPlaceCard({
           <Icon
             icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
             iconSize={fontSizeCaption}
-            iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
+            iconColor={COLOR.WHITE}
           />
           <UiEntity
             uiText={{
               value: place.base_position ?? '',
               fontSize: fontSizeCaption,
-              color: COLOR.TEXT_COLOR_LIGHT_GREY
+              color: COLOR.WHITE
             }}
           />
         </Row>
