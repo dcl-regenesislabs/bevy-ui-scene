@@ -97,11 +97,12 @@ function NotificationsContent(): ReactElement {
   }, [])
   const fontSize = getFontSize({})
   const fontSizeTitleM = getFontSize({ token: TYPOGRAPHY_TOKENS.TITLE_M })
+  const menuHeight = fontSize * 30
   return (
     <UiEntity
       uiTransform={{
         width: notifications.length > 5 ? fontSize * 23.5 : fontSize * 22,
-        height: getContentScaleRatio() * 540 * 2.2,
+        height: menuHeight * 1.1,
         borderRadius: fontSize / 2,
         borderWidth: 0,
         borderColor: COLOR.BLACK_TRANSPARENT,
@@ -128,7 +129,7 @@ function NotificationsContent(): ReactElement {
       <UiEntity
         uiTransform={{
           scrollVisible: notifications.length > 5 ? 'vertical' : 'hidden',
-          height: getContentScaleRatio() * 540 * 2,
+          height: menuHeight,
           width: '100%',
           borderWidth: 1,
           borderColor: COLOR.BLACK_TRANSPARENT,
