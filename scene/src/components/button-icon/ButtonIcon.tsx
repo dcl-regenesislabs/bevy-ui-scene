@@ -55,7 +55,7 @@ function ButtonIcon(props: {
   })
   const BUTTON_ICON_HEIGHT = (BUTTON_ICON_SIZE / 1.5) * 2
 
-  const DEFAULT_HINT_FONT_SIZE = getFontSize({})
+  const DEFAULT_HINT_FONT_SIZE = getFontSize({ context: layoutContext })
 
   let position: Partial<Position> = { left: '100%' }
 

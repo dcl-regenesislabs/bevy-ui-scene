@@ -402,7 +402,6 @@ export default class MainHud {
             backgroundColor={this.walletBackground}
             icon={this.walletIcon}
             hintText={'Profile'}
-            hintFontSize={getFontSize({})}
             showHint={this.walletHint}
           />
 
@@ -428,7 +427,6 @@ export default class MainHud {
               icon={this.bellIcon}
               hintText={'Notifications'}
               showHint={this.bellHint}
-              hintFontSize={getFontSize({})}
               notifications={store.getState().hud.unreadNotifications}
             />
           )}
@@ -454,7 +452,6 @@ export default class MainHud {
               backgroundColor={this.mapBackground}
               icon={this.mapIcon}
               hintText={'Map'}
-              hintFontSize={getFontSize({})}
               showHint={this.mapHint}
             />
           )}
@@ -475,7 +472,6 @@ export default class MainHud {
               backgroundColor={this.communitiesBackground}
               icon={this.communitiesIcon}
               hintText={'Communities'}
-              hintFontSize={getFontSize({})}
               showHint={this.communitiesHint}
             />
           )}
@@ -495,7 +491,6 @@ export default class MainHud {
             backgroundColor={this.backpackBackground}
             icon={this.backpackIcon}
             hintText={'Backpack'}
-            hintFontSize={getFontSize({})}
             showHint={this.backpackHint}
           />
 
@@ -514,7 +509,6 @@ export default class MainHud {
             backgroundColor={this.settingsBackground}
             icon={this.settingsIcon}
             hintText={'Settings'}
-            hintFontSize={getFontSize({})}
             showHint={this.settingsHint}
           />
 
@@ -540,7 +534,6 @@ export default class MainHud {
             backgroundColor={this.helpBackground}
             icon={this.helpIcon}
             hintText={'Help'}
-            hintFontSize={getFontSize({})}
             showHint={this.helpHint}
           />
         </UiEntity>
@@ -569,7 +562,6 @@ export default class MainHud {
             backgroundColor={this.voiceChatBackground}
             icon={this.voiceChatIcon}
             hintText={'Voice Chat (Click to toggle or hold <b>V</b> to talk)'}
-            hintFontSize={getFontSize({})}
             showHint={this.voiceChatHint}
           />
 
@@ -591,7 +583,6 @@ export default class MainHud {
                 this.updateButtons()
               }}
               hintText={'Friends'}
-              hintFontSize={getFontSize({})}
               showHint={state.hover === MENU_ELEMENT.FRIENDS}
               notifications={0}
               onMouseEnter={() => {
@@ -637,7 +628,6 @@ export default class MainHud {
                   : ChatIconInactive
               }
               hintText={'Chat'}
-              hintFontSize={getFontSize({})}
               showHint={state.hover === MENU_ELEMENT.CHAT}
               notifications={this.chatAndLogs.getUnreadMessages()}
             />
@@ -658,7 +648,6 @@ export default class MainHud {
             backgroundColor={this.emotesBackground}
             icon={this.emotesIcon}
             hintText={'Emotes (Alt or ⌥)'}
-            hintFontSize={getFontSize({})}
             showHint={this.emotesHint}
           />
         </UiEntity>
