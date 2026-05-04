@@ -349,17 +349,12 @@ export default class MainHud {
   MainSideBar(): ReactElement | null {
     const canvasInfo =
       UiCanvasInformation.getOrNull(engine.RootEntity) ?? ZERO_SIZE
-    const buttonMinSize: number = 38
-    const buttonSize = Math.max(buttonMinSize, (canvasInfo.height * 5) / 100)
     const buttonMargin: Partial<Position> = { top: 5, bottom: 5 } // TODO review responsiveness
     const buttonTransform = {
-      height: buttonSize,
-      width: buttonSize,
       margin: buttonMargin,
       flexShrink: 0,
       flexGrow: 0
     }
-    const buttonIconSize = buttonSize * 0.7
 
     if (canvasInfo === null) return null
     return (
@@ -409,7 +404,6 @@ export default class MainHud {
             hintText={'Profile'}
             hintFontSize={getFontSize({})}
             showHint={this.walletHint}
-            iconSize={buttonIconSize}
           />
 
           {getFeatureFlag(FEATURES.NOTIFICATIONS) && (
@@ -435,7 +429,6 @@ export default class MainHud {
               hintText={'Notifications'}
               showHint={this.bellHint}
               hintFontSize={getFontSize({})}
-              iconSize={buttonIconSize}
               notifications={store.getState().hud.unreadNotifications}
             />
           )}
@@ -463,7 +456,6 @@ export default class MainHud {
               hintText={'Map'}
               hintFontSize={getFontSize({})}
               showHint={this.mapHint}
-              iconSize={buttonIconSize}
             />
           )}
 
@@ -485,7 +477,6 @@ export default class MainHud {
               hintText={'Communities'}
               hintFontSize={getFontSize({})}
               showHint={this.communitiesHint}
-              iconSize={buttonIconSize}
             />
           )}
 
@@ -506,7 +497,6 @@ export default class MainHud {
             hintText={'Backpack'}
             hintFontSize={getFontSize({})}
             showHint={this.backpackHint}
-            iconSize={buttonIconSize}
           />
 
           <ButtonIcon
@@ -526,7 +516,6 @@ export default class MainHud {
             hintText={'Settings'}
             hintFontSize={getFontSize({})}
             showHint={this.settingsHint}
-            iconSize={buttonIconSize}
           />
 
           <UiEntity
@@ -553,7 +542,6 @@ export default class MainHud {
             hintText={'Help'}
             hintFontSize={getFontSize({})}
             showHint={this.helpHint}
-            iconSize={buttonIconSize}
           />
         </UiEntity>
 
@@ -583,7 +571,6 @@ export default class MainHud {
             hintText={'Voice Chat (Click to toggle or hold <b>V</b> to talk)'}
             hintFontSize={getFontSize({})}
             showHint={this.voiceChatHint}
-            iconSize={buttonIconSize}
           />
 
           {getFeatureFlag(FEATURES.FRIENDS) && (
@@ -607,7 +594,6 @@ export default class MainHud {
               hintFontSize={getFontSize({})}
               showHint={state.hover === MENU_ELEMENT.FRIENDS}
               notifications={0}
-              iconSize={buttonIconSize}
               onMouseEnter={() => {
                 state.hover = MENU_ELEMENT.FRIENDS
               }}
@@ -654,7 +640,6 @@ export default class MainHud {
               hintFontSize={getFontSize({})}
               showHint={state.hover === MENU_ELEMENT.CHAT}
               notifications={this.chatAndLogs.getUnreadMessages()}
-              iconSize={buttonIconSize}
             />
           )}
 
@@ -675,7 +660,6 @@ export default class MainHud {
             hintText={'Emotes (Alt or ⌥)'}
             hintFontSize={getFontSize({})}
             showHint={this.emotesHint}
-            iconSize={buttonIconSize}
           />
         </UiEntity>
       </UiEntity>
