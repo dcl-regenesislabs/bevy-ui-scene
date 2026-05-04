@@ -19,7 +19,8 @@ import { type PBUiCanvasInformation } from '@dcl/ecs/dist/components/generated/p
 import { BevyApi } from '../../bevy-api'
 import { sleep } from '../../utils/dcl-utils'
 import { listenSystemAction } from '../../service/system-actions-emitter'
-import { getFontSize } from '../../service/fontsize-system'
+import { CONTEXT, getFontSize } from '../../service/fontsize-system'
+import { LayoutContext } from '../../service/layout-context'
 import FriendsPanel from '../../components/friends/friends-panel'
 import { FEATURES, getFeatureFlag } from '../../service/feature-flags'
 
@@ -292,54 +293,56 @@ export default class MainHud {
 
   mainUi(): ReactEcs.JSX.Element | null {
     return (
-      <UiEntity
-        uiTransform={{
-          width: '100%',
-          height: '100%',
-          positionType: 'absolute',
-          flexDirection: 'row'
-        }}
-      >
+      <LayoutContext.Provider value={CONTEXT.SIDE}>
         <UiEntity
           uiTransform={{
-            width: getHudBarWidth(),
+            width: '100%',
             height: '100%',
-            zIndex: 1
-          }}
-          // onMouseEnter={() => (this.isSideBarVisible = true)}
-          // onMouseLeave={() => (this.isSideBarVisible = false)}
-        >
-          {this.MainSideBar()}
-        </UiEntity>
-
-        <UiEntity
-          uiTransform={{
-            width: getChatWidth(),
-            height: '100%',
-            flexDirection: 'column'
+            positionType: 'absolute',
+            flexDirection: 'row'
           }}
         >
-          {this.sceneInfo.mainUi()}
+          <UiEntity
+            uiTransform={{
+              width: getHudBarWidth(),
+              height: '100%',
+              zIndex: 1
+            }}
+            // onMouseEnter={() => (this.isSideBarVisible = true)}
+            // onMouseLeave={() => (this.isSideBarVisible = false)}
+          >
+            {this.MainSideBar()}
+          </UiEntity>
 
           <UiEntity
             uiTransform={{
-              width: '100%',
-              alignSelf: 'flex-end',
-              positionType: 'absolute',
-              position: { bottom: 0 },
-              padding: {
-                left: '2%'
-              }
+              width: getChatWidth(),
+              height: '100%',
+              flexDirection: 'column'
             }}
           >
-            {getFeatureFlag(FEATURES.CHAT) &&
-              this.chatAndLogs.isOpen() &&
-              this.chatAndLogs.mainUi()}
-            {getFeatureFlag(FEATURES.FRIENDS) &&
-              store.getState().hud.friendsOpen && <FriendsPanel />}
+            {this.sceneInfo.mainUi()}
+
+            <UiEntity
+              uiTransform={{
+                width: '100%',
+                alignSelf: 'flex-end',
+                positionType: 'absolute',
+                position: { bottom: 0 },
+                padding: {
+                  left: '2%'
+                }
+              }}
+            >
+              {getFeatureFlag(FEATURES.CHAT) &&
+                this.chatAndLogs.isOpen() &&
+                this.chatAndLogs.mainUi()}
+              {getFeatureFlag(FEATURES.FRIENDS) &&
+                store.getState().hud.friendsOpen && <FriendsPanel />}
+            </UiEntity>
           </UiEntity>
         </UiEntity>
-      </UiEntity>
+      </LayoutContext.Provider>
     )
   }
 

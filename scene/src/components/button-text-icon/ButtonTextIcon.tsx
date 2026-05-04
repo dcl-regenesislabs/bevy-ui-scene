@@ -8,10 +8,11 @@ import ReactEcs, {
 import { type AtlasIcon } from '../../utils/definitions'
 import Icon from '../icon/Icon'
 import {
-  CONTEXT,
+  type CONTEXT,
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../service/fontsize-system'
+import { useLayoutContext } from '../../service/layout-context'
 import { COLOR } from '../color-palette'
 
 function ButtonTextIcon(props: {
@@ -32,7 +33,8 @@ function ButtonTextIcon(props: {
   iconColor?: Color4
   layoutContext?: CONTEXT
 }): ReactEcs.JSX.Element | null {
-  const layoutContext = props.layoutContext ?? CONTEXT.SIDE
+  const fromContext = useLayoutContext()
+  const layoutContext = props.layoutContext ?? fromContext
   const fontSize = props.fontSize ?? getFontSize({})
   const borderRadius = getFontSize({
     token: TYPOGRAPHY_TOKENS.BUTTON_ICON_BORDER_RADIUS,

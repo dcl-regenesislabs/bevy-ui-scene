@@ -14,10 +14,11 @@ import { ROUNDED_TEXTURE_BACKGROUND } from '../../utils/constants'
 import { type UiBackgroundProps } from '@dcl/react-ecs'
 import { COLOR } from '../color-palette'
 import {
-  CONTEXT,
+  type CONTEXT,
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../service/fontsize-system'
+import { useLayoutContext } from '../../service/layout-context'
 
 function ButtonIcon(props: {
   // Events
@@ -42,7 +43,8 @@ function ButtonIcon(props: {
 }): ReactEcs.JSX.Element | null {
   const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
   if (canvasInfo === null) return null
-  const layoutContext = props.layoutContext ?? CONTEXT.SIDE
+  const fromContext = useLayoutContext()
+  const layoutContext = props.layoutContext ?? fromContext
   const BUTTON_ICON_SIZE = getFontSize({
     token: TYPOGRAPHY_TOKENS.BUTTON_ICON,
     context: layoutContext
