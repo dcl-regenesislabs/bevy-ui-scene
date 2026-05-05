@@ -52,7 +52,7 @@ export const DEFAULT_EMOTE_NAMES: Record<offchainEmoteURN, string> = {
   cry: 'Cry',
   dab: 'Dab',
   disco: 'Disco',
-  dontsee: 'Don\'t wanna see',
+  dontsee: "Don't wanna see",
   hammer: 'Hammer time',
   hohoho: 'HoHoHo',
   robot: 'Do the Robot',
