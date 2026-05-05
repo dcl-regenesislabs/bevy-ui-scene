@@ -200,6 +200,226 @@
         "h": 256
       }
     },
+    "cry.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "dab.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "disco.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "dontsee.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "hammer.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "hohoho.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "robot.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "snowfall.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "tektonic.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "tik.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
+    "confettipopper.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 2,
+        "h": 2
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
+      "sourceSize": {
+        "w": 1,
+        "h": 1
+      }
+    },
     "wheel-background.png": {
       "frame": {
         "x": 517,

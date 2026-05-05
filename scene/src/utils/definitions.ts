@@ -51,6 +51,17 @@ export type offchainEmoteURN =
   | `kiss`
   | `headexplode`
   | `shrug`
+  | `cry`
+  | `dab`
+  | `disco`
+  | `dontsee`
+  | `hammer`
+  | `hohoho`
+  | `robot`
+  | `snowfall`
+  | `tektonic`
+  | `tik`
+  | `confettipopper`
 export type URNWithoutTokenId =
   | `decentraland:off-chain:base-avatars:${string}`
   | `decentraland:${Network}:collections-v1:${ContractAddress}:${string}`

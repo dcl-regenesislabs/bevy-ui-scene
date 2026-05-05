@@ -217,7 +217,7 @@ export function reducer(
     case BACKPACK_ACTION.RESET_DEFAULT_EMOTES: {
       return {
         ...backpackPageState,
-        equippedEmotes: DEFAULT_EMOTES,
+        equippedEmotes: DEFAULT_EMOTES.slice(0, 10),
         changedEmotesFromResetVersion: true
       }
     }

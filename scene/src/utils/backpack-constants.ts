@@ -13,7 +13,18 @@ export const DEFAULT_EMOTES: offchainEmoteURN[] = [
   'money',
   'kiss',
   'headexplode',
-  'shrug'
+  'shrug',
+  'cry',
+  'dab',
+  'disco',
+  'dontsee',
+  'hammer',
+  'hohoho',
+  'robot',
+  'snowfall',
+  'tektonic',
+  'tik',
+  'confettipopper'
 ]
 export const EMPTY_EMOTES: EquippedEmote[] = [
   '',
@@ -37,7 +48,18 @@ export const DEFAULT_EMOTE_NAMES: Record<offchainEmoteURN, string> = {
   money: 'Money',
   kiss: 'Kiss',
   headexplode: 'Head explode',
-  shrug: 'Shrug'
+  shrug: 'Shrug',
+  cry: 'Cry',
+  dab: 'Dab',
+  disco: 'Disco',
+  dontsee: "Don't wanna see",
+  hammer: 'Hammer time',
+  hohoho: 'HoHoHo',
+  robot: 'Do the Robot',
+  snowfall: 'Snowfall',
+  tektonic: 'Tektonic',
+  tik: 'Tik',
+  confettipopper: 'Confetti Popper'
 }
 export const DEFAULT_EMOTE_ELEMENTS: CatalogEmoteElement[] = DEFAULT_EMOTES.map(
   (offchainEmoteURN: offchainEmoteURN) => ({
