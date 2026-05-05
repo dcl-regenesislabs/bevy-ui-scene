@@ -1,42 +1,27 @@
 import { noop } from '../utils/function-utils'
 import type { Callback, UiTransformProps } from '@dcl/sdk/react-ecs'
-import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { Color4 } from '@dcl/sdk/math'
-import Icon from './icon/Icon'
+import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { CONTEXT, getFontSize } from '../service/fontsize-system'
+import { COLOR } from './color-palette'
+import ButtonIcon from './button-icon/ButtonIcon'
+import { store } from '../state/store'
+import { closeLastPopupAction } from '../state/hud/actions'
 
 export function CloseButton({
   uiTransform,
-  onClick = noop,
-  fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  onClick = () => store.dispatch(closeLastPopupAction())
 }: {
   uiTransform?: UiTransformProps
-  onClick: Callback
-  fontSize?: number
+  onClick?: Callback
 }): ReactElement {
   return (
-    <UiEntity
+    <ButtonIcon
+      icon={{ atlasName: 'icons', spriteName: 'CloseIcon' }}
+      backgroundColor={COLOR.BLACK}
+      onMouseDown={onClick}
       uiTransform={{
-        borderWidth: 0,
-        borderRadius: fontSize / 2,
-        borderColor: Color4.Black(),
-        width: fontSize * 2,
-        height: fontSize * 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexShrink: 0,
         ...uiTransform
       }}
-      uiBackground={{
-        color: Color4.Black()
-      }}
-      onMouseDown={onClick}
-    >
-      <Icon
-        icon={{ atlasName: 'icons', spriteName: 'CloseIcon' }}
-        uiTransform={{}}
-        iconSize={fontSize}
-      />
-    </UiEntity>
+    />
   )
 }

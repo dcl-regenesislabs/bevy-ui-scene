@@ -105,9 +105,6 @@ function CommunityEventPopupContent({
             zIndex: 1
           }}
           fontSize={fontSize}
-          onClick={() => {
-            store.dispatch(closeLastPopupAction())
-          }}
         />
         {/* Hero image */}
         <UiEntity

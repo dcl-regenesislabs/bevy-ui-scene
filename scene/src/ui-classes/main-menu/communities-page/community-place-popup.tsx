@@ -297,9 +297,6 @@ function CommunityPlacePopupContent({
               position: { top: fontSize, right: fontSize },
               positionType: 'absolute'
             }}
-            onClick={() => {
-              store.dispatch(closeLastPopupAction())
-            }}
           />
 
           {/* Header: thumbnail + info + actions */}

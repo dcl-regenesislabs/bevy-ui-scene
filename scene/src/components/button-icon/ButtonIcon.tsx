@@ -101,7 +101,7 @@ function ButtonIcon(props: {
   const variant = props.variant ?? 'transparent'
   const styles = VARIANT_STYLES[variant]
 
-  const BUTTON_ICON_SIZE = getFontSize({
+  const iconSize = getFontSize({
     token: TYPOGRAPHY_TOKENS.BUTTON_ICON,
     context: layoutContext
   })
@@ -109,7 +109,7 @@ function ButtonIcon(props: {
     token: TYPOGRAPHY_TOKENS.BUTTON_ICON_BORDER_RADIUS,
     context: layoutContext
   })
-  const BUTTON_ICON_HEIGHT = (BUTTON_ICON_SIZE / 1.5) * 2
+  const buttonSize = (iconSize / 1.5) * 2
   const DEFAULT_HINT_FONT_SIZE = getFontSize({ context: layoutContext })
 
   // Resolve visual state. `disabled` short-circuits everything (no hover,
@@ -121,10 +121,10 @@ function ButtonIcon(props: {
   const visualState: 'base' | 'hover' | 'active' = isDisabled
     ? 'base'
     : props.active === true
-      ? 'active'
-      : hovered
-        ? 'hover'
-        : 'base'
+    ? 'active'
+    : hovered
+    ? 'hover'
+    : 'base'
 
   const variantBg = styles.bg[visualState]
   const variantIconColor =
@@ -143,8 +143,7 @@ function ButtonIcon(props: {
   // Hint visibility: external prop wins; else show on internal hover when
   // hintText is provided.
   const showHint =
-    props.showHint ??
-    (props.hintText !== undefined && hovered && isInteractive)
+    props.showHint ?? (props.hintText !== undefined && hovered && isInteractive)
 
   let position: Partial<Position> = { left: '100%' }
   if (props.hintSide === 'right') position = { right: '100%' }
@@ -157,10 +156,13 @@ function ButtonIcon(props: {
   return (
     <UiEntity
       uiTransform={{
+        flexGrow: 0,
+        flexShrink: 0,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: props.borderRadius ?? BUTTON_ICON_BORDER_RADIUS,
-        height: BUTTON_ICON_HEIGHT,
+        height: buttonSize,
+        width: buttonSize,
         opacity,
         ...props.uiTransform
       }}
@@ -183,7 +185,7 @@ function ButtonIcon(props: {
       <Icon
         icon={renderedIcon}
         iconColor={iconColor}
-        iconSize={props.iconSize ?? BUTTON_ICON_SIZE}
+        iconSize={props.iconSize ?? iconSize}
       />
       {/* Notification badge — renders nothing if count <= 0 */}
       <NotificationBadge

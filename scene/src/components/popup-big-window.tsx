@@ -47,9 +47,6 @@ export const PopupBigWindow = ({
           flexShrink: 0,
           flexGrow: 0
         }}
-        onClick={() => {
-          store.dispatch(closeLastPopupAction())
-        }}
       />
     </UiEntity>
   )
