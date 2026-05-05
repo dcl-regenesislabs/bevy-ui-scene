@@ -104,7 +104,6 @@ function CommunityEventPopupContent({
             positionType: 'absolute',
             zIndex: 1
           }}
-          fontSize={fontSize}
         />
         {/* Hero image */}
         <UiEntity
