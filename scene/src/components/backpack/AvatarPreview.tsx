@@ -1,47 +1,17 @@
-import {
-  CameraLayers,
-  CameraLayer,
-  engine,
-  TextureCamera,
-  Transform,
-  AvatarShape,
-  type Entity,
-  type Orthographic,
-  type Perspective
-} from '@dcl/sdk/ecs'
-import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
-import { getPlayer } from '@dcl/sdk/src/players'
-import {
-  type EquippedEmote,
-  type URNWithoutTokenId
-} from '../../utils/definitions'
+import { type Entity, type Orthographic, type Perspective } from '@dcl/sdk/ecs'
+import { Vector3 } from '@dcl/sdk/math'
+import { type EquippedEmote } from '../../utils/definitions'
 import {
   WEARABLE_CATEGORY_DEFINITIONS,
   type WearableCategory
 } from '../../service/categories'
 
-import { type PBAvatarBase } from '../../bevy-api/interface'
-import { getItemsWithTokenId } from '../../utils/urn-utils'
 import { updateBackpackStateAction } from '../../state/backpack/actions'
 import { store } from '../../state/store'
 
 export type AvatarPreview = {
   avatarEntity: Entity
   cameraEntity: Entity
-}
-
-const CAMERA_SIZE = { WIDTH: 1600, HEIGHT: 1800 }
-
-const avatarPreview: AvatarPreview = {
-  avatarEntity: engine.RootEntity,
-  cameraEntity: engine.RootEntity
-}
-
-export const getAvatarCamera: () => Entity = () => avatarPreview.cameraEntity
-export const getAvatarPreviewEntity: () => Entity = () =>
-  avatarPreview.avatarEntity
-export const setAvatarPreviewRotation = (rotation: Quaternion): void => {
-  Transform.getMutable(avatarPreview.avatarEntity).rotation = rotation
 }
 
 export type OrthographicMode = {
@@ -52,18 +22,6 @@ export type PerspectiveMode = {
   $case: 'perspective'
   perspective: Perspective
 }
-export const setAvatarPreviewZoomFactor = (zoomFactor: number): void => {
-  const mode: OrthographicMode = TextureCamera.getMutable(
-    avatarPreview.cameraEntity
-  )?.mode as OrthographicMode
-
-  mode.orthographic.verticalRange = zoomFactor * 10 + 10 * 0.3
-}
-
-export const getAvatarPreviewQuaternion = (): Quaternion => {
-  return Transform.get(avatarPreview.avatarEntity).rotation
-}
-
 export const playPreviewEmote = (emoteURN: EquippedEmote): void => {
   store.dispatch(
     updateBackpackStateAction({
@@ -139,78 +97,6 @@ export const setAvatarPreviewCameraToWearableCategory = (
 
   /* Transform.getMutable(avatarPreview.cameraEntity).position =
     getCameraPositionPerCategory(category) */
-}
-
-export function updateAvatarPreview(
-  wearables: URNWithoutTokenId[],
-  avatarBase: PBAvatarBase,
-  forceRender: WearableCategory[] = []
-): void {
-  const mutableAvatarShape = AvatarShape.getMutable(avatarPreview.avatarEntity)
-  mutableAvatarShape.wearables = getItemsWithTokenId(wearables)
-  mutableAvatarShape.bodyShape = avatarBase.bodyShapeUrn
-  mutableAvatarShape.hairColor = avatarBase.hairColor
-  mutableAvatarShape.eyeColor = avatarBase.eyesColor
-  mutableAvatarShape.skinColor = avatarBase.skinColor
-  mutableAvatarShape.forceRender = forceRender
-}
-
-export function createAvatarPreview(): boolean {
-  if (avatarPreview.cameraEntity !== engine.RootEntity) return false
-  const avatarEntity: Entity = (avatarPreview.avatarEntity = engine.addEntity())
-  const cameraEntity = (avatarPreview.cameraEntity = engine.addEntity())
-  const playerData = getPlayer()
-
-  AvatarShape.create(avatarEntity, {
-    bodyShape: playerData?.avatar?.bodyShapeUrn,
-    emotes: [],
-    expressionTriggerId: undefined,
-    expressionTriggerTimestamp: undefined,
-    eyeColor: playerData?.avatar?.eyesColor,
-    hairColor: playerData?.avatar?.hairColor,
-    id: playerData?.userId ?? '',
-    name: undefined,
-    skinColor: playerData?.avatar?.skinColor,
-    talking: false,
-    wearables: playerData?.wearables ?? [],
-    forceRender: []
-  })
-
-  CameraLayers.create(avatarEntity, {
-    layers: [1]
-  })
-  CameraLayer.create(cameraEntity, {
-    layer: 1,
-    directionalLight: false,
-    showAvatars: false,
-    showSkybox: false,
-    showFog: false,
-    ambientBrightnessOverride: 5
-  })
-
-  TextureCamera.create(cameraEntity, {
-    width: CAMERA_SIZE.WIDTH,
-    height: CAMERA_SIZE.HEIGHT,
-    layer: 1,
-    clearColor: Color4.create(0.4, 0.4, 1.0, 0),
-    mode: {
-      $case: 'orthographic',
-      orthographic: { verticalRange: 6 }
-    },
-    volume: 1
-  })
-
-  Transform.create(avatarEntity, {
-    position: { x: 8, y: 0, z: 8 },
-    rotation: Quaternion.fromEulerDegrees(0, 180, 0),
-    scale: { x: 2, y: 2, z: 2 }
-  })
-
-  Transform.create(cameraEntity, {
-    position: AVATAR_CAMERA_POSITION.BODY,
-    rotation: Quaternion.fromEulerDegrees(4, 0, 0)
-  })
-  return true
 }
 
 export function getCameraPositionPerCategory(
