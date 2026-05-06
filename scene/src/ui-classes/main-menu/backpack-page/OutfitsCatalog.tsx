@@ -27,7 +27,6 @@ import {
 import { catalystMetadataMap } from '../../../utils/catalyst-metadata-map'
 import { fetchWearablesData } from '../../../utils/wearables-promise-utils'
 import { getRealm } from '~system/Runtime'
-import { updateAvatarPreview } from '../../../components/backpack/AvatarPreview'
 import { cloneDeep } from '../../../utils/function-utils'
 import type { RGBColor } from '../../../bevy-api/interface'
 import { ButtonIcon } from '../../../components/button-icon'
@@ -190,12 +189,6 @@ export const OutfitsCatalog = (): ReactElement => {
           }}
           onClick={() => {
             store.dispatch(resetOutfitAction())
-
-            updateAvatarPreview(
-              store.getState().backpack.equippedWearables,
-              store.getState().backpack.outfitSetup.base,
-              store.getState().backpack.forceRender
-            )
           }}
         />
       )}
@@ -280,12 +273,6 @@ export const OutfitsCatalog = (): ReactElement => {
       })
     )
     store.dispatch(updateForceRenderAction(viewSlot?.forceRender ?? []))
-
-    updateAvatarPreview(
-      store.getState().backpack.equippedWearables,
-      store.getState().backpack.outfitSetup.base,
-      store.getState().backpack.forceRender
-    )
   }
   function availableSlots(): number {
     return (

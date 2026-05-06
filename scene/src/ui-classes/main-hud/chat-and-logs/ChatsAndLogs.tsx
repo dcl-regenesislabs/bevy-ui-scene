@@ -452,7 +452,7 @@ function sendChatMessage(value: string): void {
             value.trim() === '/goto main'
           ) {
             await changeRealm({
-              realm: 'https://realm-provider.decentraland.org/main'
+              realm: 'https://realm-provider-ea.decentraland.org/main'
             })
             await sleep(1000)
             await teleportTo({
@@ -511,7 +511,7 @@ build: ${COMMIT_HASH}`,
           const [, world] = value.trim().split(' ')
           if (world === 'genesis' || world === 'main') {
             await changeRealm({
-              realm: 'https://realm-provider.decentraland.org/main'
+              realm: 'https://realm-provider-ea.decentraland.org/main'
             })
             await sleep(1000)
             await teleportTo({
