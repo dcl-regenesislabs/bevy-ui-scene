@@ -1,6 +1,12 @@
 import { ReactEcs, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type SystemProximityEvent } from '../../bevy-api/interface'
-import { engine, executeTask, UiCanvasInformation } from '@dcl/sdk/ecs'
+import {
+  engine,
+  executeTask,
+  inputSystem,
+  PointerEventType,
+  UiCanvasInformation
+} from '@dcl/sdk/ecs'
 import { type Key } from '@dcl/sdk/react-ecs'
 import { BevyApi } from '../../bevy-api'
 import { COLOR } from '../color-palette'
@@ -82,9 +88,22 @@ function ProximityTooltip({
   event: SystemProximityEvent
   key?: Key
 }): ReactElement | null {
-  const actions = event.actions.filter(
-    (a) => a.eventInfo?.showFeedback !== false
-  )
+  // Match hover-action-component: pre-press, surface PET_DOWN entries (the
+  // "press X to do Y" prompts); while the entry's button is held, surface the
+  // matching PET_UP entry. Drag events drive the drag mechanics — scene
+  // authors get drag tooltips by pairing PetDown + PetDrag (or PetUp +
+  // PetDragEnd).
+  const actions = event.actions
+    .filter((a) => a.eventInfo?.showFeedback !== false)
+    .filter((a) => {
+      if (
+        a.eventInfo?.button !== undefined &&
+        inputSystem.isPressed(a.eventInfo?.button)
+      ) {
+        return a.eventType === PointerEventType.PET_UP
+      }
+      return a.eventType === PointerEventType.PET_DOWN
+    })
   if (actions.length === 0) return null
 
   const projection = projectWorldToScreen(event.entityPosition)
