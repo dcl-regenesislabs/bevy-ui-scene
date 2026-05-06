@@ -33,9 +33,8 @@ function ButtonTextIcon(props: {
   iconColor?: Color4
   layoutContext?: CONTEXT
 }): ReactEcs.JSX.Element | null {
-  const fromContext = useLayoutContext()
-  const layoutContext = props.layoutContext ?? fromContext
-  const fontSize = props.fontSize ?? getFontSize({})
+  const layoutContext = props.layoutContext ?? useLayoutContext()
+  const fontSize = props.fontSize ?? getFontSize({ context: layoutContext })
   const borderRadius = getFontSize({
     token: TYPOGRAPHY_TOKENS.BUTTON_ICON_BORDER_RADIUS,
     context: layoutContext

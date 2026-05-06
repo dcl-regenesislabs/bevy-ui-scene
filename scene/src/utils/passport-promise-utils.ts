@@ -18,6 +18,45 @@ export type ProfileResponse = {
 }
 export const profileDataMap = new Map<string, ProfileResponse>()
 
+export type ResolvedPlayerData = {
+  userId: string
+  name: string
+  hasClaimedName: boolean
+}
+
+/**
+ * Resolve basic player data with a graceful fallback chain so it works for
+ * users who aren't currently in the scene:
+ *
+ *   1. `getPlayer({ userId })` — sync, available only for tracked avatars.
+ *   2. `fetchProfileData({ userId, useCache: true })` — catalyst lambda,
+ *      works for any userId.
+ *   3. last resort: returns the address itself as the "name".
+ */
+export async function resolvePlayerData(
+  userId: string
+): Promise<ResolvedPlayerData> {
+  const player = getPlayer({ userId })
+  if (player?.name != null) {
+    const name = player.name
+    return {
+      userId,
+      name,
+      hasClaimedName: !!(name.length > 0 && !name.includes('#'))
+    }
+  }
+  const profile = await fetchProfileData({ userId, useCache: true })
+  const avatar = profile?.avatars?.[0]
+  if (avatar != null) {
+    return {
+      userId,
+      name: avatar.name ?? userId,
+      hasClaimedName: avatar.hasClaimedName ?? false
+    }
+  }
+  return { userId, name: userId, hasClaimedName: false }
+}
+
 export async function fetchProfileData({
   userId,
   useCache = false

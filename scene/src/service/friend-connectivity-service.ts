@@ -1,5 +1,4 @@
 import { executeTask } from '@dcl/sdk/ecs'
-import { getPlayer } from '@dcl/sdk/src/players'
 import { BevyApi } from '../bevy-api'
 import { store } from '../state/store'
 import {
@@ -14,7 +13,7 @@ import type {
   FriendshipEventUpdate
 } from './social-service-type'
 import { showErrorPopup } from './error-popup-service'
-import { fetchProfileData } from '../utils/passport-promise-utils'
+import { resolvePlayerData } from '../utils/passport-promise-utils'
 import { type FriendshipResultVariant } from '../components/friends/friendship-result-popup'
 import { createMediator } from '../utils/function-utils'
 import { sleep } from '../utils/dcl-utils'
@@ -143,24 +142,7 @@ function handleFriendshipResultEvent(event: FriendshipEventUpdate): void {
   }
 
   executeTask(async () => {
-    let name = event.address
-    let hasClaimedName = false
-
-    const player = getPlayer({ userId: event.address })
-    if (player?.name != null) {
-      name = player.name
-      hasClaimedName = !!(name.length > 0 && !name.includes('#'))
-    } else {
-      const profile = await fetchProfileData({
-        userId: event.address,
-        useCache: true
-      })
-      if (profile?.avatars?.[0] != null) {
-        name = profile.avatars[0].name ?? name
-        hasClaimedName = profile.avatars[0].hasClaimedName ?? false
-      }
-    }
-
+    const { name, hasClaimedName } = await resolvePlayerData(event.address)
     store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,

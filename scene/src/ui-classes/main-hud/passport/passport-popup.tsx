@@ -47,7 +47,8 @@ import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
 import { BevyApi } from '../../../bevy-api'
-import { showConfirmPopup } from '../../../components/confirm-popup'
+import { FriendButton } from '../../../components/friend-button'
+import { BlockUserButton } from '../../../components/block-user-button'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
 import { Column, Row } from '../../../components/layout'
 import useState = ReactEcs.useState
@@ -171,6 +172,7 @@ export function setupPassportPopup(): void {
 export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const [isFriend, setIsFriend] = useState<boolean>(true)
+  const [isBlocked, setIsBlocked] = useState<boolean>(false)
   const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
 
@@ -188,6 +190,14 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
     executeTask(async () => {
       const friends = await BevyApi.social.getFriends()
       setIsFriend(friends.some((f) => f.address.toLowerCase() === userId))
+    })
+  }, [checkVersion])
+
+  useEffect(() => {
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
+    executeTask(async () => {
+      const blocked = await BevyApi.social.getBlockedUsers()
+      setIsBlocked(blocked.some((b) => b.address.toLowerCase() === userId))
     })
   }, [checkVersion])
 
@@ -245,11 +255,28 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
             </Row>
           )}
           {!state.editable && getFeatureFlag(FEATURES.FRIENDS) ? (
-            <PassportFriendButton
-              isFriend={isFriend}
-              userId={userId}
-              fontSize={fontSize}
-            />
+            <Row
+              uiTransform={{
+                positionType: 'absolute',
+                position: {
+                  top: fontSize / 2,
+                  right: fontSize * 3
+                },
+                borderWidth: 1,
+                borderColor: COLOR.GREEN,
+                justifyContent: 'flex-end'
+              }}
+            >
+              {/* Friend button: hide when the user is blocked. */}
+              {!isBlocked ? (
+                <FriendButton userId={userId} isFriend={isFriend} />
+              ) : null}
+              {/* Block/Unblock button: hide when the user is a friend
+                  AND not currently blocked. */}
+              {!(isFriend && !isBlocked) ? (
+                <BlockUserButton userId={userId} isBlocked={isBlocked} />
+              ) : null}
+            </Row>
           ) : null}
         </PopupBigWindow>
       </ResponsiveContent>
@@ -896,185 +923,6 @@ function Header({ children }: { children?: ReactElement }): ReactElement {
       }}
     >
       {children}
-    </UiEntity>
-  )
-}
-
-function PassportFriendButton({
-  isFriend,
-  userId,
-  fontSize
-}: {
-  isFriend: boolean
-  userId: string
-  fontSize: number
-}): ReactElement {
-  const [isHovered, setIsHovered] = useState<boolean>(false)
-  const [isBlocked, setIsBlocked] = useState<boolean>(false)
-  const profileData = store.getState().hud.profileData
-  const buttonWidth = fontSize * 9
-  const buttonTransform = {
-    position: {
-      top: getContentScaleRatio() * 16,
-      right: getContentScaleRatio() * 16 + fontSize * 2.5
-    },
-    positionType: 'absolute' as const,
-    width: buttonWidth,
-    height: fontSize * 2,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    borderRadius: fontSize / 2,
-    borderWidth: fontSize / 6,
-    padding: { left: fontSize * 0.5, right: fontSize * 0.8 }
-  }
-
-  useEffect(() => {
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    executeTask(async () => {
-      const blocked = await BevyApi.social.getBlockedUsers()
-      setIsBlocked(
-        blocked.some((b) => b.address.toLowerCase() === userId.toLowerCase())
-      )
-    })
-  }, [])
-
-  if (isBlocked) {
-    return (
-      <UiEntity
-        uiTransform={{
-          ...buttonTransform,
-          borderColor: isHovered ? COLOR.RED : COLOR.RED
-        }}
-        uiBackground={{
-          color: isHovered ? COLOR.RED : COLOR.BLACK_TRANSPARENT
-        }}
-        onMouseEnter={() => {
-          setIsHovered(true)
-        }}
-        onMouseLeave={() => {
-          setIsHovered(false)
-        }}
-        onMouseDown={() => {
-          showConfirmPopup({
-            title: `Are you sure you want to unblock\n<b>${profileData.name}</b>?`,
-            message:
-              'If you unblock someone, you will see their avatar in-world, and you will be able to send friend requests and messages to each other in public or private chats.',
-            icon: {
-              spriteName: 'BlockUser',
-              atlasName: 'icons',
-              backgroundColor: COLOR.RED
-            },
-            confirmLabel: 'UNBLOCK',
-            onConfirm: async () => {
-              await BevyApi.social.unblockUser(userId)
-            }
-          })
-        }}
-      >
-        <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
-          <Icon
-            icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
-            iconSize={fontSize}
-          />
-          <UiEntity
-            uiText={{
-              value: isHovered ? '<b>UNBLOCK</b>' : '<b>BLOCKED</b>',
-              fontSize: fontSize * 0.85,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'middle-center'
-            }}
-          />
-        </Row>
-      </UiEntity>
-    )
-  }
-
-  if (isFriend) {
-    return (
-      <UiEntity
-        uiTransform={{
-          ...buttonTransform,
-
-          borderColor: isHovered ? COLOR.RED : COLOR.BLACK_TRANSPARENT
-        }}
-        uiBackground={{
-          color: isHovered ? COLOR.BLACK_TRANSPARENT : COLOR.WHITE_OPACITY_1
-        }}
-        onMouseEnter={() => {
-          setIsHovered(true)
-        }}
-        onMouseLeave={() => {
-          setIsHovered(false)
-        }}
-        onMouseDown={() => {
-          showConfirmPopup({
-            title: `Are you sure you want to unfriend <b>${profileData.name}</b>?`,
-            icon: {
-              spriteName: 'Unfriends',
-              atlasName: 'context',
-              backgroundColor: COLOR.RED
-            },
-            confirmLabel: 'UNFRIEND',
-            category: 'friendship',
-            address: userId,
-            onConfirm: async () => {
-              await BevyApi.social.deleteFriend(userId)
-            }
-          })
-        }}
-      >
-        <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
-          <Icon
-            icon={{
-              atlasName: isHovered ? 'context' : 'icons',
-              spriteName: isHovered ? 'Unfriends' : 'FriendIcon'
-            }}
-            iconSize={fontSize}
-          />
-          <UiEntity
-            uiText={{
-              value: isHovered ? '<b>Remove Friend</b>' : '<b>Friend</b>',
-              fontSize: fontSize * 0.85,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'middle-center'
-            }}
-          />
-        </Row>
-      </UiEntity>
-    )
-  }
-
-  return (
-    <UiEntity
-      uiTransform={buttonTransform}
-      uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
-      onMouseDown={() => {
-        store.dispatch(
-          pushPopupAction({
-            type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
-            data: {
-              address: userId,
-              name: profileData.name,
-              hasClaimedName: profileData.hasClaimedName,
-              profilePictureUrl: ''
-            }
-          })
-        )
-      }}
-    >
-      <Row uiTransform={{ alignItems: 'center' }}>
-        <Icon
-          icon={{ spriteName: 'Add', atlasName: 'context' }}
-          iconSize={fontSize}
-        />
-        <UiEntity
-          uiText={{
-            value: '<b>Add Friend</b>',
-            fontSize: fontSize * 0.85,
-            color: COLOR.TEXT_COLOR_WHITE
-          }}
-        />
-      </Row>
     </UiEntity>
   )
 }
