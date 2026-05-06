@@ -33,8 +33,8 @@ const TOOLTIP_EDGE_MARGIN = 8
 // off-viewport / behind-camera entities.
 export const ProximityActionComponent = (): ReactElement | null => {
   const [activeEntities, setActiveEntities] = useState<
-    Record<string, SystemProximityEvent>
-  >({})
+    Map<string, SystemProximityEvent>
+  >(new Map())
 
   useEffect(() => {
     startCameraProjection()
@@ -43,12 +43,12 @@ export const ProximityActionComponent = (): ReactElement | null => {
         const stream = await BevyApi.getProximityStream()
         for await (const ev of stream) {
           setActiveEntities((prev) => {
-            const next = { ...prev }
+            const next = new Map(prev)
             const key = String(ev.entity)
             if (ev.entered) {
-              next[key] = ev
+              next.set(key, ev)
             } else {
-              delete next[key]
+              next.delete(key)
             }
             return next
           })
@@ -59,8 +59,8 @@ export const ProximityActionComponent = (): ReactElement | null => {
     })
   }, [])
 
-  const events = Object.values(activeEntities)
-  if (events.length === 0) return null
+  if (activeEntities.size === 0) return null
+  const events = Array.from(activeEntities.values())
 
   return (
     <UiEntity
@@ -118,10 +118,13 @@ function ProximityTooltip({
   const iconSize = fontSize * 2
 
   // Estimate tooltip dimensions so we can center on the anchor.
-  const rowWidth = (a: PBPointerEvents_Entry & { enabled: boolean }): number => {
+  const rowWidth = (
+    a: PBPointerEvents_Entry & { enabled: boolean }
+  ): number => {
     const text = a.eventInfo?.hoverText ?? 'Interact'
     const button = a.eventInfo?.button
-    const hasIcon = button !== undefined && inputBindings?.[button] !== undefined
+    const hasIcon =
+      button !== undefined && inputBindings?.[button] !== undefined
     const iconW = hasIcon ? iconSize + fontSize * 0.3 : 0
     return iconW + text.length * fontSize * APPROX_CHAR_WIDTH_RATIO
   }
@@ -136,7 +139,10 @@ function ProximityTooltip({
   // Constrain to the system-scene-set interactable area so tooltips don't sit
   // under the HUD or in the unsafe-area edges.
   const canvas = UiCanvasInformation.getOrNull(engine.RootEntity)
-  if (canvas?.interactableArea !== undefined && canvas.interactableArea !== null) {
+  if (
+    canvas?.interactableArea !== undefined &&
+    canvas.interactableArea !== null
+  ) {
     const ia = canvas.interactableArea
     const minLeft = ia.left + TOOLTIP_EDGE_MARGIN
     const minTop = ia.top + TOOLTIP_EDGE_MARGIN
