@@ -149,9 +149,12 @@ export type SystemProximityEvent = {
   /** Session-stable opaque id; matches enter/leave for the same entity. */
   entity: number
   /**
-   * Entity transform origin in world space. The scene projects this to screen
-   * space per frame via its own helper using cached camera FOV (from
-   * `Runtime.getCameraFov`) and the live `Transform.get(engine.CameraEntity)`.
+   * World-space AABB centre of the specific collider on the entity that
+   * produced the closest-point hit. For multi-collider entities (e.g.
+   * GltfContainers) this anchors UI on the part the player is actually
+   * nearest. The scene projects it to screen space per frame via its own
+   * helper using cached camera FOV (from `Runtime.getCameraFov`) and the
+   * live `Transform.get(engine.CameraEntity)`.
    */
   entityPosition: Vec3
   actions: Array<PBPointerEvents_Entry & { enabled: boolean }>

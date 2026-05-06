@@ -94,6 +94,7 @@ function ProximityTooltip({
   // authors get drag tooltips by pairing PetDown + PetDrag (or PetUp +
   // PetDragEnd).
   const actions = event.actions
+    .filter((a) => a.enabled)
     .filter((a) => a.eventInfo?.showFeedback !== false)
     .filter((a) => {
       if (
@@ -133,8 +134,8 @@ function ProximityTooltip({
   const rowHeight = Math.max(iconSize, fontSize) + fontSize * 0.1
   const estimatedHeight = padding * 2 + actions.length * rowHeight
 
-  let left = projection.x - estimatedWidth / 2
-  let top = projection.y - estimatedHeight / 2
+  let left = projection.left - estimatedWidth / 2
+  let top = projection.top - estimatedHeight / 2
 
   // Constrain to the system-scene-set interactable area so tooltips don't sit
   // under the HUD or in the unsafe-area edges.
