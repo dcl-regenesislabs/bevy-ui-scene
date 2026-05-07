@@ -1,9 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
-import { type Color4 } from '@dcl/sdk/math'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
-import { ButtonTextIcon } from './button-text-icon'
-import { COLOR } from './color-palette'
+import { ButtonComponent } from './button-component'
 import { getFontSize } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
 import { type GetPlayerDataRes } from '../utils/definitions'
@@ -16,9 +14,8 @@ import { store } from '../state/store'
 import { pushPopupAction } from '../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../state/hud/state'
 import { showConfirmPopup } from './confirm-popup'
+import { COLOR } from './color-palette'
 import { FEATURES, getFeatureFlag } from '../service/feature-flags'
-import { getLoadingAlphaValue } from '../service/loading-alpha-color'
-import { noop } from '../utils/function-utils'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -26,26 +23,28 @@ import useEffect = ReactEcs.useEffect
  * Friend / Add Friend toggle button.
  *
  * Pass either `player` (preferred) or `userId`. The display name is
- * resolved via `resolvePlayerData` (sync `getPlayer` first, falls back to
- * the catalyst lambda for users not in the scene). `isFriend` is resolved
- * via `BevyApi.social.getFriends()` on mount unless the prop is provided.
+ * resolved via `resolvePlayerData` (sync `getPlayer` first, falls back
+ * to the catalyst lambda for users not in the scene). `isFriend` is
+ * resolved via `BevyApi.social.getFriends()` on mount unless the prop
+ * is provided.
  *
- * Layout / styling escape hatches via `fontSize`, `backgroundColor`,
- * `uiTransform`.
+ * Visual states:
+ *   - friend, idle  → `subtle` variant ("Friend" + FriendIcon).
+ *   - friend, hover → `destructive` variant ("Remove Friend" + Unfriends).
+ *   - add friend    → `subtle` variant ("Add Friend" + Add).
+ *   - loading       → `subtle` placeholder with pulsing opacity.
  */
 export function FriendButton({
   player: playerProp,
   userId: userIdProp,
   isFriend: isFriendProp,
   fontSize: fontSizeProp,
-  backgroundColor,
   uiTransform
 }: {
   player?: GetPlayerDataRes
   userId?: string
   isFriend?: boolean
   fontSize?: number
-  backgroundColor?: Color4
   uiTransform?: UiTransformProps
 }): ReactElement | null {
   const layoutContext = useLayoutContext()
@@ -53,9 +52,10 @@ export function FriendButton({
 
   const userId = playerProp?.userId ?? userIdProp
 
-  // Resolve display name with fallback chain. Seed from playerProp when
-  // available so we can render immediately without waiting on a fetch.
-  const [resolved, setResolved] = useState<ResolvedPlayerData | null>(
+  // If `playerProp` is given, derive the resolved data synchronously and
+  // skip the async fetch + loading state entirely. Otherwise we start
+  // with `null` and let the useEffect below fetch it.
+  const seededFromPlayer: ResolvedPlayerData | null =
     playerProp != null
       ? {
           userId: playerProp.userId,
@@ -65,13 +65,15 @@ export function FriendButton({
           )
         }
       : null
+  const [resolved, setResolved] = useState<ResolvedPlayerData | null>(
+    () => seededFromPlayer
   )
   const [isFriendInternal, setIsFriendInternal] = useState<boolean>(false)
   const [hovered, setHovered] = useState<boolean>(false)
   const isFriend = isFriendProp ?? isFriendInternal
 
   useEffect(() => {
-    if (resolved !== null) return
+    if (seededFromPlayer !== null) return
     if (userId === undefined) return
     executeTask(async () => {
       setResolved(await resolvePlayerData(userId))
@@ -95,41 +97,30 @@ export function FriendButton({
   // Loading placeholder while we resolve the player's name asynchronously.
   if (resolved === null) {
     return (
-      <ButtonTextIcon
+      <ButtonComponent
+        variant="subtle"
         value="<b>...</b>"
         fontSize={fontSize}
         icon={{ atlasName: 'icons', spriteName: 'FriendIcon' }}
-        iconColor={COLOR.WHITE}
-        fontColor={COLOR.WHITE}
-        backgroundColor={backgroundColor}
-        uiTransform={{
-          borderColor: COLOR.WHITE_OPACITY_1,
-          borderWidth: 1,
-          opacity: getLoadingAlphaValue(),
-          ...uiTransform
-        }}
-        onMouseDown={noop}
+        loading={true}
+        uiTransform={uiTransform}
+        onMouseDown={() => {}}
       />
     )
   }
 
   if (isFriend) {
     return (
-      <ButtonTextIcon
+      <ButtonComponent
+        variant="subtle"
+        destructiveHover={true}
         value={hovered ? '<b>Remove Friend</b>' : '<b>Friend</b>'}
         fontSize={fontSize}
         icon={{
           atlasName: hovered ? 'context' : 'icons',
           spriteName: hovered ? 'Unfriends' : 'FriendIcon'
         }}
-        iconColor={hovered ? COLOR.RED : COLOR.WHITE}
-        fontColor={hovered ? COLOR.RED : COLOR.WHITE}
-        backgroundColor={backgroundColor}
-        uiTransform={{
-          borderColor: hovered ? COLOR.RED : COLOR.WHITE_OPACITY_1,
-          borderWidth: 1,
-          ...uiTransform
-        }}
+        uiTransform={uiTransform}
         onMouseEnter={() => {
           setHovered(true)
         }}
@@ -157,17 +148,12 @@ export function FriendButton({
   }
 
   return (
-    <ButtonTextIcon
+    <ButtonComponent
+      variant="subtle"
       value="<b>Add Friend</b>"
       fontSize={fontSize}
       icon={{ atlasName: 'context', spriteName: 'Add' }}
-      iconColor={COLOR.WHITE}
-      fontColor={COLOR.WHITE}
-      backgroundColor={backgroundColor}
-      uiTransform={{
-        borderColor: COLOR.WHITE_OPACITY_1,
-        ...uiTransform
-      }}
+      uiTransform={uiTransform}
       onMouseDown={() => {
         store.dispatch(
           pushPopupAction({

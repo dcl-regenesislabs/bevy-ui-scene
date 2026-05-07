@@ -20,7 +20,6 @@ import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
 import Icon from '../../../components/icon/Icon'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { copyToClipboard, openExternalUrl } from '~system/RestrictedActions'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import useState = ReactEcs.useState
@@ -188,15 +187,14 @@ function EventItem({
           }}
         >
           <ButtonTextIcon
+            variant="transparent"
             value={attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>'}
             icon={{
               spriteName: attending ? 'ReminderOn' : 'ReminderOff',
               atlasName: 'icons'
             }}
-            iconColor={COLOR.WHITE}
-            fontColor={COLOR.WHITE}
             fontSize={fontSizeSmall}
-            backgroundColor={COLOR.WHITE_OPACITY_0}
+            loading={toggling}
             uiTransform={{
               borderRadius: fontSize / 2,
               padding: {
@@ -207,8 +205,7 @@ function EventItem({
               },
               margin: { right: fontSize * 0.5 },
               flexGrow: 0,
-              width: 'auto',
-              opacity: toggling ? getLoadingAlphaValue() : 1
+              width: 'auto'
             }}
             onMouseDown={toggleReminder}
           />

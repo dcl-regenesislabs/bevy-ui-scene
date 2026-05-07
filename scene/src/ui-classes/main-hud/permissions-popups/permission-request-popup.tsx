@@ -142,7 +142,7 @@ function PermissionRequestContent({
           uiTransform={{
             width: '30%'
           }}
-          backgroundColor={COLOR.BUTTON_PRIMARY}
+          variant="solid"
           fontSize={fontSize}
           value={'Allow'}
           onMouseDown={() => {
@@ -169,7 +169,7 @@ function PermissionRequestContent({
             width: '30%',
             margin: { left: '5%', right: '5%' }
           }}
-          backgroundColor={COLOR.BUTTON_PRIMARY}
+          variant="solid"
           fontSize={fontSize}
           value={'Deny'}
           onMouseDown={() => {

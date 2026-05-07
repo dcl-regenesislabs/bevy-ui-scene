@@ -135,19 +135,13 @@ function CommunityMemberMenuContent({
 
         {(canPromote || canDemote || canTransferOwnership) && <Divider />}
         {canPromote && (
-          <PromoteModeratorButton
-            member={member}
-            communityId={communityId}
-          />
+          <PromoteModeratorButton member={member} communityId={communityId} />
         )}
         {canDemote && (
           <DemoteModeratorButton member={member} communityId={communityId} />
         )}
         {canTransferOwnership && (
-          <TransferOwnershipButton
-            member={member}
-            communityId={communityId}
-          />
+          <TransferOwnershipButton member={member} communityId={communityId} />
         )}
 
         {(canRemove || canBan) && <Divider />}
@@ -229,10 +223,7 @@ function MemberHeader({ member }: { member: CommunityMember }): ReactElement {
 function Divider(): ReactElement {
   return (
     <Row uiTransform={{ margin: { top: '3%' } }}>
-      <BottomBorder
-        color={COLOR.WHITE_OPACITY_1}
-        uiTransform={{ height: 1 }}
-      />
+      <BottomBorder color={COLOR.WHITE_OPACITY_1} uiTransform={{ height: 1 }} />
     </Row>
   )
 }
@@ -264,16 +255,18 @@ function MenuButton({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.BODY
   })
+  // The legacy `color === BUTTON_PRIMARY` signal flags a destructive menu
+  // item (Ban / Block / Report) — show a red border on hover.
+  const isDestructive = color === COLOR.BUTTON_PRIMARY
   return (
     <ButtonTextIcon
       uiTransform={ROW_BUTTON_TRANSFORM}
+      variant="transparent"
+      destructiveHover={isDestructive}
       icon={{ atlasName: iconAtlas, spriteName: iconName }}
       iconSize={fontSize}
-      iconColor={color}
-      fontColor={color}
       fontSize={fontSize}
       value={`<b>${label}</b>`}
-      backgroundColor={COLOR.BLACK_TRANSPARENT}
       onMouseDown={onMouseDown}
     />
   )

@@ -383,9 +383,7 @@ export async function fetchCommunityInvites(
   const parts: string[] = ['type=invite']
   if (params.offset != null) parts.push(`offset=${params.offset}`)
   if (params.limit != null) parts.push(`limit=${params.limit}`)
-  return await signedGet(
-    `${base}/${communityId}/requests?${parts.join('&')}`
-  )
+  return await signedGet(`${base}/${communityId}/requests?${parts.join('&')}`)
 }
 
 export async function fetchCommunityMembers(

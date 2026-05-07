@@ -9,7 +9,6 @@ import { ButtonTextIcon } from '../../components/button-text-icon'
 import { type UIController } from '../../controllers/ui.controller'
 import {
   ALMOST_BLACK,
-  ALMOST_WHITE,
   CLICKED_PRIMARY_COLOR,
   RUBY
 } from '../../utils/constants'
@@ -407,25 +406,21 @@ export default class LoadingAndLogin {
                     // uiBackground={{ color: Color4.Red() }}
                   >
                     {/* BACK BUTTON */}
+                    {/* TODO: this lives on the light-theme login screen and
+                        doesn't fit the dark-theme variant set well. Using
+                        `subtle` for now; revisit when a light-theme
+                        variant is added to the design system. */}
                     <ButtonTextIcon
                       uiTransform={{
                         margin: 0,
                         display: this.isBackButtonVisible ? 'flex' : 'none',
                         width: BUTTON_WIDTH / 3
                       }}
-                      iconColor={RUBY}
+                      variant="subtle"
                       icon={{ atlasName: 'icons', spriteName: 'LeftArrow' }}
                       onMouseDown={this.backButtonAction}
                       value={'BACK'}
                       fontSize={BUTTON_FONT_SIZE}
-                      fontColor={ALMOST_BLACK}
-                      onMouseEnter={function (): void {
-                        // throw new Error('Function not implemented.')
-                      }}
-                      onMouseLeave={function (): void {
-                        // throw new Error('Function not implemented.')
-                      }}
-                      backgroundColor={ALMOST_WHITE}
                     />
                     {/* LOGO DECENTRALAND */}
                     <UiEntity

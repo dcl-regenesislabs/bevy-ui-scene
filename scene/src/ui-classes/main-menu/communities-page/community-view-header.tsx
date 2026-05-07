@@ -30,7 +30,6 @@ import {
   sendInviteOrRequestToJoin
 } from '../../../utils/communities-promise-utils'
 import { showErrorPopup } from '../../../service/error-popup-service'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { notifyCommunitiesChanged } from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
@@ -302,15 +301,11 @@ export function CommunityViewHeader({
           {isOwner ? (
             <Row uiTransform={{ width: 'auto', alignItems: 'center' }}>
               <ButtonTextIcon
+                variant="subtle"
                 value="<b>EDIT</b>"
                 icon={{ spriteName: 'Edit', atlasName: 'icons' }}
                 fontSize={fontSizeSmall}
-                fontColor={COLOR.WHITE}
-                iconColor={COLOR.WHITE}
-                backgroundColor={COLOR.BLACK_TRANSPARENT}
                 uiTransform={{
-                  borderWidth: fontSize / 10,
-                  borderColor: COLOR.WHITE,
                   borderRadius: fontSize / 2,
                   padding: {
                     left: fontSize * 0.6,
@@ -381,6 +376,8 @@ export function CommunityViewHeader({
             </Row>
           ) : isMember ? (
             <ButtonTextIcon
+              variant="subtle"
+              destructiveHover={true}
               value={hovering ? '<b>LEAVE</b>' : '<b>JOINED</b>'}
               icon={
                 hovering
@@ -388,22 +385,15 @@ export function CommunityViewHeader({
                   : { spriteName: 'Check', atlasName: 'icons' }
               }
               fontSize={fontSizeSmall}
-              fontColor={COLOR.WHITE}
-              iconColor={COLOR.WHITE}
-              backgroundColor={
-                hovering ? COLOR.BUTTON_PRIMARY : COLOR.BLACK_TRANSPARENT
-              }
+              loading={acting}
               uiTransform={{
-                borderWidth: fontSize / 10,
-                borderColor: COLOR.WHITE,
                 borderRadius: fontSize / 2,
                 padding: {
                   left: fontSize * 0.6,
                   right: fontSize * 0.8,
                   top: fontSize * 0.3,
                   bottom: fontSize * 0.3
-                },
-                opacity: acting ? getLoadingAlphaValue() : 1
+                }
               }}
               onMouseEnter={() => {
                 setHovering(true)
@@ -415,6 +405,7 @@ export function CommunityViewHeader({
             />
           ) : community.privacy === 'private' ? (
             <ButtonTextIcon
+              variant={requested ? 'subtle' : 'solid'}
               value={
                 requested ? '<b>CANCEL REQUEST</b>' : '<b>REQUEST TO JOIN</b>'
               }
@@ -424,33 +415,25 @@ export function CommunityViewHeader({
                   : { spriteName: 'Add', atlasName: 'context' }
               }
               fontSize={fontSizeSmall}
-              fontColor={COLOR.WHITE}
-              iconColor={COLOR.WHITE}
-              backgroundColor={
-                requested ? COLOR.BLACK_TRANSPARENT : COLOR.BUTTON_PRIMARY
-              }
+              loading={acting}
               uiTransform={{
-                borderWidth: fontSize / 10,
-                borderColor: COLOR.WHITE,
                 borderRadius: fontSize / 2,
                 padding: {
                   left: fontSize * 0.6,
                   right: fontSize * 0.8,
                   top: fontSize * 0.3,
                   bottom: fontSize * 0.3
-                },
-                opacity: acting ? getLoadingAlphaValue() : 1
+                }
               }}
               onMouseDown={requested ? onCancelRequest : onRequestToJoin}
             />
           ) : (
             <ButtonTextIcon
+              variant="solid"
               value="<b>JOIN</b>"
               icon={{ spriteName: 'Add', atlasName: 'context' }}
               fontSize={fontSizeSmall}
-              fontColor={COLOR.WHITE}
-              iconColor={COLOR.WHITE}
-              backgroundColor={COLOR.BUTTON_PRIMARY}
+              loading={acting}
               uiTransform={{
                 borderRadius: fontSize / 2,
                 padding: {
@@ -458,8 +441,7 @@ export function CommunityViewHeader({
                   right: fontSize * 0.8,
                   top: fontSize * 0.3,
                   bottom: fontSize * 0.3
-                },
-                opacity: acting ? getLoadingAlphaValue() : 1
+                }
               }}
               onMouseDown={onJoin}
             />

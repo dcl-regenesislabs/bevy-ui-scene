@@ -1,8 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
-import { type Color4 } from '@dcl/sdk/math'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
-import { ButtonTextIcon } from './button-text-icon'
+import { ButtonComponent } from './button-component'
 import { COLOR } from './color-palette'
 import { getFontSize } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
@@ -14,8 +13,6 @@ import {
 import { BevyApi } from '../bevy-api'
 import { showConfirmPopup } from './confirm-popup'
 import { FEATURES, getFeatureFlag } from '../service/feature-flags'
-import { getLoadingAlphaValue } from '../service/loading-alpha-color'
-import { noop } from '../utils/function-utils'
 
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
@@ -29,25 +26,23 @@ import useEffect = ReactEcs.useEffect
  * unless the prop is provided.
  *
  * Visual states:
- *   - not blocked → "Block User" with BUTTON_PRIMARY colors; click opens
+ *   - not blocked → `destructive` variant ("Block User"). Click opens
  *                   the block confirm popup.
- *   - blocked, idle → bordered red "BLOCKED" with `BlockUser` icon.
- *   - blocked, hover → filled red "UNBLOCK"; click opens the unblock
- *                      confirm popup.
+ *   - blocked, idle → `subtle` variant ("BLOCKED").
+ *   - blocked, hover → `destructive` variant ("UNBLOCK"). Click opens
+ *                      the unblock confirm popup.
  */
 export function BlockUserButton({
   player: playerProp,
   userId: userIdProp,
   isBlocked: isBlockedProp,
   fontSize: fontSizeProp,
-  backgroundColor,
   uiTransform
 }: {
   player?: GetPlayerDataRes
   userId?: string
   isBlocked?: boolean
   fontSize?: number
-  backgroundColor?: Color4
   uiTransform?: UiTransformProps
 }): ReactElement | null {
   const layoutContext = useLayoutContext()
@@ -55,7 +50,10 @@ export function BlockUserButton({
 
   const userId = playerProp?.userId ?? userIdProp
 
-  const [resolved, setResolved] = useState<ResolvedPlayerData | null>(
+  // If `playerProp` is given, derive the resolved data synchronously and
+  // skip the async fetch + loading state entirely. Otherwise we start
+  // with `null` and let the useEffect below fetch it.
+  const seededFromPlayer: ResolvedPlayerData | null =
     playerProp != null
       ? {
           userId: playerProp.userId,
@@ -65,13 +63,15 @@ export function BlockUserButton({
           )
         }
       : null
+  const [resolved, setResolved] = useState<ResolvedPlayerData | null>(
+    () => seededFromPlayer
   )
   const [isBlockedInternal, setIsBlockedInternal] = useState<boolean>(false)
   const [hovered, setHovered] = useState<boolean>(false)
   const isBlocked = isBlockedProp ?? isBlockedInternal
 
   useEffect(() => {
-    if (resolved !== null) return
+    if (seededFromPlayer !== null) return
     if (userId === undefined) return
     executeTask(async () => {
       setResolved(await resolvePlayerData(userId))
@@ -95,38 +95,28 @@ export function BlockUserButton({
   // Loading placeholder while we resolve the player's name asynchronously.
   if (resolved === null) {
     return (
-      <ButtonTextIcon
+      <ButtonComponent
+        variant="subtle"
         value="<b>...</b>"
         fontSize={fontSize}
         icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
-        iconColor={COLOR.WHITE}
-        fontColor={COLOR.WHITE}
-        backgroundColor={backgroundColor}
-        uiTransform={{
-          borderColor: COLOR.WHITE_OPACITY_1,
-          borderWidth: 1,
-          opacity: getLoadingAlphaValue(),
-          ...uiTransform
-        }}
-        onMouseDown={noop}
+        loading={true}
+        uiTransform={uiTransform}
+        onMouseDown={() => {}}
       />
     )
   }
 
   if (isBlocked) {
     return (
-      <ButtonTextIcon
+      <ButtonComponent
         key={'block-user-button-' + resolved.userId}
+        variant="subtle"
+        destructiveHover={true}
         value={hovered ? '<b>UNBLOCK</b>' : '<b>BLOCKED</b>'}
         fontSize={fontSize}
         icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
-        iconColor={COLOR.WHITE}
-        fontColor={COLOR.WHITE}
-        backgroundColor={hovered ? COLOR.RED : backgroundColor}
-        uiTransform={{
-          borderColor: COLOR.RED,
-          ...uiTransform
-        }}
+        uiTransform={uiTransform}
         onMouseEnter={() => {
           setHovered(true)
         }}
@@ -154,14 +144,13 @@ export function BlockUserButton({
   }
 
   return (
-    <ButtonTextIcon
+    <ButtonComponent
       key={'block-user-button-' + resolved.userId}
+      variant="transparent"
+      destructiveHover={true}
       value="<b>Block User</b>"
       fontSize={fontSize}
       icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
-      iconColor={COLOR.BUTTON_PRIMARY}
-      fontColor={COLOR.BUTTON_PRIMARY}
-      backgroundColor={backgroundColor}
       uiTransform={uiTransform}
       onMouseDown={() => {
         showConfirmPopup({

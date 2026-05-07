@@ -6,7 +6,6 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import Icon from '../../../components/icon/Icon'
 import type { EventFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import { createAttendee, removeAttendee } from '../../../utils/promise-utils'
@@ -113,33 +112,24 @@ export function CommunityEventActionsRow({
     >
       {/* REMIND ME */}
       <ButtonTextIcon
+        variant={attending ? 'transparent' : 'solid'}
         value={attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>'}
         icon={{
           spriteName: attending ? 'ReminderOn' : 'ReminderOff',
           atlasName: 'icons' as Atlas
         }}
-        iconColor={COLOR.WHITE}
-        fontColor={COLOR.WHITE}
         fontSize={fontSizeSmall}
-        backgroundColor={
-          attending ? COLOR.BLACK_TRANSPARENT : COLOR.BUTTON_PRIMARY
-        }
-        uiTransform={{
-          ...buttonBaseTransform,
-          opacity: toggling ? getLoadingAlphaValue() : 1
-        }}
+        loading={toggling}
+        uiTransform={buttonBaseTransform}
         onMouseDown={toggleReminder}
       />
       {/* Add to calendar */}
       <ButtonTextIcon
+        variant="transparent"
         value="ADD TO CALENDAR"
         icon={{ spriteName: 'EventsIcn', atlasName: 'social' }}
-        iconColor={COLOR.WHITE}
         fontSize={fontSizeSmall}
-        backgroundColor={COLOR.BLACK_TRANSPARENT}
-        uiTransform={{
-          ...buttonBaseTransform
-        }}
+        uiTransform={buttonBaseTransform}
         onMouseDown={onAddToCalendar}
       />
 
@@ -174,14 +164,12 @@ function ShareButton({
   return (
     <UiEntity uiTransform={{ flexDirection: 'column' }}>
       <ButtonTextIcon
+        variant="transparent"
+        active={open}
         value="SHARE"
         icon={{ spriteName: 'Share', atlasName: 'context' }}
-        iconColor={COLOR.WHITE}
         fontSize={fontSizeSmall}
-        backgroundColor={open ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT}
-        uiTransform={{
-          ...uiTransform
-        }}
+        uiTransform={uiTransform}
         onMouseDown={() => {
           setOpen(!open)
         }}

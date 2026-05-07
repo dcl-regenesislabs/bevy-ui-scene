@@ -347,9 +347,9 @@ function ReportUserButton({
   return (
     <ButtonTextIcon
       key={'profile-button-report-' + player.userId}
+      variant="transparent"
+      destructiveHover={true}
       value={'<b>Report</b>'}
-      fontColor={COLOR.BUTTON_PRIMARY}
-      iconColor={COLOR.BUTTON_PRIMARY}
       onMouseDown={() => {
         closeDialog()
         showConfirmPopup({
