@@ -42,6 +42,7 @@ import { engine, PointerLock, Transform } from '@dcl/sdk/ecs'
 import { getViewportWidth } from '../service/canvas-ratio'
 import { listenSystemAction } from '../service/system-actions-emitter'
 import { HoverActionComponent } from '../components/hover-actions/hover-action-component'
+import { ProximityActionComponent } from '../components/proximity-actions/proximity-action-component'
 import { SceneLoadingWindowComponent } from '../components/scene-loading-window'
 import {
   applyGuestDisabledFeatures,
@@ -178,6 +179,7 @@ export class UIController {
         {getFeatureFlag(FEATURES.NOTIFICATIONS) && NotificationToastStack()}
         {PopupStack()}
         <HoverActionComponent />
+        <ProximityActionComponent />
         {SceneLoadingWindowComponent()}
       </Canvas>
     )
