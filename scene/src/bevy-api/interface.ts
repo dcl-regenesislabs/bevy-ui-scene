@@ -141,6 +141,25 @@ export type SystemHoverEvent = {
   actions: Array<PBPointerEvents_Entry & { enabled: boolean }>
 }
 
+export type Vec3 = { x: number; y: number; z: number }
+export type Vec2 = { x: number; y: number }
+
+export type SystemProximityEvent = {
+  entered: boolean
+  /** Session-stable opaque id; matches enter/leave for the same entity. */
+  entity: number
+  /**
+   * World-space AABB centre of the specific collider on the entity that
+   * produced the closest-point hit. For multi-collider entities (e.g.
+   * GltfContainers) this anchors UI on the part the player is actually
+   * nearest. The scene projects it to screen space per frame via its own
+   * helper using cached camera FOV (from `Runtime.getCameraFov`) and the
+   * live `Transform.get(engine.CameraEntity)`.
+   */
+  entityPosition: Vec3
+  actions: Array<PBPointerEvents_Entry & { enabled: boolean }>
+}
+
 export type ShowUiRequestParams = {
   hash?: string | undefined
   show?: boolean | undefined
@@ -191,6 +210,7 @@ export type BevyApiInterface = {
   getRealmProvider: () => Promise<string>
   getSystemActionStream: () => Promise<SystemAction[]>
   getHoverStream: () => Promise<SystemHoverEvent[]>
+  getProximityStream: () => Promise<SystemProximityEvent[]>
   getInputBindings: () => Promise<BindingsConfig>
   getChatStream: () => Promise<ChatMessageDefinition[]>
   getVoiceStream: () => Promise<MicActivation[]>
