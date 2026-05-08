@@ -262,14 +262,16 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
                   top: fontSize / 2,
                   right: fontSize * 3
                 },
-                borderWidth: 1,
-                borderColor: COLOR.GREEN,
                 justifyContent: 'flex-end'
               }}
             >
               {/* Friend button: hide when the user is blocked. */}
               {!isBlocked ? (
-                <FriendButton userId={userId} isFriend={isFriend} />
+                <FriendButton
+                  userId={userId}
+                  isFriend={isFriend}
+                  variant="black"
+                />
               ) : null}
               {/* Block/Unblock button: hide when the user is a friend
                   AND not currently blocked. */}

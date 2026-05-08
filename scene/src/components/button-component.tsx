@@ -13,6 +13,7 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
+import { useAlign } from '../service/align-context'
 import { getLoadingAlphaValue } from '../service/loading-alpha-color'
 import { COLOR } from './color-palette'
 
@@ -21,14 +22,15 @@ export type ButtonVariant = 'transparent' | 'subtle' | 'solid' | 'black'
 type VariantStyle = {
   bg: { base: Color4; hover: Color4; active: Color4 }
   textColor: { base: Color4; hover?: Color4; active?: Color4 }
-  borderColor?: Color4
-  borderWidth: number
+  borderColor: Color4
 }
 
-// Every variant carries a 1px border. Variants that don't want a visible
-// border use `BLACK_TRANSPARENT` so the layout slot is reserved — that
-// way swapping to a coloured border on hover (e.g. via `destructiveHover`)
-// doesn't shift the surrounding layout.
+// Every variant reserves a layout slot for a thin border (width is
+// computed from `BORDER_THIN` token at render time so it scales with
+// the layout context). Variants that don't want a visible border use
+// `BLACK_TRANSPARENT` so the slot stays reserved — that way swapping
+// to a coloured border on hover (e.g. via `destructiveHover`) doesn't
+// shift the surrounding layout.
 const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
   transparent: {
     bg: {
@@ -37,18 +39,16 @@ const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
       active: COLOR.WHITE_OPACITY_2
     },
     textColor: { base: COLOR.WHITE },
-    borderColor: COLOR.BLACK_TRANSPARENT,
-    borderWidth: 1
+    borderColor: COLOR.BLACK_TRANSPARENT
   },
   subtle: {
     bg: {
-      base: COLOR.WHITE_OPACITY_1,
+      base: COLOR.WHITE_OPACITY_0,
       hover: COLOR.WHITE_OPACITY_2,
       active: COLOR.WHITE_OPACITY_3
     },
     textColor: { base: COLOR.WHITE },
-    borderColor: COLOR.WHITE,
-    borderWidth: 1
+    borderColor: COLOR.BLACK_TRANSPARENT
   },
   solid: {
     bg: {
@@ -57,8 +57,7 @@ const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
       active: COLOR.BUTTON_PRIMARY_HOVER
     },
     textColor: { base: COLOR.WHITE },
-    borderColor: COLOR.BLACK_TRANSPARENT,
-    borderWidth: 1
+    borderColor: COLOR.BLACK_TRANSPARENT
   },
   black: {
     bg: {
@@ -67,8 +66,7 @@ const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
       active: COLOR.MENU_ITEM_BACKGROUND
     },
     textColor: { base: COLOR.WHITE },
-    borderColor: COLOR.BLACK_TRANSPARENT,
-    borderWidth: 1
+    borderColor: COLOR.BLACK_TRANSPARENT
   }
 }
 
@@ -129,11 +127,22 @@ function ButtonComponent(props: {
 }): ReactEcs.JSX.Element | null {
   const fromContext = useLayoutContext()
   const layoutContext = props.layoutContext ?? fromContext
+  const align = useAlign()
   const [hovered, setHovered] = ReactEcs.useState<boolean>(false)
+
+  // Map our `Align` semantic to Yoga's `justifyContent`. A button outside
+  // any `<AlignContext.Provider>` falls through to `'center'` (the default
+  // value of the context), preserving the bare-component behaviour.
+  const justifyContent =
+    align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center'
 
   const fontSize = props.fontSize ?? getFontSize({ context: layoutContext })
   const borderRadius = getFontSize({
     token: TYPOGRAPHY_TOKENS.BUTTON_ICON_BORDER_RADIUS,
+    context: layoutContext
+  })
+  const borderWidth = getFontSize({
+    token: TYPOGRAPHY_TOKENS.BORDER_THIN,
     context: layoutContext
   })
 
@@ -156,11 +165,12 @@ function ButtonComponent(props: {
   const opacity = isDisabled ? 0.4 : isLoading ? getLoadingAlphaValue() : 1
 
   // `destructiveHover` swaps the border to red on hover (no layout shift
-  // because every variant already reserves a 1px border slot).
+  // because every variant already reserves a border slot of width
+  // `BORDER_THIN`, even if the colour is transparent).
   const borderColor =
     props.destructiveHover === true && hovered && isInteractive
       ? COLOR.RED
-      : (styles.borderColor ?? COLOR.BLACK_TRANSPARENT)
+      : styles.borderColor
 
   // Sprite swap.
   const renderedIcon =
@@ -176,10 +186,10 @@ function ButtonComponent(props: {
   return (
     <UiEntity
       uiTransform={{
-        justifyContent: 'center',
+        justifyContent,
         alignItems: 'center',
         flexDirection: 'row',
-        borderWidth: styles.borderWidth,
+        borderWidth,
         borderColor,
         borderRadius,
         padding: defaultPadding,

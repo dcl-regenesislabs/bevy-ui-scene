@@ -16,13 +16,14 @@ import {
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { getPlayer } from '@dcl/sdk/src/players'
 import { getAddressColor } from '../chat-and-logs/ColorByAddress'
-import { Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/layout'
 import { applyMiddleEllipsis } from '../../../utils/urn-utils'
 import { CopyButton } from '../../../components/copy-button'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
 import { BottomBorder } from '../../../components/bottom-border'
 import { FriendButton } from '../../../components/friend-button'
 import { BlockUserButton } from '../../../components/block-user-button'
+import { MenuSection } from '../../../components/menu-section'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { showConfirmPopup } from '../../../components/confirm-popup'
 import { type GetPlayerDataRes } from '../../../utils/definitions'
@@ -91,7 +92,7 @@ function ProfileContent({
   data: { align?: string; player?: GetPlayerDataRes }
 }): ReactElement | null {
   const fontSize = getFontSize({ context: useLayoutContext() })
-  const width = fontSize * 23
+  const width = fontSize * 18
   const player = data.player
 
   // Capture pointer-derived position once at mount so the popup doesn't
@@ -102,8 +103,8 @@ function ProfileContent({
   // so the popup always grows away from the nearest screen edge.
   const [position] = useState(() => {
     const { screenCoordinates } = PrimaryPointerInfo.get(engine.RootEntity)
-    const clickX = screenCoordinates?.x ?? 0
-    const clickY = screenCoordinates?.y ?? 0
+    const clickX = screenCoordinates?.x ?? getViewportWidth() / 2
+    const clickY = screenCoordinates?.y ?? getViewportHeight() / 2
     const isOnHalfBottomOfScreen = clickY > getViewportHeight() / 2
 
     const yAnchor = isOnHalfBottomOfScreen
@@ -140,7 +141,7 @@ function ProfileContent({
         borderWidth: 0,
         borderColor: COLOR.TEXT_COLOR,
         flexDirection: 'column',
-        padding: 0,
+        padding: fontSize,
         positionType: 'absolute',
         position
       }}
@@ -149,10 +150,8 @@ function ProfileContent({
         color: COLOR.BLACK_POPUP_BACKGROUND
       }}
     >
-      <UiEntity
+      <Column
         uiTransform={{
-          flexDirection: 'column',
-          width: '100%',
           margin: { top: '5%' }
         }}
       >
@@ -163,19 +162,21 @@ function ProfileContent({
             uiTransform={{ height: 1 }}
           />
         </Row>
-        <ViewPassportButton player={player} />
-        {player.userId !== getPlayer()?.userId ? (
-          <MentionButton player={player} />
-        ) : null}
-        {player.userId !== getPlayer()?.userId &&
-        getFeatureFlag(FEATURES.FRIENDS) ? (
-          <BlockUserButton player={player} />
-        ) : null}
-        {player.userId !== getPlayer()?.userId ? (
-          <ReportUserButton player={player} />
-        ) : null}
+        <MenuSection align="left">
+          <ViewPassportButton player={player} />
+          {player.userId !== getPlayer()?.userId ? (
+            <MentionButton player={player} />
+          ) : null}
+          {player.userId !== getPlayer()?.userId &&
+          getFeatureFlag(FEATURES.FRIENDS) ? (
+            <BlockUserButton player={player} />
+          ) : null}
+          {player.userId !== getPlayer()?.userId ? (
+            <ReportUserButton player={player} />
+          ) : null}
+        </MenuSection>
         {/* // TODO Exit / Sign out : OwnProfileButtons({player}) */}
-      </UiEntity>
+      </Column>
     </UiEntity>
   )
 }
@@ -241,8 +242,7 @@ function ProfileHeader({
           <Row
             key={1}
             uiTransform={{
-              justifyContent: 'center',
-              height: fontSize
+              justifyContent: 'center'
             }}
           >
             <UiEntity
@@ -263,7 +263,7 @@ function ProfileHeader({
           </Row>,
           ...(getFeatureFlag(FEATURES.FRIENDS) &&
           player.userId !== getPlayer()?.userId
-            ? [<FriendButton player={player} />]
+            ? [<FriendButton variant={'black'} player={player} />]
             : [])
         ]
       : [])

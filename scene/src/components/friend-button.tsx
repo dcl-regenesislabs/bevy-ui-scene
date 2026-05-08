@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
-import { ButtonComponent } from './button-component'
+import { ButtonComponent, type ButtonVariant } from './button-component'
 import { getFontSize } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
 import { type GetPlayerDataRes } from '../utils/definitions'
@@ -24,27 +24,36 @@ import useEffect = ReactEcs.useEffect
  *
  * Pass either `player` (preferred) or `userId`. The display name is
  * resolved via `resolvePlayerData` (sync `getPlayer` first, falls back
- * to the catalyst lambda for users not in the scene). `isFriend` is
- * resolved via `BevyApi.social.getFriends()` on mount unless the prop
- * is provided.
+ * to the catalyst lambda for users not in the scene). `isFriend` and
+ * `hasIncomingRequest` are resolved on mount unless the props are given.
  *
  * Visual states:
- *   - friend, idle  → `subtle` variant ("Friend" + FriendIcon).
- *   - friend, hover → `destructive` variant ("Remove Friend" + Unfriends).
- *   - add friend    → `subtle` variant ("Add Friend" + Add).
+ *   - friend, idle  → `subtle` ("Friend" + FriendIcon).
+ *   - friend, hover → `subtle` + red border ("Remove Friend" + Unfriends).
+ *   - incoming request pending → `solid` ("Accept Friend"). Click accepts.
+ *   - add friend    → `subtle` ("Add Friend" + Add).
  *   - loading       → `subtle` placeholder with pulsing opacity.
  */
 export function FriendButton({
   player: playerProp,
   userId: userIdProp,
   isFriend: isFriendProp,
+  hasIncomingRequest: hasIncomingRequestProp,
   fontSize: fontSizeProp,
+  variant = 'subtle',
   uiTransform
 }: {
   player?: GetPlayerDataRes
   userId?: string
   isFriend?: boolean
+  hasIncomingRequest?: boolean
   fontSize?: number
+  /**
+   * Variant for the non-CTA states (Friend / Add Friend / loading).
+   * Defaults to `subtle`. The "Accept Friend" branch always uses `solid`
+   * regardless — it's the affirmative CTA for an incoming request.
+   */
+  variant?: ButtonVariant
   uiTransform?: UiTransformProps
 }): ReactElement | null {
   const layoutContext = useLayoutContext()
@@ -69,8 +78,12 @@ export function FriendButton({
     () => seededFromPlayer
   )
   const [isFriendInternal, setIsFriendInternal] = useState<boolean>(false)
+  const [hasIncomingRequestInternal, setHasIncomingRequestInternal] =
+    useState<boolean>(false)
   const [hovered, setHovered] = useState<boolean>(false)
   const isFriend = isFriendProp ?? isFriendInternal
+  const hasIncomingRequest =
+    hasIncomingRequestProp ?? hasIncomingRequestInternal
 
   useEffect(() => {
     if (seededFromPlayer !== null) return
@@ -92,13 +105,25 @@ export function FriendButton({
     })
   }, [])
 
+  useEffect(() => {
+    if (hasIncomingRequestProp !== undefined) return
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
+    if (userId === undefined) return
+    executeTask(async () => {
+      const requests = await BevyApi.social.getReceivedFriendRequests()
+      setHasIncomingRequestInternal(
+        requests.some((r) => r.address.toLowerCase() === userId.toLowerCase())
+      )
+    })
+  }, [])
+
   if (userId === undefined) return null
 
   // Loading placeholder while we resolve the player's name asynchronously.
   if (resolved === null) {
     return (
       <ButtonComponent
-        variant="subtle"
+        variant={variant}
         value="<b>...</b>"
         fontSize={fontSize}
         icon={{ atlasName: 'icons', spriteName: 'FriendIcon' }}
@@ -112,7 +137,7 @@ export function FriendButton({
   if (isFriend) {
     return (
       <ButtonComponent
-        variant="subtle"
+        variant={variant}
         destructiveHover={true}
         value={hovered ? '<b>Remove Friend</b>' : '<b>Friend</b>'}
         fontSize={fontSize}
@@ -147,9 +172,31 @@ export function FriendButton({
     )
   }
 
+  if (hasIncomingRequest) {
+    return (
+      <ButtonComponent
+        variant="solid"
+        value="<b>Accept Friend</b>"
+        fontSize={fontSize}
+        icon={{ atlasName: 'icons', spriteName: 'Check' }}
+        uiTransform={uiTransform}
+        onMouseDown={() => {
+          executeTask(async () => {
+            await BevyApi.social.acceptFriendRequest(resolved.userId)
+            // Optimistically update local state so the button flips to
+            // the "Friend" branch on the next render without waiting for
+            // a remount or external refetch.
+            setIsFriendInternal(true)
+            setHasIncomingRequestInternal(false)
+          })
+        }}
+      />
+    )
+  }
+
   return (
     <ButtonComponent
-      variant="subtle"
+      variant={variant}
       value="<b>Add Friend</b>"
       fontSize={fontSize}
       icon={{ atlasName: 'context', spriteName: 'Add' }}
