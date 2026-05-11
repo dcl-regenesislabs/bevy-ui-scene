@@ -474,7 +474,8 @@ function handleFriendshipNotificationClick(
       hasClaimedName: protagonist.hasClaimedName,
       profilePictureUrl: protagonist.profileImageUrl,
       createdAt: Number(notification.timestamp),
-      id: notification.metadata.requestId
+      id: notification.metadata.requestId,
+      message: notification.metadata.message
     }
     store.dispatch(
       pushPopupAction({

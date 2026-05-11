@@ -286,8 +286,12 @@ function FriendRequestPopupContent({
         <UiEntity
           uiTransform={{
             width: '100%',
-            margin: { bottom: fontSize }
+            margin: { bottom: fontSize },
+            height: fontSize * 5,
+            borderRadius: fontSize / 2,
+            padding: { left: fontSize * 0.5, top: fontSize * 0.5 }
           }}
+          uiBackground={{ color: COLOR.WHITE_OPACITY_0 }}
           uiText={{
             value: request.message,
             fontSize,

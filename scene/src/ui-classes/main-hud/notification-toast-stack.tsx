@@ -137,7 +137,8 @@ function buildFriendRequestNotification(
         hasClaimedName: myHasClaimedName,
         profileImageUrl: ''
       },
-      requestId: event.id
+      requestId: event.id,
+      message: event.message
     },
     timestamp: String(event.createdAt),
     read: false

@@ -85,6 +85,7 @@ export type FriendshipRequestNotification = {
     sender: UserProfile
     receiver: UserProfile
     requestId: string
+    message?: string
   }
 } & BaseNotification
 
