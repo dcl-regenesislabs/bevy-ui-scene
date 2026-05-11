@@ -11,11 +11,12 @@ import {
 } from '../utils/passport-promise-utils'
 import { BevyApi } from '../bevy-api'
 import { store } from '../state/store'
-import { pushPopupAction } from '../state/hud/actions'
+import { closeLastPopupAction, pushPopupAction } from '../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../state/hud/state'
 import { showConfirmPopup } from './confirm-popup'
 import { COLOR } from './color-palette'
 import { FEATURES, getFeatureFlag } from '../service/feature-flags'
+import { markSelfInitiatedFriendshipAction } from '../service/friend-connectivity-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -31,6 +32,8 @@ import useEffect = ReactEcs.useEffect
  *   - friend, idle  → `black` ("Friend" + FriendIcon).
  *   - friend, hover → `black` + red border ("Remove Friend" + Unfriends).
  *   - incoming request pending → `primary` CTA ("Accept Friend").
+ *   - outgoing request pending, idle  → `black` ("Request Sent").
+ *   - outgoing request pending, hover → `black` + red border ("Cancel Request").
  *   - add friend    → `primary` CTA ("Add Friend" + Add).
  *   - loading       → `black` placeholder with pulsing opacity.
  */
@@ -39,6 +42,7 @@ export function FriendButton({
   userId: userIdProp,
   isFriend: isFriendProp,
   hasIncomingRequest: hasIncomingRequestProp,
+  hasOutgoingRequest: hasOutgoingRequestProp,
   fontSize: fontSizeProp,
   uiTransform
 }: {
@@ -46,6 +50,7 @@ export function FriendButton({
   userId?: string
   isFriend?: boolean
   hasIncomingRequest?: boolean
+  hasOutgoingRequest?: boolean
   fontSize?: number
   uiTransform?: UiTransformProps
 }): ReactElement | null {
@@ -73,10 +78,14 @@ export function FriendButton({
   const [isFriendInternal, setIsFriendInternal] = useState<boolean>(false)
   const [hasIncomingRequestInternal, setHasIncomingRequestInternal] =
     useState<boolean>(false)
+  const [hasOutgoingRequestInternal, setHasOutgoingRequestInternal] =
+    useState<boolean>(false)
   const [hovered, setHovered] = useState<boolean>(false)
   const isFriend = isFriendProp ?? isFriendInternal
   const hasIncomingRequest =
     hasIncomingRequestProp ?? hasIncomingRequestInternal
+  const hasOutgoingRequest =
+    hasOutgoingRequestProp ?? hasOutgoingRequestInternal
 
   useEffect(() => {
     if (seededFromPlayer !== null) return
@@ -105,6 +114,18 @@ export function FriendButton({
     executeTask(async () => {
       const requests = await BevyApi.social.getReceivedFriendRequests()
       setHasIncomingRequestInternal(
+        requests.some((r) => r.address.toLowerCase() === userId.toLowerCase())
+      )
+    })
+  }, [])
+
+  useEffect(() => {
+    if (hasOutgoingRequestProp !== undefined) return
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
+    if (userId === undefined) return
+    executeTask(async () => {
+      const requests = await BevyApi.social.getSentFriendRequests()
+      setHasOutgoingRequestInternal(
         requests.some((r) => r.address.toLowerCase() === userId.toLowerCase())
       )
     })
@@ -175,12 +196,55 @@ export function FriendButton({
         uiTransform={uiTransform}
         onMouseDown={() => {
           executeTask(async () => {
+            markSelfInitiatedFriendshipAction('accept', resolved.userId)
             await BevyApi.social.acceptFriendRequest(resolved.userId)
             // Optimistically update local state so the button flips to
             // the "Friend" branch on the next render without waiting for
             // a remount or external refetch.
             setIsFriendInternal(true)
             setHasIncomingRequestInternal(false)
+          })
+        }}
+      />
+    )
+  }
+
+  if (hasOutgoingRequest) {
+    return (
+      <ButtonComponent
+        variant="black"
+        destructiveHover={true}
+        value={hovered ? '<b>Cancel Request</b>' : '<b>Request Sent</b>'}
+        fontSize={fontSize}
+        icon={{
+          atlasName: hovered ? 'icons' : 'context',
+          spriteName: hovered ? 'CloseIcon' : 'Add'
+        }}
+        uiTransform={uiTransform}
+        onMouseEnter={() => {
+          setHovered(true)
+        }}
+        onMouseLeave={() => {
+          setHovered(false)
+        }}
+        onMouseDown={() => {
+          showConfirmPopup({
+            title: `Cancel friend request to <b>${resolved.name}</b>?`,
+            icon: {
+              spriteName: 'CloseIcon',
+              atlasName: 'icons',
+              backgroundColor: COLOR.BUTTON_PRIMARY
+            },
+            confirmLabel: 'CANCEL REQUEST',
+            cancelLabel: 'BACK',
+            category: 'friendship',
+            address: resolved.userId,
+            onConfirm: async () => {
+              markSelfInitiatedFriendshipAction('cancel', resolved.userId)
+              await BevyApi.social.cancelFriendRequest(resolved.userId)
+              // Optimistic flip back to "Add Friend".
+              setHasOutgoingRequestInternal(false)
+            }
           })
         }}
       />
@@ -195,6 +259,12 @@ export function FriendButton({
       icon={{ atlasName: 'context', spriteName: 'Add' }}
       uiTransform={uiTransform}
       onMouseDown={() => {
+        // Close the parent popup (passport / profile-popup) that hosted
+        // this button. The SEND_FRIEND_REQUEST popup is a self-contained
+        // flow — once the user is in it, the underlying popup is just
+        // visual noise and would still be there after the request is sent
+        // showing a stale "Add Friend" button.
+        store.dispatch(closeLastPopupAction())
         store.dispatch(
           pushPopupAction({
             type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,

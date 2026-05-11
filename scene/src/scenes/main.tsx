@@ -239,7 +239,7 @@ export async function init(retry: boolean): Promise<void> {
       })
     ) */
 
-    store.dispatch(
+    /*    store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.PROFILE_MENU,
         // data: getPlayer()?.userId
@@ -249,7 +249,7 @@ export async function init(retry: boolean): Promise<void> {
           )
         }
       })
-    )
+    )*/
 
     /* store.dispatch(
       pushPopupAction({

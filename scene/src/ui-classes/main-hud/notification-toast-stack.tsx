@@ -9,6 +9,8 @@ import { fetchNotifications } from '../../utils/notifications-promise-utils'
 import { getPlayer } from '@dcl/sdk/src/players'
 import type { FriendshipEventUpdate } from '../../service/social-service-type'
 import { listenFriendshipEvent } from '../../service/friend-connectivity-service'
+import { store } from '../../state/store'
+import { updateHudStateAction } from '../../state/hud/actions'
 
 export type NotificationToastStackState = {
   toasts: Notification[]
@@ -16,6 +18,18 @@ export type NotificationToastStackState = {
 
 const state: NotificationToastStackState = {
   toasts: []
+}
+
+const AUTO_DISMISS_MS = 10000
+const FRIEND_REQUEST_DISMISS_MS = 20000
+const AUTO_DISMISS_POLL_MS = 500
+const FETCH_POLL_MS = 5000
+
+function getDismissBudget(notification: Notification): number {
+  if (notification.type === 'social_service_friendship_request') {
+    return FRIEND_REQUEST_DISMISS_MS
+  }
+  return AUTO_DISMISS_MS
 }
 
 export function NotificationToastStack(): ReactElement | null {
@@ -48,26 +62,24 @@ export function NotificationToastStack(): ReactElement | null {
 export function initRealTimeNotifications(): void {
   executeTask(async (): Promise<never> => {
     while (true) {
-      await sleep(5000)
+      await sleep(AUTO_DISMISS_POLL_MS)
+      if (state.toasts.length === 0) continue
+      const now = Date.now()
+      state.toasts = state.toasts.filter(
+        (t) => (t.localTimestamp ?? now) + getDismissBudget(t) > now
+      )
+    }
+  })
 
-      if (
-        state.toasts.length &&
-        new Date(
-          Number(state.toasts[state.toasts.length - 1].timestamp)
-        ).getTime() +
-          5000 <
-          Date.now()
-      ) {
-        state.toasts.shift()
-      }
-      const lastNotification: Notification =
+  executeTask(async (): Promise<never> => {
+    while (true) {
+      await sleep(FETCH_POLL_MS)
+      const lastNotification: Notification | undefined =
         state.toasts[state.toasts.length - 1]
-
       const [nextNotification] = await fetchNotifications({
         limit: 1,
         from: Number(lastNotification?.timestamp ?? Date.now()) + 1
       })
-
       if (nextNotification !== undefined) {
         pushNotificationToast(nextNotification)
       }
@@ -90,6 +102,12 @@ export function initFriendshipEventToasts(): void {
   listenFriendshipEvent((event) => {
     if (event.type === 'request') {
       pushNotificationToast(buildFriendRequestNotification(event))
+      // Optimistically bump the unread-notifications badge so the bell
+      // reflects the new request immediately, without waiting for the
+      // next backend poll (~20s). Opening the notifications panel will
+      // reset the count via the existing `markAllRead` path.
+      const current = store.getState().hud.unreadNotifications
+      store.dispatch(updateHudStateAction({ unreadNotifications: current + 1 }))
     }
   })
 }

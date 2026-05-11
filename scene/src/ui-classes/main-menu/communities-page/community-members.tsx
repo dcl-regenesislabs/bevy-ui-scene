@@ -40,6 +40,7 @@ import { showErrorPopup } from '../../../service/error-popup-service'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { showConfirmPopup } from '../../../components/confirm-popup'
 import { NavButton } from '../../../components/nav-button/NavButton'
+import { markSelfInitiatedFriendshipAction } from '../../../service/friend-connectivity-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -90,6 +91,7 @@ function CommunityMemberItem({
     setActing(true)
     executeTask(async () => {
       try {
+        markSelfInitiatedFriendshipAction('accept', member.memberAddress)
         await BevyApi.social.acceptFriendRequest(member.memberAddress)
         // Mutate the shared object so the members cache stays consistent.
         member.friendshipStatus = CommunityFriendshipStatus.FRIEND

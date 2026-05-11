@@ -29,6 +29,7 @@ import { formatRequestDate, PanelListButton } from './friend-request-item'
 import { showConfirmPopup } from '../confirm-popup'
 
 import { removeFriendRequest } from './friend-request-list'
+import { markSelfInitiatedFriendshipAction } from '../../service/friend-connectivity-service'
 
 export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
   const request = shownPopup.data as FriendRequestData
@@ -42,6 +43,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         dismissLabel="Decide Later"
         onPrimary={() => {
           executeTask(async () => {
+            markSelfInitiatedFriendshipAction('accept', request.address)
             await BevyApi.social.acceptFriendRequest(request.address)
             removeFriendRequest(request.address)
             store.dispatch(closeLastPopupAction())
@@ -60,6 +62,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         }}
         onSecondary={() => {
           executeTask(async () => {
+            markSelfInitiatedFriendshipAction('reject', request.address)
             await BevyApi.social.rejectFriendRequest(request.address)
             removeFriendRequest(request.address)
             store.dispatch(closeLastPopupAction())
@@ -107,6 +110,7 @@ export const FriendRequestSentPopup: Popup = ({ shownPopup }) => {
             category: 'friendship',
             address: request.address,
             onConfirm: async () => {
+              markSelfInitiatedFriendshipAction('cancel', request.address)
               await BevyApi.social.cancelFriendRequest(request.address)
               removeFriendRequest(request.address)
               store.dispatch(

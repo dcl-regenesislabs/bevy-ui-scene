@@ -16,6 +16,7 @@ import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 import { showConfirmPopup } from '../confirm-popup'
+import { markSelfInitiatedFriendshipAction } from '../../service/friend-connectivity-service'
 
 const MONTH_NAMES = [
   'JAN',
@@ -229,6 +230,10 @@ export function FriendRequestItemReceived({
             category: 'friendship',
             address: friendRequest.address,
             onConfirm: async () => {
+              markSelfInitiatedFriendshipAction(
+                'reject',
+                friendRequest.address
+              )
               await BevyApi.social.rejectFriendRequest(friendRequest.address)
               onAction?.(friendRequest.address)
             }
@@ -243,6 +248,10 @@ export function FriendRequestItemReceived({
           setActing(true)
           executeTask(async () => {
             try {
+              markSelfInitiatedFriendshipAction(
+                'accept',
+                friendRequest.address
+              )
               await BevyApi.social.acceptFriendRequest(friendRequest.address)
               onAction?.(friendRequest.address)
               store.dispatch(
@@ -335,6 +344,10 @@ export function FriendRequestItemSent({
             category: 'friendship',
             address: friendRequest.address,
             onConfirm: async () => {
+              markSelfInitiatedFriendshipAction(
+                'cancel',
+                friendRequest.address
+              )
               await BevyApi.social.cancelFriendRequest(friendRequest.address)
               onAction?.(friendRequest.address)
             }
