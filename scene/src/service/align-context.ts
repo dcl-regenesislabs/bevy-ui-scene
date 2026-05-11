@@ -1,4 +1,4 @@
-import ReactEcs from '@dcl/react-ecs'
+import { createContext, useContext } from 'react'
 
 /**
  * Generic alignment context. A subtree wrapped in
@@ -13,9 +13,13 @@ import ReactEcs from '@dcl/react-ecs'
  *
  * Default `'center'` keeps existing components rendering centered when
  * no Provider is in scope.
+ *
+ * Imports come straight from `react` because `@dcl/react-ecs` doesn't
+ * expose the Context API yet (pending upstream PR). See
+ * `scene/src/types/react.d.ts` for the typing shim.
  */
 export type Align = 'left' | 'center' | 'right'
 
-export const AlignContext = ReactEcs.createContext<Align>('center')
+export const AlignContext = createContext<Align>('center')
 
-export const useAlign = (): Align => ReactEcs.useContext(AlignContext)
+export const useAlign = (): Align => useContext(AlignContext)

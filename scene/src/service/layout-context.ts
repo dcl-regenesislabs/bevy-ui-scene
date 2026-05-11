@@ -1,4 +1,4 @@
-import ReactEcs from '@dcl/react-ecs'
+import { createContext, useContext } from 'react'
 import { CONTEXT } from './fontsize-system'
 
 /**
@@ -13,8 +13,12 @@ import { CONTEXT } from './fontsize-system'
  * Components that already accept an explicit `layoutContext` prop (e.g.
  * `ButtonIcon`, `ButtonTextIcon`) should treat the prop as an override:
  * `props.layoutContext ?? useLayoutContext()`.
+ *
+ * Imports come straight from `react` because `@dcl/react-ecs` doesn't
+ * expose the Context API yet (pending upstream PR). `react` itself is a
+ * transitive dependency that lives in `node_modules/react`. See
+ * `scene/src/types/react.d.ts` for the typing shim.
  */
-export const LayoutContext = ReactEcs.createContext<CONTEXT>(CONTEXT.SIDE)
+export const LayoutContext = createContext<CONTEXT>(CONTEXT.SIDE)
 
-export const useLayoutContext = (): CONTEXT =>
-  ReactEcs.useContext(LayoutContext)
+export const useLayoutContext = (): CONTEXT => useContext(LayoutContext)

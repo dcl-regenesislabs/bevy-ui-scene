@@ -173,6 +173,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const [isFriend, setIsFriend] = useState<boolean>(true)
   const [isBlocked, setIsBlocked] = useState<boolean>(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState<boolean>(false)
   const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
 
@@ -273,10 +274,42 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
                   variant="black"
                 />
               ) : null}
-              {/* Block/Unblock button: hide when the user is a friend
-                  AND not currently blocked. */}
+              {/* "More actions" menu — currently hosts BlockUser /
+                  UnblockUser. Hidden when the user is a friend AND not
+                  blocked (no destructive action makes sense). */}
               {!(isFriend && !isBlocked) ? (
-                <BlockUserButton userId={userId} isBlocked={isBlocked} />
+                <UiEntity uiTransform={{ flexDirection: 'column' }}>
+                  <ButtonIcon
+                    icon={{ spriteName: 'Menu', atlasName: 'icons' }}
+                    iconColor={COLOR.WHITE}
+                    backgroundColor={COLOR.BLACK}
+                    onMouseDown={() => {
+                      setMoreMenuOpen(!moreMenuOpen)
+                    }}
+                    uiTransform={{
+                      margin: { left: fontSize * 0.3 }
+                    }}
+                  />
+                  {moreMenuOpen && (
+                    <UiEntity
+                      uiTransform={{
+                        positionType: 'absolute',
+                        position: { top: '110%', right: 0 },
+                        flexDirection: 'column',
+                        padding: fontSize * 0.3,
+                        borderRadius: fontSize / 2,
+                        zIndex: 10
+                      }}
+                      uiBackground={{ color: COLOR.BLACK }}
+                    >
+                      <BlockUserButton
+                        userId={userId}
+                        isBlocked={isBlocked}
+                        variant="black"
+                      />
+                    </UiEntity>
+                  )}
+                </UiEntity>
               ) : null}
             </Row>
           ) : null}

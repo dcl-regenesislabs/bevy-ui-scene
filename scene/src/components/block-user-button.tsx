@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
-import { ButtonComponent } from './button-component'
+import { ButtonComponent, type ButtonVariant } from './button-component'
 import { COLOR } from './color-palette'
 import { getFontSize } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
@@ -37,12 +37,19 @@ export function BlockUserButton({
   userId: userIdProp,
   isBlocked: isBlockedProp,
   fontSize: fontSizeProp,
+  variant = 'subtle',
   uiTransform
 }: {
   player?: GetPlayerDataRes
   userId?: string
   isBlocked?: boolean
   fontSize?: number
+  /**
+   * Variant used by the non-CTA states (BLOCKED idle / loading). The
+   * "Block User" CTA stays `transparent` and the "UNBLOCK" hover state
+   * gets its red border via `destructiveHover`. Default `'subtle'`.
+   */
+  variant?: ButtonVariant
   uiTransform?: UiTransformProps
 }): ReactElement | null {
   const layoutContext = useLayoutContext()
@@ -96,7 +103,7 @@ export function BlockUserButton({
   if (resolved === null) {
     return (
       <ButtonComponent
-        variant="subtle"
+        variant={variant}
         value="<b>...</b>"
         fontSize={fontSize}
         icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
@@ -111,7 +118,7 @@ export function BlockUserButton({
     return (
       <ButtonComponent
         key={'block-user-button-' + resolved.userId}
-        variant="subtle"
+        variant={variant}
         destructiveHover={true}
         value={hovered ? '<b>UNBLOCK</b>' : '<b>BLOCKED</b>'}
         fontSize={fontSize}
@@ -146,7 +153,7 @@ export function BlockUserButton({
   return (
     <ButtonComponent
       key={'block-user-button-' + resolved.userId}
-      variant="transparent"
+      variant={variant}
       destructiveHover={true}
       value="<b>Block User</b>"
       fontSize={fontSize}

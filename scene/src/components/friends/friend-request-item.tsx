@@ -245,6 +245,17 @@ export function FriendRequestItemReceived({
             try {
               await BevyApi.social.acceptFriendRequest(friendRequest.address)
               onAction?.(friendRequest.address)
+              store.dispatch(
+                pushPopupAction({
+                  type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+                  data: {
+                    variant: 'accepted',
+                    address: friendRequest.address,
+                    name: friendRequest.name,
+                    hasClaimedName: friendRequest.hasClaimedName
+                  }
+                })
+              )
             } finally {
               setActing(false)
             }
