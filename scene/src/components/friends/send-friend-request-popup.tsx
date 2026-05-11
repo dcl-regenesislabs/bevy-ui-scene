@@ -119,6 +119,7 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
             padding: { left: fontSize * 0.5, top: fontSize * 0.5 },
             margin: { bottom: fontSize * 0.3 }
           }}
+          multiLine={true}
           uiBackground={{ color: COLOR.WHITE }}
           value={message}
           placeholder="Write an introduction message"
