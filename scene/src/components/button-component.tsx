@@ -17,7 +17,7 @@ import { useAlign } from '../service/align-context'
 import { getLoadingAlphaValue } from '../service/loading-alpha-color'
 import { COLOR } from './color-palette'
 
-export type ButtonVariant = 'transparent' | 'subtle' | 'solid' | 'black'
+export type ButtonVariant = 'transparent' | 'subtle' | 'primary' | 'black'
 
 type VariantStyle = {
   bg: { base: Color4; hover: Color4; active: Color4 }
@@ -50,7 +50,7 @@ const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
     textColor: { base: COLOR.WHITE },
     borderColor: COLOR.BLACK_TRANSPARENT
   },
-  solid: {
+  primary: {
     bg: {
       base: COLOR.BUTTON_PRIMARY,
       hover: COLOR.BUTTON_PRIMARY_HOVER,
@@ -80,7 +80,7 @@ const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
  *     Use for menu items / toolbar buttons.
  *   - `subtle` — chip with bg + thin border. Use when the button should
  *     be visible without screaming for attention.
- *   - `solid` — filled with `BUTTON_PRIMARY`. Use for the main CTA.
+ *   - `primary` — filled with `BUTTON_PRIMARY`. Use for the main CTA.
  *   - `black` — solid black background with white text/icon. Use for
  *     dark inverted CTAs (e.g. close-button-style or dark-on-light pages).
  *

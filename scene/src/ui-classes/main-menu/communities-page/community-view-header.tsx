@@ -405,7 +405,7 @@ export function CommunityViewHeader({
             />
           ) : community.privacy === 'private' ? (
             <ButtonTextIcon
-              variant={requested ? 'subtle' : 'solid'}
+              variant={requested ? 'subtle' : 'primary'}
               value={
                 requested ? '<b>CANCEL REQUEST</b>' : '<b>REQUEST TO JOIN</b>'
               }
@@ -429,7 +429,7 @@ export function CommunityViewHeader({
             />
           ) : (
             <ButtonTextIcon
-              variant="solid"
+              variant="primary"
               value="<b>JOIN</b>"
               icon={{ spriteName: 'Add', atlasName: 'context' }}
               fontSize={fontSizeSmall}

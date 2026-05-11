@@ -263,7 +263,7 @@ function ProfileHeader({
           </Row>,
           ...(getFeatureFlag(FEATURES.FRIENDS) &&
           player.userId !== getPlayer()?.userId
-            ? [<FriendButton variant={'black'} player={player} />]
+            ? [<FriendButton player={player} />]
             : [])
         ]
       : [])

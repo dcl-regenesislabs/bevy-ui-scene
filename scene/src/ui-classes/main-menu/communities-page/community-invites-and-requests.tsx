@@ -393,7 +393,7 @@ function InviteCard({
         />
         {primaryLabel.length > 0 && (
           <ButtonTextIcon
-            variant="solid"
+            variant="primary"
             value={`<b>${primaryLabel}</b>`}
             fontSize={fontSizeSmall}
             uiTransform={{

@@ -112,7 +112,7 @@ export function CommunityEventActionsRow({
     >
       {/* REMIND ME */}
       <ButtonTextIcon
-        variant={attending ? 'transparent' : 'solid'}
+        variant={attending ? 'transparent' : 'primary'}
         value={attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>'}
         icon={{
           spriteName: attending ? 'ReminderOn' : 'ReminderOff',

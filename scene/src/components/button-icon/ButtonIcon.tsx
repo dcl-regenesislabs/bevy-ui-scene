@@ -22,7 +22,7 @@ import { NotificationBadge } from '../notification-badge'
 
 export type ButtonIconVariant =
   | 'transparent'
-  | 'solid'
+  | 'primary'
   | 'subtle'
   | 'destructive'
 
@@ -40,7 +40,7 @@ const VARIANT_STYLES: Record<ButtonIconVariant, VariantStyle> = {
     },
     iconColor: { base: COLOR.WHITE }
   },
-  solid: {
+  primary: {
     bg: {
       base: COLOR.BUTTON_PRIMARY,
       hover: COLOR.BUTTON_PRIMARY_HOVER,

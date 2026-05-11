@@ -268,11 +268,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
             >
               {/* Friend button: hide when the user is blocked. */}
               {!isBlocked ? (
-                <FriendButton
-                  userId={userId}
-                  isFriend={isFriend}
-                  variant="black"
-                />
+                <FriendButton userId={userId} isFriend={isFriend} />
               ) : null}
               {/* "More actions" menu — currently hosts BlockUser /
                   UnblockUser. Hidden when the user is a friend AND not

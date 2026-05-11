@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
-import { ButtonComponent, type ButtonVariant } from './button-component'
+import { ButtonComponent } from './button-component'
 import { getFontSize } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
 import { type GetPlayerDataRes } from '../utils/definitions'
@@ -27,12 +27,12 @@ import useEffect = ReactEcs.useEffect
  * to the catalyst lambda for users not in the scene). `isFriend` and
  * `hasIncomingRequest` are resolved on mount unless the props are given.
  *
- * Visual states:
- *   - friend, idle  → `subtle` ("Friend" + FriendIcon).
- *   - friend, hover → `subtle` + red border ("Remove Friend" + Unfriends).
- *   - incoming request pending → `solid` ("Accept Friend"). Click accepts.
- *   - add friend    → `subtle` ("Add Friend" + Add).
- *   - loading       → `subtle` placeholder with pulsing opacity.
+ * Visual variant is fixed per state — no prop to override:
+ *   - friend, idle  → `black` ("Friend" + FriendIcon).
+ *   - friend, hover → `black` + red border ("Remove Friend" + Unfriends).
+ *   - incoming request pending → `primary` CTA ("Accept Friend").
+ *   - add friend    → `primary` CTA ("Add Friend" + Add).
+ *   - loading       → `black` placeholder with pulsing opacity.
  */
 export function FriendButton({
   player: playerProp,
@@ -40,7 +40,6 @@ export function FriendButton({
   isFriend: isFriendProp,
   hasIncomingRequest: hasIncomingRequestProp,
   fontSize: fontSizeProp,
-  variant = 'subtle',
   uiTransform
 }: {
   player?: GetPlayerDataRes
@@ -48,12 +47,6 @@ export function FriendButton({
   isFriend?: boolean
   hasIncomingRequest?: boolean
   fontSize?: number
-  /**
-   * Variant for the non-CTA states (Friend / Add Friend / loading).
-   * Defaults to `subtle`. The "Accept Friend" branch always uses `solid`
-   * regardless — it's the affirmative CTA for an incoming request.
-   */
-  variant?: ButtonVariant
   uiTransform?: UiTransformProps
 }): ReactElement | null {
   const layoutContext = useLayoutContext()
@@ -123,7 +116,7 @@ export function FriendButton({
   if (resolved === null) {
     return (
       <ButtonComponent
-        variant={variant}
+        variant="black"
         value="<b>...</b>"
         fontSize={fontSize}
         icon={{ atlasName: 'icons', spriteName: 'FriendIcon' }}
@@ -137,7 +130,7 @@ export function FriendButton({
   if (isFriend) {
     return (
       <ButtonComponent
-        variant={variant}
+        variant="black"
         destructiveHover={true}
         value={hovered ? '<b>Remove Friend</b>' : '<b>Friend</b>'}
         fontSize={fontSize}
@@ -175,7 +168,7 @@ export function FriendButton({
   if (hasIncomingRequest) {
     return (
       <ButtonComponent
-        variant="solid"
+        variant="primary"
         value="<b>Accept Friend</b>"
         fontSize={fontSize}
         icon={{ atlasName: 'icons', spriteName: 'Check' }}
@@ -196,7 +189,7 @@ export function FriendButton({
 
   return (
     <ButtonComponent
-      variant={variant}
+      variant="primary"
       value="<b>Add Friend</b>"
       fontSize={fontSize}
       icon={{ atlasName: 'context', spriteName: 'Add' }}
