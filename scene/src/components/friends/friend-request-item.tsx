@@ -1,7 +1,13 @@
 import type { FriendRequestData } from '../../service/social-service-type'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import useState = ReactEcs.useState
-import { type Key, UiEntity, type Callback, Label } from '@dcl/sdk/react-ecs'
+import {
+  type Key,
+  UiEntity,
+  type Callback,
+  Label,
+  type UiTransformProps
+} from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { Column, Row } from '../layout'
@@ -230,10 +236,7 @@ export function FriendRequestItemReceived({
             category: 'friendship',
             address: friendRequest.address,
             onConfirm: async () => {
-              markSelfInitiatedFriendshipAction(
-                'reject',
-                friendRequest.address
-              )
+              markSelfInitiatedFriendshipAction('reject', friendRequest.address)
               await BevyApi.social.rejectFriendRequest(friendRequest.address)
               onAction?.(friendRequest.address)
             }
@@ -248,10 +251,7 @@ export function FriendRequestItemReceived({
           setActing(true)
           executeTask(async () => {
             try {
-              markSelfInitiatedFriendshipAction(
-                'accept',
-                friendRequest.address
-              )
+              markSelfInitiatedFriendshipAction('accept', friendRequest.address)
               await BevyApi.social.acceptFriendRequest(friendRequest.address)
               onAction?.(friendRequest.address)
               store.dispatch(
@@ -344,10 +344,7 @@ export function FriendRequestItemSent({
             category: 'friendship',
             address: friendRequest.address,
             onConfirm: async () => {
-              markSelfInitiatedFriendshipAction(
-                'cancel',
-                friendRequest.address
-              )
+              markSelfInitiatedFriendshipAction('cancel', friendRequest.address)
               await BevyApi.social.cancelFriendRequest(friendRequest.address)
               onAction?.(friendRequest.address)
             }

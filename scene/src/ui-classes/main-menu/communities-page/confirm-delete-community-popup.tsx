@@ -3,7 +3,8 @@ import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
-import { PanelListButton } from '../../../components/friends/friend-request-item'
+import ButtonComponent from '../../../components/button-component'
+import { setLastPopupSubmitting } from '../../../components/popup-stack'
 import {
   CONTEXT,
   getFontSize,
@@ -18,7 +19,6 @@ import { executeTask } from '@dcl/sdk/ecs'
 import { deleteCommunity } from '../../../utils/communities-promise-utils'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import { notifyCommunitiesChanged } from '../../../service/communities-events'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { type CommunityListItem } from '../../../service/communities-types'
 import useState = ReactEcs.useState
 
@@ -44,10 +44,12 @@ export const ConfirmDeleteCommunityPopup: Popup = ({ shownPopup }) => {
   const onDelete = (): void => {
     if (!canDelete) return
     setSubmitting(true)
+    setLastPopupSubmitting(true)
     executeTask(async () => {
       try {
         await deleteCommunity(community.id)
         notifyCommunitiesChanged()
+        setLastPopupSubmitting(false)
         // Close the confirm popup AND the underlying community-view popup so
         // the user isn't left looking at a community that no longer exists.
         store.dispatch(closeLastPopupAction())
@@ -58,6 +60,7 @@ export const ConfirmDeleteCommunityPopup: Popup = ({ shownPopup }) => {
           'deleteCommunity'
         )
         setSubmitting(false)
+        setLastPopupSubmitting(false)
       }
     })
   }
@@ -132,42 +135,21 @@ export const ConfirmDeleteCommunityPopup: Popup = ({ shownPopup }) => {
             justifyContent: 'center'
           }}
         >
-          <PanelListButton
-            variant="secondary"
+          <ButtonComponent
+            variant="subtle"
+            value="<b>CANCEL</b>"
+            uiTransform={{ minWidth: '50%' }}
             onMouseDown={() => {
               if (submitting) return
               store.dispatch(closeLastPopupAction())
             }}
-          >
-            <UiEntity
-              uiText={{
-                value: '<b>CANCEL</b>',
-                fontSize,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-              uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-            />
-          </PanelListButton>
-          <UiEntity
-            uiTransform={{
-              borderRadius: fontSize / 2,
-              padding: {
-                left: fontSize * 2,
-                right: fontSize * 2,
-                top: fontSize * 0.5,
-                bottom: fontSize * 0.5
-              },
-              margin: { left: fontSize * 0.5 },
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: submitting ? getLoadingAlphaValue() : canDelete ? 1 : 0.4
-            }}
-            uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
-            uiText={{
-              value: '<b>DELETE COMMUNITY</b>',
-              fontSize,
-              color: COLOR.WHITE
-            }}
+          />
+          <ButtonComponent
+            variant="primary"
+            value="<b>DELETE COMMUNITY</b>"
+            loading={submitting}
+            disabled={!canDelete}
+            uiTransform={{ minWidth: '50%' }}
             onMouseDown={onDelete}
           />
         </Row>

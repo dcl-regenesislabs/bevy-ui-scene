@@ -1,5 +1,5 @@
 import ReactEcs, { Input, UiEntity } from '@dcl/react-ecs'
-import { type Popup } from '../popup-stack'
+import { type Popup, setLastPopupSubmitting } from '../popup-stack'
 import { PopupBackdrop } from '../popup-backdrop'
 import { COLOR } from '../color-palette'
 import { Column, Row } from '../layout'
@@ -19,7 +19,7 @@ import { closeLastPopupAction, pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
-import { PanelListButton } from './friend-request-item'
+import ButtonComponent from '../button-component'
 import { fetchAndStoreFriendRequests } from './friend-request-list'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 import useState = ReactEcs.useState
@@ -36,6 +36,7 @@ export type SendFriendRequestData = {
 export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
   const data = shownPopup.data as SendFriendRequestData
   const [message, setMessage] = useState<string>('')
+  const [submitting, setSubmitting] = useState<boolean>(false)
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
@@ -152,54 +153,52 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
             justifyContent: 'center'
           }}
         >
-          <PanelListButton
-            variant="secondary"
+          <ButtonComponent
+            variant="subtle"
+            value="<b>CANCEL</b>"
+            loading={submitting}
+            uiTransform={{ minWidth: '50%' }}
             onMouseDown={() => {
               store.dispatch(closeLastPopupAction())
             }}
-          >
-            <UiEntity
-              uiText={{
-                value: '<b>CANCEL</b>',
-                fontSize,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-              uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-            />
-          </PanelListButton>
-          <PanelListButton
+          />
+          <ButtonComponent
             variant="primary"
+            value="<b>SEND</b>"
+            loading={submitting}
+            uiTransform={{ minWidth: '50%' }}
             onMouseDown={() => {
+              if (submitting) return
+              setSubmitting(true)
+              setLastPopupSubmitting(true)
               executeTask(async () => {
-                await BevyApi.social.sendFriendRequest(
-                  data.address,
-                  message.length > 0 ? message : undefined
-                )
-                fetchAndStoreFriendRequests().catch(console.error)
-                store.dispatch(closeLastPopupAction())
-                store.dispatch(
-                  pushPopupAction({
-                    type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
-                    data: {
-                      variant: 'sent',
-                      address: data.address,
-                      name: displayName,
-                      hasClaimedName: data.hasClaimedName
-                    }
-                  })
-                )
+                try {
+                  await BevyApi.social.sendFriendRequest(
+                    data.address,
+                    message.length > 0 ? message : undefined
+                  )
+                  fetchAndStoreFriendRequests().catch(console.error)
+                  setLastPopupSubmitting(false)
+                  store.dispatch(closeLastPopupAction())
+                  store.dispatch(
+                    pushPopupAction({
+                      type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+                      data: {
+                        variant: 'sent',
+                        address: data.address,
+                        name: displayName,
+                        hasClaimedName: data.hasClaimedName
+                      }
+                    })
+                  )
+                } catch (error) {
+                  setSubmitting(false)
+                  setLastPopupSubmitting(false)
+                  throw error
+                }
               })
             }}
-          >
-            <UiEntity
-              uiText={{
-                value: '<b>SEND</b>',
-                fontSize,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-              uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-            />
-          </PanelListButton>
+          />
         </Row>
       </Column>
     </PopupBackdrop>

@@ -31,6 +31,23 @@ export type Popup = (
   params: PopupParameters
 ) => ReactElement | null | ReactElement[]
 
+/**
+ * Global busy flag — set by whichever popup is currently in the middle of
+ * an async submit, cleared when the operation finishes or errors. Read by
+ * the ESC handler in `MainHud` to refuse closing a popup mid-submit.
+ *
+ * Module-level rather than store-backed because only the global handler
+ * cares about it; no re-render needs to flow from these changes. Safe in
+ * this app because only the top popup is interactive at any moment.
+ */
+let lastPopupSubmitting = false
+export function isLastPopupSubmitting(): boolean {
+  return lastPopupSubmitting
+}
+export function setLastPopupSubmitting(submitting: boolean): void {
+  lastPopupSubmitting = submitting
+}
+
 const popupComponents: Record<number, Popup> = {
   [HUD_POPUP_TYPE.URL as number]: PopupUrl,
   [HUD_POPUP_TYPE.MARKETPLACE as number]: PopupMarketplace,

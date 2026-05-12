@@ -10,8 +10,13 @@ import { SceneInfo } from './scene-info'
 import { switchEmotesWheelVisibility } from '../../emotes-wheel/emotes-wheel'
 import { type ReactElement } from '@dcl/react-ecs'
 import { store } from '../../state/store'
-import { pushPopupAction, updateHudStateAction } from '../../state/hud/actions'
+import {
+  closeLastPopupAction,
+  pushPopupAction,
+  updateHudStateAction
+} from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
+import { isLastPopupSubmitting } from '../../components/popup-stack'
 import { getPlayer } from '@dcl/sdk/players'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import { type PBUiCanvasInformation } from '@dcl/ecs/dist/components/generated/pb/decentraland/sdk/components/ui_canvas_information.gen'
@@ -137,6 +142,17 @@ export default class MainHud {
     listenSystemAction('Map', () => {
       if (uiController?.isMainMenuVisible) return
       this.uiController.menu?.show('map')
+    })
+
+    // ESC closes the top popup, peeling off one per press (same semantics
+    // as a backdrop click). Skipped while any popup is mid-submit (via the
+    // shared `lastPopupSubmitting` flag set by the popup's submit handler).
+    listenSystemAction('Escape', (pressed: boolean) => {
+      if (!pressed) return
+      const popups = store.getState().hud.shownPopups
+      if (popups.length === 0) return
+      if (isLastPopupSubmitting()) return
+      store.dispatch(closeLastPopupAction())
     })
 
     executeTask(async () => {

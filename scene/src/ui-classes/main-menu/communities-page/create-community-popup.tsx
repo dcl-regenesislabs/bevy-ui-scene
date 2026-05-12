@@ -1,7 +1,10 @@
 import ReactEcs, { Input, type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { Color4 } from '@dcl/sdk/math'
 import { executeTask } from '@dcl/sdk/ecs'
-import { type Popup } from '../../../components/popup-stack'
+import {
+  type Popup,
+  setLastPopupSubmitting
+} from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
 import { Column, Row } from '../../../components/layout'
@@ -166,6 +169,7 @@ const CommunityFormContent = ({
     if (!canSubmit) return
     setIssues({})
     setSubmitting(true)
+    setLastPopupSubmitting(true)
     executeTask(async () => {
       try {
         if (isEdit) {
@@ -205,6 +209,7 @@ const CommunityFormContent = ({
         }
       } finally {
         setSubmitting(false)
+        setLastPopupSubmitting(false)
       }
     })
   }

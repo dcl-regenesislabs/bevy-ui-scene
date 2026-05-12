@@ -25,7 +25,8 @@ import { closeLastPopupAction, pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
-import { formatRequestDate, PanelListButton } from './friend-request-item'
+import { formatRequestDate } from './friend-request-item'
+import ButtonComponent from '../button-component'
 import { showConfirmPopup } from '../confirm-popup'
 
 import { removeFriendRequest } from './friend-request-list'
@@ -308,26 +309,18 @@ function FriendRequestPopupContent({
           margin: { bottom: dismissLabel ? fontSize : 0 }
         }}
       >
-        <PanelListButton variant="secondary" onMouseDown={onSecondary}>
-          <UiEntity
-            uiText={{
-              value: `<b>${secondaryLabel}</b>`,
-              fontSize,
-              color: COLOR.TEXT_COLOR_WHITE
-            }}
-            uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-          />
-        </PanelListButton>
-        <PanelListButton variant="primary" onMouseDown={onPrimary}>
-          <UiEntity
-            uiText={{
-              value: `<b>${primaryLabel}</b>`,
-              fontSize,
-              color: COLOR.TEXT_COLOR_WHITE
-            }}
-            uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-          />
-        </PanelListButton>
+        <ButtonComponent
+          variant="subtle"
+          value={`<b>${secondaryLabel}</b>`}
+          uiTransform={{ minWidth: '50%' }}
+          onMouseDown={onSecondary}
+        />
+        <ButtonComponent
+          variant="primary"
+          value={`<b>${primaryLabel}</b>`}
+          uiTransform={{ minWidth: '50%' }}
+          onMouseDown={onPrimary}
+        />
       </Row>
 
       {dismissLabel ? (
