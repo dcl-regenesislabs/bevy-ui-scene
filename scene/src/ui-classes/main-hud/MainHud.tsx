@@ -144,16 +144,20 @@ export default class MainHud {
       this.uiController.menu?.show('map')
     })
 
-    // ESC closes the top popup, peeling off one per press (same semantics
-    // as a backdrop click). Skipped while any popup is mid-submit (via the
-    // shared `lastPopupSubmitting` flag set by the popup's submit handler).
+    // ESC priority: 1) close the top popup, peeling off one per press
+    // (same semantics as a backdrop click; skipped while any popup is
+    // mid-submit), 2) otherwise close the main menu if open.
     listenSystemAction('Cancel', (pressed: boolean) => {
-      console.log('Escape!!!!!!')
       if (!pressed) return
       const popups = store.getState().hud.shownPopups
-      if (popups.length === 0) return
-      if (isLastPopupSubmitting()) return
-      store.dispatch(closeLastPopupAction())
+      if (popups.length > 0) {
+        if (isLastPopupSubmitting()) return
+        store.dispatch(closeLastPopupAction())
+        return
+      }
+      if (this.uiController.isMainMenuVisible) {
+        this.uiController.menu?.hide()
+      }
     })
 
     executeTask(async () => {
