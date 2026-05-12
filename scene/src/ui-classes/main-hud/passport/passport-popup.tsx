@@ -83,6 +83,12 @@ import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { PlayerNameComponent } from '../../../components/player-name-component'
 import { PopupBigWindow } from '../../../components/popup-big-window'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
+import {
+  fetchInvitableCommunities,
+  inviteUserToCommunity
+} from '../../../service/community-invites-service'
+import { type CommunityListItem } from '../../../service/communities-types'
+import ButtonComponent from '../../../components/button-component'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -174,6 +180,10 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   const [isFriend, setIsFriend] = useState<boolean>(true)
   const [isBlocked, setIsBlocked] = useState<boolean>(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState<boolean>(false)
+  const [inviteSubmenuOpen, setInviteSubmenuOpen] = useState<boolean>(false)
+  const [invitableCommunities, setInvitableCommunities] = useState<
+    CommunityListItem[]
+  >([])
   const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
 
@@ -201,6 +211,24 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
       setIsBlocked(blocked.some((b) => b.address.toLowerCase() === userId))
     })
   }, [checkVersion])
+
+  // Communities I can invite this user to. Skip the fetch for my own
+  // passport — there's no "invite myself" flow.
+  useEffect(() => {
+    const me = getPlayer()?.userId?.toLowerCase()
+    if (me === userId) return
+    executeTask(async () => {
+      setInvitableCommunities(await fetchInvitableCommunities())
+    })
+  }, [])
+
+  const handleInviteToCommunity = (community: CommunityListItem): void => {
+    setInviteSubmenuOpen(false)
+    setMoreMenuOpen(false)
+    executeTask(async () => {
+      await inviteUserToCommunity(community, userId)
+    })
+  }
 
   return (
     <PopupBackdrop>
@@ -298,6 +326,51 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
                       }}
                       uiBackground={{ color: COLOR.BLACK }}
                     >
+                      {invitableCommunities.length > 0 ? (
+                        <UiEntity
+                          uiTransform={{
+                            flexDirection: 'column',
+                            positionType: 'relative'
+                          }}
+                        >
+                          <ButtonComponent
+                            variant="black"
+                            value="<b>Invite to Community</b>"
+                            icon={{
+                              atlasName: 'icons',
+                              spriteName: 'Members'
+                            }}
+                            onMouseDown={() => {
+                              setInviteSubmenuOpen(!inviteSubmenuOpen)
+                            }}
+                          />
+                          {inviteSubmenuOpen && (
+                            <UiEntity
+                              uiTransform={{
+                                positionType: 'absolute',
+                                position: { top: 0, right: '100%' },
+                                margin: { right: fontSize * 0.3 },
+                                flexDirection: 'column',
+                                padding: fontSize * 0.3,
+                                borderRadius: fontSize / 2,
+                                zIndex: 11
+                              }}
+                              uiBackground={{ color: COLOR.BLACK }}
+                            >
+                              {invitableCommunities.map((c) => (
+                                <ButtonComponent
+                                  key={`invite-${c.id}`}
+                                  variant="black"
+                                  value={`<b>${c.name}</b>`}
+                                  onMouseDown={() => {
+                                    handleInviteToCommunity(c)
+                                  }}
+                                />
+                              ))}
+                            </UiEntity>
+                          )}
+                        </UiEntity>
+                      ) : null}
                       <BlockUserButton
                         userId={userId}
                         isBlocked={isBlocked}

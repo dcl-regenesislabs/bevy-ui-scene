@@ -51,6 +51,11 @@ import { getNameWithHashPostfix } from '../../../service/chat/chat-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { PlayerNameComponent } from '../../../components/player-name-component'
+import {
+  fetchInvitableCommunities,
+  inviteUserToCommunity
+} from '../../../service/community-invites-service'
+import { type CommunityListItem } from '../../../service/communities-types'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
@@ -166,6 +171,9 @@ function ProfileContent({
           <ViewPassportButton player={player} />
           {player.userId !== getPlayer()?.userId ? (
             <MentionButton player={player} />
+          ) : null}
+          {player.userId !== getPlayer()?.userId ? (
+            <InviteToCommunityButton player={player} />
           ) : null}
           {player.userId !== getPlayer()?.userId &&
           getFeatureFlag(FEATURES.FRIENDS) ? (
@@ -380,4 +388,79 @@ function ReportUserButton({
 
 function closeDialog(): void {
   store.dispatch(closeLastPopupAction())
+}
+
+/**
+ * Shows a "Invite to Community" item when the current user is owner or
+ * moderator of at least one community. Clicking expands a submenu to the
+ * LEFT of the profile popup listing those communities; clicking a name
+ * fires the invite and closes everything (toast confirms).
+ *
+ * Mirrors the same widget used in passport-popup so a click in either
+ * surface yields the same outcome.
+ */
+function InviteToCommunityButton({
+  player
+}: {
+  player: GetPlayerDataRes
+}): ReactElement | null {
+  const [communities, setCommunities] = useState<CommunityListItem[]>([])
+  const [submenuOpen, setSubmenuOpen] = useState<boolean>(false)
+  const fontSize = getFontSize({ context: CONTEXT.SIDE })
+
+  useEffect(() => {
+    executeTask(async () => {
+      setCommunities(await fetchInvitableCommunities())
+    })
+  }, [])
+
+  if (communities.length === 0) return null
+
+  const onPick = (c: CommunityListItem): void => {
+    setSubmenuOpen(false)
+    executeTask(async () => {
+      await inviteUserToCommunity(c, player.userId)
+      closeDialog()
+    })
+  }
+
+  return (
+    <UiEntity uiTransform={{ flexDirection: 'column', positionType: 'relative' }}>
+      <ButtonTextIcon
+        key={'profile-button-invite-' + player.userId}
+        value={'<b>Invite to Community</b>'}
+        onMouseDown={() => {
+          setSubmenuOpen(!submenuOpen)
+        }}
+        icon={{
+          atlasName: 'icons',
+          spriteName: 'Members'
+        }}
+      />
+      {submenuOpen && (
+        <UiEntity
+          uiTransform={{
+            positionType: 'absolute',
+            position: { top: 0, right: '100%' },
+            margin: { right: fontSize * 0.3 },
+            flexDirection: 'column',
+            padding: fontSize * 0.3,
+            borderRadius: fontSize / 2,
+            zIndex: 11
+          }}
+          uiBackground={{ color: COLOR.BLACK_POPUP_BACKGROUND }}
+        >
+          {communities.map((c) => (
+            <ButtonTextIcon
+              key={'invite-pick-' + c.id}
+              value={`<b>${c.name}</b>`}
+              onMouseDown={() => {
+                onPick(c)
+              }}
+            />
+          ))}
+        </UiEntity>
+      )}
+    </UiEntity>
+  )
 }

@@ -246,6 +246,8 @@ function getTitleFromNotification(notification: Notification): string {
       return 'Friend request received'
     case 'social_service_friendship_rejected':
       return 'Friend request rejected'
+    case 'community_invite_sent':
+      return 'Invitation sent'
     case 'item_sold':
       return 'Item sold'
     default:

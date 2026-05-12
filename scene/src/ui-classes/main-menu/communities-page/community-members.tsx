@@ -523,7 +523,8 @@ function CompactMemberRow({
   hasClaimedName,
   profilePictureUrl,
   actionLabel,
-  onAction
+  onAction,
+  onMenuClick
 }: {
   address: string
   name: string
@@ -531,6 +532,9 @@ function CompactMemberRow({
   profilePictureUrl?: string
   actionLabel: string
   onAction: () => void
+  /** When provided, renders a `ThinMenuButton` after the main action that
+   *  opens the user-profile menu (HUD_POPUP_TYPE.PROFILE_MENU). */
+  onMenuClick?: () => void
   key: string
 }): ReactElement {
   const fontSize = getFontSize({
@@ -594,6 +598,17 @@ function CompactMemberRow({
         }}
         onMouseDown={onAction}
       />
+      {onMenuClick != null ? (
+        <ThinMenuButton
+          fontSize={fontSize}
+          uiTransform={{
+            margin: { left: fontSize * 0.3 },
+            height: fontSize * 2
+          }}
+          backgroundColor={COLOR.WHITE_OPACITY_1}
+          onMouseDown={onMenuClick}
+        />
+      ) : null}
     </Row>
   )
 }
@@ -653,6 +668,26 @@ function InvitedList({ communityId }: { communityId: string }): ReactElement {
           actionLabel="CANCEL INVITE"
           onAction={() => {
             onCancelInvite(entry)
+          }}
+          onMenuClick={() => {
+            // Surface the user-profile context menu (View Passport / Mention
+            // / Invite to Community / Block / Report) for this invitee.
+            // PROFILE_MENU only needs userId, name, hasClaimedName and
+            // isGuest from the `player` payload, so we synthesise a minimal
+            // GetPlayerDataRes-shaped object from the invite entry.
+            store.dispatch(
+              pushPopupAction({
+                type: HUD_POPUP_TYPE.PROFILE_MENU,
+                data: {
+                  player: {
+                    userId: entry.memberAddress.toLowerCase(),
+                    name: entry.name,
+                    hasClaimedName: entry.hasClaimedName,
+                    isGuest: false
+                  }
+                }
+              })
+            )
           }}
         />
       ))}
