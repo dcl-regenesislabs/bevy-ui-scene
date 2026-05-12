@@ -1,5 +1,6 @@
 import ReactEcs, { Input, type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { MainContent, ResponsiveContent } from '../backpack-page/BackpackPage'
+import { MainContent } from '../backpack-page/BackpackPage'
+import { ResponsiveContent } from '../../../components/responsive-content'
 import {
   LeftSection,
   NavBar,

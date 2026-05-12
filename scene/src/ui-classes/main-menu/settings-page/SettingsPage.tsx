@@ -4,7 +4,8 @@ import {
   getContentScaleRatio,
   getViewportHeight
 } from '../../../service/canvas-ratio'
-import { MainContent, ResponsiveContent } from '../backpack-page/BackpackPage'
+import { MainContent } from '../backpack-page/BackpackPage'
+import { ResponsiveContent } from '../../../components/responsive-content'
 import {
   LeftSection,
   NavBar,

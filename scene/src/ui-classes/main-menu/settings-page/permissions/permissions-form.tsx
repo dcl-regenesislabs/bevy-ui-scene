@@ -5,7 +5,7 @@ import { Column, Row } from '../../../../components/layout'
 import { COLOR } from '../../../../components/color-palette'
 
 import { noop } from '../../../../utils/function-utils'
-import { ResponsiveContent } from '../../backpack-page/BackpackPage'
+import { ResponsiveContent } from '../../../../components/responsive-content'
 import { DropdownComponent } from '../../../../components/dropdown-component'
 import useState = ReactEcs.useState
 import { BevyApi } from '../../../../bevy-api'

@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
-import { ResponsiveContent } from '../backpack-page/BackpackPage'
+import { ResponsiveContent } from '../../../components/responsive-content'
 import { Column } from '../../../components/layout'
 import { type CommunityListItem } from '../../../service/communities-types'
 import {

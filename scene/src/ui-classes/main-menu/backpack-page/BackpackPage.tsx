@@ -1,11 +1,7 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { engine, UiCanvasInformation } from '@dcl/sdk/ecs'
 import { Color4 } from '@dcl/sdk/math'
-import {
-  getContentScaleRatio,
-  getContentHeight,
-  getContentWidth
-} from '../../../service/canvas-ratio'
+import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { fetchWearablesData } from '../../../utils/wearables-promise-utils'
 import { getPlayer } from '@dcl/sdk/src/players'
 import type {
@@ -45,6 +41,7 @@ import { getRealm } from '~system/Runtime'
 import { catalystMetadataMap } from '../../../utils/catalyst-metadata-map'
 
 import { BackpackNavBar } from './BackpackNavBar'
+import { ResponsiveContent } from '../../../components/responsive-content'
 import { updatePageGeneric } from './backpack-service'
 import { OutfitsCatalog } from './OutfitsCatalog'
 import { fetchPlayerOutfitMetadata } from '../../../utils/outfits-promise-utils'
@@ -224,25 +221,6 @@ export function MainContent({
   )
 }
 
-export function ResponsiveContent({
-  children
-}: {
-  children?: ReactElement
-}): ReactElement {
-  return (
-    <UiEntity
-      uiTransform={{
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        width: getContentWidth(),
-        height: getContentHeight() * 1.1
-      }}
-    >
-      {children}
-    </UiEntity>
-  )
-}
 
 function nullAsEmptyString(v: any): any {
   if (!v) return ''
