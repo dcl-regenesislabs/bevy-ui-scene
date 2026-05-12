@@ -31,16 +31,14 @@ import { PlayerNameComponent } from '../../../components/player-name-component'
 import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import Icon from '../../../components/icon/Icon'
 import { ThinMenuButton } from '../../../components/thin-menu-button'
-import { BevyApi } from '../../../bevy-api'
+import { FriendButton } from '../../../components/friend-button'
+import { type GetPlayerDataRes } from '../../../utils/definitions'
 import { getPlayer } from '@dcl/sdk/players'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
-import { showErrorPopup } from '../../../service/error-popup-service'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import { showConfirmPopup } from '../../../components/confirm-popup'
 import { NavButton } from '../../../components/nav-button/NavButton'
-import { markSelfInitiatedFriendshipAction } from '../../../service/friend-connectivity-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -48,6 +46,20 @@ function roleBadgeLabel(role: string): string | null {
   if (role === 'owner') return 'Owner'
   if (role === 'moderator') return 'Moderator'
   return null
+}
+
+/**
+ * Build a minimal `GetPlayerDataRes`-shaped object from a community
+ * member, just for `FriendButton`'s `player` prop. The button only reads
+ * `userId`, `name`, `isGuest` — the rest of the type is untouched, so a
+ * single cast keeps TS happy without us inventing fake wearables/emotes.
+ */
+function memberAsPlayerStub(member: CommunityMember): GetPlayerDataRes {
+  return {
+    userId: member.memberAddress.toLowerCase(),
+    name: member.name,
+    isGuest: false
+  } as unknown as GetPlayerDataRes
 }
 
 function CommunityMemberItem({
@@ -75,62 +87,12 @@ function CommunityMemberItem({
   const badge = roleBadgeLabel(member.role)
   const avatarSize = fontSize * 2.5
 
-  const [friendshipStatus, setFriendshipStatus] = useState<
-    CommunityFriendshipStatus | undefined
-  >(member.friendshipStatus)
-  const [acting, setActing] = useState<boolean>(false)
+  // `friendshipStatus` is read-only from the API payload — `FriendButton`
+  // owns its own internal state for optimistic updates.
+  const friendshipStatus = member.friendshipStatus
   const isSelf =
     (getPlayer()?.userId ?? '').toLowerCase() ===
     member.memberAddress.toLowerCase()
-
-  const onAccept = (): void => {
-    if (acting) return
-    const previous = friendshipStatus
-    // Optimistic: mark as friend so the button disappears.
-    setFriendshipStatus(CommunityFriendshipStatus.FRIEND)
-    setActing(true)
-    executeTask(async () => {
-      try {
-        markSelfInitiatedFriendshipAction('accept', member.memberAddress)
-        await BevyApi.social.acceptFriendRequest(member.memberAddress)
-        // Mutate the shared object so the members cache stays consistent.
-        member.friendshipStatus = CommunityFriendshipStatus.FRIEND
-        store.dispatch(
-          pushPopupAction({
-            type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
-            data: {
-              variant: 'accepted',
-              address: member.memberAddress,
-              name: member.name,
-              hasClaimedName: member.hasClaimedName
-            }
-          })
-        )
-      } catch (error) {
-        setFriendshipStatus(previous)
-        showErrorPopup(
-          error instanceof Error ? error : new Error(String(error)),
-          'acceptFriendRequest'
-        )
-      } finally {
-        setActing(false)
-      }
-    })
-  }
-
-  const onAddFriend = (): void => {
-    store.dispatch(
-      pushPopupAction({
-        type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
-        data: {
-          address: member.memberAddress,
-          name: member.name,
-          hasClaimedName: member.hasClaimedName,
-          profilePictureUrl: member.profilePictureUrl
-        }
-      })
-    )
-  }
 
   const openPassport = (): void => {
     store.dispatch(
@@ -212,52 +174,27 @@ function CommunityMemberItem({
       {/* Spacer */}
       <UiEntity uiTransform={{ flexGrow: 1 }} />
 
-      {/* Action button — hidden when looking at our own row or when we're
-          already friends. */}
-      {!isSelf && friendshipStatus !== CommunityFriendshipStatus.FRIEND && (
-        <UiEntity
-          uiTransform={{
-            borderRadius: fontSize / 2,
-            height: fontSize * 2,
-            padding: {
-              left: fontSize * 0.5,
-              right: fontSize * 0.6
-            },
-            flexShrink: 0,
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'row',
-            opacity: acting ? getLoadingAlphaValue() : 1
-          }}
-          uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
-          onMouseDown={
+      {/* Friend button — owns the full friend-state lifecycle (add /
+          accept / cancel-request / unfriend). Fully seeded from data the
+          community list already loaded (name + friendshipStatus), so the
+          button renders the right state immediately and skips ALL of its
+          internal fetches: `resolvePlayerData`, `getFriends`,
+          `getReceivedFriendRequests`, `getSentFriendRequests`. Hidden on
+          my own row. The cast is safe: FriendButton only reads
+          `userId`, `name`, `isGuest` off the player payload. */}
+      {!isSelf ? (
+        <FriendButton
+          player={memberAsPlayerStub(member)}
+          fontSize={fontSizeSmall}
+          isFriend={friendshipStatus === CommunityFriendshipStatus.FRIEND}
+          hasIncomingRequest={
             friendshipStatus === CommunityFriendshipStatus.REQUEST_RECEIVED
-              ? onAccept
-              : onAddFriend
           }
-        >
-          <Icon
-            icon={
-              friendshipStatus === CommunityFriendshipStatus.REQUEST_RECEIVED
-                ? { spriteName: 'Check', atlasName: 'icons' }
-                : { spriteName: 'Add', atlasName: 'context' }
-            }
-            iconSize={fontSize}
-            iconColor={COLOR.WHITE}
-          />
-          <UiEntity
-            uiText={{
-              value:
-                friendshipStatus === CommunityFriendshipStatus.REQUEST_RECEIVED
-                  ? '<b>ACCEPT FRIEND</b>'
-                  : '<b>ADD FRIEND</b>',
-              fontSize: fontSizeSmall,
-              color: COLOR.WHITE,
-              textWrap: 'nowrap'
-            }}
-          />
-        </UiEntity>
-      )}
+          hasOutgoingRequest={
+            friendshipStatus === CommunityFriendshipStatus.REQUEST_SENT
+          }
+        />
+      ) : null}
 
       {/* Profile menu button. Hidden for the row that represents me —
           the community-member menu has no useful actions on yourself
