@@ -247,7 +247,7 @@ export const PermissionsForm = ({
           </Column>
         </Column>
         {hoveredPermission && (
-          <Column>
+          <Column uiTransform={{ width: '40%' }}>
             <UiEntity
               uiText={{
                 value: hoveredPermissionDefinition
@@ -273,7 +273,7 @@ export const PermissionsForm = ({
           </Column>
         )}
         {!hoveredPermission && (
-          <Column>
+          <Column uiTransform={{ width: '40%' }}>
             <UiEntity
               uiText={{
                 value: 'Permissions',
