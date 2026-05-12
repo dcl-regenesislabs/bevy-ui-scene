@@ -14,6 +14,7 @@ import {
 } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
 import { useAlign } from '../service/align-context'
+import { useGrowContext } from '../service/grow-context'
 import { getLoadingAlphaValue } from '../service/loading-alpha-color'
 import { COLOR } from './color-palette'
 
@@ -128,6 +129,7 @@ function ButtonComponent(props: {
   const fromContext = useLayoutContext()
   const layoutContext = props.layoutContext ?? fromContext
   const align = useAlign()
+  const grow = useGrowContext()
   const [hovered, setHovered] = ReactEcs.useState<boolean>(false)
 
   // Map our `Align` semantic to Yoga's `justifyContent`. A button outside
@@ -183,6 +185,18 @@ function ButtonComponent(props: {
   // less breathing room (or vertical padding too).
   const defaultPadding = { left: fontSize * 0.8, right: fontSize * 0.8 }
 
+  // When the nearest flex container opts in via `<Row childrenGrow>`,
+  // every sibling claims equal width (`flexGrow: 1` + `flexBasis: 0`) and
+  // the symmetric horizontal margin pairs with the Row's negative outer
+  // margin to produce a uniform `gap` between siblings.
+  const growTransform = grow.active
+    ? {
+        flexGrow: 1,
+        flexBasis: 0,
+        margin: { left: grow.gap / 2, right: grow.gap / 2 }
+      }
+    : {}
+
   return (
     <UiEntity
       uiTransform={{
@@ -194,6 +208,7 @@ function ButtonComponent(props: {
         borderRadius,
         padding: defaultPadding,
         opacity,
+        ...growTransform,
         ...props.uiTransform
       }}
       uiBackground={{ color: bgColor }}

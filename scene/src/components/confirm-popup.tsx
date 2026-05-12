@@ -179,25 +179,18 @@ export const ConfirmPopup: Popup = ({ shownPopup }) => {
           />
         )}
 
-        <Row
-          uiTransform={{
-            width: '100%',
-            justifyContent: 'center'
-          }}
-        >
+        <Row childrenGrow childrenGap={fontSize / 2}>
           <ButtonComponent
-            uiTransform={{ flexGrow: 1 }}
             variant="subtle"
             onMouseDown={onCancel}
             value={`<b>${data.cancelLabel ?? 'CANCEL'}</b>`}
           />
           <ButtonComponent
-            uiTransform={{ flexGrow: 1 }}
             loading={submitting}
-            variant={'primary'}
+            variant="primary"
             onMouseDown={onConfirm}
             value={`<b>${data.confirmLabel ?? 'CONFIRM'}</b>`}
-          ></ButtonComponent>
+          />
         </Row>
       </Column>
     </PopupBackdrop>

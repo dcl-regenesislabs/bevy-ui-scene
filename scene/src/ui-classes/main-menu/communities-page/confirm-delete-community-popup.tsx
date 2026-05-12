@@ -129,16 +129,10 @@ export const ConfirmDeleteCommunityPopup: Popup = ({ shownPopup }) => {
           onChange={setConfirmName}
         />
 
-        <Row
-          uiTransform={{
-            width: '100%',
-            justifyContent: 'center'
-          }}
-        >
+        <Row childrenGrow childrenGap={fontSize / 2}>
           <ButtonComponent
             variant="subtle"
             value="<b>CANCEL</b>"
-            uiTransform={{ minWidth: '50%' }}
             onMouseDown={() => {
               if (submitting) return
               store.dispatch(closeLastPopupAction())
@@ -149,7 +143,6 @@ export const ConfirmDeleteCommunityPopup: Popup = ({ shownPopup }) => {
             value="<b>DELETE COMMUNITY</b>"
             loading={submitting}
             disabled={!canDelete}
-            uiTransform={{ minWidth: '50%' }}
             onMouseDown={onDelete}
           />
         </Row>

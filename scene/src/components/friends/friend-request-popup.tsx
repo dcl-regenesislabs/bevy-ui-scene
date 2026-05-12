@@ -303,22 +303,18 @@ function FriendRequestPopupContent({
       ) : null}
 
       <Row
-        uiTransform={{
-          width: '100%',
-          justifyContent: 'center',
-          margin: { bottom: dismissLabel ? fontSize : 0 }
-        }}
+        childrenGrow
+        childrenGap={fontSize / 2}
+        uiTransform={{ margin: { bottom: dismissLabel ? fontSize : 0 } }}
       >
         <ButtonComponent
           variant="subtle"
           value={`<b>${secondaryLabel}</b>`}
-          uiTransform={{ minWidth: '50%' }}
           onMouseDown={onSecondary}
         />
         <ButtonComponent
           variant="primary"
           value={`<b>${primaryLabel}</b>`}
-          uiTransform={{ minWidth: '50%' }}
           onMouseDown={onPrimary}
         />
       </Row>

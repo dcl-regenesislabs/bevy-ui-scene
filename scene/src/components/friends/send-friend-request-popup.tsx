@@ -147,17 +147,11 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
           }}
         />
 
-        <Row
-          uiTransform={{
-            width: '100%',
-            justifyContent: 'center'
-          }}
-        >
+        <Row childrenGrow childrenGap={fontSize / 2}>
           <ButtonComponent
             variant="subtle"
             value="<b>CANCEL</b>"
             loading={submitting}
-            uiTransform={{ minWidth: '50%' }}
             onMouseDown={() => {
               store.dispatch(closeLastPopupAction())
             }}
@@ -166,7 +160,6 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
             variant="primary"
             value="<b>SEND</b>"
             loading={submitting}
-            uiTransform={{ minWidth: '50%' }}
             onMouseDown={() => {
               if (submitting) return
               setSubmitting(true)
