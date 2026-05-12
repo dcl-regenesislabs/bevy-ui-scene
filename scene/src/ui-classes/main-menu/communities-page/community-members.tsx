@@ -153,7 +153,7 @@ function CommunityMemberItem({
   return (
     <Row
       uiTransform={{
-        width: '42%',
+        width: '48%',
         height: fontSize * 4,
         alignItems: 'center',
         padding: { left: fontSize, right: fontSize * 2 },
@@ -266,7 +266,7 @@ function CommunityMemberItem({
         <ThinMenuButton
           fontSize={fontSize}
           uiTransform={{
-            margin: { left: fontSize * 0.3 },
+            margin: { left: fontSize / 2 },
             height: fontSize * 2
           }}
           onMouseDown={openProfileMenu}
@@ -614,7 +614,6 @@ function CompactMemberRow({
       />
       {onMenuClick != null ? (
         <ThinMenuButton
-          fontSize={fontSize}
           uiTransform={{
             margin: { left: fontSize * 0.3 },
             height: fontSize * 2

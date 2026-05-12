@@ -4,7 +4,6 @@ import ReactEcs, {
   UiEntity,
   type UiTransformProps
 } from '@dcl/sdk/react-ecs'
-import { type Color4 } from '@dcl/sdk/math'
 import { type AtlasIcon } from '../utils/definitions'
 import Icon from './icon/Icon'
 import {
@@ -17,59 +16,9 @@ import { useAlign } from '../service/align-context'
 import { useGrowContext } from '../service/grow-context'
 import { getLoadingAlphaValue } from '../service/loading-alpha-color'
 import { COLOR } from './color-palette'
+import { type ButtonVariant, VARIANT_STYLES } from './button-variants'
 
-export type ButtonVariant = 'transparent' | 'subtle' | 'primary' | 'black'
-
-type VariantStyle = {
-  bg: { base: Color4; hover: Color4; active: Color4 }
-  textColor: { base: Color4; hover?: Color4; active?: Color4 }
-  borderColor: Color4
-}
-
-// Every variant reserves a layout slot for a thin border (width is
-// computed from `BORDER_THIN` token at render time so it scales with
-// the layout context). Variants that don't want a visible border use
-// `BLACK_TRANSPARENT` so the slot stays reserved — that way swapping
-// to a coloured border on hover (e.g. via `destructiveHover`) doesn't
-// shift the surrounding layout.
-const VARIANT_STYLES: Record<ButtonVariant, VariantStyle> = {
-  transparent: {
-    bg: {
-      base: COLOR.BLACK_TRANSPARENT,
-      hover: COLOR.WHITE_OPACITY_1,
-      active: COLOR.WHITE_OPACITY_2
-    },
-    textColor: { base: COLOR.WHITE },
-    borderColor: COLOR.BLACK_TRANSPARENT
-  },
-  subtle: {
-    bg: {
-      base: COLOR.WHITE_OPACITY_0,
-      hover: COLOR.WHITE_OPACITY_2,
-      active: COLOR.WHITE_OPACITY_3
-    },
-    textColor: { base: COLOR.WHITE },
-    borderColor: COLOR.BLACK_TRANSPARENT
-  },
-  primary: {
-    bg: {
-      base: COLOR.BUTTON_PRIMARY,
-      hover: COLOR.BUTTON_PRIMARY_HOVER,
-      active: COLOR.BUTTON_PRIMARY_HOVER
-    },
-    textColor: { base: COLOR.WHITE },
-    borderColor: COLOR.BLACK_TRANSPARENT
-  },
-  black: {
-    bg: {
-      base: COLOR.BLACK,
-      hover: COLOR.MENU_ITEM_BACKGROUND,
-      active: COLOR.MENU_ITEM_BACKGROUND
-    },
-    textColor: { base: COLOR.WHITE },
-    borderColor: COLOR.BLACK_TRANSPARENT
-  }
-}
+export type { ButtonVariant }
 
 /**
  * Generic clickable button (text and/or icon) with a variant-driven

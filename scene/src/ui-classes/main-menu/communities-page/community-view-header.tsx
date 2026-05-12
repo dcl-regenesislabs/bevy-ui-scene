@@ -319,13 +319,9 @@ export function CommunityViewHeader({
               />
               <UiEntity uiTransform={{ width: 'auto' }}>
                 <ThinMenuButton
-                  fontSize={fontSize}
+                  variant={'subtle'}
+                  fontSize={fontSizeSmall}
                   backgroundColor={COLOR.BLACK_TRANSPARENT}
-                  uiTransform={{
-                    borderWidth: fontSize / 10,
-                    borderColor: COLOR.WHITE,
-                    borderRadius: fontSize / 2
-                  }}
                   onMouseDown={() => {
                     setOwnerMenuOpen(!ownerMenuOpen)
                   }}
