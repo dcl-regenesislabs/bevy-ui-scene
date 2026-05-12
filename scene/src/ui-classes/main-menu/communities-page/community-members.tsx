@@ -62,7 +62,7 @@ function CommunityMemberItem({
 }): ReactElement {
   const fontSize = getFontSize({
     context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.BODY
+    token: TYPOGRAPHY_TOKENS.BODY_S
   })
   const fontSizeSmall = getFontSize({
     context: CONTEXT.DIALOG,
@@ -259,13 +259,20 @@ function CommunityMemberItem({
         </UiEntity>
       )}
 
-      {/* Profile menu button */}
-      <ThinMenuButton
-        fontSize={fontSize}
-        uiTransform={{ margin: { left: fontSize * 0.3 }, height: fontSize * 2 }}
-        onMouseDown={openProfileMenu}
-        backgroundColor={COLOR.WHITE_OPACITY_1}
-      />
+      {/* Profile menu button. Hidden for the row that represents me —
+          the community-member menu has no useful actions on yourself
+          (no promote/demote/kick/block-self) and would just clutter the UI. */}
+      {!isSelf ? (
+        <ThinMenuButton
+          fontSize={fontSize}
+          uiTransform={{
+            margin: { left: fontSize * 0.3 },
+            height: fontSize * 2
+          }}
+          onMouseDown={openProfileMenu}
+          backgroundColor={COLOR.WHITE_OPACITY_1}
+        />
+      ) : null}
     </Row>
   )
 }
@@ -431,7 +438,14 @@ function MembersList({
   const rows = chunk(members, 2)
 
   return (
-    <Column uiTransform={{ width: '100%' }}>
+    <Column
+      uiTransform={{
+        width: '100%',
+        borderWidth: 5,
+        borderColor: COLOR.RED,
+        borderRadius: 1
+      }}
+    >
       {rows.map((pair, rowIndex) => (
         <Row key={rowIndex} uiTransform={{ width: '100%' }}>
           {pair.map((member) => (
@@ -616,6 +630,7 @@ function CompactMemberRow({
 function InvitedList({ communityId }: { communityId: string }): ReactElement {
   const [invites, setInvites] = useState<CommunityInviteEntry[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const myAddress = (getPlayer()?.userId ?? '').toLowerCase()
 
   const refetch = (): void => {
     executeTask(async () => {
@@ -658,39 +673,47 @@ function InvitedList({ communityId }: { communityId: string }): ReactElement {
 
   return (
     <Column uiTransform={{ width: '100%' }}>
-      {invites.map((entry) => (
-        <CompactMemberRow
-          key={entry.id}
-          address={entry.memberAddress}
-          name={entry.name}
-          hasClaimedName={entry.hasClaimedName}
-          profilePictureUrl={entry.profilePictureUrl}
-          actionLabel="CANCEL INVITE"
-          onAction={() => {
-            onCancelInvite(entry)
-          }}
-          onMenuClick={() => {
-            // Surface the user-profile context menu (View Passport / Mention
-            // / Invite to Community / Block / Report) for this invitee.
-            // PROFILE_MENU only needs userId, name, hasClaimedName and
-            // isGuest from the `player` payload, so we synthesise a minimal
-            // GetPlayerDataRes-shaped object from the invite entry.
-            store.dispatch(
-              pushPopupAction({
-                type: HUD_POPUP_TYPE.PROFILE_MENU,
-                data: {
-                  player: {
-                    userId: entry.memberAddress.toLowerCase(),
-                    name: entry.name,
-                    hasClaimedName: entry.hasClaimedName,
-                    isGuest: false
+      {invites.map((entry) => {
+        const isSelf = entry.memberAddress.toLowerCase() === myAddress
+        return (
+          <CompactMemberRow
+            key={entry.id}
+            address={entry.memberAddress}
+            name={entry.name}
+            hasClaimedName={entry.hasClaimedName}
+            profilePictureUrl={entry.profilePictureUrl}
+            actionLabel="CANCEL INVITE"
+            onAction={() => {
+              onCancelInvite(entry)
+            }}
+            onMenuClick={
+              isSelf
+                ? undefined
+                : () => {
+                    // Surface the user-profile context menu (View Passport /
+                    // Mention / Invite to Community / Block / Report) for
+                    // this invitee. PROFILE_MENU only needs userId, name,
+                    // hasClaimedName and isGuest from the `player` payload,
+                    // so we synthesise a minimal GetPlayerDataRes-shaped
+                    // object from the invite entry.
+                    store.dispatch(
+                      pushPopupAction({
+                        type: HUD_POPUP_TYPE.PROFILE_MENU,
+                        data: {
+                          player: {
+                            userId: entry.memberAddress.toLowerCase(),
+                            name: entry.name,
+                            hasClaimedName: entry.hasClaimedName,
+                            isGuest: false
+                          }
+                        }
+                      })
+                    )
                   }
-                }
-              })
-            )
-          }}
-        />
-      ))}
+            }
+          />
+        )
+      })}
     </Column>
   )
 }

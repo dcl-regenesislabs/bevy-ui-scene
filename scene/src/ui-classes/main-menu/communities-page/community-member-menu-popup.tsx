@@ -41,6 +41,7 @@ import {
 } from '../../../service/communities-types'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
+import { MenuSection } from '../../../components/menu-section'
 
 export type CommunityMemberMenuData = {
   member: CommunityMember
@@ -130,31 +131,37 @@ function CommunityMemberMenuContent({
         <MemberHeader member={member} />
 
         <Divider />
+        <MenuSection>
+          {!isSelf && <ViewProfileButton member={member} />}
 
-        {!isSelf && <ViewProfileButton member={member} />}
+          {(canPromote || canDemote || canTransferOwnership) && <Divider />}
 
-        {(canPromote || canDemote || canTransferOwnership) && <Divider />}
-        {canPromote && (
-          <PromoteModeratorButton member={member} communityId={communityId} />
-        )}
-        {canDemote && (
-          <DemoteModeratorButton member={member} communityId={communityId} />
-        )}
-        {canTransferOwnership && (
-          <TransferOwnershipButton member={member} communityId={communityId} />
-        )}
+          {canPromote && (
+            <PromoteModeratorButton member={member} communityId={communityId} />
+          )}
+          {canDemote && (
+            <DemoteModeratorButton member={member} communityId={communityId} />
+          )}
+          {canTransferOwnership && (
+            <TransferOwnershipButton
+              member={member}
+              communityId={communityId}
+            />
+          )}
 
-        {(canRemove || canBan) && <Divider />}
-        {canRemove && (
-          <RemoveMemberButton member={member} communityId={communityId} />
-        )}
-        {canBan && (
-          <BanMemberButton member={member} communityId={communityId} />
-        )}
+          {(canRemove || canBan) && <Divider />}
+          {canRemove && (
+            <RemoveMemberButton member={member} communityId={communityId} />
+          )}
+          {canBan && (
+            <BanMemberButton member={member} communityId={communityId} />
+          )}
 
-        {!isSelf && <Divider />}
-        {!isSelf && <BlockUserButton member={member} />}
-        {!isSelf && <ReportUserButton member={member} />}
+          {!isSelf && <Divider />}
+
+          {!isSelf && <BlockUserButton member={member} />}
+          {!isSelf && <ReportUserButton member={member} />}
+        </MenuSection>
       </UiEntity>
     </UiEntity>
   )
@@ -228,16 +235,6 @@ function Divider(): ReactElement {
   )
 }
 
-const ROW_BUTTON_TRANSFORM: UiTransformProps = {
-  width: '90%',
-  height: getContentScaleRatio() * 64,
-  justifyContent: 'flex-start',
-  alignSelf: 'center',
-  borderWidth: 0,
-  margin: { top: '1%' },
-  padding: { left: '4%' }
-}
-
 function MenuButton({
   label,
   iconName,
@@ -260,7 +257,6 @@ function MenuButton({
   const isDestructive = color === COLOR.BUTTON_PRIMARY
   return (
     <ButtonTextIcon
-      uiTransform={ROW_BUTTON_TRANSFORM}
       variant="transparent"
       destructiveHover={isDestructive}
       icon={{ atlasName: iconAtlas, spriteName: iconName }}
