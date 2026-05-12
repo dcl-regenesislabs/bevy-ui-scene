@@ -147,7 +147,8 @@ export default class MainHud {
     // ESC closes the top popup, peeling off one per press (same semantics
     // as a backdrop click). Skipped while any popup is mid-submit (via the
     // shared `lastPopupSubmitting` flag set by the popup's submit handler).
-    listenSystemAction('Escape', (pressed: boolean) => {
+    listenSystemAction('Cancel', (pressed: boolean) => {
+      console.log('Escape!!!!!!')
       if (!pressed) return
       const popups = store.getState().hud.shownPopups
       if (popups.length === 0) return
