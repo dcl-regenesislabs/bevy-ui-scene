@@ -9,6 +9,7 @@ import { noop } from '../../utils/function-utils'
 import { Color4 } from '@dcl/sdk/math'
 
 import { getContentScaleRatio } from '../../service/canvas-ratio'
+import useState = ReactEcs.useState
 
 type BasicSliderProps = {
   children?: ReactElement
@@ -41,6 +42,11 @@ export function BasicSlider({
     100,
     Math.max(0, ((value - min) / (max - min)) * 100)
   )
+  // Sub-step drag accumulator: `percentage` above is derived from the rounded
+  // `value` prop, so each drag tick re-snaps to the last step and slow drags
+  // whose per-frame delta stays inside one step never advance. Carry the
+  // un-snapped percentage across frames here, reset on drag end.
+  const [drag] = useState<{ rawPercent: number | null }>({ rawPercent: null })
   return (
     <UiEntity uiTransform={uiTransform}>
       {children}
@@ -93,10 +99,12 @@ export function BasicSlider({
         onMouseDragLocked={() => {
           const pointerInfo = PrimaryPointerInfo.get(engine.RootEntity)
           const deltaX: number = pointerInfo?.screenDelta?.x ?? 0
+          const basePercent = drag.rawPercent ?? percentage
           const newPercentage = Math.min(
             100,
-            Math.max(0, percentage + deltaX * MOUSE_VELOCITY)
+            Math.max(0, basePercent + deltaX * MOUSE_VELOCITY)
           )
+          drag.rawPercent = newPercentage
           const total = max - min
           let newValue = min + (newPercentage / 100) * total
 
@@ -123,6 +131,7 @@ export function BasicSlider({
           onChange(newValue)
         }}
         onMouseDragEnd={() => {
+          drag.rawPercent = null
           onRelease(value)
         }}
       >
