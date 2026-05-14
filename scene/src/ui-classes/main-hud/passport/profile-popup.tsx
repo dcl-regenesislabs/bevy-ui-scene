@@ -1,7 +1,10 @@
 import type { Popup } from '../../../components/popup-stack'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { getContentScaleRatio } from '../../../service/canvas-ratio'
+import {
+  LayoutContext,
+  useLayoutContext
+} from '../../../service/layout-context'
 import { BORDER_RADIUS_F } from '../../../utils/ui-utils'
 import { noop, setIfNot } from '../../../utils/function-utils'
 import { store } from '../../../state/store'
@@ -13,11 +16,14 @@ import {
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { getPlayer } from '@dcl/sdk/src/players'
 import { getAddressColor } from '../chat-and-logs/ColorByAddress'
-import { Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/layout'
 import { applyMiddleEllipsis } from '../../../utils/urn-utils'
 import { CopyButton } from '../../../components/copy-button'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
 import { BottomBorder } from '../../../components/bottom-border'
+import { FriendButton } from '../../../components/friend-button'
+import { BlockUserButton } from '../../../components/block-user-button'
+import { MenuSection } from '../../../components/menu-section'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { showConfirmPopup } from '../../../components/confirm-popup'
 import { type GetPlayerDataRes } from '../../../utils/definitions'
@@ -30,7 +36,6 @@ import {
 } from '@dcl/sdk/ecs'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
-import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { fetchProfileData } from '../../../utils/passport-promise-utils'
 import { composedUsersData } from '../chat-and-logs/named-users-data-service'
 import {
@@ -38,12 +43,19 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
+import {
+  getViewportHeight,
+  getViewportWidth
+} from '../../../service/canvas-ratio'
 import { getNameWithHashPostfix } from '../../../service/chat/chat-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
-import { BevyApi } from '../../../bevy-api'
-import Icon from '../../../components/icon/Icon'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { PlayerNameComponent } from '../../../components/player-name-component'
+import {
+  fetchInvitableCommunities,
+  inviteUserToCommunity
+} from '../../../service/community-invites-service'
+import { type CommunityListItem } from '../../../service/communities-types'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
@@ -64,16 +76,18 @@ export function setupProfilePopups(): void {
 
 export const ProfileMenuPopup: Popup = ({ shownPopup }) => {
   return (
-    <PopupBackdrop>
-      <ProfileContent
-        data={
-          shownPopup.data as {
-            align: string
-            userId: string
+    <LayoutContext.Provider value={CONTEXT.SIDE}>
+      <PopupBackdrop>
+        <ProfileContent
+          data={
+            shownPopup.data as {
+              align: string
+              userId: string
+            }
           }
-        }
-      />
-    </PopupBackdrop>
+        />
+      </PopupBackdrop>
+    </LayoutContext.Provider>
   )
 }
 
@@ -82,46 +96,48 @@ function ProfileContent({
 }: {
   data: { align?: string; player?: GetPlayerDataRes }
 }): ReactElement | null {
-  const [coords, setCoords] = useState({ x: 0, y: 0 })
-  const width = getContentScaleRatio() * 800
+  const fontSize = getFontSize({ context: useLayoutContext() })
+  const width = fontSize * 18
   const player = data.player
-  useEffect(() => {
-    if (!player) {
-      closeDialog()
-      return
-    }
-    if (data.align === 'left') {
-      setCoords({
-        x: store.getState().viewport.width * 0.045,
-        y: store.getState().viewport.height * 0.018
-      })
-    } else if (data.align === 'right') {
-      setCoords({
-        x:
-          store.getState().viewport.width -
-          width -
-          store.getState().viewport.width * 0.01,
-        y: store.getState().viewport.height * 0.07
-      })
-    } else {
-      const { screenCoordinates } = PrimaryPointerInfo.get(engine.RootEntity)
-      const isOnHalfRightOfScreen =
-        (screenCoordinates?.x ?? 0) > store.getState().viewport.width / 2
-      const isOnHalfBottomOfScreen =
-        (screenCoordinates?.y ?? 0) > store.getState().viewport.height / 2
 
-      setCoords({
-        x: isOnHalfRightOfScreen
-          ? (screenCoordinates?.x ?? 0) - width
-          : screenCoordinates?.x ?? 0,
-        y: isOnHalfBottomOfScreen
-          ? (screenCoordinates?.y ?? 0) - getContentScaleRatio() * 400
-          : screenCoordinates?.y ?? 0
-      })
+  // Capture pointer-derived position once at mount so the popup doesn't
+  // follow subsequent mouse movements. Y always uses the click-flip
+  // (top/bottom anchor based on which half of the screen the click hit).
+  // X depends on `align`: a defined side pins to a fixed corner;
+  // otherwise we also flip X based on which half the click landed in,
+  // so the popup always grows away from the nearest screen edge.
+  const [position] = useState(() => {
+    const { screenCoordinates } = PrimaryPointerInfo.get(engine.RootEntity)
+    const clickX = screenCoordinates?.x ?? getViewportWidth() / 2
+    const clickY = screenCoordinates?.y ?? getViewportHeight() / 2
+    const isOnHalfBottomOfScreen = clickY > getViewportHeight() / 2
+
+    const yAnchor = isOnHalfBottomOfScreen
+      ? { bottom: getViewportHeight() - clickY }
+      : { top: clickY }
+
+    if (data.align === 'left') {
+      return { left: 0 as const, ...yAnchor }
     }
+    if (data.align === 'right') {
+      return { right: 0 as const, ...yAnchor }
+    }
+
+    // No align: flip X based on which half the click landed in. Using
+    // `left: clickX - width` (instead of `right: vpWidth - clickX`) lets
+    // the popup grow leftward without needing extra viewport math here.
+    const isOnHalfRightOfScreen = clickX > getViewportWidth() / 2
+    const xAnchor = isOnHalfRightOfScreen
+      ? { left: clickX - width }
+      : { left: clickX }
+    return { ...xAnchor, ...yAnchor }
+  })
+
+  useEffect(() => {
+    if (!player) closeDialog()
   }, [])
 
-  if (!player || coords.x === 0) return null
+  if (!player) return null
   return (
     <UiEntity
       uiTransform={{
@@ -130,22 +146,17 @@ function ProfileContent({
         borderWidth: 0,
         borderColor: COLOR.TEXT_COLOR,
         flexDirection: 'column',
-        padding: 0,
+        padding: fontSize,
         positionType: 'absolute',
-        position: {
-          left: coords.x,
-          top: coords.y
-        }
+        position
       }}
       onMouseDown={noop}
       uiBackground={{
         color: COLOR.BLACK_POPUP_BACKGROUND
       }}
     >
-      <UiEntity
+      <Column
         uiTransform={{
-          flexDirection: 'column',
-          width: '100%',
           margin: { top: '5%' }
         }}
       >
@@ -156,16 +167,24 @@ function ProfileContent({
             uiTransform={{ height: 1 }}
           />
         </Row>
-        <ViewPassportButton player={player} />
-        {player.userId !== getPlayer()?.userId ? (
-          <MentionButton player={player} />
-        ) : null}
-        {player.userId !== getPlayer()?.userId &&
-        getFeatureFlag(FEATURES.FRIENDS) ? (
-          <BlockUserButton player={player} />
-        ) : null}
+        <MenuSection align="left">
+          <ViewPassportButton player={player} />
+          {player.userId !== getPlayer()?.userId ? (
+            <MentionButton player={player} />
+          ) : null}
+          {player.userId !== getPlayer()?.userId ? (
+            <InviteToCommunityButton player={player} />
+          ) : null}
+          {player.userId !== getPlayer()?.userId &&
+          getFeatureFlag(FEATURES.FRIENDS) ? (
+            <BlockUserButton player={player} />
+          ) : null}
+          {player.userId !== getPlayer()?.userId ? (
+            <ReportUserButton player={player} />
+          ) : null}
+        </MenuSection>
         {/* // TODO Exit / Sign out : OwnProfileButtons({player}) */}
-      </UiEntity>
+      </Column>
     </UiEntity>
   )
 }
@@ -179,12 +198,13 @@ function ProfileHeader({
   const nameColor = hasClaimedName
     ? getAddressColor(player.userId)
     : COLOR.TEXT_COLOR_LIGHT_GREY
+  const fontSize = getFontSize({ context: CONTEXT.SIDE })
   const fontSizeTitleL = getFontSize({
-    context: CONTEXT.DIALOG,
+    context: CONTEXT.SIDE,
     token: TYPOGRAPHY_TOKENS.TITLE_L
   })
   const fontSizeTitleM = getFontSize({
-    context: CONTEXT.DIALOG,
+    context: CONTEXT.SIDE,
     token: TYPOGRAPHY_TOKENS.TITLE_M
   })
   return [
@@ -192,8 +212,8 @@ function ProfileHeader({
       userId={player.userId}
       circleColor={nameColor}
       uiTransform={{
-        width: getContentScaleRatio() * 200,
-        height: getContentScaleRatio() * 200,
+        width: fontSize * 5.5,
+        height: fontSize * 5.5,
         alignSelf: 'center'
       }}
       isGuest={player.isGuest}
@@ -230,8 +250,7 @@ function ProfileHeader({
           <Row
             key={1}
             uiTransform={{
-              justifyContent: 'center',
-              height: getContentScaleRatio() * 36
+              justifyContent: 'center'
             }}
           >
             <UiEntity
@@ -250,20 +269,15 @@ function ProfileHeader({
               }}
             />
           </Row>,
-          ...(getFeatureFlag(FEATURES.FRIENDS)
-            ? [<FriendButton player={player} fontSize={fontSizeTitleL} />]
+          ...(getFeatureFlag(FEATURES.FRIENDS) &&
+          player.userId !== getPlayer()?.userId
+            ? [<FriendButton player={player} />]
             : [])
         ]
       : [])
   ]
 }
 
-const PROFILE_BUTTON_TRANSFORM: UiTransformProps = {
-  width: '80%',
-  height: getContentScaleRatio() * 64,
-  justifyContent: 'flex-start',
-  alignSelf: 'center'
-}
 function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
   useEffect(() => {
     executeTask(async () => {
@@ -274,15 +288,10 @@ function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
         (await fetchProfileData({ userId: player.userId, useCache: true }))
     })
   }, [])
-  const fontSizeTitleL = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.TITLE_L
-  })
 
   return (
     <ButtonTextIcon
       key={'profile-button-message-' + player.userId}
-      uiTransform={PROFILE_BUTTON_TRANSFORM}
       value={'<b>Mention</b>'}
       onMouseDown={() => {
         executeTask(async () => {
@@ -304,7 +313,6 @@ function MentionButton({ player }: { player: GetPlayerDataRes }): ReactElement {
         atlasName: 'icons',
         spriteName: '@'
       }}
-      fontSize={fontSizeTitleL}
     />
   )
 }
@@ -314,14 +322,9 @@ function ViewPassportButton({
 }: {
   player: GetPlayerDataRes
 }): ReactElement {
-  const fontSizeTitleL = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.TITLE_L
-  })
   return (
     <ButtonTextIcon
       key={'profile-button-passport-' + player.userId}
-      uiTransform={PROFILE_BUTTON_TRANSFORM}
       value={'<b>View Passport</b>'}
       onMouseDown={() => {
         closeDialog()
@@ -336,175 +339,130 @@ function ViewPassportButton({
         atlasName: 'icons',
         spriteName: 'PassportIcon'
       }}
-      fontSize={fontSizeTitleL}
     />
   )
 }
 
-function FriendButton({
-  player,
-  fontSize
-}: {
-  player: GetPlayerDataRes
-  fontSize: number
-}): ReactElement {
-  const [isFriend, setIsFriend] = useState<boolean>(false)
-  const [isHovered, setIsHovered] = useState<boolean>(false)
-
-  useEffect(() => {
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    executeTask(async () => {
-      const friends = await BevyApi.social.getFriends()
-      setIsFriend(
-        friends.some(
-          (f) => f.address.toLowerCase() === player.userId.toLowerCase()
-        )
-      )
-    })
-  }, [])
-
-  if (isFriend) {
-    return (
-      <UiEntity
-        uiTransform={{
-          width: '80%',
-          borderColor: isHovered ? COLOR.RED : COLOR.WHITE_OPACITY_1,
-          borderWidth: getContentScaleRatio() * 6,
-          borderRadius: getContentScaleRatio() * 20,
-          alignSelf: 'center',
-          margin: { top: '4%' },
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'row'
-        }}
-        onMouseEnter={() => {
-          setIsHovered(true)
-        }}
-        onMouseLeave={() => {
-          setIsHovered(false)
-        }}
-        onMouseDown={() => {
-          showConfirmPopup({
-            title: `Are you sure you want to unfriend <b>${player.name}</b>?`,
-            icon: {
-              spriteName: 'Unfriends',
-              atlasName: 'context',
-              backgroundColor: COLOR.RED
-            },
-            confirmLabel: 'UNFRIEND',
-            category: 'friendship',
-            address: player.userId,
-            onConfirm: async () => {
-              await BevyApi.social.deleteFriend(player.userId)
-            }
-          })
-        }}
-      >
-        <Icon
-          iconSize={fontSize}
-          icon={{
-            atlasName: isHovered ? 'context' : 'icons',
-            spriteName: isHovered ? 'Unfriends' : 'FriendIcon'
-          }}
-          iconColor={isHovered ? COLOR.RED : undefined}
-        />
-        <UiEntity
-          uiText={{
-            value: isHovered ? '<b>Remove Friend</b>' : '<b>Friend</b>',
-            fontSize,
-            color: isHovered ? COLOR.RED : COLOR.WHITE
-          }}
-        />
-      </UiEntity>
-    )
-  }
-
-  return (
-    <UiEntity
-      uiTransform={{
-        width: '80%',
-        borderColor: COLOR.WHITE_OPACITY_1,
-        borderWidth: getContentScaleRatio() * 6,
-        borderRadius: getContentScaleRatio() * 20,
-        alignSelf: 'center',
-        margin: { top: '4%' },
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'row'
-      }}
-      onMouseDown={() => {
-        closeDialog()
-        store.dispatch(
-          pushPopupAction({
-            type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
-            data: {
-              address: player.userId,
-              name: player.name,
-              hasClaimedName: !!(
-                player.name?.length && !player.name?.includes('#')
-              ),
-              profilePictureUrl: ''
-            }
-          })
-        )
-      }}
-    >
-      <Icon
-        iconSize={fontSize}
-        icon={{ atlasName: 'context', spriteName: 'Add' }}
-      />
-      <UiEntity
-        uiText={{
-          value: '<b>Add Friend</b>',
-          fontSize,
-          color: COLOR.WHITE
-        }}
-      />
-    </UiEntity>
-  )
-}
-
-function BlockUserButton({
+/**
+ * Stub: there's no general report endpoint wired yet — surfaces a confirm
+ * and logs the address. Replace `onConfirm` body when one is available.
+ */
+function ReportUserButton({
   player
 }: {
   player: GetPlayerDataRes
 }): ReactElement {
-  const fontSizeTitleL = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.TITLE_L
-  })
-
   return (
     <ButtonTextIcon
-      key={'profile-button-block-' + player.userId}
-      uiTransform={PROFILE_BUTTON_TRANSFORM}
-      value={'<b>Block User</b>'}
+      key={'profile-button-report-' + player.userId}
+      variant="transparent"
+      destructiveHover={true}
+      value={'<b>Report</b>'}
       onMouseDown={() => {
         closeDialog()
         showConfirmPopup({
-          title: `Are you sure you want to block\n<b>${player.name}</b>?`,
+          title: `Report <b>${player.name}</b>?`,
           message:
-            "If you block someone in Decentraland, you will no longer see their avatar in-world, and you will not be able to send friend requests or messages to each other. You will also not see each other's names or messages in public chats.",
+            'Reports help moderators take action against users that break Decentraland Community Guidelines.',
           icon: {
-            spriteName: 'BlockUser',
+            spriteName: 'Warning',
             atlasName: 'icons',
-            backgroundColor: COLOR.RED
+            backgroundColor: COLOR.BUTTON_PRIMARY
           },
-          confirmLabel: 'BLOCK',
+          confirmLabel: 'REPORT',
           onConfirm: async () => {
-            await BevyApi.social.blockUser(player.userId)
+            await Promise.resolve()
+            console.log('[profile] report submitted (stub)', {
+              address: player.userId
+            })
           }
         })
       }}
       icon={{
         atlasName: 'icons',
-        spriteName: 'BlockUser'
+        spriteName: 'Warning'
       }}
-      fontSize={fontSizeTitleL}
     />
   )
 }
 
 function closeDialog(): void {
   store.dispatch(closeLastPopupAction())
+}
+
+/**
+ * Shows a "Invite to Community" item when the current user is owner or
+ * moderator of at least one community. Clicking expands a submenu to the
+ * LEFT of the profile popup listing those communities; clicking a name
+ * fires the invite and closes everything (toast confirms).
+ *
+ * Mirrors the same widget used in passport-popup so a click in either
+ * surface yields the same outcome.
+ */
+function InviteToCommunityButton({
+  player
+}: {
+  player: GetPlayerDataRes
+}): ReactElement | null {
+  const [communities, setCommunities] = useState<CommunityListItem[]>([])
+  const [submenuOpen, setSubmenuOpen] = useState<boolean>(false)
+  const fontSize = getFontSize({ context: CONTEXT.SIDE })
+
+  useEffect(() => {
+    executeTask(async () => {
+      setCommunities(await fetchInvitableCommunities())
+    })
+  }, [])
+
+  if (communities.length === 0) return null
+
+  const onPick = (c: CommunityListItem): void => {
+    setSubmenuOpen(false)
+    executeTask(async () => {
+      await inviteUserToCommunity(c, player.userId)
+      closeDialog()
+    })
+  }
+
+  return (
+    <UiEntity
+      uiTransform={{ flexDirection: 'column', positionType: 'relative' }}
+    >
+      <ButtonTextIcon
+        key={'profile-button-invite-' + player.userId}
+        value={'<b>Invite to Community</b>'}
+        onMouseDown={() => {
+          setSubmenuOpen(!submenuOpen)
+        }}
+        icon={{
+          atlasName: 'icons',
+          spriteName: 'Members'
+        }}
+      />
+      {submenuOpen && (
+        <UiEntity
+          uiTransform={{
+            positionType: 'absolute',
+            position: { top: 0, right: '100%' },
+            margin: { right: fontSize * 0.3 },
+            flexDirection: 'column',
+            padding: fontSize * 0.3,
+            borderRadius: fontSize / 2,
+            zIndex: 11
+          }}
+          uiBackground={{ color: COLOR.BLACK_POPUP_BACKGROUND }}
+        >
+          {communities.map((c) => (
+            <ButtonTextIcon
+              key={'invite-pick-' + c.id}
+              value={`<b>${c.name}</b>`}
+              onMouseDown={() => {
+                onPick(c)
+              }}
+            />
+          ))}
+        </UiEntity>
+      )}
+    </UiEntity>
+  )
 }

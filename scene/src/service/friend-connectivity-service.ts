@@ -1,5 +1,4 @@
 import { executeTask } from '@dcl/sdk/ecs'
-import { getPlayer } from '@dcl/sdk/src/players'
 import { BevyApi } from '../bevy-api'
 import { store } from '../state/store'
 import {
@@ -14,10 +13,13 @@ import type {
   FriendshipEventUpdate
 } from './social-service-type'
 import { showErrorPopup } from './error-popup-service'
-import { fetchProfileData } from '../utils/passport-promise-utils'
+import { resolvePlayerData } from '../utils/passport-promise-utils'
 import { type FriendshipResultVariant } from '../components/friends/friendship-result-popup'
 import { createMediator } from '../utils/function-utils'
 import { sleep } from '../utils/dcl-utils'
+import { pushNotificationToast } from '../ui-classes/main-hud/notification-toast-stack'
+import type { Notification } from '../ui-classes/main-hud/notification-types'
+import { getPlayer } from '@dcl/sdk/src/players'
 
 const CHANNEL_CONNECTIVITY = 'friend-connectivity'
 const CHANNEL_FRIENDSHIP = 'friendship-event'
@@ -82,6 +84,38 @@ const EVENT_TO_VARIANT: Record<string, FriendshipResultVariant> = {
   cancel: 'canceled'
 }
 
+/**
+ * Tracks friendship actions WE initiated locally (e.g. clicking "Accept"),
+ * so when the matching stream event echoes back we know it was our own
+ * action and show the result popup. Events not in this set arrived from
+ * the other party — those surface as a toast notification instead, to
+ * avoid interrupting the user with a modal popup for someone else's action.
+ */
+const selfInitiatedFriendshipActions = new Set<string>()
+
+function selfInitiatedKey(type: string, address: string): string {
+  return `${type}:${address.toLowerCase()}`
+}
+
+export function markSelfInitiatedFriendshipAction(
+  type: 'accept' | 'reject' | 'cancel' | 'delete' | 'block',
+  address: string
+): void {
+  selfInitiatedFriendshipActions.add(selfInitiatedKey(type, address))
+}
+
+function consumeSelfInitiatedFriendshipAction(
+  type: string,
+  address: string
+): boolean {
+  const key = selfInitiatedKey(type, address)
+  if (selfInitiatedFriendshipActions.has(key)) {
+    selfInitiatedFriendshipActions.delete(key)
+    return true
+  }
+  return false
+}
+
 function normalizeAddress(address: string): string {
   return address.toLowerCase()
 }
@@ -133,41 +167,106 @@ function handleFriendshipResultEvent(event: FriendshipEventUpdate): void {
   const variant = EVENT_TO_VARIANT[event.type]
   if (variant == null) return
 
+  const popups = store.getState().hud.shownPopups
+  const topPopup = popups[popups.length - 1]
+
+  const isSelfInitiated = consumeSelfInitiatedFriendshipAction(
+    event.type,
+    event.address
+  )
+
+  // Optimistic UX: some callsites push a FRIENDSHIP_RESULT popup
+  // immediately (without waiting for the stream echo). When that event
+  // finally arrives, the popup is already on screen — don't close and
+  // re-open it (would cause a flicker). Just consume the mark and bail.
+  const topPopupAddress = (topPopup?.data as { address?: string } | undefined)
+    ?.address
+  if (
+    isSelfInitiated &&
+    topPopup?.type === HUD_POPUP_TYPE.FRIENDSHIP_RESULT &&
+    topPopupAddress?.toLowerCase() === event.address.toLowerCase()
+  ) {
+    return
+  }
+
   // Close the top popup only if it belongs to this same user.
   // Otherwise an unrelated event (e.g. Bob cancels) would close a popup
   // the user has open about someone else (e.g. Alice's request).
-  const popups = store.getState().hud.shownPopups
-  const topPopup = popups[popups.length - 1]
   if (isFriendshipPopupForAddress(topPopup, event.address)) {
     store.dispatch(closeLastPopupAction())
   }
 
   executeTask(async () => {
-    let name = event.address
-    let hasClaimedName = false
-
-    const player = getPlayer({ userId: event.address })
-    if (player?.name != null) {
-      name = player.name
-      hasClaimedName = !!(name.length > 0 && !name.includes('#'))
-    } else {
-      const profile = await fetchProfileData({
-        userId: event.address,
-        useCache: true
-      })
-      if (profile?.avatars?.[0] != null) {
-        name = profile.avatars[0].name ?? name
-        hasClaimedName = profile.avatars[0].hasClaimedName ?? false
-      }
+    const { name, hasClaimedName } = await resolvePlayerData(event.address)
+    if (isSelfInitiated) {
+      store.dispatch(
+        pushPopupAction({
+          type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
+          data: { variant, address: event.address, name, hasClaimedName }
+        })
+      )
+      return
     }
-
-    store.dispatch(
-      pushPopupAction({
-        type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,
-        data: { variant, address: event.address, name, hasClaimedName }
-      })
+    // Event arrived from the other avatar — surface as a toast instead of
+    // a modal popup, so it doesn't interrupt whatever the user is doing.
+    // Only accept/reject have a renderable notification type; cancel from
+    // the other side is silently dropped (popup already closed above).
+    const toast = buildFriendshipResultNotification(
+      event.type,
+      event.address,
+      name,
+      hasClaimedName
     )
+    if (toast == null) return
+    pushNotificationToast(toast)
+    // Bump the bell badge optimistically, same as for incoming requests.
+    const current = store.getState().hud.unreadNotifications
+    store.dispatch(updateHudStateAction({ unreadNotifications: current + 1 }))
   })
+}
+
+function buildFriendshipResultNotification(
+  eventType: FriendshipEventUpdate['type'],
+  address: string,
+  name: string,
+  hasClaimedName: boolean
+): Notification | null {
+  let toastType:
+    | 'social_service_friendship_accepted'
+    | 'social_service_friendship_rejected'
+  if (eventType === 'accept') {
+    toastType = 'social_service_friendship_accepted'
+  } else if (eventType === 'reject') {
+    toastType = 'social_service_friendship_rejected'
+  } else {
+    return null
+  }
+  const myPlayer = getPlayer()
+  const myAddress = myPlayer?.userId ?? ''
+  const myName = myPlayer?.name ?? ''
+  const myHasClaimedName = !(myName.includes('#') || myName.length === 0)
+  return {
+    id: `friendship-${eventType}-${address}-${Date.now()}`,
+    type: toastType,
+    address: myAddress,
+    metadata: {
+      sender: {
+        name,
+        address,
+        hasClaimedName,
+        profileImageUrl: ''
+      },
+      receiver: {
+        name: myName,
+        address: myAddress,
+        hasClaimedName: myHasClaimedName,
+        profileImageUrl: ''
+      },
+      requestId: ''
+    },
+    timestamp: String(Date.now()),
+    read: false
+  }
 }
 
 let initialized = false

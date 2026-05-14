@@ -2,12 +2,11 @@ import ReactEcs, { UiEntity } from '@dcl/react-ecs'
 import { type Color4 } from '@dcl/sdk/math'
 import { executeTask } from '@dcl/sdk/ecs'
 import { type Atlas } from '../utils/definitions'
-import { type Popup } from './popup-stack'
+import { type Popup, setLastPopupSubmitting } from './popup-stack'
 import { PopupBackdrop } from './popup-backdrop'
 import { COLOR } from './color-palette'
 import { Column, Row } from './layout'
 import Icon from './icon/Icon'
-import { PanelListButton } from './friends/friend-request-item'
 import {
   CONTEXT,
   getFontSize,
@@ -16,12 +15,12 @@ import {
 import { getContentScaleRatio } from '../service/canvas-ratio'
 import { BORDER_RADIUS_F } from '../utils/ui-utils'
 import { noop } from '../utils/function-utils'
-import { getLoadingAlphaValue } from '../service/loading-alpha-color'
 import { showErrorPopup } from '../service/error-popup-service'
 import { store } from '../state/store'
 import { closeLastPopupAction, pushPopupAction } from '../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../state/hud/state'
 import useState = ReactEcs.useState
+import ButtonComponent from './button-component'
 
 export type ConfirmPopupIcon = {
   spriteName: string
@@ -89,12 +88,15 @@ export const ConfirmPopup: Popup = ({ shownPopup }) => {
   const onConfirm = (): void => {
     if (submitting) return
     setSubmitting(true)
+    setLastPopupSubmitting(true)
     executeTask(async () => {
       try {
         await data.onConfirm()
+        setLastPopupSubmitting(false)
         store.dispatch(closeLastPopupAction())
       } catch (error) {
         setSubmitting(false)
+        setLastPopupSubmitting(false)
         showErrorPopup(
           error instanceof Error ? error : new Error(String(error)),
           'confirmPopup'
@@ -177,42 +179,18 @@ export const ConfirmPopup: Popup = ({ shownPopup }) => {
           />
         )}
 
-        <Row
-          uiTransform={{
-            width: '100%',
-            justifyContent: 'center'
-          }}
-        >
-          <PanelListButton variant="secondary" onMouseDown={onCancel}>
-            <UiEntity
-              uiText={{
-                value: `<b>${data.cancelLabel ?? 'CANCEL'}</b>`,
-                fontSize,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-              uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-            />
-          </PanelListButton>
-          <UiEntity
-            uiTransform={{
-              height: fontSize * 2,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: fontSize / 2,
-              opacity: submitting ? getLoadingAlphaValue() : 1
-            }}
-            uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+        <Row childrenGrow childrenGap={fontSize / 2}>
+          <ButtonComponent
+            variant="subtle"
+            onMouseDown={onCancel}
+            value={`<b>${data.cancelLabel ?? 'CANCEL'}</b>`}
+          />
+          <ButtonComponent
+            loading={submitting}
+            variant="primary"
             onMouseDown={onConfirm}
-          >
-            <UiEntity
-              uiText={{
-                value: `<b>${data.confirmLabel ?? 'CONFIRM'}</b>`,
-                fontSize,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-              uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-            />
-          </UiEntity>
+            value={`<b>${data.confirmLabel ?? 'CONFIRM'}</b>`}
+          />
         </Row>
       </Column>
     </PopupBackdrop>

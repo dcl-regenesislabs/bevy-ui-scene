@@ -2,12 +2,13 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type Color4 } from '@dcl/sdk/math'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getContentScaleRatio } from '../service/canvas-ratio'
+import { COLOR } from './color-palette'
 
 export function BottomBorder({
-  color,
+  color = COLOR.WHITE_OPACITY_0,
   uiTransform
 }: {
-  color: Color4
+  color?: Color4
   uiTransform?: UiTransformProps
 }): ReactElement {
   return (

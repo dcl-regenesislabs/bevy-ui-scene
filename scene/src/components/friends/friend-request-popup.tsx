@@ -25,10 +25,12 @@ import { closeLastPopupAction, pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
 import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
-import { formatRequestDate, PanelListButton } from './friend-request-item'
+import { formatRequestDate } from './friend-request-item'
+import ButtonComponent from '../button-component'
 import { showConfirmPopup } from '../confirm-popup'
 
 import { removeFriendRequest } from './friend-request-list'
+import { markSelfInitiatedFriendshipAction } from '../../service/friend-connectivity-service'
 
 export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
   const request = shownPopup.data as FriendRequestData
@@ -42,6 +44,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         dismissLabel="Decide Later"
         onPrimary={() => {
           executeTask(async () => {
+            markSelfInitiatedFriendshipAction('accept', request.address)
             await BevyApi.social.acceptFriendRequest(request.address)
             removeFriendRequest(request.address)
             store.dispatch(closeLastPopupAction())
@@ -60,6 +63,7 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
         }}
         onSecondary={() => {
           executeTask(async () => {
+            markSelfInitiatedFriendshipAction('reject', request.address)
             await BevyApi.social.rejectFriendRequest(request.address)
             removeFriendRequest(request.address)
             store.dispatch(closeLastPopupAction())
@@ -107,6 +111,7 @@ export const FriendRequestSentPopup: Popup = ({ shownPopup }) => {
             category: 'friendship',
             address: request.address,
             onConfirm: async () => {
+              markSelfInitiatedFriendshipAction('cancel', request.address)
               await BevyApi.social.cancelFriendRequest(request.address)
               removeFriendRequest(request.address)
               store.dispatch(
@@ -282,8 +287,12 @@ function FriendRequestPopupContent({
         <UiEntity
           uiTransform={{
             width: '100%',
-            margin: { bottom: fontSize }
+            margin: { bottom: fontSize },
+            height: fontSize * 5,
+            borderRadius: fontSize / 2,
+            padding: { left: fontSize * 0.5, top: fontSize * 0.5 }
           }}
+          uiBackground={{ color: COLOR.WHITE_OPACITY_0 }}
           uiText={{
             value: request.message,
             fontSize,
@@ -294,32 +303,20 @@ function FriendRequestPopupContent({
       ) : null}
 
       <Row
-        uiTransform={{
-          width: '100%',
-          justifyContent: 'center',
-          margin: { bottom: dismissLabel ? fontSize : 0 }
-        }}
+        childrenGrow
+        childrenGap={fontSize / 2}
+        uiTransform={{ margin: { bottom: dismissLabel ? fontSize : 0 } }}
       >
-        <PanelListButton variant="secondary" onMouseDown={onSecondary}>
-          <UiEntity
-            uiText={{
-              value: `<b>${secondaryLabel}</b>`,
-              fontSize,
-              color: COLOR.TEXT_COLOR_WHITE
-            }}
-            uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-          />
-        </PanelListButton>
-        <PanelListButton variant="primary" onMouseDown={onPrimary}>
-          <UiEntity
-            uiText={{
-              value: `<b>${primaryLabel}</b>`,
-              fontSize,
-              color: COLOR.TEXT_COLOR_WHITE
-            }}
-            uiTransform={{ margin: { left: fontSize, right: fontSize } }}
-          />
-        </PanelListButton>
+        <ButtonComponent
+          variant="subtle"
+          value={`<b>${secondaryLabel}</b>`}
+          onMouseDown={onSecondary}
+        />
+        <ButtonComponent
+          variant="primary"
+          value={`<b>${primaryLabel}</b>`}
+          onMouseDown={onPrimary}
+        />
       </Row>
 
       {dismissLabel ? (

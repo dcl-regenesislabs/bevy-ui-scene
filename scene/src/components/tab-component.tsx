@@ -8,6 +8,7 @@ import { COLOR } from './color-palette'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { noop } from '../utils/function-utils'
 import { CONTEXT, getFontSize } from '../service/fontsize-system'
+import { Column, Row } from './layout'
 
 export type Tab = {
   text: string
@@ -27,29 +28,30 @@ export function TabComponent({
   uiBackground?: UiBackgroundProps
 }): ReactElement {
   return (
-    <UiEntity
+    <Column
       uiTransform={{
-        flexDirection: 'row',
         ...uiTransform
       }}
       uiBackground={uiBackground}
     >
-      <BottomBorder color={COLOR.WHITE_OPACITY_1} />
-      {tabs.map(({ text, active }, index) => (
-        <UiEntity
-          key={text}
-          uiText={{
-            value: active ? `<b>${text}</b>` : text,
-            color: active ? COLOR.WHITE : COLOR.INACTIVE,
-            fontSize
-          }}
-          onMouseDown={() => {
-            onClickTab(index)
-          }}
-        >
-          {active && <BottomBorder color={COLOR.LINK_COLOR} />}
-        </UiEntity>
-      ))}
-    </UiEntity>
+      <Row>
+        {tabs.map(({ text, active }, index) => (
+          <UiEntity
+            key={text}
+            uiText={{
+              value: active ? `<b>${text}</b>` : text,
+              color: active ? COLOR.WHITE : COLOR.INACTIVE,
+              fontSize
+            }}
+            onMouseDown={() => {
+              onClickTab(index)
+            }}
+          >
+            {active && <BottomBorder color={COLOR.LINK_COLOR} />}
+          </UiEntity>
+        ))}
+        <BottomBorder color={COLOR.WHITE_OPACITY_1} />
+      </Row>
+    </Column>
   )
 }

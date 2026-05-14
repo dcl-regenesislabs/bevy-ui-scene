@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
-import { ResponsiveContent } from '../backpack-page/BackpackPage'
+import { ResponsiveContent } from '../../../components/responsive-content'
 import { Column } from '../../../components/layout'
 import { type CommunityListItem } from '../../../service/communities-types'
 import {
@@ -37,7 +37,7 @@ function CommunityViewContent({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.LABEL
   })
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(0)
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(2)
 
   const COMMUNITY_TABS: Tab[] = [
     { text: '  ANNOUNCEMENTS  ' },
@@ -94,7 +94,10 @@ function CommunityViewContent({
                 />
               )}
               {activeTabIndex === 1 && (
-                <CommunityMembers communityId={community.id} />
+                <CommunityMembers
+                  communityId={community.id}
+                  viewerRole={community.role}
+                />
               )}
               {activeTabIndex === 2 && (
                 <CommunityPlaces communityId={community.id} />

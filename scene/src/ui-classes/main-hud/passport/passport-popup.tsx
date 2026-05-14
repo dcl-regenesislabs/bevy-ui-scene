@@ -13,7 +13,7 @@ import {
   type ViewAvatarData
 } from '../../../state/hud/state'
 import { cloneDeep, memoize, noop } from '../../../utils/function-utils'
-import { ResponsiveContent } from '../../main-menu/backpack-page/BackpackPage'
+import { ResponsiveContent } from '../../../components/responsive-content'
 import { setAvatarPreviewCameraToWearableCategory } from '../../../components/backpack/AvatarPreview'
 import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
@@ -47,7 +47,8 @@ import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
 import { BevyApi } from '../../../bevy-api'
-import { showConfirmPopup } from '../../../components/confirm-popup'
+import { FriendButton } from '../../../components/friend-button'
+import { BlockUserButton } from '../../../components/block-user-button'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
 import { Column, Row } from '../../../components/layout'
 import useState = ReactEcs.useState
@@ -82,6 +83,12 @@ import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { PlayerNameComponent } from '../../../components/player-name-component'
 import { PopupBigWindow } from '../../../components/popup-big-window'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
+import {
+  fetchInvitableCommunities,
+  inviteUserToCommunity
+} from '../../../service/community-invites-service'
+import { type CommunityListItem } from '../../../service/communities-types'
+import ButtonComponent from '../../../components/button-component'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -171,6 +178,12 @@ export function setupPassportPopup(): void {
 export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const [isFriend, setIsFriend] = useState<boolean>(true)
+  const [isBlocked, setIsBlocked] = useState<boolean>(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState<boolean>(false)
+  const [inviteSubmenuOpen, setInviteSubmenuOpen] = useState<boolean>(false)
+  const [invitableCommunities, setInvitableCommunities] = useState<
+    CommunityListItem[]
+  >([])
   const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
 
@@ -190,6 +203,32 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
       setIsFriend(friends.some((f) => f.address.toLowerCase() === userId))
     })
   }, [checkVersion])
+
+  useEffect(() => {
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
+    executeTask(async () => {
+      const blocked = await BevyApi.social.getBlockedUsers()
+      setIsBlocked(blocked.some((b) => b.address.toLowerCase() === userId))
+    })
+  }, [checkVersion])
+
+  // Communities I can invite this user to. Skip the fetch for my own
+  // passport — there's no "invite myself" flow.
+  useEffect(() => {
+    const me = getPlayer()?.userId?.toLowerCase()
+    if (me === userId) return
+    executeTask(async () => {
+      setInvitableCommunities(await fetchInvitableCommunities())
+    })
+  }, [])
+
+  const handleInviteToCommunity = (community: CommunityListItem): void => {
+    setInviteSubmenuOpen(false)
+    setMoreMenuOpen(false)
+    executeTask(async () => {
+      await inviteUserToCommunity(community, userId)
+    })
+  }
 
   return (
     <PopupBackdrop>
@@ -245,11 +284,103 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
             </Row>
           )}
           {!state.editable && getFeatureFlag(FEATURES.FRIENDS) ? (
-            <PassportFriendButton
-              isFriend={isFriend}
-              userId={userId}
-              fontSize={fontSize}
-            />
+            <Row
+              uiTransform={{
+                positionType: 'absolute',
+                position: {
+                  top: fontSize / 2,
+                  right: fontSize * 3
+                },
+                justifyContent: 'flex-end'
+              }}
+            >
+              {/* Friend button: hide when the user is blocked. */}
+              {!isBlocked ? (
+                <FriendButton userId={userId} isFriend={isFriend} />
+              ) : null}
+              {/* "More actions" menu — currently hosts BlockUser /
+                  UnblockUser. Hidden when the user is a friend AND not
+                  blocked (no destructive action makes sense). */}
+              {!(isFriend && !isBlocked) ? (
+                <UiEntity uiTransform={{ flexDirection: 'column' }}>
+                  <ButtonIcon
+                    icon={{ spriteName: 'Menu', atlasName: 'icons' }}
+                    iconColor={COLOR.WHITE}
+                    backgroundColor={COLOR.BLACK}
+                    onMouseDown={() => {
+                      setMoreMenuOpen(!moreMenuOpen)
+                    }}
+                    uiTransform={{
+                      margin: { left: fontSize * 0.3 }
+                    }}
+                  />
+                  {moreMenuOpen && (
+                    <UiEntity
+                      uiTransform={{
+                        positionType: 'absolute',
+                        position: { top: '110%', right: 0 },
+                        flexDirection: 'column',
+                        padding: fontSize * 0.3,
+                        borderRadius: fontSize / 2,
+                        zIndex: 10
+                      }}
+                      uiBackground={{ color: COLOR.BLACK }}
+                    >
+                      {invitableCommunities.length > 0 ? (
+                        <UiEntity
+                          uiTransform={{
+                            flexDirection: 'column',
+                            positionType: 'relative'
+                          }}
+                        >
+                          <ButtonComponent
+                            variant="black"
+                            value="<b>Invite to Community</b>"
+                            icon={{
+                              atlasName: 'icons',
+                              spriteName: 'Members'
+                            }}
+                            onMouseDown={() => {
+                              setInviteSubmenuOpen(!inviteSubmenuOpen)
+                            }}
+                          />
+                          {inviteSubmenuOpen && (
+                            <UiEntity
+                              uiTransform={{
+                                positionType: 'absolute',
+                                position: { top: 0, right: '100%' },
+                                margin: { right: fontSize * 0.3 },
+                                flexDirection: 'column',
+                                padding: fontSize * 0.3,
+                                borderRadius: fontSize / 2,
+                                zIndex: 11
+                              }}
+                              uiBackground={{ color: COLOR.BLACK }}
+                            >
+                              {invitableCommunities.map((c) => (
+                                <ButtonComponent
+                                  key={`invite-${c.id}`}
+                                  variant="black"
+                                  value={`<b>${c.name}</b>`}
+                                  onMouseDown={() => {
+                                    handleInviteToCommunity(c)
+                                  }}
+                                />
+                              ))}
+                            </UiEntity>
+                          )}
+                        </UiEntity>
+                      ) : null}
+                      <BlockUserButton
+                        userId={userId}
+                        isBlocked={isBlocked}
+                        variant="black"
+                      />
+                    </UiEntity>
+                  )}
+                </UiEntity>
+              ) : null}
+            </Row>
           ) : null}
         </PopupBigWindow>
       </ResponsiveContent>
@@ -896,185 +1027,6 @@ function Header({ children }: { children?: ReactElement }): ReactElement {
       }}
     >
       {children}
-    </UiEntity>
-  )
-}
-
-function PassportFriendButton({
-  isFriend,
-  userId,
-  fontSize
-}: {
-  isFriend: boolean
-  userId: string
-  fontSize: number
-}): ReactElement {
-  const [isHovered, setIsHovered] = useState<boolean>(false)
-  const [isBlocked, setIsBlocked] = useState<boolean>(false)
-  const profileData = store.getState().hud.profileData
-  const buttonWidth = fontSize * 9
-  const buttonTransform = {
-    position: {
-      top: getContentScaleRatio() * 16,
-      right: getContentScaleRatio() * 16 + fontSize * 2.5
-    },
-    positionType: 'absolute' as const,
-    width: buttonWidth,
-    height: fontSize * 2,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    borderRadius: fontSize / 2,
-    borderWidth: fontSize / 6,
-    padding: { left: fontSize * 0.5, right: fontSize * 0.8 }
-  }
-
-  useEffect(() => {
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    executeTask(async () => {
-      const blocked = await BevyApi.social.getBlockedUsers()
-      setIsBlocked(
-        blocked.some((b) => b.address.toLowerCase() === userId.toLowerCase())
-      )
-    })
-  }, [])
-
-  if (isBlocked) {
-    return (
-      <UiEntity
-        uiTransform={{
-          ...buttonTransform,
-          borderColor: isHovered ? COLOR.RED : COLOR.RED
-        }}
-        uiBackground={{
-          color: isHovered ? COLOR.RED : COLOR.BLACK_TRANSPARENT
-        }}
-        onMouseEnter={() => {
-          setIsHovered(true)
-        }}
-        onMouseLeave={() => {
-          setIsHovered(false)
-        }}
-        onMouseDown={() => {
-          showConfirmPopup({
-            title: `Are you sure you want to unblock\n<b>${profileData.name}</b>?`,
-            message:
-              'If you unblock someone, you will see their avatar in-world, and you will be able to send friend requests and messages to each other in public or private chats.',
-            icon: {
-              spriteName: 'BlockUser',
-              atlasName: 'icons',
-              backgroundColor: COLOR.RED
-            },
-            confirmLabel: 'UNBLOCK',
-            onConfirm: async () => {
-              await BevyApi.social.unblockUser(userId)
-            }
-          })
-        }}
-      >
-        <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
-          <Icon
-            icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
-            iconSize={fontSize}
-          />
-          <UiEntity
-            uiText={{
-              value: isHovered ? '<b>UNBLOCK</b>' : '<b>BLOCKED</b>',
-              fontSize: fontSize * 0.85,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'middle-center'
-            }}
-          />
-        </Row>
-      </UiEntity>
-    )
-  }
-
-  if (isFriend) {
-    return (
-      <UiEntity
-        uiTransform={{
-          ...buttonTransform,
-
-          borderColor: isHovered ? COLOR.RED : COLOR.BLACK_TRANSPARENT
-        }}
-        uiBackground={{
-          color: isHovered ? COLOR.BLACK_TRANSPARENT : COLOR.WHITE_OPACITY_1
-        }}
-        onMouseEnter={() => {
-          setIsHovered(true)
-        }}
-        onMouseLeave={() => {
-          setIsHovered(false)
-        }}
-        onMouseDown={() => {
-          showConfirmPopup({
-            title: `Are you sure you want to unfriend <b>${profileData.name}</b>?`,
-            icon: {
-              spriteName: 'Unfriends',
-              atlasName: 'context',
-              backgroundColor: COLOR.RED
-            },
-            confirmLabel: 'UNFRIEND',
-            category: 'friendship',
-            address: userId,
-            onConfirm: async () => {
-              await BevyApi.social.deleteFriend(userId)
-            }
-          })
-        }}
-      >
-        <Row uiTransform={{ alignItems: 'center', justifyContent: 'center' }}>
-          <Icon
-            icon={{
-              atlasName: isHovered ? 'context' : 'icons',
-              spriteName: isHovered ? 'Unfriends' : 'FriendIcon'
-            }}
-            iconSize={fontSize}
-          />
-          <UiEntity
-            uiText={{
-              value: isHovered ? '<b>Remove Friend</b>' : '<b>Friend</b>',
-              fontSize: fontSize * 0.85,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'middle-center'
-            }}
-          />
-        </Row>
-      </UiEntity>
-    )
-  }
-
-  return (
-    <UiEntity
-      uiTransform={buttonTransform}
-      uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
-      onMouseDown={() => {
-        store.dispatch(
-          pushPopupAction({
-            type: HUD_POPUP_TYPE.SEND_FRIEND_REQUEST,
-            data: {
-              address: userId,
-              name: profileData.name,
-              hasClaimedName: profileData.hasClaimedName,
-              profilePictureUrl: ''
-            }
-          })
-        )
-      }}
-    >
-      <Row uiTransform={{ alignItems: 'center' }}>
-        <Icon
-          icon={{ spriteName: 'Add', atlasName: 'context' }}
-          iconSize={fontSize}
-        />
-        <UiEntity
-          uiText={{
-            value: '<b>Add Friend</b>',
-            fontSize: fontSize * 0.85,
-            color: COLOR.TEXT_COLOR_WHITE
-          }}
-        />
-      </Row>
     </UiEntity>
   )
 }

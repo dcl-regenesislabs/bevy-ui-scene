@@ -19,6 +19,7 @@ export enum TYPOGRAPHY_TOKENS {
   MONO,
   BUTTON_ICON,
   BUTTON_ICON_BORDER_RADIUS,
+  BORDER_THIN,
   NAV_BUTTON,
   NAV_BUTTON_PADDING,
   NAV_BUTTON_HEIGHT,
@@ -39,6 +40,7 @@ const TYPO_SCALE: Record<TYPOGRAPHY_TOKENS, number> = {
   [TYPOGRAPHY_TOKENS.MONO]: 0.95,
   [TYPOGRAPHY_TOKENS.BUTTON_ICON]: 1.8,
   [TYPOGRAPHY_TOKENS.BUTTON_ICON_BORDER_RADIUS]: 0.6,
+  [TYPOGRAPHY_TOKENS.BORDER_THIN]: 0.15,
   [TYPOGRAPHY_TOKENS.NAV_BUTTON]: 1.2,
   [TYPOGRAPHY_TOKENS.NAV_BUTTON_PADDING]: 1.2 * 0.5,
   [TYPOGRAPHY_TOKENS.NAV_BUTTON_HEIGHT]: 1.2 * 2.5,
@@ -53,7 +55,7 @@ export function getFontSize({
 }): number {
   const scale = TYPO_SCALE[token]
   if (context === CONTEXT.DIALOG) {
-    return BASE_FONT_SIZE * scale * getContentScaleRatio() * 2.06
+    return Math.floor(BASE_FONT_SIZE * scale * getContentScaleRatio() * 2.06)
   }
-  return getViewportHeight() * 0.015 * scale
+  return Math.floor(getViewportHeight() * 0.015 * scale)
 }

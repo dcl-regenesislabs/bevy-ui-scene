@@ -36,10 +36,10 @@ export default function FriendsPanel(): ReactElement {
     >
       <TabComponent
         uiTransform={{
-          width: '97%',
+          width: '100%',
           height: fontSize * 2,
           borderRadius: { topLeft: fontSize / 2, topRight: fontSize / 2 },
-          padding: { left: fontSize / 2 },
+          padding: { left: fontSize / 2, right: fontSize / 2 },
           justifyContent: 'flex-start',
           alignItems: 'center'
         }}

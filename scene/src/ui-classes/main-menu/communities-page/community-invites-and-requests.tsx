@@ -376,12 +376,9 @@ function InviteCard({
       {/* Action buttons */}
       <Row uiTransform={{ width: '100%', alignItems: 'center' }}>
         <ButtonTextIcon
+          variant="subtle"
           value={`<b>${secondaryLabel}</b>`}
-          icon={{ spriteName: 'icon.png', atlasName: 'icons' }}
-          iconSize={0}
           fontSize={fontSizeSmall}
-          fontColor={COLOR.TEXT_COLOR_WHITE}
-          backgroundColor={COLOR.WHITE_OPACITY_1}
           uiTransform={{
             flexGrow: 1,
             height: fontSize * 2,
@@ -396,12 +393,9 @@ function InviteCard({
         />
         {primaryLabel.length > 0 && (
           <ButtonTextIcon
+            variant="primary"
             value={`<b>${primaryLabel}</b>`}
-            icon={{ spriteName: 'icon.png', atlasName: 'icons' }}
-            iconSize={0}
             fontSize={fontSizeSmall}
-            fontColor={COLOR.WHITE}
-            backgroundColor={COLOR.BUTTON_PRIMARY}
             uiTransform={{
               flexGrow: 1,
               height: fontSize * 2,

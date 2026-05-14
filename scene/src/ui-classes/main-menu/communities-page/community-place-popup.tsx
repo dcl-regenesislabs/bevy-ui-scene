@@ -10,21 +10,27 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
-import type { Atlas } from '../../../utils/definitions'
+import { LayoutContext } from '../../../service/layout-context'
 import { BORDER_RADIUS_F, parseCoordinates } from '../../../utils/ui-utils'
 import { noop } from '../../../utils/function-utils'
 import { store } from '../../../state/store'
 import { closeLastPopupAction } from '../../../state/hud/actions'
 import Icon from '../../../components/icon/Icon'
+import ButtonIcon from '../../../components/button-icon/ButtonIcon'
 import type { PlaceFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import {
   updateFavoriteStatus,
   updateLikeStatus
 } from '../../../utils/promise-utils'
-import { updateCachedCommunityPlace } from '../../../utils/communities-promise-utils'
+import {
+  listenPlaceChanged,
+  updateCachedCommunityPlace
+} from '../../../utils/communities-promise-utils'
 import { BevyApi } from '../../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
+import { AvatarCircle } from '../../../components/avatar-circle'
+import { ZERO_ADDRESS } from '../../../utils/constants'
+import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import {
   changeRealm,
   copyToClipboard,
@@ -35,8 +41,10 @@ import { currentRealmProviderIsWorld } from '../../../service/realm-change'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import { Vector2 } from '@dcl/sdk/math'
 import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string | null | undefined): string {
+  if (dateStr == null) return ''
   try {
     const d = new Date(dateStr)
     const day = String(d.getDate()).padStart(2, '0')
@@ -59,6 +67,10 @@ function CommunityPlacePopupContent({
   place: PlaceFromApi
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeAction = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.POPUP_TITLE
+  })
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.TITLE_L
@@ -67,12 +79,9 @@ function CommunityPlacePopupContent({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.LABEL
   })
-  const fontSizeCaption = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.CAPTION
-  })
-  const scale = getContentScaleRatio()
-  const thumbnailSize = scale * 260
+
+  const thumbnailWidth = fontSize * 27
+  const thumbnailHeight = thumbnailWidth * 0.75
 
   const [isFav, setIsFav] = useState<boolean>(place.user_favorite ?? false)
   const [isLiked, setIsLiked] = useState<boolean>(place.user_like ?? false)
@@ -80,14 +89,45 @@ function CommunityPlacePopupContent({
     place.user_dislike ?? false
   )
   const [likesCount, setLikesCount] = useState<number>(place.likes)
+  const [dislikesCount, setDislikesCount] = useState<number>(place.dislikes)
   const [favoritesCount, setFavoritesCount] = useState<number>(place.favorites)
   const [updatingFav, setUpdatingFav] = useState<boolean>(false)
   const [updatingLike, setUpdatingLike] = useState<boolean>(false)
   const [shareOpen, setShareOpen] = useState<boolean>(false)
+  const [isHome, setIsHome] = useState<boolean>(false)
+
+  // Resolve whether this place's base parcel is the user's current home.
+  useEffect(() => {
+    const target = parseCoordinates(place.base_position)
+    if (target == null) return
+    executeTask(async () => {
+      try {
+        const home = await BevyApi.getHomeScene()
+        setIsHome(home.parcel.x === target.x && home.parcel.y === target.y)
+      } catch {
+        // No-op: leave the icon as outline if we can't read the home.
+      }
+    })
+  }, [])
+
+  // Stay in sync with cache mutations from elsewhere (e.g. another popup of
+  // the same place reopened over a stale dispatch payload).
+  useEffect(() => {
+    return listenPlaceChanged(place.id, (partial) => {
+      if (partial.user_favorite !== undefined) setIsFav(partial.user_favorite)
+      if (partial.favorites !== undefined) setFavoritesCount(partial.favorites)
+      if (partial.user_like !== undefined) setIsLiked(partial.user_like)
+      if (partial.user_dislike !== undefined) {
+        setIsDisliked(partial.user_dislike)
+      }
+      if (partial.likes !== undefined) setLikesCount(partial.likes)
+      if (partial.dislikes !== undefined) setDislikesCount(partial.dislikes)
+    })
+  }, [])
 
   const likeRate =
-    likesCount + place.dislikes > 0
-      ? Math.round((likesCount / (likesCount + place.dislikes)) * 100)
+    likesCount + dislikesCount > 0
+      ? Math.round((likesCount / (likesCount + dislikesCount)) * 100)
       : 0
 
   const toggleFav = (): void => {
@@ -121,26 +161,36 @@ function CommunityPlacePopupContent({
     const prev = {
       isLiked,
       isDisliked,
-      likesCount
+      likesCount,
+      dislikesCount
     }
     let nextIsLiked = isLiked
     let nextIsDisliked = isDisliked
     let nextLikes = likesCount
+    let nextDislikes = dislikesCount
     let apiArg: boolean | null
     if (target === 'like') {
       nextIsLiked = !isLiked
-      nextIsDisliked = false
       nextLikes = likesCount + (nextIsLiked ? 1 : -1)
+      // Toggling like also clears any pre-existing dislike.
+      if (isDisliked) {
+        nextIsDisliked = false
+        nextDislikes = Math.max(0, dislikesCount - 1)
+      }
       apiArg = nextIsLiked ? true : null
     } else {
       nextIsDisliked = !isDisliked
-      nextIsLiked = false
-      if (isLiked) nextLikes = Math.max(0, likesCount - 1)
+      nextDislikes = dislikesCount + (nextIsDisliked ? 1 : -1)
+      if (isLiked) {
+        nextIsLiked = false
+        nextLikes = Math.max(0, likesCount - 1)
+      }
       apiArg = nextIsDisliked ? false : null
     }
     setIsLiked(nextIsLiked)
     setIsDisliked(nextIsDisliked)
-    setLikesCount(nextLikes)
+    setLikesCount(Math.max(0, nextLikes))
+    setDislikesCount(Math.max(0, nextDislikes))
     setUpdatingLike(true)
     executeTask(async () => {
       try {
@@ -148,12 +198,14 @@ function CommunityPlacePopupContent({
         updateCachedCommunityPlace(place.id, {
           user_like: nextIsLiked,
           user_dislike: nextIsDisliked,
-          likes: nextLikes
+          likes: Math.max(0, nextLikes),
+          dislikes: Math.max(0, nextDislikes)
         })
       } catch (error) {
         setIsLiked(prev.isLiked)
         setIsDisliked(prev.isDisliked)
         setLikesCount(prev.likesCount)
+        setDislikesCount(prev.dislikesCount)
         showErrorPopup(
           error instanceof Error ? error : new Error(String(error)),
           'updateLikeStatus'
@@ -172,6 +224,7 @@ function CommunityPlacePopupContent({
       realm: 'http://realm-provider-ea.decentraland.org/main',
       parcel
     })
+    setIsHome(true)
   }
 
   const jumpIn = (): void => {
@@ -218,374 +271,390 @@ function CommunityPlacePopupContent({
     )
   }
 
+  const actionButtonTransform = {
+    width: fontSizeAction * 4,
+    margin: { right: fontSizeAction * 0.3 }
+  }
+
   return (
     <PopupBackdrop>
-      <Column
-        uiTransform={{
-          width: getContentScaleRatio() * 1400,
-          borderRadius: BORDER_RADIUS_F,
-          padding: fontSize * 1.5
-        }}
-        uiBackground={{ color: COLOR.URL_POPUP_BACKGROUND }}
-        onMouseDown={noop}
-      >
-        <CloseButton
+      <LayoutContext.Provider value={CONTEXT.DIALOG}>
+        <Column
           uiTransform={{
-            position: { top: fontSize, right: fontSize },
-            positionType: 'absolute'
+            width: getContentScaleRatio() * 2222,
+            borderRadius: BORDER_RADIUS_F,
+            padding: fontSize * 1.5
           }}
-          onClick={() => {
-            store.dispatch(closeLastPopupAction())
-          }}
-        />
-
-        {/* Header: thumbnail + info + actions */}
-        <Row
-          uiTransform={{
-            width: '100%',
-            alignItems: 'flex-start',
-            margin: { bottom: fontSize }
-          }}
+          uiBackground={{ color: COLOR.URL_POPUP_BACKGROUND }}
+          onMouseDown={noop}
         >
-          {/* Thumbnail */}
-          <UiEntity
+          <CloseButton
             uiTransform={{
-              width: thumbnailSize,
-              height: thumbnailSize,
-              borderRadius: fontSize,
-              flexShrink: 0,
-              margin: { right: fontSize }
-            }}
-            uiBackground={{
-              textureMode: 'stretch',
-              texture: { src: place.image }
+              position: { top: fontSize, right: fontSize },
+              positionType: 'absolute'
             }}
           />
 
-          {/* Info column */}
+          {/* Header: thumbnail + info + actions */}
+          <Row
+            uiTransform={{
+              width: '100%',
+              alignItems: 'flex-start',
+              margin: { bottom: fontSize }
+            }}
+          >
+            {/* Thumbnail */}
+            <UiEntity
+              uiTransform={{
+                width: thumbnailWidth,
+                height: thumbnailHeight,
+                borderRadius: fontSize,
+                flexShrink: 0,
+                margin: { right: fontSize }
+              }}
+              uiBackground={{
+                textureMode: 'stretch',
+                texture: { src: place.image ?? '' }
+              }}
+            />
+
+            {/* Info column */}
+            <Column
+              uiTransform={{
+                flexGrow: 1,
+                alignItems: 'flex-start'
+              }}
+            >
+              <UiEntity
+                uiText={{
+                  value: `<b>${place.title ?? ''}</b>`,
+                  fontSize: fontSizeTitle,
+                  color: COLOR.TEXT_COLOR_WHITE,
+                  textAlign: 'top-left'
+                }}
+              />
+              {place.contact_name != null && place.contact_name.length > 0 && (
+                <Row
+                  uiTransform={{
+                    width: 'auto',
+                    alignItems: 'center',
+                    margin: { top: -fontSize * 0.5, left: fontSize }
+                  }}
+                >
+                  <AvatarCircle
+                    userId={place.creator_address ?? ZERO_ADDRESS}
+                    circleColor={getAddressColor(
+                      (place.creator_address ?? ZERO_ADDRESS).toLowerCase()
+                    )}
+                    uiTransform={{
+                      width: fontSize * 1.6,
+                      height: fontSize * 1.6
+                    }}
+                    isGuest={false}
+                  />
+                  <UiEntity
+                    uiText={{
+                      value: `created by <b><color=#FFFFFF>${place.contact_name}</color></b>`,
+                      fontSize,
+                      color: COLOR.TEXT_COLOR_LIGHT_GREY,
+                      textAlign: 'middle-left'
+                    }}
+                  />
+                </Row>
+              )}
+
+              {/* Stats: views + like rate */}
+              <Row
+                uiTransform={{
+                  alignItems: 'center',
+                  margin: {
+                    top: fontSize * 2,
+                    bottom: fontSize * 0.5,
+                    left: fontSize
+                  }
+                }}
+              >
+                <Icon
+                  uiTransform={{
+                    width: fontSize,
+                    height: fontSize * 0.75,
+                    flexShrink: 0,
+                    flexGrow: 0
+                  }}
+                  icon={{ spriteName: 'PreviewIcn', atlasName: 'map2' }}
+                  iconSize={fontSize}
+                  iconColor={COLOR.WHITE}
+                />
+                <UiEntity
+                  uiTransform={{
+                    margin: { right: fontSize * 0.8, left: -fontSize / 2 }
+                  }}
+                  uiText={{
+                    value: ` ${place.user_visits ?? 0}`,
+                    fontSize,
+                    color: COLOR.WHITE
+                  }}
+                />
+                <Icon
+                  icon={{ spriteName: 'Like', atlasName: 'icons' }}
+                  iconSize={fontSize}
+                  iconColor={COLOR.WHITE}
+                />
+                <UiEntity
+                  uiTransform={{
+                    margin: { right: fontSize * 0.8, left: -fontSize / 2 }
+                  }}
+                  uiText={{
+                    value: ` ${likeRate}%`,
+                    fontSize,
+                    color: COLOR.WHITE
+                  }}
+                />
+              </Row>
+
+              {/* Icon action row */}
+              <Row
+                uiTransform={{
+                  alignItems: 'center',
+                  margin: { bottom: fontSize * 0.5 }
+                }}
+              >
+                <ButtonIcon
+                  variant="subtle"
+                  icon={{
+                    spriteName: isLiked ? 'Like solid' : 'Like',
+                    atlasName: 'icons'
+                  }}
+                  iconSize={fontSizeAction}
+                  loading={updatingLike}
+                  uiTransform={actionButtonTransform}
+                  onMouseDown={() => {
+                    setLike('like')
+                  }}
+                />
+                <ButtonIcon
+                  variant="subtle"
+                  icon={{
+                    spriteName: isDisliked ? 'Dislike solid' : 'Dislike',
+                    atlasName: 'icons'
+                  }}
+                  iconSize={fontSizeAction}
+                  loading={updatingLike}
+                  uiTransform={actionButtonTransform}
+                  onMouseDown={() => {
+                    setLike('dislike')
+                  }}
+                />
+                <ButtonIcon
+                  variant="subtle"
+                  icon={{
+                    spriteName: isFav ? 'HeartOnOutlined' : 'HeartOffOutlined',
+                    atlasName: 'toggles'
+                  }}
+                  iconSize={fontSizeAction}
+                  iconColor={isFav ? COLOR.RED : COLOR.WHITE}
+                  loading={updatingFav}
+                  uiTransform={actionButtonTransform}
+                  onMouseDown={toggleFav}
+                />
+                <ButtonIcon
+                  variant="subtle"
+                  icon={{
+                    spriteName: isHome ? 'Home' : 'HomeOutline',
+                    atlasName: 'icons'
+                  }}
+                  iconSize={fontSizeAction}
+                  uiTransform={actionButtonTransform}
+                  onMouseDown={setHome}
+                />
+                <UiEntity uiTransform={{ flexDirection: 'column' }}>
+                  <ButtonIcon
+                    variant="subtle"
+                    icon={{ spriteName: 'Share', atlasName: 'context' }}
+                    iconSize={fontSizeAction}
+                    uiTransform={actionButtonTransform}
+                    onMouseDown={() => {
+                      setShareOpen(!shareOpen)
+                    }}
+                  />
+                  {shareOpen && (
+                    <ShareMenu
+                      fontSize={fontSizeAction}
+                      fontSizeSmall={fontSizeSmall}
+                      onShareX={onShareX}
+                      onCopyLink={onCopyLink}
+                    />
+                  )}
+                </UiEntity>
+              </Row>
+
+              {/* JUMP IN (single CTA — "Start Navigation" removed per request) */}
+              <UiEntity
+                uiTransform={{
+                  borderRadius: fontSize / 2,
+                  height: fontSize * 2.5,
+                  padding: { left: fontSize, right: fontSize },
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row'
+                }}
+                uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
+                onMouseDown={jumpIn}
+              >
+                <Icon
+                  icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
+                  iconSize={fontSizeAction}
+                  iconColor={COLOR.WHITE}
+                />
+                <UiEntity
+                  uiText={{
+                    value: '<b>JUMP IN</b>',
+                    fontSize: fontSizeAction,
+                    color: COLOR.WHITE,
+                    textWrap: 'nowrap'
+                  }}
+                />
+              </UiEntity>
+            </Column>
+          </Row>
+
+          {/* Description */}
+          <Column></Column>
           <Column
             uiTransform={{
-              flexGrow: 1,
-              alignItems: 'flex-start'
+              width: '100%',
+              margin: { top: fontSize, bottom: fontSize },
+              borderRadius: fontSize,
+              padding: fontSize
+            }}
+            uiBackground={{
+              color: COLOR.DARK_OPACITY_5
             }}
           >
             <UiEntity
               uiText={{
-                value: `<b>${place.title}</b>`,
-                fontSize: fontSizeTitle,
-                color: COLOR.TEXT_COLOR_WHITE,
+                value: '<b>DESCRIPTION</b>',
+                fontSize,
+                color: COLOR.TEXT_COLOR_LIGHT_GREY,
                 textAlign: 'top-left'
               }}
+              uiTransform={{ width: '100%' }}
             />
-            {place.contact_name != null && place.contact_name.length > 0 && (
-              <UiEntity
-                uiTransform={{ margin: { top: fontSize * 0.2 } }}
-                uiText={{
-                  value: `created by ${place.contact_name}`,
-                  fontSize: fontSizeCaption,
-                  color: COLOR.TEXT_COLOR_LIGHT_GREY,
-                  textAlign: 'top-left'
-                }}
-              />
-            )}
+            <UiEntity
+              uiText={{
+                value: place.description ?? '',
+                fontSize,
+                color: COLOR.TEXT_COLOR_WHITE,
+                textAlign: 'top-left',
+                textWrap: 'wrap'
+              }}
+              uiTransform={{ width: '100%' }}
+            />
 
-            {/* Stats: views + like rate */}
             <Row
               uiTransform={{
-                alignItems: 'center',
-                margin: { top: fontSize * 0.5, bottom: fontSize * 0.5 }
+                width: '100%',
+                margin: { top: fontSize * 2 }
               }}
             >
-              <Icon
-                icon={{ spriteName: 'ViewIcn', atlasName: 'icons' }}
-                iconSize={fontSizeCaption}
-                iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
-              />
-              <UiEntity
-                uiTransform={{ margin: { right: fontSize * 0.8 } }}
-                uiText={{
-                  value: ` ${place.user_visits ?? 0}`,
-                  fontSize: fontSizeCaption,
-                  color: COLOR.TEXT_COLOR_LIGHT_GREY
-                }}
-              />
-              <Icon
-                icon={{ spriteName: 'Like', atlasName: 'icons' }}
-                iconSize={fontSizeCaption}
-                iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
-              />
-              <UiEntity
-                uiText={{
-                  value: ` ${likeRate}%`,
-                  fontSize: fontSizeCaption,
-                  color: COLOR.TEXT_COLOR_LIGHT_GREY
-                }}
-              />
-            </Row>
+              <Column uiTransform={{ margin: { right: fontSize } }}>
+                <UiEntity
+                  uiText={{
+                    value: '<b>LOCATION</b>',
+                    fontSize,
+                    color: COLOR.TEXT_COLOR_LIGHT_GREY,
+                    textAlign: 'top-left'
+                  }}
+                  uiTransform={{ width: '100%' }}
+                />
+                <Row
+                  uiTransform={{
+                    margin: { left: fontSize / 2 }
+                  }}
+                >
+                  <Icon
+                    icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
+                    iconSize={fontSize}
+                    iconColor={COLOR.TEXT_COLOR_WHITE}
+                  />
+                  <UiEntity
+                    uiText={{
+                      value: ` ${place.base_position}`,
+                      fontSize,
+                      color: COLOR.TEXT_COLOR_WHITE
+                    }}
+                  />
+                </Row>
+              </Column>
+              <Column uiTransform={{ margin: { right: fontSize } }}>
+                <UiEntity
+                  uiText={{
+                    value: '<b>PARCELS</b>',
+                    fontSize,
+                    color: COLOR.TEXT_COLOR_LIGHT_GREY,
+                    textAlign: 'top-left'
+                  }}
+                  uiTransform={{ width: '100%' }}
+                />
+                <Row
+                  uiTransform={{
+                    margin: { left: fontSize / 2 }
+                  }}
+                >
+                  <Icon
+                    icon={{ spriteName: 'ParcelsIcn', atlasName: 'map2' }}
+                    iconSize={fontSize}
+                    iconColor={COLOR.TEXT_COLOR_WHITE}
+                  />
+                  <UiEntity
+                    uiText={{
+                      value: `${place.positions?.length ?? 0}`,
+                      fontSize,
+                      color: COLOR.TEXT_COLOR_WHITE,
+                      textAlign: 'top-left'
+                    }}
+                    uiTransform={{ width: '100%' }}
+                  />
+                </Row>
+              </Column>
 
-            {/* Icon action row */}
-            <Row
-              uiTransform={{
-                alignItems: 'center',
-                margin: { bottom: fontSize * 0.5 }
-              }}
-            >
-              <ActionIconButton
-                fontSize={fontSize}
-                spriteName={isLiked ? 'Like solid' : 'Like'}
-                active={isLiked}
-                pulsing={updatingLike}
-                onClick={() => {
-                  setLike('like')
-                }}
-              />
-              <ActionIconButton
-                fontSize={fontSize}
-                spriteName={isDisliked ? 'Dislike solid' : 'Dislike'}
-                active={isDisliked}
-                pulsing={updatingLike}
-                onClick={() => {
-                  setLike('dislike')
-                }}
-              />
-              <ActionIconButton
-                fontSize={fontSize}
-                spriteName={isFav ? 'HeartOnOutlined' : 'HeartOffOutlined'}
-                atlasName="toggles"
-                active={isFav}
-                pulsing={updatingFav}
-                onClick={toggleFav}
-              />
-              <ActionIconButton
-                fontSize={fontSize}
-                spriteName="House"
-                atlasName="icons"
-                active={false}
-                pulsing={false}
-                onClick={setHome}
-              />
-              <UiEntity uiTransform={{ flexDirection: 'column' }}>
-                <ActionIconButton
-                  fontSize={fontSize}
-                  spriteName="Share"
-                  atlasName="context"
-                  active={shareOpen}
-                  pulsing={false}
-                  onClick={() => {
-                    setShareOpen(!shareOpen)
+              <Column uiTransform={{ margin: { right: fontSize } }}>
+                <UiEntity
+                  uiText={{
+                    value: '<b>FAVORITES</b>',
+                    fontSize,
+                    color: COLOR.TEXT_COLOR_LIGHT_GREY
                   }}
                 />
-                {shareOpen && (
-                  <ShareMenu
-                    fontSize={fontSize}
-                    fontSizeSmall={fontSizeSmall}
-                    onShareX={onShareX}
-                    onCopyLink={onCopyLink}
-                  />
-                )}
-              </UiEntity>
+                <UiEntity
+                  uiText={{
+                    value: `${favoritesCount}`,
+                    fontSize,
+                    color: COLOR.TEXT_COLOR_WHITE
+                  }}
+                />
+              </Column>
+              <Column>
+                <UiEntity
+                  uiText={{
+                    value: '<b>UPDATED</b>',
+                    fontSize,
+                    color: COLOR.TEXT_COLOR_LIGHT_GREY
+                  }}
+                />
+                <UiEntity
+                  uiText={{
+                    value: formatDate(place.updated_at),
+                    fontSize,
+                    color: COLOR.TEXT_COLOR_WHITE
+                  }}
+                />
+              </Column>
             </Row>
-
-            {/* JUMP IN (single CTA — "Start Navigation" removed per request) */}
-            <UiEntity
-              uiTransform={{
-                borderRadius: fontSize / 2,
-                height: fontSize * 2.5,
-                padding: { left: fontSize, right: fontSize },
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row'
-              }}
-              uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
-              onMouseDown={jumpIn}
-            >
-              <Icon
-                icon={{ spriteName: 'JumpIn', atlasName: 'icons' }}
-                iconSize={fontSizeSmall}
-                iconColor={COLOR.WHITE}
-              />
-              <UiEntity
-                uiText={{
-                  value: '<b>JUMP IN</b>',
-                  fontSize: fontSizeSmall,
-                  color: COLOR.WHITE,
-                  textWrap: 'nowrap'
-                }}
-              />
-            </UiEntity>
           </Column>
-        </Row>
-
-        {/* Description */}
-        <Column
-          uiTransform={{
-            width: '100%',
-            margin: { top: fontSize, bottom: fontSize }
-          }}
-        >
-          <UiEntity
-            uiText={{
-              value: '<b>DESCRIPTION</b>',
-              fontSize: fontSizeSmall,
-              color: COLOR.TEXT_COLOR_LIGHT_GREY,
-              textAlign: 'top-left'
-            }}
-            uiTransform={{ width: '100%' }}
-          />
-          <UiEntity
-            uiText={{
-              value: place.description ?? '',
-              fontSize: fontSizeCaption,
-              color: COLOR.TEXT_COLOR_WHITE,
-              textAlign: 'top-left',
-              textWrap: 'wrap'
-            }}
-            uiTransform={{ width: '100%' }}
-          />
         </Column>
-
-        {/* Location + Parcels */}
-        <Row
-          uiTransform={{
-            width: '100%',
-            margin: { bottom: fontSize }
-          }}
-        >
-          <Column uiTransform={{ width: '50%' }}>
-            <UiEntity
-              uiText={{
-                value: '<b>LOCATION</b>',
-                fontSize: fontSizeSmall,
-                color: COLOR.TEXT_COLOR_LIGHT_GREY,
-                textAlign: 'top-left'
-              }}
-              uiTransform={{ width: '100%' }}
-            />
-            <Row uiTransform={{ alignItems: 'center' }}>
-              <Icon
-                icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
-                iconSize={fontSizeCaption}
-                iconColor={COLOR.TEXT_COLOR_WHITE}
-              />
-              <UiEntity
-                uiText={{
-                  value: ` ${place.base_position}`,
-                  fontSize: fontSizeCaption,
-                  color: COLOR.TEXT_COLOR_WHITE
-                }}
-              />
-            </Row>
-          </Column>
-          <Column uiTransform={{ width: '50%' }}>
-            <UiEntity
-              uiText={{
-                value: '<b>PARCELS</b>',
-                fontSize: fontSizeSmall,
-                color: COLOR.TEXT_COLOR_LIGHT_GREY,
-                textAlign: 'top-left'
-              }}
-              uiTransform={{ width: '100%' }}
-            />
-            <UiEntity
-              uiText={{
-                value: `${place.positions.length}`,
-                fontSize: fontSizeCaption,
-                color: COLOR.TEXT_COLOR_WHITE,
-                textAlign: 'top-left'
-              }}
-              uiTransform={{ width: '100%' }}
-            />
-          </Column>
-        </Row>
-
-        {/* Separator */}
-        <UiEntity
-          uiTransform={{
-            width: '100%',
-            height: 1,
-            margin: { bottom: fontSize }
-          }}
-          uiBackground={{ color: COLOR.WHITE_OPACITY_1 }}
-        />
-
-        {/* Favorites + Updated */}
-        <Row uiTransform={{ width: '100%' }}>
-          <Column uiTransform={{ width: '50%', alignItems: 'center' }}>
-            <UiEntity
-              uiText={{
-                value: '<b>FAVORITES</b>',
-                fontSize: fontSizeSmall,
-                color: COLOR.TEXT_COLOR_LIGHT_GREY
-              }}
-            />
-            <UiEntity
-              uiText={{
-                value: `${favoritesCount}`,
-                fontSize: fontSizeCaption,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-            />
-          </Column>
-          <Column uiTransform={{ width: '50%', alignItems: 'center' }}>
-            <UiEntity
-              uiText={{
-                value: '<b>UPDATED</b>',
-                fontSize: fontSizeSmall,
-                color: COLOR.TEXT_COLOR_LIGHT_GREY
-              }}
-            />
-            <UiEntity
-              uiText={{
-                value: formatDate(place.updated_at),
-                fontSize: fontSizeCaption,
-                color: COLOR.TEXT_COLOR_WHITE
-              }}
-            />
-          </Column>
-        </Row>
-      </Column>
+      </LayoutContext.Provider>
     </PopupBackdrop>
-  )
-}
-
-function ActionIconButton({
-  fontSize,
-  spriteName,
-  atlasName = 'icons',
-  active,
-  pulsing,
-  onClick
-}: {
-  fontSize: number
-  spriteName: string
-  atlasName?: Atlas
-  active: boolean
-  pulsing: boolean
-  onClick: () => void
-}): ReactElement {
-  const size = fontSize * 2.2
-  return (
-    <UiEntity
-      uiTransform={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: { right: fontSize * 0.3 },
-        opacity: pulsing ? getLoadingAlphaValue() : 1
-      }}
-      uiBackground={{
-        color: active ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT
-      }}
-      onMouseDown={onClick}
-    >
-      <Icon
-        icon={{ spriteName, atlasName }}
-        iconSize={fontSize}
-        iconColor={COLOR.WHITE}
-      />
-    </UiEntity>
   )
 }
 

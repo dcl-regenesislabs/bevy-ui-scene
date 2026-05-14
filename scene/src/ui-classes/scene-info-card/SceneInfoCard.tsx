@@ -748,7 +748,7 @@ export default class SceneInfoCard {
             }
           }}
           value={'JUMP IN'}
-          backgroundColor={RUBY}
+          variant="primary"
           fontSize={this.fontSize}
           iconSize={1.5 * this.fontSize}
           icon={{
@@ -1282,7 +1282,7 @@ export default class SceneInfoCard {
                 }}
                 onMouseDown={() => {}}
                 value={'JUMP IN'}
-                backgroundColor={RUBY}
+                variant="primary"
                 fontSize={BIG_TEXT}
                 iconSize={1.2 * BIG_TEXT}
                 icon={{
@@ -1311,15 +1311,10 @@ export default class SceneInfoCard {
                 value={
                   this.areInterestedButtonsLocked ? 'Loading...' : 'INTERESTED'
                 }
-                backgroundColor={
-                  this.eventInterestedEnter === index
-                    ? SELECTED_BUTTON_COLOR
-                    : DCL_SNOW
-                }
+                variant="subtle"
+                active={this.eventInterestedEnter === index}
                 fontSize={BIG_TEXT}
                 iconSize={1.2 * BIG_TEXT}
-                fontColor={BLACK_TEXT}
-                iconColor={BLACK_TEXT}
                 icon={{
                   atlasName: 'icons',
                   spriteName:

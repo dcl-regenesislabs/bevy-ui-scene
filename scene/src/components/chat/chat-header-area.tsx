@@ -169,7 +169,6 @@ export function ChatHeaderArea({ state }: { state: any }): ReactElement {
         </UiEntity>
       </UiEntity>
       <CloseButton
-        fontSize={fontSize}
         uiTransform={{
           zIndex: 2
         }}

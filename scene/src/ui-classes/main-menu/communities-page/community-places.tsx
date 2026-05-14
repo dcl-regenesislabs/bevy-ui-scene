@@ -6,15 +6,21 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import { getContentScaleRatio } from '../../../service/canvas-ratio'
 import { executeTask } from '@dcl/sdk/ecs'
-import { fetchCommunityPlaces } from '../../../utils/communities-promise-utils'
+import {
+  fetchCommunityPlaces,
+  listenPlaceChanged,
+  updateCachedCommunityPlace
+} from '../../../utils/communities-promise-utils'
+import { updateLikeStatus } from '../../../utils/promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import type { PlaceFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import Icon from '../../../components/icon/Icon'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
+import { showErrorPopup } from '../../../service/error-popup-service'
+import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -27,18 +33,78 @@ function CommunityPlaceCard({
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeSmall = getFontSize({
     context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.BODY_S
+  })
+  const fontSizeCaption = getFontSize({
+    context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.CAPTION
   })
-  const scale = getContentScaleRatio()
-  const cardWidth = scale * 280
+  const cardWidth = fontSize * 14
   const imageHeight = cardWidth * 0.65
-  const likePercent =
-    place.like_rate != null ? `${Math.round(place.like_rate * 100)}%` : '0%'
+  const cardHeight = imageHeight + fontSize * 3
+  const [isLiked, setIsLiked] = useState<boolean>(place.user_like ?? false)
+  const [likeRate, setLikeRate] = useState<number | null>(
+    place.like_rate ?? null
+  )
+  const [likes, setLikes] = useState<number>(place.likes ?? 0)
+  const [dislikes, setDislikes] = useState<number>(place.dislikes ?? 0)
+  const [updatingLike, setUpdatingLike] = useState<boolean>(false)
+  const likePercent = likeRate != null ? `${Math.round(likeRate * 100)}%` : '0%'
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- wired by UI in a follow-up
+  const toggleLike = (): void => {
+    if (updatingLike) return
+    const prev = { isLiked, likes, dislikes, likeRate }
+    const nextIsLiked = !isLiked
+    const nextLikes = likes + (nextIsLiked ? 1 : -1)
+    const total = nextLikes + dislikes
+    const nextRate = total > 0 ? nextLikes / total : null
+    setIsLiked(nextIsLiked)
+    setLikes(Math.max(0, nextLikes))
+    setLikeRate(nextRate)
+    setUpdatingLike(true)
+    executeTask(async () => {
+      try {
+        // `null` clears any like/dislike; `true` sets a like.
+        await updateLikeStatus(place.id, nextIsLiked ? true : null)
+        updateCachedCommunityPlace(place.id, {
+          user_like: nextIsLiked,
+          user_dislike: false,
+          likes: Math.max(0, nextLikes),
+          like_rate: nextRate
+        })
+      } catch (error) {
+        setIsLiked(prev.isLiked)
+        setLikes(prev.likes)
+        setDislikes(prev.dislikes)
+        setLikeRate(prev.likeRate)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'updateLikeStatus'
+        )
+      } finally {
+        setUpdatingLike(false)
+      }
+    })
+  }
+
+  // Pick up like / dislike / fav mutations triggered from the place popup
+  // (or anywhere else that calls `updateCachedCommunityPlace`) so the card
+  // doesn't stay stale after the popup closes.
+  useEffect(() => {
+    return listenPlaceChanged(place.id, (partial) => {
+      if (partial.user_like !== undefined) setIsLiked(partial.user_like)
+      if (partial.likes !== undefined) setLikes(partial.likes)
+      if (partial.dislikes !== undefined) setDislikes(partial.dislikes)
+      if (partial.like_rate !== undefined) setLikeRate(partial.like_rate)
+    })
+  }, [])
 
   return (
     <Column
       uiTransform={{
         width: cardWidth,
+        height: cardHeight,
         margin: { right: fontSize * 0.5, bottom: fontSize * 0.5 },
         flexShrink: 0
       }}
@@ -56,12 +122,12 @@ function CommunityPlaceCard({
         uiTransform={{
           width: cardWidth,
           height: imageHeight,
-          borderRadius: fontSize / 2,
+          borderRadius: fontSize,
           flexShrink: 0
         }}
         uiBackground={{
           textureMode: 'stretch',
-          texture: { src: place.image }
+          texture: { src: place.image ?? '' }
         }}
       >
         {/* User count badge */}
@@ -135,11 +201,11 @@ function CommunityPlaceCard({
       <UiEntity
         uiTransform={{
           width: '100%',
-          margin: { top: fontSizeSmall * 0.3 }
+          margin: { top: -fontSizeSmall * 0.3 }
         }}
         uiText={{
-          value: `<b>${place.title}</b>`,
-          fontSize,
+          value: `<b>${place.title ?? ''}</b>`,
+          fontSize: fontSizeSmall,
           color: COLOR.TEXT_COLOR_WHITE,
           textAlign: 'top-left',
           textWrap: 'nowrap'
@@ -151,34 +217,57 @@ function CommunityPlaceCard({
         uiTransform={{
           width: '100%',
           alignItems: 'center',
-          margin: { top: -fontSizeSmall * 0.3 }
+          margin: { top: fontSizeCaption, left: fontSizeCaption }
         }}
       >
-        <Icon
-          icon={{ spriteName: 'LikeOn', atlasName: 'icons' }}
-          iconSize={fontSizeSmall}
-          iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
-        />
-        <UiEntity
-          uiText={{
-            value: likePercent,
-            fontSize: fontSizeSmall,
-            color: COLOR.TEXT_COLOR_LIGHT_GREY
+        <Row
+          uiTransform={{
+            width: 'auto',
+            alignItems: 'center',
+            opacity: updatingLike ? getLoadingAlphaValue() : 1,
+            margin: { right: fontSizeCaption * 0.5 },
+            flexShrink: 0
           }}
-          uiTransform={{ margin: { right: fontSize * 0.5 } }}
-        />
-        <Icon
-          icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
-          iconSize={fontSizeSmall}
-          iconColor={COLOR.TEXT_COLOR_LIGHT_GREY}
-        />
-        <UiEntity
-          uiText={{
-            value: place.base_position,
-            fontSize: fontSizeSmall,
-            color: COLOR.TEXT_COLOR_LIGHT_GREY
+        >
+          <Icon
+            icon={{
+              spriteName: isLiked ? 'Like solid' : 'Like',
+              atlasName: 'icons'
+            }}
+            iconSize={fontSizeCaption}
+            iconColor={COLOR.WHITE}
+          />
+          <UiEntity
+            uiText={{
+              value: `<b>${likePercent}</b>`,
+              fontSize: fontSizeCaption,
+              color: COLOR.WHITE
+            }}
+          />
+        </Row>
+        <Row
+          uiTransform={{
+            flexGrow: 0,
+            flexShrink: 0,
+            width: 'auto',
+            borderRadius: fontSizeCaption / 2,
+            padding: { left: fontSizeCaption, right: fontSizeCaption }
           }}
-        />
+          uiBackground={{ color: COLOR.WHITE_OPACITY_1 }}
+        >
+          <Icon
+            icon={{ spriteName: 'PinIcn', atlasName: 'icons' }}
+            iconSize={fontSizeCaption}
+            iconColor={COLOR.WHITE}
+          />
+          <UiEntity
+            uiText={{
+              value: place.base_position ?? '',
+              fontSize: fontSizeCaption,
+              color: COLOR.WHITE
+            }}
+          />
+        </Row>
       </Row>
     </Column>
   )
@@ -190,7 +279,7 @@ export function CommunityPlaces({
   communityId: string
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const scale = getContentScaleRatio()
+
   const [places, setPlaces] = useState<PlaceFromApi[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -213,8 +302,8 @@ export function CommunityPlaces({
           <UiEntity
             key={i}
             uiTransform={{
-              width: scale * 280,
-              height: scale * 220,
+              width: fontSize * 280,
+              height: fontSize * 220,
               margin: { right: fontSize * 0.5, bottom: fontSize * 0.5 }
             }}
           >

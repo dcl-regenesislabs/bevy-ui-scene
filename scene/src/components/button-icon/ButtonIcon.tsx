@@ -1,8 +1,7 @@
 import { engine, UiCanvasInformation } from '@dcl/sdk/ecs'
-import { Color4 } from '@dcl/sdk/math'
+import { type Color4 } from '@dcl/sdk/math'
 import ReactEcs, {
   type Callback,
-  Label,
   type Position,
   UiEntity,
   type UiTransformProps
@@ -10,14 +9,62 @@ import ReactEcs, {
 import { type AtlasIcon } from '../../utils/definitions'
 import { ArrowToast } from '../arrow-toast'
 import Icon from '../icon/Icon'
-import { ROUNDED_TEXTURE_BACKGROUND } from '../../utils/constants'
 import { type UiBackgroundProps } from '@dcl/react-ecs'
 import { COLOR } from '../color-palette'
 import {
-  CONTEXT,
+  type CONTEXT,
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../service/fontsize-system'
+import { useLayoutContext } from '../../service/layout-context'
+import { getLoadingAlphaValue } from '../../service/loading-alpha-color'
+import { NotificationBadge } from '../notification-badge'
+
+export type ButtonIconVariant =
+  | 'transparent'
+  | 'primary'
+  | 'subtle'
+  | 'destructive'
+
+type VariantStyle = {
+  bg: { base: Color4; hover: Color4; active: Color4 }
+  iconColor: { base: Color4; hover?: Color4; active?: Color4 }
+}
+
+const VARIANT_STYLES: Record<ButtonIconVariant, VariantStyle> = {
+  transparent: {
+    bg: {
+      base: COLOR.BLACK_TRANSPARENT,
+      hover: COLOR.WHITE_OPACITY_1,
+      active: COLOR.WHITE_OPACITY_2
+    },
+    iconColor: { base: COLOR.WHITE }
+  },
+  primary: {
+    bg: {
+      base: COLOR.BUTTON_PRIMARY,
+      hover: COLOR.BUTTON_PRIMARY_HOVER,
+      active: COLOR.BUTTON_PRIMARY_HOVER
+    },
+    iconColor: { base: COLOR.WHITE }
+  },
+  subtle: {
+    bg: {
+      base: COLOR.WHITE_OPACITY_1,
+      hover: COLOR.WHITE_OPACITY_2,
+      active: COLOR.WHITE_OPACITY_3
+    },
+    iconColor: { base: COLOR.WHITE }
+  },
+  destructive: {
+    bg: {
+      base: COLOR.BLACK_TRANSPARENT,
+      hover: { ...COLOR.RED, a: 0.15 },
+      active: { ...COLOR.RED, a: 0.25 }
+    },
+    iconColor: { base: COLOR.WHITE, hover: COLOR.RED, active: COLOR.RED }
+  }
+}
 
 function ButtonIcon(props: {
   // Events
@@ -30,6 +77,7 @@ function ButtonIcon(props: {
   uiBackground?: UiBackgroundProps
   backgroundColor?: Color4
   icon: AtlasIcon
+  hoverIcon?: AtlasIcon
   iconSize?: number
   borderRadius?: number
   iconColor?: Color4
@@ -37,13 +85,23 @@ function ButtonIcon(props: {
   showHint?: boolean
   hintFontSize?: number
   notifications?: number
-  side?: 'left' | 'right' | 'top' | 'bottom'
+  hintSide?: 'left' | 'right' | 'top' | 'bottom'
   layoutContext?: CONTEXT
+  // Design-system additions
+  variant?: ButtonIconVariant
+  active?: boolean
+  disabled?: boolean
+  loading?: boolean
 }): ReactEcs.JSX.Element | null {
   const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
+  const fromContext = useLayoutContext()
+  const [hovered, setHovered] = ReactEcs.useState<boolean>(false)
   if (canvasInfo === null) return null
-  const layoutContext = props.layoutContext ?? CONTEXT.SIDE
-  const BUTTON_ICON_SIZE = getFontSize({
+  const layoutContext = props.layoutContext ?? fromContext
+  const variant = props.variant ?? 'transparent'
+  const styles = VARIANT_STYLES[variant]
+
+  const iconSize = getFontSize({
     token: TYPOGRAPHY_TOKENS.BUTTON_ICON,
     context: layoutContext
   })
@@ -51,69 +109,90 @@ function ButtonIcon(props: {
     token: TYPOGRAPHY_TOKENS.BUTTON_ICON_BORDER_RADIUS,
     context: layoutContext
   })
-  const BUTTON_ICON_HEIGHT = (BUTTON_ICON_SIZE / 1.5) * 2
+  const buttonSize = (iconSize / 1.5) * 2
+  const DEFAULT_HINT_FONT_SIZE = getFontSize({ context: layoutContext })
 
-  const DEFAULT_HINT_FONT_SIZE = getFontSize({})
+  // Resolve visual state. `disabled` short-circuits everything (no hover,
+  // no clicks). `active` forces the active style. Otherwise we fall back
+  // to the live hover state.
+  const isDisabled = props.disabled === true
+  const isLoading = props.loading === true
+  const isInteractive = !isDisabled && !isLoading
+  const visualState: 'base' | 'hover' | 'active' = isDisabled
+    ? 'base'
+    : props.active === true
+    ? 'active'
+    : hovered
+    ? 'hover'
+    : 'base'
+
+  const variantBg = styles.bg[visualState]
+  const variantIconColor =
+    styles.iconColor[visualState] ?? styles.iconColor.base
+
+  // Legacy prop overrides win over variant defaults (backwards compat).
+  const bgColor = props.backgroundColor ?? variantBg
+  const iconColor = props.iconColor ?? variantIconColor
+
+  // Sprite swap: hoverIcon when hovered or active, else default icon.
+  const renderedIcon =
+    (hovered || props.active === true) && props.hoverIcon !== undefined
+      ? props.hoverIcon
+      : props.icon
+
+  // Hint visibility: external prop wins; else show on internal hover when
+  // hintText is provided.
+  const showHint =
+    props.showHint ?? (props.hintText !== undefined && hovered && isInteractive)
 
   let position: Partial<Position> = { left: '100%' }
+  if (props.hintSide === 'right') position = { right: '100%' }
+  if (props.hintSide === 'bottom') position = { bottom: '100%' }
+  if (props.hintSide === 'top') position = { top: '100%' }
 
-  if (props.side === 'right') position = { right: '100%' }
-  if (props.side === 'bottom') position = { bottom: '100%' }
-  if (props.side === 'top') position = { top: '100%' }
+  // Opacity for disabled / loading visuals.
+  const opacity = isDisabled ? 0.4 : isLoading ? getLoadingAlphaValue() : 1
 
   return (
     <UiEntity
       uiTransform={{
+        flexGrow: 0,
+        flexShrink: 0,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: props.borderRadius ?? BUTTON_ICON_BORDER_RADIUS,
-        borderColor: COLOR.BLACK_TRANSPARENT,
-        borderWidth: 0,
-        height: BUTTON_ICON_HEIGHT,
+        height: buttonSize,
+        width: buttonSize,
+        opacity,
         ...props.uiTransform
       }}
       uiBackground={{
-        color: props.backgroundColor ?? { ...Color4.White(), a: 0 },
+        color: bgColor,
         ...props.uiBackground
       }}
-      onMouseDown={props.onMouseDown}
-      onMouseEnter={props.onMouseEnter}
-      onMouseLeave={props.onMouseLeave}
+      onMouseDown={isInteractive ? props.onMouseDown : undefined}
+      onMouseEnter={() => {
+        if (!isInteractive) return
+        setHovered(true)
+        props.onMouseEnter?.()
+      }}
+      onMouseLeave={() => {
+        setHovered(false)
+        props.onMouseLeave?.()
+      }}
     >
       {/* ICON */}
-
       <Icon
-        icon={props.icon}
-        iconColor={props.iconColor ?? Color4.White()}
-        iconSize={props.iconSize ?? BUTTON_ICON_SIZE}
+        icon={renderedIcon}
+        iconColor={iconColor}
+        iconSize={props.iconSize ?? iconSize}
       />
-      <UiEntity
-        uiTransform={{
-          width: '40%',
-          height: '40%',
-          flexDirection: 'row',
-          alignItems: 'center',
-          positionType: 'absolute',
-          position: { bottom: '-5%', right: '-5%' },
-          display:
-            props.notifications !== undefined && props.notifications > 0
-              ? 'flex'
-              : 'none'
-        }}
-        uiBackground={{
-          ...ROUNDED_TEXTURE_BACKGROUND,
-          color: { ...Color4.Red() }
-        }}
-      >
-        <Label
-          value={props.notifications?.toString() ?? '0'}
-          textAlign="middle-center"
-          fontSize={getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })}
-          uiTransform={{ width: '100%', height: '100%' }}
-          textWrap={'nowrap'}
-        />
-      </UiEntity>
-      {props.showHint && props.hintText !== undefined && (
+      {/* Notification badge — renders nothing if count <= 0 */}
+      <NotificationBadge
+        count={props.notifications ?? 0}
+        context={layoutContext}
+      />
+      {showHint && props.hintText !== undefined && (
         <ArrowToast
           uiTransform={{
             width: 'auto',
@@ -123,7 +202,7 @@ function ButtonIcon(props: {
           }}
           text={props.hintText}
           fontSize={props.hintFontSize ?? DEFAULT_HINT_FONT_SIZE}
-          arrowSide={props.side ?? 'left'}
+          arrowSide={props.hintSide ?? 'left'}
         />
       )}
     </UiEntity>
