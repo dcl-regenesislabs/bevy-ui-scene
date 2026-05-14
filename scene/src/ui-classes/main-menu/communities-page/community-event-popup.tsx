@@ -12,8 +12,6 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import { noop } from '../../../utils/function-utils'
-import { store } from '../../../state/store'
-import { closeLastPopupAction } from '../../../state/hud/actions'
 import type { EventFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import { CommunityEventActionsRow } from './community-event-actions-row'
 import {

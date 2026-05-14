@@ -179,9 +179,8 @@ function handleFriendshipResultEvent(event: FriendshipEventUpdate): void {
   // immediately (without waiting for the stream echo). When that event
   // finally arrives, the popup is already on screen — don't close and
   // re-open it (would cause a flicker). Just consume the mark and bail.
-  const topPopupAddress = (
-    topPopup?.data as { address?: string } | undefined
-  )?.address
+  const topPopupAddress = (topPopup?.data as { address?: string } | undefined)
+    ?.address
   if (
     isSelfInitiated &&
     topPopup?.type === HUD_POPUP_TYPE.FRIENDSHIP_RESULT &&

@@ -51,6 +51,7 @@ function CommunityPlaceCard({
   const [updatingLike, setUpdatingLike] = useState<boolean>(false)
   const likePercent = likeRate != null ? `${Math.round(likeRate * 100)}%` : '0%'
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- wired by UI in a follow-up
   const toggleLike = (): void => {
     if (updatingLike) return
     const prev = { isLiked, likes, dislikes, likeRate }

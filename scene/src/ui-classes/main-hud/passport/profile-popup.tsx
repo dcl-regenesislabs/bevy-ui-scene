@@ -425,7 +425,9 @@ function InviteToCommunityButton({
   }
 
   return (
-    <UiEntity uiTransform={{ flexDirection: 'column', positionType: 'relative' }}>
+    <UiEntity
+      uiTransform={{ flexDirection: 'column', positionType: 'relative' }}
+    >
       <ButtonTextIcon
         key={'profile-button-invite-' + player.userId}
         value={'<b>Invite to Community</b>'}

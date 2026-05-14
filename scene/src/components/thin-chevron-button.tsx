@@ -32,8 +32,7 @@ export const ThinChevronButton = ({
 }): ReactElement => {
   const fromContext = useLayoutContext()
   const layoutContext = layoutContextProp ?? fromContext
-  const fontSize =
-    fontSizeProp ?? getFontSize({ context: layoutContext }) * 0.9
+  const fontSize = fontSizeProp ?? getFontSize({ context: layoutContext }) * 0.9
   return (
     <ThinButton
       fontSize={fontSize}

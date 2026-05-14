@@ -33,8 +33,7 @@ export const ThinMenuButton = ({
 }): ReactElement => {
   const fromContext = useLayoutContext()
   const layoutContext = layoutContextProp ?? fromContext
-  const fontSize =
-    fontSizeProp ?? getFontSize({ context: layoutContext }) * 0.9
+  const fontSize = fontSizeProp ?? getFontSize({ context: layoutContext }) * 0.9
   // When a variant is given, defer the bg/hover to ThinButton's variant
   // path; the legacy `backgroundColor` default only applies when no
   // variant is supplied.

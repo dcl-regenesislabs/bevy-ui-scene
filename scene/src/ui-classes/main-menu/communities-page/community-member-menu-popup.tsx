@@ -1,5 +1,4 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { engine, executeTask, PrimaryPointerInfo } from '@dcl/sdk/ecs'
 import { getPlayer } from '@dcl/sdk/players'
 import { type Popup } from '../../../components/popup-stack'

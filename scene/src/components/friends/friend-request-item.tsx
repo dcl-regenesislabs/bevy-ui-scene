@@ -1,13 +1,7 @@
 import type { FriendRequestData } from '../../service/social-service-type'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import useState = ReactEcs.useState
-import {
-  type Key,
-  UiEntity,
-  type Callback,
-  Label,
-  type UiTransformProps
-} from '@dcl/sdk/react-ecs'
+import { type Key, UiEntity, type Callback, Label } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import { Column, Row } from '../layout'

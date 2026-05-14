@@ -7,10 +7,6 @@ import { store } from '../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
 import { sleep, waitFor } from '../utils/dcl-utils'
 import { getPlayer } from '@dcl/sdk/players'
-import { HUD_POPUP_TYPE } from '../state/hud/state'
-import { pushPopupAction } from '../state/hud/actions'
-import { requestPlayer } from '../service/chat-members'
-import { resolvePlayerData } from '../utils/passport-promise-utils'
 
 let gameInstance: GameController
 
@@ -249,7 +245,7 @@ export async function init(retry: boolean): Promise<void> {
           )
         }
       })
-    )*/
+    ) */
 
     /* store.dispatch(
       pushPopupAction({

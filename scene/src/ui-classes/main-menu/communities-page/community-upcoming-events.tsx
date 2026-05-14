@@ -25,7 +25,6 @@ import { showErrorPopup } from '../../../service/error-popup-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
-import { BottomBorder } from '../../../components/bottom-border'
 
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const MONTHS = [

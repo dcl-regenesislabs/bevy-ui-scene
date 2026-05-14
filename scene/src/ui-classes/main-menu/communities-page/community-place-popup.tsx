@@ -79,10 +79,6 @@ function CommunityPlacePopupContent({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.LABEL
   })
-  const fontSizeCaption = getFontSize({
-    context: CONTEXT.DIALOG,
-    token: TYPOGRAPHY_TOKENS.CAPTION
-  })
 
   const thumbnailWidth = fontSize * 27
   const thumbnailHeight = thumbnailWidth * 0.75
@@ -538,7 +534,7 @@ function CommunityPlacePopupContent({
             <UiEntity
               uiText={{
                 value: '<b>DESCRIPTION</b>',
-                fontSize: fontSize,
+                fontSize,
                 color: COLOR.TEXT_COLOR_LIGHT_GREY,
                 textAlign: 'top-left'
               }}
@@ -547,7 +543,7 @@ function CommunityPlacePopupContent({
             <UiEntity
               uiText={{
                 value: place.description ?? '',
-                fontSize: fontSize,
+                fontSize,
                 color: COLOR.TEXT_COLOR_WHITE,
                 textAlign: 'top-left',
                 textWrap: 'wrap'
@@ -565,7 +561,7 @@ function CommunityPlacePopupContent({
                 <UiEntity
                   uiText={{
                     value: '<b>LOCATION</b>',
-                    fontSize: fontSize,
+                    fontSize,
                     color: COLOR.TEXT_COLOR_LIGHT_GREY,
                     textAlign: 'top-left'
                   }}
@@ -584,7 +580,7 @@ function CommunityPlacePopupContent({
                   <UiEntity
                     uiText={{
                       value: ` ${place.base_position}`,
-                      fontSize: fontSize,
+                      fontSize,
                       color: COLOR.TEXT_COLOR_WHITE
                     }}
                   />
@@ -613,7 +609,7 @@ function CommunityPlacePopupContent({
                   <UiEntity
                     uiText={{
                       value: `${place.positions?.length ?? 0}`,
-                      fontSize: fontSize,
+                      fontSize,
                       color: COLOR.TEXT_COLOR_WHITE,
                       textAlign: 'top-left'
                     }}

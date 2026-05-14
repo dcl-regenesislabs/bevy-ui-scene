@@ -42,7 +42,9 @@ export async function inviteUserToCommunity(
   try {
     await sendInviteOrRequestToJoin(community.id, targetAddress, 'invite')
     pushNotificationToast({
-      id: `community-invite-sent-${community.id}-${targetAddress}-${Date.now()}`,
+      id: `community-invite-sent-${
+        community.id
+      }-${targetAddress}-${Date.now()}`,
       type: 'community_invite_sent',
       address: targetAddress,
       metadata: {

@@ -4,8 +4,6 @@ import { CONTEXT, getFontSize } from '../service/fontsize-system'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { CloseButton } from './close-button'
 import { getContentScaleRatio } from '../service/canvas-ratio'
-import { closeLastPopupAction } from 'src/state/hud/actions'
-import { store } from '../state/store'
 
 export const PopupBigWindow = ({
   children = null
