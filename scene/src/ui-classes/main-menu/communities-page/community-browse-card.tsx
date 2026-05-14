@@ -127,7 +127,6 @@ export function CommunityBrowseCard({
       executeTask(async () => {
         try {
           await joinCommunity(community.id)
-          community.role = 'member'
           notifyCommunitiesChanged()
         } catch (error) {
           setRole(previous)

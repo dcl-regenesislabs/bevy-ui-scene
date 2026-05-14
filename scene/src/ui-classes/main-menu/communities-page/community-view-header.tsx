@@ -105,7 +105,6 @@ export function CommunityViewHeader({
     executeTask(async () => {
       try {
         await joinCommunity(community.id)
-        community.role = 'member'
         notifyCommunitiesChanged()
       } catch (error) {
         setRole(previous)
@@ -130,7 +129,8 @@ export function CommunityViewHeader({
     executeTask(async () => {
       try {
         await leaveCommunity(community.id, myAddress)
-        community.role = 'none'
+        // See note in onJoin: never mutate `community.role` here — same row
+        // may be the frozen `shownPopup.data` payload.
         notifyCommunitiesChanged()
       } catch (error) {
         setRole(previous)
