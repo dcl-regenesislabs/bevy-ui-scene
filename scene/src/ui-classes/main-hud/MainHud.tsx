@@ -150,17 +150,44 @@ export default class MainHud {
 
     // ESC priority: 1) close the top popup, peeling off one per press
     // (same semantics as a backdrop click; skipped while any popup is
-    // mid-submit), 2) otherwise close the main menu if open.
+    // mid-submit), 2) close the friends or chat sidecar panel if open,
+    // 3) otherwise close the main menu if open.
     listenSystemAction('Cancel', (pressed: boolean) => {
       if (!pressed) return
+      const hud = store.getState().hud
       const popups = store.getState().hud.shownPopups
+
+      console.log(
+        'CANCEL',
+        this.uiController.isMainMenuVisible,
+        popups.length,
+        hud.friendsOpen,
+        hud.chatOpen
+      )
+
       if (popups.length > 0) {
         if (isLastPopupSubmitting()) return
         store.dispatch(closeLastPopupAction())
         return
       }
+
       if (this.uiController.isMainMenuVisible) {
         this.uiController.menu?.hide()
+        return
+      }
+
+      if (hud.friendsOpen) {
+        store.dispatch(
+          updateHudStateAction({
+            friendsOpen: false
+          })
+        )
+      } else if (hud.chatOpen) {
+        store.dispatch(
+          updateHudStateAction({
+            chatOpen: false
+          })
+        )
       }
     })
 

@@ -9,6 +9,7 @@ import { Column } from '../layout'
 import { FriendListPanel } from './friend-list-panel'
 import { FriendRequestList } from './friend-request-list'
 import { BlockedList } from './blocked-list'
+import { CloseButton } from '../close-button'
 
 const FRIENDS_TAB: Tab[] = [
   { text: '  FRIENDS ' },
@@ -66,6 +67,22 @@ export default function FriendsPanel(): ReactElement {
       {store.getState().hud.friendsActiveTabIndex === 2 ? (
         <BlockedList />
       ) : null}
+      <CloseButton
+        uiTransform={{
+          positionType: 'absolute',
+          position: { right: fontSize / 4, top: fontSize / 4 },
+          height: fontSize * 1.5,
+          width: fontSize * 1.5
+        }}
+        iconSize={fontSize}
+        onClick={() => {
+          store.dispatch(
+            updateHudStateAction({
+              friendsOpen: false
+            })
+          )
+        }}
+      />
     </Column>
   )
 }

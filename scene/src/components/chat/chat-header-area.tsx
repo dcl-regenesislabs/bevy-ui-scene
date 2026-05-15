@@ -12,7 +12,8 @@ import { updateHudStateAction } from '../../state/hud/actions'
 import { CloseButton } from '../close-button'
 
 export function ChatHeaderArea({ state }: { state: any }): ReactElement {
-  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
+  const fontSize_s = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
 
   return (
     <UiEntity
@@ -21,11 +22,11 @@ export function ChatHeaderArea({ state }: { state: any }): ReactElement {
         position: { top: '-5%' },
         width: '100%',
         height: '4%',
-        padding: { top: '4%', bottom: 0, left: 0, right: fontSize / 4 },
+        padding: { top: '4%', bottom: 0, left: 0, right: fontSize_s / 4 },
         justifyContent: 'flex-start',
         flexShrink: 0,
         alignItems: 'center',
-        borderRadius: fontSize / 2,
+        borderRadius: fontSize_s / 2,
         borderColor: COLOR.BLACK_TRANSPARENT,
         borderWidth: 0,
         zIndex: 2
@@ -48,7 +49,7 @@ export function ChatHeaderArea({ state }: { state: any }): ReactElement {
       />
       <Icon
         uiTransform={{ margin: { left: '4%' }, zIndex: 3, flexShrink: 0 }}
-        iconSize={fontSize * 1.5}
+        iconSize={fontSize_s * 1.5}
         icon={{ spriteName: 'DdlIconColor', atlasName: 'icons' }}
       />
       <Label
@@ -58,7 +59,7 @@ export function ChatHeaderArea({ state }: { state: any }): ReactElement {
         }}
         textAlign={'top-left'}
         value={'Nearby'}
-        fontSize={fontSize}
+        fontSize={fontSize_s}
         color={COLOR.INACTIVE}
       />
       <UiEntity
@@ -73,13 +74,13 @@ export function ChatHeaderArea({ state }: { state: any }): ReactElement {
         }}
       >
         <Icon
-          iconSize={fontSize}
+          iconSize={fontSize_s}
           icon={{ spriteName: 'Members', atlasName: 'icons' }}
         />
         <Label
           uiTransform={{ position: { left: '-4%' } }}
           value={getChatMembers().length.toString()}
-          fontSize={fontSize}
+          fontSize={fontSize_s}
         />
       </UiEntity>
 
@@ -90,8 +91,8 @@ export function ChatHeaderArea({ state }: { state: any }): ReactElement {
           alignItems: 'center',
           justifyContent: 'flex-end',
           zIndex: 2,
-          width: fontSize * 2,
-          height: fontSize * 2,
+          width: fontSize_s * 2,
+          height: fontSize_s * 2,
           flexShrink: 0,
           margin: { right: '2%' }
         }}
@@ -170,12 +171,14 @@ export function ChatHeaderArea({ state }: { state: any }): ReactElement {
       </UiEntity>
       <CloseButton
         uiTransform={{
-          zIndex: 2
+          zIndex: 2,
+          margin: { right: fontSize / 4, top: fontSize * 0.12 },
+          height: fontSize * 1.75,
+          width: fontSize * 1.75
         }}
+        iconSize={fontSize}
         onClick={() => {
-          store.dispatch(
-            updateHudStateAction({ chatOpen: !store.getState().hud.chatOpen })
-          )
+          store.dispatch(updateHudStateAction({ chatOpen: false }))
         }}
       />
     </UiEntity>

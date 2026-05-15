@@ -176,7 +176,7 @@ export type HudStateUpdateParams = {
 
 export const hudInitialState: HudState = {
   transitioningToMap: false,
-  chatOpen: false,
+  chatOpen: true,
   shownPopups: [],
   profileData: cloneDeep(EMPTY_PROFILE_DATA),
   names: [],

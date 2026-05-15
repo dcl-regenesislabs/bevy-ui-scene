@@ -9,14 +9,17 @@ export function CloseButton({
   uiTransform,
   onClick = () => {
     store.dispatch(closeLastPopupAction())
-  }
+  },
+  iconSize
 }: {
   uiTransform?: UiTransformProps
   onClick?: Callback
+  iconSize?: number
 }): ReactElement {
   return (
     <ButtonIcon
       icon={{ atlasName: 'icons', spriteName: 'CloseIcon' }}
+      iconSize={iconSize}
       backgroundColor={COLOR.BLACK}
       onMouseDown={onClick}
       uiTransform={{
