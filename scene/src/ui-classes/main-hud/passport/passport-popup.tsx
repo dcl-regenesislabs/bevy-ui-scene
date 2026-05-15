@@ -338,7 +338,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
                             value="<b>Invite to Community</b>"
                             icon={{
                               atlasName: 'icons',
-                              spriteName: 'Members'
+                              spriteName: 'Community'
                             }}
                             onMouseDown={() => {
                               setInviteSubmenuOpen(!inviteSubmenuOpen)

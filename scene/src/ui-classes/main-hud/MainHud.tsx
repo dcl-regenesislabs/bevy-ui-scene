@@ -23,7 +23,11 @@ import { type PBUiCanvasInformation } from '@dcl/ecs/dist/components/generated/p
 import { BevyApi } from '../../bevy-api'
 import { sleep } from '../../utils/dcl-utils'
 import { listenSystemAction } from '../../service/system-actions-emitter'
-import { CONTEXT } from '../../service/fontsize-system'
+import {
+  CONTEXT,
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../service/fontsize-system'
 import { LayoutContext } from '../../service/layout-context'
 import FriendsPanel from '../../components/friends/friends-panel'
 import { FEATURES, getFeatureFlag } from '../../service/feature-flags'
@@ -59,7 +63,7 @@ const MapIconHover: AtlasIcon = { atlasName: 'navbar', spriteName: 'Map on' }
 
 const CommunitiesIcon: AtlasIcon = {
   atlasName: 'icons',
-  spriteName: 'CommunitiesHudIcon'
+  spriteName: 'Community'
 }
 
 const BackpackIconIdle: AtlasIcon = {
@@ -327,6 +331,12 @@ export default class MainHud {
           {getFeatureFlag(FEATURES.COMMUNITIES) && (
             <ButtonIcon
               uiTransform={buttonTransform}
+              iconSize={
+                getFontSize({
+                  token: TYPOGRAPHY_TOKENS.BUTTON_ICON,
+                  context: CONTEXT.SIDE
+                }) * 0.8
+              }
               variant="transparent"
               icon={CommunitiesIcon}
               hintText="Communities"

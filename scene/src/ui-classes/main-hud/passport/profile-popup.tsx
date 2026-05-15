@@ -436,7 +436,7 @@ function InviteToCommunityButton({
         }}
         icon={{
           atlasName: 'icons',
-          spriteName: 'Members'
+          spriteName: 'Community'
         }}
       />
       {submenuOpen && (
