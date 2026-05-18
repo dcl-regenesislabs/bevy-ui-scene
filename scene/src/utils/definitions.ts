@@ -41,16 +41,16 @@ type URN_VALUE =
 
 export type URN = `urn:${URN_VALUE}`
 export type offchainEmoteURN =
-  | `handsair`
-  | `wave`
-  | `fistpump`
-  | `dance`
-  | `raisehand`
-  | `clap`
-  | `money`
-  | `kiss`
-  | `headexplode`
-  | `shrug`
+  | `urn:decentraland:off-chain:base-emotes:handsair`
+  | `urn:decentraland:off-chain:base-emotes:wave`
+  | `urn:decentraland:off-chain:base-emotes:fistpump`
+  | `urn:decentraland:off-chain:base-emotes:dance`
+  | `urn:decentraland:off-chain:base-emotes:raisehand`
+  | `urn:decentraland:off-chain:base-emotes:clap`
+  | `urn:decentraland:off-chain:base-emotes:money`
+  | `urn:decentraland:off-chain:base-emotes:kiss`
+  | `urn:decentraland:off-chain:base-emotes:headexplode`
+  | `urn:decentraland:off-chain:base-emotes:shrug`
 export type URNWithoutTokenId =
   | `decentraland:off-chain:base-avatars:${string}`
   | `decentraland:${Network}:collections-v1:${ContractAddress}:${string}`

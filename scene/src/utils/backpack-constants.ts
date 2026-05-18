@@ -3,7 +3,11 @@ import type { CatalogEmoteElement } from './item-definitions'
 
 export const ITEMS_CATALOG_PAGE_SIZE = 16
 
-export const DEFAULT_EMOTES: offchainEmoteURN[] = [
+export const BASE_EMOTES_URN_PREFIX = 'urn:decentraland:off-chain:base-emotes:'
+
+// Source of truth: canonical short names. URNs and Record keys derive from
+// these to keep them in sync and avoid manual duplication.
+const BASE_EMOTE_SHORT_NAMES = [
   'handsair',
   'wave',
   'fistpump',
@@ -14,7 +18,25 @@ export const DEFAULT_EMOTES: offchainEmoteURN[] = [
   'kiss',
   'headexplode',
   'shrug'
-]
+] as const
+
+const _displayNameByShort: Record<string, string> = {
+  handsair: 'Hands air',
+  wave: 'Wave',
+  fistpump: 'Fist pump',
+  dance: 'Dance',
+  raisehand: 'Raisehand',
+  clap: 'Clap',
+  money: 'Money',
+  kiss: 'Kiss',
+  headexplode: 'Head explode',
+  shrug: 'Shrug'
+}
+
+export const DEFAULT_EMOTES: offchainEmoteURN[] = BASE_EMOTE_SHORT_NAMES.map(
+  (s) => `${BASE_EMOTES_URN_PREFIX}${s}` as offchainEmoteURN
+)
+
 export const EMPTY_EMOTES: EquippedEmote[] = [
   '',
   '',
@@ -27,17 +49,20 @@ export const EMPTY_EMOTES: EquippedEmote[] = [
   '',
   ''
 ]
-export const DEFAULT_EMOTE_NAMES: Record<offchainEmoteURN, string> = {
-  handsair: 'Hands air',
-  wave: 'Wave',
-  fistpump: 'Fist pump',
-  dance: 'Dance',
-  raisehand: 'Raisehand',
-  clap: 'Clap',
-  money: 'Money',
-  kiss: 'Kiss',
-  headexplode: 'Head explode',
-  shrug: 'Shrug'
+
+// Records below accept BOTH the short name (`'wave'`) and the full URN
+// (`'urn:…:wave'`) as keys. Old profiles persisted before the URN
+// migration still hand us shorts via `getPlayer()?.emotes`; we want
+// lookups to succeed either way.
+export const DEFAULT_EMOTE_NAMES: Record<string, string> = {}
+export const DEFAULT_EMOTE_SPRITE_NAMES: Record<string, string> = {}
+
+for (const short of BASE_EMOTE_SHORT_NAMES) {
+  const fullUrn = `${BASE_EMOTES_URN_PREFIX}${short}`
+  DEFAULT_EMOTE_NAMES[short] = _displayNameByShort[short]
+  DEFAULT_EMOTE_NAMES[fullUrn] = _displayNameByShort[short]
+  DEFAULT_EMOTE_SPRITE_NAMES[short] = short
+  DEFAULT_EMOTE_SPRITE_NAMES[fullUrn] = short
 }
 export const DEFAULT_EMOTE_ELEMENTS: CatalogEmoteElement[] = DEFAULT_EMOTES.map(
   (offchainEmoteURN: offchainEmoteURN) => ({
