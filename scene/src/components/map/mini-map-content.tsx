@@ -18,6 +18,7 @@ import { getMapSize } from './mini-map-size'
 import { getCardinalLabelPositions } from './mini-map-cardinals'
 import {
   buildMinimapUvs,
+  getPrefetchTiles,
   getTileInfo,
   PARCEL_METERS,
   worldToScreen2D
@@ -29,6 +30,41 @@ import useEffect = ReactEcs.useEffect
 
 // Diameter of world (in meters) that fits across the minimap.
 const VISIBLE_METERS = 256
+
+// Module-level direction tracker: stores the latest non-zero sign of the
+// player's movement on each world axis. Used to decide which neighbour
+// chunks to prefetch (1 cardinal + 2 chunks for diagonals).
+const directionState = {
+  initialized: false,
+  lastWorldX: 0,
+  lastWorldZ: 0,
+  dirX: 0 as -1 | 0 | 1,
+  dirZ: 0 as -1 | 0 | 1
+}
+const DELTA_THRESHOLD_METERS = 0.05
+
+function updateDirection(
+  playerWorldX: number,
+  playerWorldZ: number
+): { dirX: -1 | 0 | 1; dirZ: -1 | 0 | 1 } {
+  if (!directionState.initialized) {
+    directionState.initialized = true
+    directionState.lastWorldX = playerWorldX
+    directionState.lastWorldZ = playerWorldZ
+    return { dirX: 0, dirZ: 0 }
+  }
+  const deltaX = playerWorldX - directionState.lastWorldX
+  const deltaZ = playerWorldZ - directionState.lastWorldZ
+  if (Math.abs(deltaX) > DELTA_THRESHOLD_METERS) {
+    directionState.dirX = Math.sign(deltaX) as -1 | 1
+  }
+  if (Math.abs(deltaZ) > DELTA_THRESHOLD_METERS) {
+    directionState.dirZ = Math.sign(deltaZ) as -1 | 1
+  }
+  directionState.lastWorldX = playerWorldX
+  directionState.lastWorldZ = playerWorldZ
+  return { dirX: directionState.dirX, dirZ: directionState.dirZ }
+}
 
 const POI_SRC = 'assets/images/map/POI.png'
 const MAP_ARROW_SRC = 'assets/images/MapArrow.png'
@@ -57,6 +93,17 @@ export function MiniMapContent(): ReactElement {
     tile,
     VISIBLE_METERS,
     cameraYawRad
+  )
+
+  // Directional prefetch: load 1–3 neighbour chunks ahead of the player
+  // so the swap is instant when they cross a snap boundary.
+  const { dirX, dirZ } = updateDirection(playerWorldX, playerWorldZ)
+  const prefetchTiles = getPrefetchTiles(
+    minimapStyle,
+    playerParcel.x,
+    playerParcel.y,
+    dirX,
+    dirZ
   )
 
   // Load places catalog once.
@@ -103,6 +150,26 @@ export function MiniMapContent(): ReactElement {
           texture: { src: tile.url }
         }}
       />
+
+      {/* Invisible 1×1 prefetch quads: bevy AssetServer downloads the
+          texture even though the entity is tiny and clipped by overflow.
+          When the player crosses a snap boundary, the matching texture
+          is already cached so the swap is instant. */}
+      {prefetchTiles.map((p) => (
+        <UiEntity
+          key={`prefetch-${p.url}`}
+          uiTransform={{
+            width: 1,
+            height: 1,
+            positionType: 'absolute',
+            position: { top: 0, left: 0 }
+          }}
+          uiBackground={{
+            textureMode: 'stretch',
+            texture: { src: p.url }
+          }}
+        />
+      ))}
 
       {/* POI markers */}
       {places.map((place) => {
