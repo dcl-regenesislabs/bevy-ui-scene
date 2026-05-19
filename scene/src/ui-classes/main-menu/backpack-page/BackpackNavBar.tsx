@@ -38,6 +38,7 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
+import useEffect = ReactEcs.useEffect
 
 const debouncedSearch = debounce((name: string) => {
   updatePageGeneric().catch(console.error)
@@ -50,6 +51,12 @@ export function BackpackNavBar(): ReactElement {
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.NAV_BUTTON_HEIGHT
   })
+
+  useEffect(() => {
+    console.log('// TODO review to replace with stopEmote')
+    playPreviewEmote('')
+  }, [store.getState().backpack.activeSection])
+
   return (
     <NavBar>
       <LeftSection>
@@ -86,7 +93,6 @@ export function BackpackNavBar(): ReactElement {
               setAvatarPreviewCameraToWearableCategory(
                 backpackState.activeWearableCategory
               )
-              playPreviewEmote('')
             }}
           />
           <NavButton

@@ -128,6 +128,7 @@ export type HudState = {
   receivedFriendRequests: FriendRequestData[]
   friends: FriendStatusData[]
   friendsLoading: boolean
+  minimapStyle: 'parcel' | 'satellite'
 }
 
 export type HudStateUpdateParams = {
@@ -172,6 +173,7 @@ export type HudStateUpdateParams = {
   receivedFriendRequests?: FriendRequestData[]
   friends?: FriendStatusData[]
   friendsLoading?: boolean
+  minimapStyle?: 'parcel' | 'satellite'
 }
 
 export const hudInitialState: HudState = {
@@ -216,5 +218,6 @@ export const hudInitialState: HudState = {
   sentFriendRequests: [],
   receivedFriendRequests: [],
   friends: [],
-  friendsLoading: true
+  friendsLoading: true,
+  minimapStyle: 'parcel'
 }

@@ -95,6 +95,27 @@ export const fromParcelCoordsToPosition = (
 export const cleanMapPlaces = (): void => {
   state.places = {}
 }
+
+/**
+ * Returns the parcel (as `"x,y"`) closest to the centroid of the given
+ * parcel list. Used to pick a "main" parcel for a Place spanning multiple
+ * parcels (e.g. for icon placement on the map).
+ */
+export function getCentralParcel(parcelStrings: string[]): string | null {
+  if (parcelStrings.length === 0) return null
+  const parcels = parcelStrings.map((str) => {
+    const [x, y] = str.split(',').map(Number)
+    return { x, y }
+  })
+  const avgX = parcels.reduce((sum, p) => sum + p.x, 0) / parcels.length
+  const avgY = parcels.reduce((sum, p) => sum + p.y, 0) / parcels.length
+  const central = parcels.reduce((closest, p) => {
+    const dist = Math.hypot(p.x - avgX, p.y - avgY)
+    const closestDist = Math.hypot(closest.x - avgX, closest.y - avgY)
+    return dist < closestDist ? p : closest
+  })
+  return `${central.x},${central.y}`
+}
 export const isMapPlacesLoaded = (): boolean => state.done
 export const getPlaceCategories = (): PlaceCategory[] => state.categories
 export const loadCompleteMapPlaces = async (): Promise<
