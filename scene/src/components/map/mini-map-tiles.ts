@@ -17,7 +17,7 @@
  *                   borders.
  */
 
-export type MinimapStyle = 'parcel' | 'satellite'
+export type MinimapStyle = 'parcel' | 'satellite' | 'imposters'
 
 // Decentraland parcels are 16m square in the world.
 export const PARCEL_METERS = 16
@@ -50,11 +50,39 @@ const PARCEL_SNAP_CHUNK = 16
 const PARCEL_IMAGE_PARCELS = 48
 const PARCEL_PX_PER_PARCEL = 16
 
-// Satellite tiles are fixed by the genesis-city repo at 40 parcels each.
+// Satellite atlas convention (mirrors unity-explorer):
+//   - 8×8 grid of tiles named `(0,0)` … `(7,7)`.
+//   - Each tile covers 40 parcels (640 m) on each side.
+//   - Tile (0, 0) CENTER is at parcel (-133, 132) — i.e. the NW corner
+//     of the city; tile-y grows SOUTH (j=0 is north, j=7 is south).
+//   - Out of these bounds (e.g. worlds) the server returns 404.
 const SATELLITE_CHUNK_PARCELS = 40
+const SATELLITE_GRID_SIZE = 8
+const SATELLITE_TILE_00_CENTER_PARCEL_X = -133
+const SATELLITE_TILE_00_CENTER_PARCEL_Y = 132
 
-function chunkSizeForStyle(style: MinimapStyle): number {
-  return style === 'satellite' ? SATELLITE_CHUNK_PARCELS : PARCEL_SNAP_CHUNK
+function parcelToSatelliteChunk(
+  parcelX: number,
+  parcelY: number
+): { cx: number; cy: number } {
+  // X grows east; tile (0,0) covers parcels [-153, -113), so the floor
+  // formula offsets by (40/2 - tile00CenterX) = 20 + 133 = 153.
+  const cx = Math.floor(
+    (parcelX -
+      (SATELLITE_TILE_00_CENTER_PARCEL_X - SATELLITE_CHUNK_PARCELS / 2)) /
+      SATELLITE_CHUNK_PARCELS
+  )
+  // Y is FLIPPED: high parcel.y (north) = j=0; low parcel.y = j=7.
+  // Tile (0,0) covers parcels [112, 152) in Y. Use `(152 - 1 - py)` to
+  // be inclusive at the lower bound and exclusive at the upper.
+  const cy = Math.floor(
+    (SATELLITE_TILE_00_CENTER_PARCEL_Y +
+      SATELLITE_CHUNK_PARCELS / 2 -
+      1 -
+      parcelY) /
+      SATELLITE_CHUNK_PARCELS
+  )
+  return { cx, cy }
 }
 
 /** Chunk index that contains a given parcel. */
@@ -63,30 +91,45 @@ export function chunkForParcel(
   parcelX: number,
   parcelY: number
 ): { cx: number; cy: number } {
-  const size = chunkSizeForStyle(style)
+  if (style === 'satellite') return parcelToSatelliteChunk(parcelX, parcelY)
   return {
-    cx: Math.floor(parcelX / size),
-    cy: Math.floor(parcelY / size)
+    cx: Math.floor(parcelX / PARCEL_SNAP_CHUNK),
+    cy: Math.floor(parcelY / PARCEL_SNAP_CHUNK)
   }
+}
+
+/**
+ * `true` if a satellite chunk index is within the 8×8 grid. Outside the
+ * grid the genesis-city CDN returns 404 — callers can skip those.
+ */
+function isValidSatelliteChunk(cx: number, cy: number): boolean {
+  return (
+    cx >= 0 && cx < SATELLITE_GRID_SIZE && cy >= 0 && cy < SATELLITE_GRID_SIZE
+  )
 }
 
 /**
  * Build a TileInfo for a specific chunk index. Works for both styles —
  * parcel-mode picks an image larger than the chunk to leave room for
  * rotation, satellite-mode uses the fixed-size tile at the chunk's grid
- * position.
+ * position. Returns `null` for satellite tiles outside the 8×8 grid.
  */
 export function tileInfoForChunk(
   style: MinimapStyle,
   cx: number,
   cy: number
-): TileInfo {
+): TileInfo | null {
   if (style === 'satellite') {
-    const sizeMeters = SATELLITE_CHUNK_PARCELS * PARCEL_METERS
+    if (!isValidSatelliteChunk(cx, cy)) return null
+    const centerParcelX =
+      SATELLITE_TILE_00_CENTER_PARCEL_X + cx * SATELLITE_CHUNK_PARCELS
+    // Y inverted: j=0 → +132, j+1 → -40.
+    const centerParcelY =
+      SATELLITE_TILE_00_CENTER_PARCEL_Y - cy * SATELLITE_CHUNK_PARCELS
     return {
-      imageMeters: sizeMeters,
-      centerWorldX: cx * sizeMeters + sizeMeters / 2,
-      centerWorldZ: cy * sizeMeters + sizeMeters / 2,
+      imageMeters: SATELLITE_CHUNK_PARCELS * PARCEL_METERS,
+      centerWorldX: centerParcelX * PARCEL_METERS + PARCEL_METERS / 2,
+      centerWorldZ: centerParcelY * PARCEL_METERS + PARCEL_METERS / 2,
       url: `https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/${cx}%2C${cy}.jpg`
     }
   }
@@ -103,12 +146,15 @@ export function tileInfoForChunk(
   }
 }
 
-/** Convenience: get the tile that contains the player. */
+/**
+ * Convenience: get the tile that contains the player. Returns `null` for
+ * satellite mode when the player is outside the 8×8 genesis-city grid.
+ */
 export function getTileInfo(
   style: MinimapStyle,
   playerParcelX: number,
   playerParcelY: number
-): TileInfo {
+): TileInfo | null {
   const { cx, cy } = chunkForParcel(style, playerParcelX, playerParcelY)
   return tileInfoForChunk(style, cx, cy)
 }
@@ -131,12 +177,15 @@ export function getPrefetchTiles(
 ): TileInfo[] {
   if (dirX === 0 && dirZ === 0) return []
   const { cx, cy } = chunkForParcel(style, playerParcelX, playerParcelY)
-  const tiles: TileInfo[] = []
+  // Satellite Y is flipped (j=0 is north). Player walking north
+  // (`dirZ = +1`) means we want the chunk at `cy - 1`, not `cy + 1`.
+  const dirCy = style === 'satellite' ? -dirZ : dirZ
+  const tiles: Array<TileInfo | null> = []
   if (dirX !== 0) tiles.push(tileInfoForChunk(style, cx + dirX, cy))
-  if (dirZ !== 0) tiles.push(tileInfoForChunk(style, cx, cy + dirZ))
-  if (dirX !== 0 && dirZ !== 0)
-    tiles.push(tileInfoForChunk(style, cx + dirX, cy + dirZ))
-  return tiles
+  if (dirCy !== 0) tiles.push(tileInfoForChunk(style, cx, cy + dirCy))
+  if (dirX !== 0 && dirCy !== 0)
+    tiles.push(tileInfoForChunk(style, cx + dirX, cy + dirCy))
+  return tiles.filter((t): t is TileInfo => t !== null)
 }
 
 /**

@@ -3,6 +3,7 @@ import { type NameDefinition } from '../../utils/passport-promise-utils'
 import { type Place } from '../../service/map-places'
 import { Vector3 } from '@dcl/sdk/math'
 import { type SceneLoadingWindow } from '../../bevy-api/interface'
+import { loadMinimapStyle } from '../../components/map/mini-map-persistence'
 import {
   type AchievedAchievementItem,
   type NotAchievedAchievementItem
@@ -128,7 +129,7 @@ export type HudState = {
   receivedFriendRequests: FriendRequestData[]
   friends: FriendStatusData[]
   friendsLoading: boolean
-  minimapStyle: 'parcel' | 'satellite'
+  minimapStyle: 'parcel' | 'satellite' | 'imposters'
 }
 
 export type HudStateUpdateParams = {
@@ -173,7 +174,7 @@ export type HudStateUpdateParams = {
   receivedFriendRequests?: FriendRequestData[]
   friends?: FriendStatusData[]
   friendsLoading?: boolean
-  minimapStyle?: 'parcel' | 'satellite'
+  minimapStyle?: 'parcel' | 'satellite' | 'imposters'
 }
 
 export const hudInitialState: HudState = {
@@ -219,5 +220,5 @@ export const hudInitialState: HudState = {
   receivedFriendRequests: [],
   friends: [],
   friendsLoading: true,
-  minimapStyle: 'parcel'
+  minimapStyle: loadMinimapStyle()
 }
