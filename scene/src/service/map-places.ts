@@ -95,6 +95,22 @@ export const fromParcelCoordsToPosition = (
 export const cleanMapPlaces = (): void => {
   state.places = {}
 }
+
+export function getCentralParcel(parcelStrings: string[]): string | null {
+  if (parcelStrings.length === 0) return null
+  const parcels = parcelStrings.map((str) => {
+    const [x, y] = str.split(',').map(Number)
+    return { x, y }
+  })
+  const avgX = parcels.reduce((sum, p) => sum + p.x, 0) / parcels.length
+  const avgY = parcels.reduce((sum, p) => sum + p.y, 0) / parcels.length
+  const central = parcels.reduce((closest, p) => {
+    const dist = Math.hypot(p.x - avgX, p.y - avgY)
+    const closestDist = Math.hypot(closest.x - avgX, closest.y - avgY)
+    return dist < closestDist ? p : closest
+  })
+  return `${central.x},${central.y}`
+}
 export const isMapPlacesLoaded = (): boolean => state.done
 export const getPlaceCategories = (): PlaceCategory[] => state.categories
 export const loadCompleteMapPlaces = async (): Promise<

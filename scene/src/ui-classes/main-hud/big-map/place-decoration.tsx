@@ -2,10 +2,10 @@ import { memoize } from '../../../utils/function-utils'
 import {
   fromParcelCoordsToPosition,
   fromStringToCoords,
+  getCentralParcel,
   type Place
 } from '../../../service/map-places'
 import { type PlaceRepresentation, PLAYER_PLACE_ID } from './big-map-view'
-import { getCentralParcel } from '../../../components/map/mini-map-info-entities'
 import { store } from '../../../state/store'
 import { type Atlas, type AtlasIcon } from '../../../utils/definitions'
 import { mapSymbolPerPlaceCategory } from '../../../components/map/map-definitions'
