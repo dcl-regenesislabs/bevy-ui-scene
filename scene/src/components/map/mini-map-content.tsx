@@ -41,12 +41,8 @@ import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import useEffect = ReactEcs.useEffect
 
-// Diameter of world (in meters) that fits across the minimap.
 const VISIBLE_METERS = 256
 
-// Module-level direction tracker: stores the latest non-zero sign of the
-// player's movement on each world axis. Used to decide which neighbour
-// chunks to prefetch (1 cardinal + 2 chunks for diagonals).
 const directionState = {
   initialized: false,
   lastWorldX: 0,
@@ -100,8 +96,6 @@ export function MiniMapContent(): ReactElement {
 
   const playerParcel = getPlayerParcel()
 
-  // Parcel mode renders a single 2D quad with UV rotation — compute its
-  // tile + UVs + prefetch list. Other modes do their own rendering.
   const parcelTile =
     minimapStyle === 'parcel'
       ? getTileInfo('parcel', playerParcel.x, playerParcel.y)
@@ -116,9 +110,6 @@ export function MiniMapContent(): ReactElement {
       )
     : null
 
-  // Directional prefetch: load 1–3 neighbour chunks ahead of the player
-  // so the swap is instant when they cross a snap boundary. Only relevant
-  // for parcel mode (satellite uses a 3×3 window of 3D planes).
   const { dirX, dirZ } = updateDirection(playerWorldX, playerWorldZ)
   const prefetchTiles =
     minimapStyle === 'parcel'
@@ -131,34 +122,24 @@ export function MiniMapContent(): ReactElement {
         )
       : []
 
-  // Load places catalog once.
   useEffect(() => {
     loadCompleteMapPlaces().catch(console.error)
   }, [])
 
-  // Satellite mode lifecycle: spawn the TextureCamera + tile planes when
-  // entering satellite mode, tear them down when leaving. Avoids paying
-  // GPU + memory cost while in parcel/imposters mode.
   useEffect(() => {
     if (minimapStyle !== 'satellite') return
-    // Lazy-spawn.
     getSatelliteCamera()
     return () => {
       disposeSatelliteCamera()
     }
   }, [minimapStyle])
 
-  // Per-frame: keep satellite camera/tiles in sync with the player when
-  // active. Skipping the work when not in satellite mode means no
-  // wasted updates.
   useEffect(() => {
     if (minimapStyle !== 'satellite') return
     updateSatelliteCamera(playerWorldX, playerWorldZ, cameraYawDeg)
     updateSatelliteTiles(playerWorldX, playerWorldZ)
   })
 
-  // Imposters mode lifecycle: spawn / dispose the world-facing
-  // TextureCamera as the user toggles in / out of CAM mode.
   useEffect(() => {
     if (minimapStyle !== 'imposters') return
     getImpostersCamera()
@@ -167,19 +148,16 @@ export function MiniMapContent(): ReactElement {
     }
   }, [minimapStyle])
 
-  // Per-frame: follow the player + yaw while imposters mode is active.
   useEffect(() => {
     if (minimapStyle !== 'imposters') return
     updateImpostersCamera(playerWorldX, playerWorldZ, cameraYawDeg)
   })
 
-  // POIs/places shown as 2D markers. Skip in worlds (no map context).
   const places: Place[] = currentRealmProviderIsWorld()
     ? []
     : getPlacesAroundParcel(playerParcel, 10).filter((p) =>
         p.categories.some((c: string) => c === 'poi' || c === 'player')
       )
-  // Tie places state to a memo via getLoadedMapPlaces (re-evaluated per render).
   void getLoadedMapPlaces()
 
   return (
@@ -194,10 +172,6 @@ export function MiniMapContent(): ReactElement {
         getUiController().menu?.show('map')
       }}
     >
-      {/* Clipped layer: the rotating tiles + markers stay inside the
-          minimap rect. Cardinal labels, player arrow and the toggle
-          live OUTSIDE this clipped layer so they can overflow on top
-          (e.g. the rotating N label sits half-out of the square). */}
       <UiEntity
         uiTransform={{
           width: mapSize,
@@ -208,8 +182,6 @@ export function MiniMapContent(): ReactElement {
         }}
         uiBackground={{ color: COLOR.BLACK_TRANSPARENT }}
       >
-        {/* PARCEL mode: single 2D quad sampling a re-centered parcel
-          atlas image, rotated around the player's UV. */}
         {minimapStyle === 'parcel' && parcelTile && parcelTileUvs && (
           <UiEntity
             uiTransform={{
@@ -226,8 +198,6 @@ export function MiniMapContent(): ReactElement {
           />
         )}
 
-        {/* SATELLITE mode: render the TextureCamera output. The 3D
-          tile planes + rotating camera live in `mini-map-satellite-camera`. */}
         {minimapStyle === 'satellite' && (
           <UiEntity
             uiTransform={{
@@ -243,9 +213,6 @@ export function MiniMapContent(): ReactElement {
           />
         )}
 
-        {/* IMPOSTERS mode: top-down TextureCamera on the default world
-          layer (0) — renders the actual scene / scene impostors from
-          above. The 3D camera entity lives in `mini-map-imposters-camera`. */}
         {minimapStyle === 'imposters' && (
           <UiEntity
             uiTransform={{
@@ -261,10 +228,6 @@ export function MiniMapContent(): ReactElement {
           />
         )}
 
-        {/* PARCEL prefetch: invisible 1×1 quads so bevy AssetServer
-          downloads the neighbour tile images ahead of the player
-          crossing a snap boundary. Satellite uses a 3D windowed grid
-          instead, so it doesn't need these. */}
         {prefetchTiles.map((p) => (
           <UiEntity
             key={`prefetch-${p.url}`}
@@ -281,7 +244,6 @@ export function MiniMapContent(): ReactElement {
           />
         ))}
 
-        {/* POI markers */}
         {places.map((place) => {
           const central = getCentralParcel(place.positions ?? [])
           if (!central) return null
@@ -323,9 +285,6 @@ export function MiniMapContent(): ReactElement {
 }
 
 const POI_SIZE = 18
-// Width budget for the title shown below the POI icon. Wider than the
-// icon so 2–3 word names render centered without immediate ellipsis,
-// but bounded so long names don't bleed across neighbouring markers.
 const POI_LABEL_WIDTH = 90
 
 function PoiMarker({
@@ -342,8 +301,6 @@ function PoiMarker({
   return (
     <UiEntity
       uiTransform={{
-        // Container is the width of the label so we can horizontally
-        // center both the icon and the text on the POI's screen point.
         width: POI_LABEL_WIDTH,
         height: POI_SIZE + labelFontSize * 1.4,
         positionType: 'absolute',
@@ -373,8 +330,6 @@ function PoiMarker({
         }}
         uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
         uiText={{
-          // `<b>…</b>` is the SDK's inline bold markup — the SDK has no
-          // fontWeight on UiText, but the renderer parses these tags.
           value: `<b>${truncateWithoutBreakingWords(title, 20)}</b>`,
           textWrap: 'nowrap',
           fontSize: labelFontSize,

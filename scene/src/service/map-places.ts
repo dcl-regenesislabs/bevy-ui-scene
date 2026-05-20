@@ -96,11 +96,6 @@ export const cleanMapPlaces = (): void => {
   state.places = {}
 }
 
-/**
- * Returns the parcel (as `"x,y"`) closest to the centroid of the given
- * parcel list. Used to pick a "main" parcel for a Place spanning multiple
- * parcels (e.g. for icon placement on the map).
- */
 export function getCentralParcel(parcelStrings: string[]): string | null {
   if (parcelStrings.length === 0) return null
   const parcels = parcelStrings.map((str) => {
