@@ -88,7 +88,9 @@ export function MiniMapContent(): ReactElement {
   const mapCenter = mapSize / 2
   const pxPerMeter = mapSize / VISIBLE_METERS
 
-  const minimapStyle = store.getState().hud.minimapStyle ?? 'parcel'
+  const userMinimapStyle = store.getState().hud.minimapStyle ?? 'parcel'
+  const isWorld = currentRealmProviderIsWorld()
+  const minimapStyle: MinimapStyle = isWorld ? 'imposters' : userMinimapStyle
   const minimapRotation: MinimapRotation =
     store.getState().hud.minimapRotation ?? 'camera'
 
@@ -161,7 +163,7 @@ export function MiniMapContent(): ReactElement {
     updateImpostersCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
   })
 
-  const places: Place[] = currentRealmProviderIsWorld()
+  const places: Place[] = isWorld
     ? []
     : getPlacesAroundParcel(playerParcel, 10).filter((p) =>
         p.categories.some((c: string) => c === 'poi' || c === 'player')
@@ -278,7 +280,7 @@ export function MiniMapContent(): ReactElement {
 
       <PlayerArrow mapSize={mapSize} mapYawDeg={effectiveYawDeg} />
       <CardinalLabels mapSize={mapSize} cameraYawDeg={effectiveYawDeg} />
-      <MinimapStyleToggle style={minimapStyle} />
+      {!isWorld && <MinimapStyleToggle style={minimapStyle} />}
       <MinimapRotationToggle rotation={minimapRotation} />
     </UiEntity>
   )
