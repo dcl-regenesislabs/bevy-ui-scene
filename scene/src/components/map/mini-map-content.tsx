@@ -92,7 +92,7 @@ export function MiniMapContent(): ReactElement {
   const isWorld = currentRealmProviderIsWorld()
   const minimapStyle: MinimapStyle = isWorld ? 'imposters' : userMinimapStyle
   const minimapRotation: MinimapRotation =
-    store.getState().hud.minimapRotation ?? 'camera'
+    store.getState().hud.minimapRotation ?? 'north'
 
   const playerTransform = Transform.get(engine.PlayerEntity)
   const playerWorldX = playerTransform.position.x
