@@ -43,6 +43,7 @@ import {
 import { getUiController } from '../../controllers/ui.controller'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
+import ButtonComponent from '../button-component'
 import useEffect = ReactEcs.useEffect
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 
@@ -88,7 +89,7 @@ export function MiniMapContent(): ReactElement {
   const mapCenter = mapSize / 2
   const pxPerMeter = mapSize / VISIBLE_METERS
 
-  const userMinimapStyle = store.getState().hud.minimapStyle ?? 'parcel'
+  const userMinimapStyle = store.getState().hud.minimapStyle ?? 'satellite'
   const isWorld = currentRealmProviderIsWorld()
   const minimapStyle: MinimapStyle = isWorld ? 'imposters' : userMinimapStyle
   const minimapRotation: MinimapRotation =
@@ -417,32 +418,20 @@ const MINIMAP_STYLE_LABEL: Record<MinimapStyle, string> = {
 }
 
 function MinimapStyleToggle({ style }: { style: MinimapStyle }): ReactElement {
-  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
-  const padding = 4
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
   return (
-    <UiEntity
+    <ButtonComponent
+      variant="black"
+      value={MINIMAP_STYLE_LABEL[style]}
+      fontSize={fontSize}
       uiTransform={{
         positionType: 'absolute',
-        position: { top: padding, right: padding },
-        padding: { left: padding, right: padding, top: 2, bottom: 2 },
-        borderRadius: 4,
-        borderWidth: 0,
-        borderColor: COLOR.BLACK_TRANSPARENT
-      }}
-      uiBackground={{ color: COLOR.BLACK }}
-      uiText={{
-        value: MINIMAP_STYLE_LABEL[style],
-        fontSize: fontSize * 0.8,
-        color: COLOR.WHITE
+        position: { top: 0, right: 0 }
       }}
       onMouseDown={() => {
         const next = MINIMAP_STYLE_CYCLE[style]
         saveMinimapStyle(next)
-        store.dispatch(
-          updateHudStateAction({
-            minimapStyle: next
-          })
-        )
+        store.dispatch(updateHudStateAction({ minimapStyle: next }))
       }}
     />
   )
@@ -458,32 +447,21 @@ function MinimapRotationToggle({
 }: {
   rotation: MinimapRotation
 }): ReactElement {
-  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
-  const padding = 4
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
+
   return (
-    <UiEntity
+    <ButtonComponent
+      variant="black"
+      value={MINIMAP_ROTATION_LABEL[rotation]}
+      fontSize={fontSize}
       uiTransform={{
         positionType: 'absolute',
-        position: { top: padding, left: padding },
-        padding: { left: padding, right: padding, top: 2, bottom: 2 },
-        borderRadius: 4,
-        borderWidth: 0,
-        borderColor: COLOR.BLACK_TRANSPARENT
-      }}
-      uiBackground={{ color: COLOR.BLACK }}
-      uiText={{
-        value: MINIMAP_ROTATION_LABEL[rotation],
-        fontSize: fontSize * 0.8,
-        color: COLOR.WHITE
+        position: { top: 0, left: 0 }
       }}
       onMouseDown={() => {
         const next: MinimapRotation = rotation === 'camera' ? 'north' : 'camera'
         saveMinimapRotation(next)
-        store.dispatch(
-          updateHudStateAction({
-            minimapRotation: next
-          })
-        )
+        store.dispatch(updateHudStateAction({ minimapRotation: next }))
       }}
     />
   )

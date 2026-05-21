@@ -17,7 +17,7 @@ export function loadMinimapStyle(): MinimapStyle {
       return stored as MinimapStyle
     }
   } catch {}
-  return 'parcel'
+  return 'satellite'
 }
 
 export function saveMinimapStyle(style: MinimapStyle): void {
