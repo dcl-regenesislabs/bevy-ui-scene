@@ -35,11 +35,16 @@ import {
   getImpostersCamera,
   updateImpostersCamera
 } from './mini-map-imposters-camera'
-import { saveMinimapStyle } from './mini-map-persistence'
+import {
+  type MinimapRotation,
+  saveMinimapRotation,
+  saveMinimapStyle
+} from './mini-map-persistence'
 import { getUiController } from '../../controllers/ui.controller'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import useEffect = ReactEcs.useEffect
+import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 
 const VISIBLE_METERS = 256
 
@@ -83,7 +88,11 @@ export function MiniMapContent(): ReactElement {
   const mapCenter = mapSize / 2
   const pxPerMeter = mapSize / VISIBLE_METERS
 
-  const minimapStyle = store.getState().hud.minimapStyle ?? 'parcel'
+  const userMinimapStyle = store.getState().hud.minimapStyle ?? 'parcel'
+  const isWorld = currentRealmProviderIsWorld()
+  const minimapStyle: MinimapStyle = isWorld ? 'imposters' : userMinimapStyle
+  const minimapRotation: MinimapRotation =
+    store.getState().hud.minimapRotation ?? 'camera'
 
   const playerTransform = Transform.get(engine.PlayerEntity)
   const playerWorldX = playerTransform.position.x
@@ -92,7 +101,8 @@ export function MiniMapContent(): ReactElement {
   const cameraYawDeg = Quaternion.toEulerAngles(
     Transform.get(engine.CameraEntity).rotation
   ).y
-  const cameraYawRad = (cameraYawDeg * Math.PI) / 180
+  const effectiveYawDeg = minimapRotation === 'north' ? 0 : cameraYawDeg
+  const effectiveYawRad = (effectiveYawDeg * Math.PI) / 180
 
   const playerParcel = getPlayerParcel()
 
@@ -106,7 +116,7 @@ export function MiniMapContent(): ReactElement {
         playerWorldZ,
         parcelTile,
         VISIBLE_METERS,
-        cameraYawRad
+        effectiveYawRad
       )
     : null
 
@@ -136,7 +146,7 @@ export function MiniMapContent(): ReactElement {
 
   useEffect(() => {
     if (minimapStyle !== 'satellite') return
-    updateSatelliteCamera(playerWorldX, playerWorldZ, cameraYawDeg)
+    updateSatelliteCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
     updateSatelliteTiles(playerWorldX, playerWorldZ)
   })
 
@@ -150,16 +160,22 @@ export function MiniMapContent(): ReactElement {
 
   useEffect(() => {
     if (minimapStyle !== 'imposters') return
-    updateImpostersCamera(playerWorldX, playerWorldZ, cameraYawDeg)
+    updateImpostersCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
   })
 
-  const places: Place[] = currentRealmProviderIsWorld()
+  const places: Place[] = isWorld
     ? []
     : getPlacesAroundParcel(playerParcel, 10).filter((p) =>
         p.categories.some((c: string) => c === 'poi' || c === 'player')
       )
   void getLoadedMapPlaces()
-
+  const mapUiTransform: UiTransformProps = {
+    width: mapSize,
+    height: mapSize,
+    positionType: 'absolute',
+    position: { top: 0, left: 0 },
+    borderRadius: 9999
+  }
   return (
     <UiEntity
       uiTransform={{
@@ -184,12 +200,7 @@ export function MiniMapContent(): ReactElement {
       >
         {minimapStyle === 'parcel' && parcelTile && parcelTileUvs && (
           <UiEntity
-            uiTransform={{
-              width: mapSize,
-              height: mapSize,
-              positionType: 'absolute',
-              position: { top: 0, left: 0 }
-            }}
+            uiTransform={mapUiTransform}
             uiBackground={{
               textureMode: 'stretch',
               uvs: parcelTileUvs,
@@ -200,12 +211,7 @@ export function MiniMapContent(): ReactElement {
 
         {minimapStyle === 'satellite' && (
           <UiEntity
-            uiTransform={{
-              width: mapSize,
-              height: mapSize,
-              positionType: 'absolute',
-              position: { top: 0, left: 0 }
-            }}
+            uiTransform={mapUiTransform}
             uiBackground={{
               textureMode: 'stretch',
               videoTexture: { videoPlayerEntity: getSatelliteCamera() }
@@ -215,12 +221,7 @@ export function MiniMapContent(): ReactElement {
 
         {minimapStyle === 'imposters' && (
           <UiEntity
-            uiTransform={{
-              width: mapSize,
-              height: mapSize,
-              positionType: 'absolute',
-              position: { top: 0, left: 0 }
-            }}
+            uiTransform={mapUiTransform}
             uiBackground={{
               textureMode: 'stretch',
               videoTexture: { videoPlayerEntity: getImpostersCamera() }
@@ -255,7 +256,7 @@ export function MiniMapContent(): ReactElement {
             worldZ,
             playerWorldX,
             playerWorldZ,
-            cameraYawRad,
+            effectiveYawRad,
             pxPerMeter,
             mapCenter
           )
@@ -277,9 +278,10 @@ export function MiniMapContent(): ReactElement {
         })}
       </UiEntity>
 
-      <PlayerArrow mapSize={mapSize} />
-      <CardinalLabels mapSize={mapSize} cameraYawDeg={cameraYawDeg} />
-      <MinimapStyleToggle style={minimapStyle} />
+      <PlayerArrow mapSize={mapSize} mapYawDeg={effectiveYawDeg} />
+      <CardinalLabels mapSize={mapSize} cameraYawDeg={effectiveYawDeg} />
+      {!isWorld && <MinimapStyleToggle style={minimapStyle} />}
+      <MinimapRotationToggle rotation={minimapRotation} />
     </UiEntity>
   )
 }
@@ -372,8 +374,17 @@ function CardinalLabels({
   )
 }
 
-function PlayerArrow({ mapSize = 1000 }: { mapSize: number }): ReactElement {
+function PlayerArrow({
+  mapSize = 1000,
+  mapYawDeg
+}: {
+  mapSize: number
+  mapYawDeg: number
+}): ReactElement {
   const ARROW_SIZE = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S }) * 2
+  const playerYawDeg = Quaternion.toEulerAngles(
+    Transform.get(engine.PlayerEntity).rotation
+  ).y
   return (
     <UiEntity
       uiTransform={{
@@ -387,13 +398,7 @@ function PlayerArrow({ mapSize = 1000 }: { mapSize: number }): ReactElement {
       }}
       uiBackground={{
         textureMode: 'stretch',
-        uvs: rotateUVs(
-          Quaternion.toEulerAngles(Transform.get(engine.PlayerEntity).rotation)
-            .y -
-            Quaternion.toEulerAngles(
-              Transform.get(engine.CameraEntity).rotation
-            ).y
-        ),
+        uvs: rotateUVs(playerYawDeg - mapYawDeg),
         texture: { src: MAP_ARROW_SRC }
       }}
     />
@@ -436,6 +441,47 @@ function MinimapStyleToggle({ style }: { style: MinimapStyle }): ReactElement {
         store.dispatch(
           updateHudStateAction({
             minimapStyle: next
+          })
+        )
+      }}
+    />
+  )
+}
+
+const MINIMAP_ROTATION_LABEL: Record<MinimapRotation, string> = {
+  camera: 'ROT',
+  north: 'NORTH'
+}
+
+function MinimapRotationToggle({
+  rotation
+}: {
+  rotation: MinimapRotation
+}): ReactElement {
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
+  const padding = 4
+  return (
+    <UiEntity
+      uiTransform={{
+        positionType: 'absolute',
+        position: { top: padding, left: padding },
+        padding: { left: padding, right: padding, top: 2, bottom: 2 },
+        borderRadius: 4,
+        borderWidth: 0,
+        borderColor: COLOR.BLACK_TRANSPARENT
+      }}
+      uiBackground={{ color: COLOR.BLACK }}
+      uiText={{
+        value: MINIMAP_ROTATION_LABEL[rotation],
+        fontSize: fontSize * 0.8,
+        color: COLOR.WHITE
+      }}
+      onMouseDown={() => {
+        const next: MinimapRotation = rotation === 'camera' ? 'north' : 'camera'
+        saveMinimapRotation(next)
+        store.dispatch(
+          updateHudStateAction({
+            minimapRotation: next
           })
         )
       }}
