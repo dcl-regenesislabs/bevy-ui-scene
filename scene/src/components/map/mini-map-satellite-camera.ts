@@ -14,7 +14,7 @@ import { Color3, Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 import { sleep } from '../../utils/dcl-utils'
 import { PARCEL_METERS, tileInfoForChunk } from './mini-map-tiles'
 
-const SATELLITE_LAYER = 11
+const SATELLITE_LAYER = 9
 
 const SATELLITE_CAMERA_ALT = 200
 
