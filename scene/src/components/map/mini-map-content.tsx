@@ -41,9 +41,14 @@ import {
   saveMinimapStyle
 } from './mini-map-persistence'
 import { getUiController } from '../../controllers/ui.controller'
-import { currentRealmProviderIsWorld } from '../../service/realm-change'
+import {
+  currentRealmProviderIsPreview,
+  currentRealmProviderIsWorld
+} from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import ButtonComponent from '../button-component'
+import ButtonIcon from '../button-icon/ButtonIcon'
+import { type AtlasIcon } from '../../utils/definitions'
 import useEffect = ReactEcs.useEffect
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 
@@ -91,7 +96,11 @@ export function MiniMapContent(): ReactElement {
 
   const userMinimapStyle = store.getState().hud.minimapStyle ?? 'satellite'
   const isWorld = currentRealmProviderIsWorld()
-  const minimapStyle: MinimapStyle = isWorld ? 'imposters' : userMinimapStyle
+  const isPreview = currentRealmProviderIsPreview()
+  const forceImposters = isWorld || isPreview
+  const minimapStyle: MinimapStyle = forceImposters
+    ? 'imposters'
+    : userMinimapStyle
   const minimapRotation: MinimapRotation =
     store.getState().hud.minimapRotation ?? 'north'
 
@@ -164,7 +173,7 @@ export function MiniMapContent(): ReactElement {
     updateImpostersCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
   })
 
-  const places: Place[] = isWorld
+  const places: Place[] = forceImposters
     ? []
     : getPlacesAroundParcel(playerParcel, 10).filter((p) =>
         p.categories.some((c: string) => c === 'poi' || c === 'player')
@@ -281,8 +290,11 @@ export function MiniMapContent(): ReactElement {
 
       <PlayerArrow mapSize={mapSize} mapYawDeg={effectiveYawDeg} />
       <CardinalLabels mapSize={mapSize} cameraYawDeg={effectiveYawDeg} />
-      {!isWorld && <MinimapStyleToggle style={minimapStyle} />}
-      <MinimapRotationToggle rotation={minimapRotation} />
+      <MinimapSettings
+        style={minimapStyle}
+        rotation={minimapRotation}
+        hideStyleSection={forceImposters}
+      />
     </UiEntity>
   )
 }
@@ -406,63 +418,164 @@ function PlayerArrow({
   )
 }
 
-const MINIMAP_STYLE_CYCLE: Record<MinimapStyle, MinimapStyle> = {
-  parcel: 'satellite',
-  satellite: 'imposters',
-  imposters: 'parcel'
+const MINIMAP_ROTATION_LABEL: Record<MinimapRotation, string> = {
+  camera: 'Rotate with camera',
+  north: 'Fixed north'
 }
-const MINIMAP_STYLE_LABEL: Record<MinimapStyle, string> = {
-  parcel: 'PARCEL',
-  satellite: 'PIC',
-  imposters: 'CAM'
+const MINIMAP_STYLE_OPTION_LABEL: Record<MinimapStyle, string> = {
+  parcel: 'Parcel atlas',
+  satellite: 'Satellite',
+  imposters: 'Scene impostors'
 }
 
-function MinimapStyleToggle({ style }: { style: MinimapStyle }): ReactElement {
-  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
+const SETTINGS_ICON_IDLE: AtlasIcon = {
+  atlasName: 'navbar',
+  spriteName: 'Settings off'
+}
+const SETTINGS_ICON_HOVER: AtlasIcon = {
+  atlasName: 'navbar',
+  spriteName: 'Settings on'
+}
+const CHECK_ICON: AtlasIcon = { atlasName: 'icons', spriteName: 'Check' }
+
+function MinimapSettings({
+  style,
+  rotation,
+  hideStyleSection
+}: {
+  style: MinimapStyle
+  rotation: MinimapRotation
+  hideStyleSection: boolean
+}): ReactElement {
+  const [open, setOpen] = ReactEcs.useState<boolean>(false)
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const padding = fontSize / 4
+  const gearSize = fontSize * 2
+
   return (
-    <ButtonComponent
-      variant="black"
-      value={MINIMAP_STYLE_LABEL[style]}
-      fontSize={fontSize}
+    <UiEntity
       uiTransform={{
         positionType: 'absolute',
-        position: { top: 0, right: 0 }
+        position: { top: padding, right: -padding },
+        width: gearSize,
+        height: gearSize
       }}
-      onMouseDown={() => {
-        const next = MINIMAP_STYLE_CYCLE[style]
-        saveMinimapStyle(next)
-        store.dispatch(updateHudStateAction({ minimapStyle: next }))
-      }}
-    />
+    >
+      <ButtonIcon
+        variant="transparent"
+        icon={SETTINGS_ICON_IDLE}
+        hoverIcon={SETTINGS_ICON_HOVER}
+        iconSize={gearSize}
+        active={open}
+        onMouseDown={() => {
+          setOpen(!open)
+        }}
+      />
+      {open && (
+        <UiEntity
+          uiTransform={{
+            positionType: 'absolute',
+            position: { top: 0, left: gearSize + padding },
+            flexDirection: 'column',
+            padding: { top: padding * 2, bottom: padding * 2 },
+            minWidth: fontSize * 14,
+            borderRadius: padding
+          }}
+          uiBackground={{ color: COLOR.BLACK }}
+        >
+          <SubmenuSection title="Rotation mode" fontSize={fontSize}>
+            {(['camera', 'north'] as MinimapRotation[]).map((opt) => (
+              <SubmenuOption
+                key={`rot-${opt}`}
+                label={MINIMAP_ROTATION_LABEL[opt]}
+                selected={rotation === opt}
+                fontSize={fontSize}
+                onMouseDown={() => {
+                  saveMinimapRotation(opt)
+                  store.dispatch(updateHudStateAction({ minimapRotation: opt }))
+                }}
+              />
+            ))}
+          </SubmenuSection>
+
+          {!hideStyleSection && (
+            <SubmenuSection title="Visualization style" fontSize={fontSize}>
+              {(['parcel', 'satellite', 'imposters'] as MinimapStyle[]).map(
+                (opt) => (
+                  <SubmenuOption
+                    key={`style-${opt}`}
+                    label={MINIMAP_STYLE_OPTION_LABEL[opt]}
+                    selected={style === opt}
+                    fontSize={fontSize}
+                    onMouseDown={() => {
+                      saveMinimapStyle(opt)
+                      store.dispatch(
+                        updateHudStateAction({ minimapStyle: opt })
+                      )
+                    }}
+                  />
+                )
+              )}
+            </SubmenuSection>
+          )}
+        </UiEntity>
+      )}
+    </UiEntity>
   )
 }
 
-const MINIMAP_ROTATION_LABEL: Record<MinimapRotation, string> = {
-  camera: 'ROT',
-  north: 'NORTH'
+function SubmenuSection({
+  title,
+  fontSize,
+  children
+}: {
+  title: string
+  fontSize: number
+  children?: ReactElement | ReactElement[] | null
+}): ReactElement {
+  return (
+    <UiEntity uiTransform={{ flexDirection: 'column' }}>
+      <UiEntity
+        uiTransform={{
+          padding: { left: fontSize, right: fontSize, top: fontSize / 3 },
+          height: fontSize * 1.6
+        }}
+        uiText={{
+          value: title.toUpperCase(),
+          fontSize,
+          color: COLOR.WHITE_OPACITY_5,
+          textAlign: 'middle-left'
+        }}
+      />
+      {children}
+    </UiEntity>
+  )
 }
 
-function MinimapRotationToggle({
-  rotation
+function SubmenuOption({
+  label,
+  selected,
+  fontSize,
+  onMouseDown
 }: {
-  rotation: MinimapRotation
+  key?: any
+  label: string
+  selected: boolean
+  fontSize: number
+  onMouseDown: () => void
 }): ReactElement {
-  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.CAPTION })
-
   return (
     <ButtonComponent
-      variant="black"
-      value={MINIMAP_ROTATION_LABEL[rotation]}
-      fontSize={fontSize}
+      variant="transparent"
+      value={label}
+      icon={selected ? CHECK_ICON : undefined}
+      iconSize={fontSize}
+      fontSize={fontSize * 0.85}
       uiTransform={{
-        positionType: 'absolute',
-        position: { top: 0, left: 0 }
+        justifyContent: 'flex-start',
+        padding: { left: fontSize / 2, right: fontSize, top: 2, bottom: 2 }
       }}
-      onMouseDown={() => {
-        const next: MinimapRotation = rotation === 'camera' ? 'north' : 'camera'
-        saveMinimapRotation(next)
-        store.dispatch(updateHudStateAction({ minimapRotation: next }))
-      }}
+      onMouseDown={onMouseDown}
     />
   )
 }

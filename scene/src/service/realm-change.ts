@@ -1,6 +1,7 @@
 import { executeTask } from '@dcl/sdk/ecs'
 import { sleep } from '../utils/dcl-utils'
 import { getRealm } from '~system/Runtime'
+import { LOCAL_PREVIEW_REALM_NAME } from '../utils/constants'
 
 const INTERVAL_TO_TRIGGER_REALM_CHANGE_MS = 2000
 
@@ -61,6 +62,9 @@ export function initRealmProviderChangeListener(): void {
 
 export function currentRealmProviderIsWorld(): boolean {
   return state.isWorld
+}
+export function currentRealmProviderIsPreview(): boolean {
+  return state.realmName === LOCAL_PREVIEW_REALM_NAME
 }
 export function getRealmName(): string {
   return state.realmName
