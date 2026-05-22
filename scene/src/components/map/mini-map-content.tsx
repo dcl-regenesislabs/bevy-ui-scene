@@ -270,12 +270,9 @@ export function MiniMapContent(): ReactElement {
             pxPerMeter,
             mapCenter
           )
-          if (
-            screen.x < -POI_SIZE ||
-            screen.x > mapSize + POI_SIZE ||
-            screen.y < -POI_SIZE ||
-            screen.y > mapSize + POI_SIZE
-          )
+          const dxFromCenter = screen.x - mapCenter
+          const dyFromCenter = screen.y - mapCenter
+          if (Math.hypot(dxFromCenter, dyFromCenter) > mapCenter - POI_SIZE / 2)
             return null
           return (
             <PoiMarker
