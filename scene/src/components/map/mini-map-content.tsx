@@ -425,7 +425,7 @@ const MINIMAP_ROTATION_LABEL: Record<MinimapRotation, string> = {
 const MINIMAP_STYLE_OPTION_LABEL: Record<MinimapStyle, string> = {
   parcel: 'Parcel atlas',
   satellite: 'Satellite',
-  imposters: 'Scene impostors'
+  imposters: 'Camera'
 }
 
 const SETTINGS_ICON_IDLE: AtlasIcon = {
