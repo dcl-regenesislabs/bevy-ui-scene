@@ -59,11 +59,9 @@ export function PlayerNameComponent({
       />
       {hasClaimedName ? (
         <Icon
-          uiTransform={{
-            position: { left: -size / 4 }
-          }}
           icon={{ spriteName: 'Verified', atlasName: 'icons' }}
           iconSize={size}
+          uiTransform={{ position: { left: -size / 4 } }}
         />
       ) : null}
     </Row>

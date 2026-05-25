@@ -112,7 +112,7 @@ function ButtonComponent(props: {
     : 'base'
 
   const bgColor = styles.bg[visualState]
-  const textColor = styles.textColor[visualState] ?? styles.textColor.base
+  const textColor = styles.contentColor[visualState] ?? styles.contentColor.base
   const opacity = isDisabled ? 0.4 : isLoading ? getLoadingAlphaValue() : 1
 
   // `destructiveHover` swaps the border to red on hover (no layout shift

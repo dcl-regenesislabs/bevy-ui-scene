@@ -28,7 +28,6 @@ export function CopyButton({
       uiTransform={{
         width: fontSize,
         height: fontSize,
-        margin: { left: '5%' },
         flexShrink: 0,
         flexGrow: 0,
         ...uiTransform

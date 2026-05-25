@@ -204,7 +204,6 @@ function ChatMessage(props: {
             textColor={props.message.addressColor}
             fontSize={defaultFontSize}
             uiTransform={{
-              width: '100%',
               height: defaultFontSize
             }}
             onMouseDown={() => {
