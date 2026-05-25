@@ -7,8 +7,6 @@ import { store } from '../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
 import { sleep, waitFor } from '../utils/dcl-utils'
 import { getPlayer } from '@dcl/sdk/players'
-import { pushPopupAction } from '../state/hud/actions'
-import { HUD_POPUP_TYPE } from '../state/hud/state'
 
 let gameInstance: GameController
 
@@ -249,13 +247,13 @@ export async function init(retry: boolean): Promise<void> {
       })
     ) */
 
-    /*store.dispatch(
+    /* store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.PASSPORT,
 
         data: `0x598f8af1565003AE7456DaC280a18ee826Df7a2c` // 0x4b538e1e044922aec2f428ec7e17a99f44205ff9 , 0x598f8af1565003AE7456DaC280a18ee826Df7a2c , 0x235ec1cc12dbda96f014896de38f74f6e60239c0
       })
-    )*/
+    ) */
     /* store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.ADD_LINK

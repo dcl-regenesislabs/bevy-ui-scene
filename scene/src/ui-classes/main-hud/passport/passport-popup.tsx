@@ -67,7 +67,7 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import { sleep, waitFor } from '../../../utils/dcl-utils'
+import { waitFor } from '../../../utils/dcl-utils'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import {
   type AchievementsData,
