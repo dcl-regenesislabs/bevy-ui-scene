@@ -17,7 +17,7 @@ import {
   type PermissionLevel,
   type PermissionRequest
 } from '../../../bevy-api/permission-definitions'
-import { Row } from '../../../components/layout'
+import { Row } from '../../../components/ui-system/layout'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
 import { RadioButton } from '../../../components/radio-button'
 import useState = ReactEcs.useState

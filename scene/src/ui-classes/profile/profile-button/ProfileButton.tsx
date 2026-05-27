@@ -1,7 +1,7 @@
 import ReactEcs, { UiEntity, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import { type ReactElement } from '@dcl/react-ecs'
-import { Row } from '../../../components/layout'
+import { Row } from '../../../components/ui-system/layout'
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import { getPlayer } from '@dcl/sdk/players'

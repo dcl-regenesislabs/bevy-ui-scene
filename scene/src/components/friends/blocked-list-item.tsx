@@ -7,7 +7,7 @@ import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../service/fontsize-system'
-import { Column, Row } from '../layout'
+import { Column, Row } from '../ui-system/layout'
 import { COLOR } from '../color-palette'
 import { AvatarCircle } from '../avatar-circle'
 import { pushPopupAction } from '../../state/hud/actions'

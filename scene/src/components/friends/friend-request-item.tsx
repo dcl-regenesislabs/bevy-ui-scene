@@ -4,7 +4,7 @@ import useState = ReactEcs.useState
 import { type Key, UiEntity, type Callback, Label } from '@dcl/sdk/react-ecs'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
-import { Column, Row } from '../layout'
+import { Column, Row } from '../ui-system/layout'
 import { COLOR } from '../color-palette'
 import { AvatarCircle } from '../avatar-circle'
 import Icon from '../icon/Icon'

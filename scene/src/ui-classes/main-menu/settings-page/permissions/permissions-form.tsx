@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type PermissionDefinition } from '../../../../bevy-api/permission-definitions'
 import { getContentScaleRatio } from '../../../../service/canvas-ratio'
-import { Column, Row } from '../../../../components/layout'
+import { Column, Row } from '../../../../components/ui-system/layout'
 import { COLOR } from '../../../../components/color-palette'
 
 import { noop } from '../../../../utils/function-utils'

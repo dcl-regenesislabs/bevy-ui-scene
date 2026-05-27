@@ -18,9 +18,12 @@ import {
 import { useLayoutContext } from '../../service/layout-context'
 import { getLoadingAlphaValue } from '../../service/loading-alpha-color'
 import { NotificationBadge } from '../notification-badge'
-import { type ButtonVariant, VARIANT_STYLES } from '../button-variants'
+import {
+  type ButtonVariant,
+  VARIANT_STYLES
+} from '../ui-system/button-variants'
 
-/** @deprecated Use `ButtonVariant` from `'../button-variants'`. */
+/** @deprecated Use `ButtonVariant` from `'../ui-system/button-variants'`. */
 export type ButtonIconVariant = ButtonVariant
 
 function ButtonIcon(props: {

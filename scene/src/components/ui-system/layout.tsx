@@ -6,7 +6,7 @@ import ReactEcs, {
   UiEntity
 } from '@dcl/react-ecs'
 import { type UiLabelProps } from '@dcl/react-ecs/dist/components/Label/types'
-import { GrowContext, type GrowContextValue } from '../service/grow-context'
+import { GrowContext, type GrowContextValue } from '../../service/grow-context'
 
 export function Row({
   uiTransform,

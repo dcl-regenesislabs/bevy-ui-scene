@@ -1,6 +1,6 @@
 import { type Notification } from './notification-types'
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
-import { Column } from '../../components/layout'
+import { Column } from '../../components/ui-system/layout'
 import { NotificationItem } from './notification-renderer'
 import { executeTask } from '@dcl/sdk/ecs'
 import { getContentScaleRatio } from '../../service/canvas-ratio'

@@ -2,8 +2,8 @@ import ReactEcs, { Input, UiEntity } from '@dcl/react-ecs'
 import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
-import ButtonComponent from '../../../components/button-component'
+import { Column, Row } from '../../../components/ui-system/layout'
+import ButtonComponent from '../../../components/ui-system/button-component'
 import { setLastPopupSubmitting } from '../../../components/popup-stack'
 import {
   CONTEXT,

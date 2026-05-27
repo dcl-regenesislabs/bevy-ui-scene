@@ -50,7 +50,7 @@ import { BevyApi } from '../../../bevy-api'
 import { FriendButton } from '../../../components/friend-button'
 import { BlockUserButton } from '../../../components/block-user-button'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { fetchWearablesData } from '../../../utils/wearables-promise-utils'
@@ -88,7 +88,7 @@ import {
   inviteUserToCommunity
 } from '../../../service/community-invites-service'
 import { type CommunityListItem } from '../../../service/communities-types'
-import ButtonComponent from '../../../components/button-component'
+import ButtonComponent from '../../../components/ui-system/button-component'
 
 export type PassportPopupState = {
   loadingProfile: boolean

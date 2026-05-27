@@ -7,9 +7,11 @@ import {
 } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
+import { Caption } from '../../../components/ui-system/caption'
+import { Field } from '../../../components/ui-system/field'
 import { DropdownComponent } from '../../../components/dropdown-component'
-import ButtonComponent from '../../../components/button-component'
+import ButtonComponent from '../../../components/ui-system/button-component'
 import { store } from '../../../state/store'
 import { closeLastPopupAction } from '../../../state/hud/actions'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
@@ -34,14 +36,11 @@ import {
 import { noop } from '../../../utils/function-utils'
 import useState = ReactEcs.useState
 import { useLayoutContext } from '../../../service/layout-context'
-import { type UiLabelProps } from '@dcl/react-ecs/dist/components/Label/types'
-import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { sleep } from '../../../utils/dcl-utils'
 import { setUiFocus } from '~system/RestrictedActions'
 
 const POPUP_BACKGROUND = Color4.fromHexString('#52247AFF')
 const SECTION_LABEL_COLOR = COLOR.WHITE
-const SECTION_HELP_COLOR = COLOR.TEXT_COLOR_LIGHT_GREY
 const NAME_MAX = 52
 const DESCRIPTION_MAX = 500
 
@@ -277,7 +276,7 @@ const CommunityFormContent = ({
         )}
       </Field>
 
-      <Field>
+      <Field uiTransform={{ zIndex: 30 }}>
         <FieldLabel text="MEMBERSHIP" fontSize={fontSizeSmall} />
 
         <DropdownComponent
@@ -304,7 +303,7 @@ const CommunityFormContent = ({
           }}
         />
       </Field>
-      <Field>
+      <Field uiTransform={{ zIndex: 20 }}>
         <FieldLabel text="DISCOVERABILITY" fontSize={fontSizeSmall} />
         <DropdownComponent
           uiTransform={{
@@ -469,44 +468,5 @@ export const CreateCommunityPopup: Popup = ({ shownPopup }) => {
         <CommunityFormContent editing={editing} />
       </UiEntity>
     </PopupBackdrop>
-  )
-}
-function Caption({
-  uiText,
-  uiTransform
-}: {
-  uiText: UiLabelProps
-  uiTransform?: UiTransformProps
-}): ReactElement {
-  const layoutContext = useLayoutContext()
-  const fontSize = getFontSize({
-    context: layoutContext,
-    token: TYPOGRAPHY_TOKENS.BODY_S
-  })
-  return (
-    <UiEntity
-      uiTransform={{
-        width: '100%',
-        ...uiTransform
-      }}
-      uiText={{
-        fontSize,
-        color: SECTION_HELP_COLOR,
-        textAlign: 'top-left',
-        ...uiText
-      }}
-    />
-  )
-}
-
-function Field({ children }: { children?: ReactElement }): ReactElement {
-  return (
-    <Column
-      uiTransform={{
-        margin: { bottom: getFontSize({ context: useLayoutContext() }) }
-      }}
-    >
-      {children}
-    </Column>
   )
 }

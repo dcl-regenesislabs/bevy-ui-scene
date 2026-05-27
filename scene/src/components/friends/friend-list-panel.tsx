@@ -2,7 +2,7 @@ import { getFontSize } from '../../service/fontsize-system'
 import ReactEcs from '@dcl/react-ecs'
 import useState = ReactEcs.useState
 import { type FriendStatusData } from '../../service/social-service-type'
-import { Column } from '../layout'
+import { Column } from '../ui-system/layout'
 import Icon from '../icon/Icon'
 import { getChatMaxHeight } from '../chat/chat-area'
 import { PanelSectionHeader } from './panel-section-header'

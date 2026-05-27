@@ -8,7 +8,7 @@ import {
   RightSection
 } from '../backpack-page/BackpackNavBar'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import { executeTask } from '@dcl/sdk/ecs'
 import {
   fetchMyCommunities,

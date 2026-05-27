@@ -1,5 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { Column, Row } from '../layout'
+import { Column, Row } from '../ui-system/layout'
 import { FLEX_BASIS_AUTO } from '../../utils/ui-utils'
 import useEffect = ReactEcs.useEffect
 import { store } from '../../state/store'

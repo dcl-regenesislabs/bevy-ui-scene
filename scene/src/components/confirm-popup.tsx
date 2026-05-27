@@ -5,7 +5,7 @@ import { type Atlas } from '../utils/definitions'
 import { type Popup, setLastPopupSubmitting } from './popup-stack'
 import { PopupBackdrop } from './popup-backdrop'
 import { COLOR } from './color-palette'
-import { Column, Row } from './layout'
+import { Column, Row } from './ui-system/layout'
 import Icon from './icon/Icon'
 import {
   CONTEXT,
@@ -20,7 +20,7 @@ import { store } from '../state/store'
 import { closeLastPopupAction, pushPopupAction } from '../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../state/hud/state'
 import useState = ReactEcs.useState
-import ButtonComponent from './button-component'
+import ButtonComponent from './ui-system/button-component'
 
 export type ConfirmPopupIcon = {
   spriteName: string

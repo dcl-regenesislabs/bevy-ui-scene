@@ -1,8 +1,8 @@
-import { ButtonComponent } from '../button-component'
+import { ButtonComponent } from '../ui-system/button-component'
 
 /**
  * @deprecated Renamed to `ButtonComponent`. Import from
- * `'../components/button-component'` instead. This alias re-exports the
+ * `'../components/ui-system/button-component'` instead. This alias re-exports the
  * new component so existing imports still resolve, but new code should
  * use the new name.
  *

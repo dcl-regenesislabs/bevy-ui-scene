@@ -46,7 +46,7 @@ import {
   currentRealmProviderIsWorld
 } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
-import ButtonComponent from '../button-component'
+import ButtonComponent from '../ui-system/button-component'
 import ButtonIcon from '../button-icon/ButtonIcon'
 import { type AtlasIcon } from '../../utils/definitions'
 import useEffect = ReactEcs.useEffect

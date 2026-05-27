@@ -1,5 +1,5 @@
 import { type Color4 } from '@dcl/sdk/math'
-import { COLOR } from './color-palette'
+import { COLOR } from '../color-palette'
 
 export type ButtonVariant =
   | 'transparent'

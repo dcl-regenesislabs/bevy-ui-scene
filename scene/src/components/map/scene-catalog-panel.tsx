@@ -10,7 +10,7 @@ import {
   type Place
 } from '../../service/map-places'
 import { executeTask } from '@dcl/sdk/ecs'
-import { Column, Row } from '../layout'
+import { Column, Row } from '../ui-system/layout'
 import { ListCard } from './list-card'
 import {
   getRightPanelWidth,

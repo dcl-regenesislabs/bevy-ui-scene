@@ -15,7 +15,7 @@ import {
 } from '../backpack-page/BackpackNavBar'
 import { NavButton } from '../../../components/nav-button/NavButton'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import useState = ReactEcs.useState
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import useEffect = ReactEcs.useEffect

@@ -1,7 +1,10 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
-import { ButtonComponent, type ButtonVariant } from './button-component'
+import {
+  ButtonComponent,
+  type ButtonVariant
+} from './ui-system/button-component'
 import { COLOR } from './color-palette'
 import { getFontSize } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'

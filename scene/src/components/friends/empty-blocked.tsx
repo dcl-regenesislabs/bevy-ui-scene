@@ -7,7 +7,7 @@ import {
 } from '../../service/fontsize-system'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
-import { Column } from '../layout'
+import { Column } from '../ui-system/layout'
 
 export function EmptyBlocked(): ReactEcs.JSX.Element {
   const fontSize = getFontSize({ context: CONTEXT.SIDE })
