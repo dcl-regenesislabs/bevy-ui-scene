@@ -17,6 +17,9 @@ import type { Atlas } from '../../../utils/definitions'
 import useState = ReactEcs.useState
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 
 /** Format ISO timestamp as YYYYMMDDTHHmmssZ (Google Calendar format). */
 function toCalendarDate(iso: string): string {
@@ -50,8 +53,6 @@ export function CommunityEventActionsRow({
   }
   const buttonBaseTransform: UiTransformProps = {
     borderRadius: fontSize / 2,
-    borderWidth: 1,
-    borderColor: COLOR.WHITE,
     padding: buttonPadding,
     margin: { right: fontSize * 0.5 },
     flexGrow: 0,
@@ -110,9 +111,27 @@ export function CommunityEventActionsRow({
         ...uiTransform
       }}
     >
+      {/* JUMP IN */}
+      <ButtonTextIcon
+        variant="primary"
+        value="<b>JUMP IN</b>"
+        icon={{ spriteName: 'JumpIn', atlasName: 'icons' as Atlas }}
+        fontSize={fontSizeSmall}
+        uiTransform={buttonBaseTransform}
+        onMouseDown={() => {
+          const [x, y] = event.coordinates ??
+            event.position ?? [event.x, event.y]
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.TELEPORT,
+              data: `${x},${y}`
+            })
+          )
+        }}
+      />
       {/* REMIND ME */}
       <ButtonTextIcon
-        variant={attending ? 'transparent' : 'primary'}
+        variant={attending ? 'black' : 'subtle'}
         value={attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>'}
         icon={{
           spriteName: attending ? 'ReminderOn' : 'ReminderOff',
@@ -125,7 +144,7 @@ export function CommunityEventActionsRow({
       />
       {/* Add to calendar */}
       <ButtonTextIcon
-        variant="transparent"
+        variant="black"
         value="ADD TO CALENDAR"
         icon={{ spriteName: 'EventsIcn', atlasName: 'social' }}
         fontSize={fontSizeSmall}
@@ -164,7 +183,7 @@ function ShareButton({
   return (
     <UiEntity uiTransform={{ flexDirection: 'column' }}>
       <ButtonTextIcon
-        variant="transparent"
+        variant="black"
         active={open}
         value="SHARE"
         icon={{ spriteName: 'Share', atlasName: 'context' }}
