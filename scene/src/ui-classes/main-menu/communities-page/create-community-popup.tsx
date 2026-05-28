@@ -37,7 +37,10 @@ import { noop } from '../../../utils/function-utils'
 import useState = ReactEcs.useState
 import { useLayoutContext } from '../../../service/layout-context'
 import { sleep } from '../../../utils/dcl-utils'
-import { setUiFocus } from '~system/RestrictedActions'
+import { openExternalUrl, setUiFocus } from '~system/RestrictedActions'
+import { getPlayer } from '@dcl/sdk/src/players'
+import { fetchAllUserNames } from '../../../utils/passport-promise-utils'
+import useEffect = ReactEcs.useEffect
 
 const POPUP_BACKGROUND = Color4.fromHexString('#52247AFF')
 const SECTION_LABEL_COLOR = COLOR.WHITE
@@ -136,6 +139,33 @@ const CommunityFormContent = ({
     {}
   )
   const [applyWorkaroundNameInput, setWorkaroundNameInput] = useState(false)
+  // Tri-state because the check is async: while we don't know yet,
+  // render the form optimistically (the backend will reject anyway if
+  // it turns out the user has no claimed name — the gate is UX, not
+  // security). Only flip to 'none' once we have a definitive answer.
+  // Skipped entirely on edit (the user already owns the community).
+  const [claimedNameState, setClaimedNameState] = useState<
+    'pending' | 'has-names' | 'none'
+  >(isEdit ? 'has-names' : 'pending')
+  useEffect(() => {
+    if (isEdit) return
+    const userId = getPlayer()?.userId
+    if (userId === undefined) {
+      setClaimedNameState('none')
+      return
+    }
+    executeTask(async () => {
+      try {
+        const names = await fetchAllUserNames({ userId })
+        setClaimedNameState(names.length > 0 ? 'has-names' : 'none')
+      } catch {
+        // If the lookup fails, fail open — let the backend be the
+        // source of truth rather than blocking the form on a network
+        // hiccup.
+        setClaimedNameState('has-names')
+      }
+    })
+  }, [])
 
   const trimmedName = name.trim()
   const trimmedDescription = description.trim()
@@ -201,6 +231,15 @@ const CommunityFormContent = ({
     })
   }
 
+  // Creating a Community requires owning at least one claimed DCL
+  // name (NFT). We check `fetchAllUserNames` instead of the display
+  // name because a user may own names but still use a custom alias —
+  // their display name would carry `#xxxx` even though the backend
+  // would accept them. Edit mode bypasses the check entirely.
+  if (claimedNameState === 'none') {
+    return <NoClaimedNameGate fontSize={fontSize} title={fontSizeTitle} />
+  }
+
   return (
     <Column
       uiTransform={{
@@ -248,10 +287,11 @@ const CommunityFormContent = ({
             color={COLOR.TEXT_COLOR}
             disabled={submitting}
             onChange={(value) => {
-              console.log('value.length', value.length, value, name)
               if (value.length > NAME_MAX) {
-                // TODO remove if kind of maxlength is implemented or controlled Input
-                setName(value.slice(0, value.length - 1))
+                // TODO remove if kind of maxLength is implemented or controlled Input.
+                // The workaround remounts the Input via `applyWorkaroundNameInput`
+                // so it re-reads the truncated state, then restores focus.
+                setName(value.slice(0, NAME_MAX))
                 executeTask(async () => {
                   setWorkaroundNameInput(true)
                   await sleep(0)
@@ -260,6 +300,8 @@ const CommunityFormContent = ({
                     console.error
                   )
                 })
+              } else {
+                setName(value)
               }
             }}
           />
@@ -468,5 +510,76 @@ export const CreateCommunityPopup: Popup = ({ shownPopup }) => {
         <CommunityFormContent editing={editing} />
       </UiEntity>
     </PopupBackdrop>
+  )
+}
+
+function NoClaimedNameGate({
+  fontSize,
+  title
+}: {
+  fontSize: number
+  title: number
+}): ReactElement {
+  return (
+    <Column
+      uiTransform={{
+        width: '100%',
+        height: '100%',
+        padding: 0,
+        alignItems: 'center'
+      }}
+    >
+      <UiEntity
+        uiTransform={{
+          width: '100%',
+          margin: { bottom: fontSize * 1.5 }
+        }}
+        uiText={{
+          value: '<b>Claim a DCL Name first</b>',
+          fontSize: title,
+          color: COLOR.WHITE,
+          textAlign: 'top-left'
+        }}
+      />
+      <UiEntity
+        uiTransform={{
+          width: '100%',
+          margin: { bottom: fontSize * 1.5 }
+        }}
+        uiText={{
+          value:
+            'Creating a Community requires a claimed DCL name. Get one in the Marketplace and come back to set up your Community.',
+          fontSize,
+          color: COLOR.WHITE,
+          textAlign: 'top-left'
+        }}
+      />
+      <Row uiTransform={{ width: '100%', justifyContent: 'flex-end' }}>
+        <ButtonComponent
+          variant="subtle"
+          value="<b>CLOSE</b>"
+          fontSize={fontSize}
+          uiTransform={{
+            height: fontSize * 2.4,
+            margin: { right: fontSize * 0.5 }
+          }}
+          onMouseDown={() => {
+            store.dispatch(closeLastPopupAction())
+          }}
+        />
+        <ButtonComponent
+          variant="primary"
+          value="<b>GET A NAME</b>"
+          fontSize={fontSize}
+          uiTransform={{ height: fontSize * 2.4 }}
+          onMouseDown={() => {
+            openExternalUrl({
+              url: 'https://decentraland.org/marketplace/names/claim'
+            }).catch(console.error)
+            store.dispatch(closeLastPopupAction())
+          }}
+        />
+      </Row>
+    </Column>
   )
 }
