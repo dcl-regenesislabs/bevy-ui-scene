@@ -10,7 +10,7 @@ import {
   type Place
 } from '../../service/map-places'
 import { executeTask } from '@dcl/sdk/ecs'
-import { Column, Row } from '../layout'
+import { Column, Row } from '../ui-system/layout'
 import { ListCard } from './list-card'
 import {
   getRightPanelWidth,
@@ -443,10 +443,14 @@ async function fetchList({
   const categories = store.getState().hud.mapFilterCategories
   const orderKey: SceneCatalogOrder = store.getState().hud.sceneCatalogOrder
   const placeType = store.getState().hud.placeType
+  // The scene catalog list always shows all scenes when the filter is
+  // 'poi' (POIs are a curated subset on the map but should not narrow
+  // the catalog — users searching by name expect to find any scene
+  // regardless of POI status). Map markers still respect the filter.
   const queryParameters =
     categories?.includes('all') ||
     categories?.includes('favorites') ||
-    (categories?.length && categories[0] === 'poi' && placeType === 'worlds')
+    categories?.includes('poi')
       ? []
       : [
           ...categories.map((c) => ({

@@ -2,7 +2,7 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { getViewportHeight } from '../../service/canvas-ratio'
 import { COLOR } from '../color-palette'
 import Icon from '../icon/Icon'
-import { Column } from '../layout'
+import { Column } from '../ui-system/layout'
 import {
   orbitToTop,
   displaceCamera,

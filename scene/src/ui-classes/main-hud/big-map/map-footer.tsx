@@ -7,7 +7,7 @@ import {
 import { COLOR } from '../../../components/color-palette'
 import { MapStatusBar } from './map-status-bar'
 import Icon from '../../../components/icon/Icon'
-import { Row } from '../../../components/layout'
+import { Row } from '../../../components/ui-system/layout'
 import {
   getFontSize,
   TYPOGRAPHY_TOKENS

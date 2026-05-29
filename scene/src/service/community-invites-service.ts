@@ -2,8 +2,12 @@ import {
   fetchMyCommunities,
   sendInviteOrRequestToJoin
 } from '../utils/communities-promise-utils'
-import { type CommunityListItem } from './communities-types'
+import {
+  type CommunityListItem,
+  getCommunityThumbnailUrl
+} from './communities-types'
 import { pushNotificationToast } from '../ui-classes/main-hud/notification-toast-stack'
+import { resolvePlayerData } from '../utils/passport-promise-utils'
 
 /**
  * Returns the communities the current user can invite OTHER users into —
@@ -41,6 +45,9 @@ export async function inviteUserToCommunity(
 ): Promise<void> {
   try {
     await sendInviteOrRequestToJoin(community.id, targetAddress, 'invite')
+    const playerData = await resolvePlayerData(targetAddress)
+    const targetName = playerData.name
+
     pushNotificationToast({
       id: `community-invite-sent-${
         community.id
@@ -51,7 +58,9 @@ export async function inviteUserToCommunity(
         communityId: community.id,
         communityName: community.name,
         targetAddress,
-        description: `to ${community.name}`
+        targetName,
+        image: getCommunityThumbnailUrl(community.id),
+        description: `Invited <b>${targetName}</b> to <b>${community.name}</b>`
       },
       timestamp: String(Date.now()),
       read: false

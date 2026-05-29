@@ -5,7 +5,7 @@ import { useLayoutContext } from '../service/layout-context'
 import { type Color4 } from '@dcl/sdk/math'
 import { noop } from '../utils/function-utils'
 import { type Callback, type UiTransformProps } from '@dcl/sdk/react-ecs'
-import { type ButtonVariant, VARIANT_STYLES } from './button-variants'
+import { type ButtonVariant, VARIANT_STYLES } from './ui-system/button-variants'
 
 /**
  * Thin vertical pill button used for HUD bars and menu kebabs. Sizes

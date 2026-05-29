@@ -2,7 +2,7 @@ import { type AchievementsData } from './badges-types'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 import { PassportSection } from './passport-section'
-import { Row } from '../../../components/layout'
+import { Row } from '../../../components/ui-system/layout'
 import { COLOR } from '../../../components/color-palette'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 

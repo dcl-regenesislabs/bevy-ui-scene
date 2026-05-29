@@ -4,18 +4,18 @@ import ReactEcs, {
   UiEntity,
   type UiTransformProps
 } from '@dcl/sdk/react-ecs'
-import { type AtlasIcon } from '../utils/definitions'
-import Icon from './icon/Icon'
+import { type AtlasIcon } from '../../utils/definitions'
+import Icon from '../icon/Icon'
 import {
   type CONTEXT,
   getFontSize,
   TYPOGRAPHY_TOKENS
-} from '../service/fontsize-system'
-import { useLayoutContext } from '../service/layout-context'
-import { useAlign } from '../service/align-context'
-import { useGrowContext } from '../service/grow-context'
-import { getLoadingAlphaValue } from '../service/loading-alpha-color'
-import { COLOR } from './color-palette'
+} from '../../service/fontsize-system'
+import { useLayoutContext } from '../../service/layout-context'
+import { useAlign } from '../../service/align-context'
+import { useGrowContext } from '../../service/grow-context'
+import { getLoadingAlphaValue } from '../../service/loading-alpha-color'
+import { COLOR } from '../color-palette'
 import { type ButtonVariant, VARIANT_STYLES } from './button-variants'
 
 export type { ButtonVariant }
@@ -112,7 +112,7 @@ function ButtonComponent(props: {
     : 'base'
 
   const bgColor = styles.bg[visualState]
-  const textColor = styles.textColor[visualState] ?? styles.textColor.base
+  const textColor = styles.contentColor[visualState] ?? styles.contentColor.base
   const opacity = isDisabled ? 0.4 : isLoading ? getLoadingAlphaValue() : 1
 
   // `destructiveHover` swaps the border to red on hover (no layout shift

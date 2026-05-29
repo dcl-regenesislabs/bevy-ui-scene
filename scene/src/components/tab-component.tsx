@@ -8,7 +8,7 @@ import { COLOR } from './color-palette'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { noop } from '../utils/function-utils'
 import { CONTEXT, getFontSize } from '../service/fontsize-system'
-import { Column, Row } from './layout'
+import { Column, Row } from './ui-system/layout'
 
 export type Tab = {
   text: string

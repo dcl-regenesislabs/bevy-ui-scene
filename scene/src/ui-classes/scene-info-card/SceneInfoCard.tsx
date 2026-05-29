@@ -67,7 +67,7 @@ import { closeBigMapIfActive } from '../../service/map/map-camera'
 import { MAP_FILTER_DEFINITIONS } from '../../components/map/map-definitions'
 import { type PlaceRepresentation } from '../main-hud/big-map/big-map-view'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
-import { Row } from '../../components/layout'
+import { Row } from '../../components/ui-system/layout'
 import { COLOR } from '../../components/color-palette'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 

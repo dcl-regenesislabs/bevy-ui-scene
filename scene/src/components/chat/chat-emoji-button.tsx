@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type Callback, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { ButtonIcon } from '../button-icon'
-import { Column, Row } from '../layout'
+import { Column, Row } from '../ui-system/layout'
 import { getChatWidth } from '../../ui-classes/main-hud/MainHud'
 import { COLOR } from '../color-palette'
 import emojisCollection from '../../ui-classes/main-hud/chat-and-logs/emojis_complete.json'

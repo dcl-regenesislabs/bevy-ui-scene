@@ -1,5 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { Row } from '../../../components/layout'
+import { Row } from '../../../components/ui-system/layout'
 import { COLOR } from '../../../components/color-palette'
 import Icon from '../../../components/icon/Icon'
 import type { CommunityPrivacy } from '../../../service/communities-types'

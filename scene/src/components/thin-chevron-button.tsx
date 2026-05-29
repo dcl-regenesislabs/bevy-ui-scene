@@ -6,7 +6,7 @@ import { useLayoutContext } from '../service/layout-context'
 import { noop } from '../utils/function-utils'
 import { type Color4 } from '@dcl/sdk/math'
 import { ThinButton } from './thin-button'
-import { type ButtonVariant } from './button-variants'
+import { type ButtonVariant } from './ui-system/button-variants'
 import { type ReactElement } from '@dcl/react-ecs'
 
 /**

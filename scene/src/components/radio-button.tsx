@@ -1,5 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { Column, Row } from './layout'
+import { Column, Row } from './ui-system/layout'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { COLOR } from './color-palette'
 import { type InputOption } from '../utils/definitions'

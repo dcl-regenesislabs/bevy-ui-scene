@@ -5,7 +5,7 @@ import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 import { executeTask } from '@dcl/sdk/ecs'
 import { NavButton } from '../../../components/nav-button/NavButton'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import { COLOR } from '../../../components/color-palette'
 import {
   CONTEXT,

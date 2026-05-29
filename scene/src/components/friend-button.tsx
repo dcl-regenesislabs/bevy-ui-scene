@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
-import { ButtonComponent } from './button-component'
+import { ButtonComponent } from './ui-system/button-component'
 import { getFontSize } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
 import { type GetPlayerDataRes } from '../utils/definitions'

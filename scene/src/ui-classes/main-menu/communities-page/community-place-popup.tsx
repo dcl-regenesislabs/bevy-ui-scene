@@ -2,7 +2,7 @@ import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import { CloseButton } from '../../../components/close-button'
 import {
   CONTEXT,

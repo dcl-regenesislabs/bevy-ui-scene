@@ -7,8 +7,11 @@ import {
 } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
+import { Caption } from '../../../components/ui-system/caption'
+import { Field } from '../../../components/ui-system/field'
 import { DropdownComponent } from '../../../components/dropdown-component'
+import ButtonComponent from '../../../components/ui-system/button-component'
 import { store } from '../../../state/store'
 import { closeLastPopupAction } from '../../../state/hud/actions'
 import { getContentScaleRatio } from '../../../service/canvas-ratio'
@@ -32,22 +35,29 @@ import {
 } from '../../../service/communities-types'
 import { noop } from '../../../utils/function-utils'
 import useState = ReactEcs.useState
+import { useLayoutContext } from '../../../service/layout-context'
+import { sleep } from '../../../utils/dcl-utils'
+import { openExternalUrl, setUiFocus } from '~system/RestrictedActions'
+import { getPlayer } from '@dcl/sdk/src/players'
+import { fetchAllUserNames } from '../../../utils/passport-promise-utils'
+import useEffect = ReactEcs.useEffect
 
 const POPUP_BACKGROUND = Color4.fromHexString('#52247AFF')
 const SECTION_LABEL_COLOR = COLOR.WHITE
-const SECTION_HELP_COLOR = COLOR.WHITE_OPACITY_5
-const NAME_MAX = 30
+const NAME_MAX = 52
 const DESCRIPTION_MAX = 500
 
 const PRIVACY_OPTIONS = [
   {
     value: 'public' as CommunityPrivacy,
-    label:
+    label: 'Public',
+    caption:
       'Public — Anyone can become a member, view Community details, and join your Voice Streams'
   },
   {
     value: 'private' as CommunityPrivacy,
-    label:
+    label: 'Private',
+    caption:
       'Private — Only members can view details; new members must request to join'
   }
 ]
@@ -55,12 +65,14 @@ const PRIVACY_OPTIONS = [
 const VISIBILITY_OPTIONS = [
   {
     value: 'all' as CommunityVisibility,
-    label:
+    label: 'Discoverable',
+    caption:
       "Discoverable — Listed in 'Browse Communities' section and search results"
   },
   {
     value: 'unlisted' as CommunityVisibility,
-    label:
+    label: 'Not discoverable',
+    caption:
       'Not discoverable — Hidden from search; joinable only via invite link'
   }
 ]
@@ -86,29 +98,6 @@ function FieldLabel({
           : `<b>${text}</b>`,
         fontSize,
         color: SECTION_LABEL_COLOR,
-        textAlign: 'top-left'
-      }}
-    />
-  )
-}
-
-function FieldHelp({
-  text,
-  fontSize
-}: {
-  text: string
-  fontSize: number
-}): ReactElement {
-  return (
-    <UiEntity
-      uiTransform={{
-        width: '100%',
-        margin: { bottom: fontSize * 0.4 }
-      }}
-      uiText={{
-        value: text,
-        fontSize,
-        color: SECTION_HELP_COLOR,
         textAlign: 'top-left'
       }}
     />
@@ -149,6 +138,34 @@ const CommunityFormContent = ({
   const [issues, setIssues] = useState<{ name?: string; description?: string }>(
     {}
   )
+  const [applyWorkaroundNameInput, setWorkaroundNameInput] = useState(false)
+  // Tri-state because the check is async: while we don't know yet,
+  // render the form optimistically (the backend will reject anyway if
+  // it turns out the user has no claimed name — the gate is UX, not
+  // security). Only flip to 'none' once we have a definitive answer.
+  // Skipped entirely on edit (the user already owns the community).
+  const [claimedNameState, setClaimedNameState] = useState<
+    'pending' | 'has-names' | 'none'
+  >(isEdit ? 'has-names' : 'pending')
+  useEffect(() => {
+    if (isEdit) return
+    const userId = getPlayer()?.userId
+    if (userId === undefined) {
+      setClaimedNameState('none')
+      return
+    }
+    executeTask(async () => {
+      try {
+        const names = await fetchAllUserNames({ userId })
+        setClaimedNameState(names.length > 0 ? 'has-names' : 'none')
+      } catch {
+        // If the lookup fails, fail open — let the backend be the
+        // source of truth rather than blocking the form on a network
+        // hiccup.
+        setClaimedNameState('has-names')
+      }
+    })
+  }, [])
 
   const trimmedName = name.trim()
   const trimmedDescription = description.trim()
@@ -214,6 +231,15 @@ const CommunityFormContent = ({
     })
   }
 
+  // Creating a Community requires owning at least one claimed DCL
+  // name (NFT). We check `fetchAllUserNames` instead of the display
+  // name because a user may own names but still use a custom alias —
+  // their display name would carry `#xxxx` even though the backend
+  // would accept them. Edit mode bypasses the check entirely.
+  if (claimedNameState === 'none') {
+    return <NoClaimedNameGate fontSize={fontSize} title={fontSizeTitle} />
+  }
+
   return (
     <Column
       uiTransform={{
@@ -237,172 +263,183 @@ const CommunityFormContent = ({
       />
 
       {/* Name */}
-      <FieldLabel text="COMMUNITY NAME" required fontSize={fontSizeSmall} />
-      <Input
-        uiTransform={{
-          width: '100%',
-          height: fontSize * 2.4,
-          borderRadius: fontSize / 2,
-          borderWidth: 0,
-          padding: { left: fontSize, right: fontSize },
-          margin: { bottom: fontSize * 0.3 }
-        }}
-        uiBackground={{ color: COLOR.WHITE }}
-        value={name}
-        placeholder="Write here"
-        placeholderColor={COLOR.TEXT_COLOR_GREY}
-        fontSize={fontSize}
-        color={COLOR.TEXT_COLOR}
-        disabled={submitting}
-        onChange={(value) => {
-          if (value.length <= NAME_MAX) setName(value)
-        }}
-      />
-      {issues.name != null && (
-        <UiEntity
-          uiTransform={{ width: '100%', margin: { bottom: fontSize * 0.3 } }}
-          uiText={{
-            value: issues.name,
-            fontSize: fontSizeCaption,
-            color: COLOR.BUTTON_PRIMARY,
-            textAlign: 'top-left'
-          }}
-        />
-      )}
+      <Field>
+        <FieldLabel text="COMMUNITY NAME" required fontSize={fontSizeSmall} />
+        {!applyWorkaroundNameInput && (
+          <Input
+            uiTransform={{
+              elementId: 'communityNameInput',
+              width: '100%',
+              height: fontSize * 2.4,
+              borderRadius: fontSize / 2,
+              borderWidth: 0,
+              padding: {
+                left: fontSize / 2,
+                right: fontSize,
+                top: fontSize / 2
+              }
+            }}
+            uiBackground={{ color: COLOR.WHITE }}
+            value={name}
+            placeholder="Write here"
+            placeholderColor={COLOR.TEXT_COLOR_GREY}
+            fontSize={fontSize}
+            color={COLOR.TEXT_COLOR}
+            disabled={submitting}
+            onChange={(value) => {
+              if (value.length > NAME_MAX) {
+                // TODO remove if kind of maxLength is implemented or controlled Input.
+                // The workaround remounts the Input via `applyWorkaroundNameInput`
+                // so it re-reads the truncated state, then restores focus.
+                setName(value.slice(0, NAME_MAX))
+                executeTask(async () => {
+                  setWorkaroundNameInput(true)
+                  await sleep(0)
+                  setWorkaroundNameInput(false)
+                  setUiFocus({ elementId: 'communityNameInput' }).catch(
+                    console.error
+                  )
+                })
+              } else {
+                setName(value)
+              }
+            }}
+          />
+        )}
+        {issues.name != null && (
+          <Caption
+            uiTransform={{ width: '100%', margin: { bottom: fontSize * 0.3 } }}
+            uiText={{
+              value: issues.name,
+              color: COLOR.BUTTON_PRIMARY,
+              textAlign: 'top-left'
+            }}
+          />
+        )}
+      </Field>
 
-      {/* Membership */}
-      <UiEntity uiTransform={{ width: '100%', margin: { top: fontSize } }}>
+      <Field uiTransform={{ zIndex: 30 }}>
         <FieldLabel text="MEMBERSHIP" fontSize={fontSizeSmall} />
-      </UiEntity>
-      <DropdownComponent
-        uiTransform={{
-          width: '100%',
-          height: fontSize * 2.4,
-          borderRadius: fontSize / 2,
-          borderWidth: 0,
-          margin: { bottom: fontSize },
-          zIndex: 30
-        }}
-        options={PRIVACY_OPTIONS}
-        value={privacy}
-        onChange={(v: CommunityPrivacy) => {
-          setPrivacy(v)
-        }}
-        disabled={submitting}
-      />
 
-      {/* Discoverability */}
-      <FieldLabel text="DISCOVERABILITY" fontSize={fontSizeSmall} />
-      <DropdownComponent
-        uiTransform={{
-          width: '100%',
-          height: fontSize * 2.4,
-          borderRadius: fontSize / 2,
-          borderWidth: 0,
-          margin: { bottom: fontSize },
-          zIndex: 20
-        }}
-        options={VISIBILITY_OPTIONS}
-        value={visibility}
-        onChange={(v: CommunityVisibility) => {
-          setVisibility(v)
-        }}
-        disabled={submitting}
-      />
-
-      {/* Description */}
-      <FieldLabel text="DESCRIPTION" required fontSize={fontSizeSmall} />
-      <FieldHelp
-        text="Tell everyone what your Community is about! The first 80 characters of your description will be visible when browsing Communities."
-        fontSize={fontSizeCaption}
-      />
-      <Input
-        uiTransform={{
-          width: '100%',
-          height: fontSize * 6,
-          borderRadius: fontSize / 2,
-          borderWidth: 0,
-          padding: { left: fontSize, right: fontSize, top: fontSize * 0.5 },
-          margin: { bottom: fontSize * 0.3 }
-        }}
-        uiBackground={{ color: COLOR.WHITE }}
-        value={description}
-        placeholder="Write here"
-        placeholderColor={COLOR.TEXT_COLOR_GREY}
-        fontSize={fontSize}
-        color={COLOR.TEXT_COLOR}
-        disabled={submitting}
-        onChange={(value) => {
-          if (value.length <= DESCRIPTION_MAX) setDescription(value)
-        }}
-      />
-      <UiEntity
-        uiTransform={{
-          width: '100%',
-          margin: { bottom: fontSize }
-        }}
-        uiText={{
-          value: `${description.length} / ${DESCRIPTION_MAX}`,
-          fontSize: fontSizeCaption,
-          color: SECTION_HELP_COLOR,
-          textAlign: 'top-right'
-        }}
-      />
-      {issues.description != null && (
-        <UiEntity
-          uiTransform={{ width: '100%', margin: { bottom: fontSize * 0.3 } }}
-          uiText={{
-            value: issues.description,
-            fontSize: fontSizeCaption,
-            color: COLOR.BUTTON_PRIMARY,
-            textAlign: 'top-left'
-          }}
-        />
-      )}
-
-      {/* Actions row */}
-      <Row
-        uiTransform={{
-          width: '100%',
-          margin: { top: fontSize },
-          justifyContent: 'space-between'
-        }}
-      >
-        <UiEntity
+        <DropdownComponent
           uiTransform={{
-            width: '48%',
+            width: '100%',
             height: fontSize * 2.4,
             borderRadius: fontSize / 2,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: submitting ? 0.4 : 1
+            borderWidth: 0,
+
+            zIndex: 30
           }}
-          uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+          options={PRIVACY_OPTIONS}
+          value={privacy}
+          onChange={(v: CommunityPrivacy) => {
+            setPrivacy(v)
+          }}
+          disabled={submitting}
+        />
+
+        <Caption
           uiText={{
-            value: '<b>CANCEL</b>',
-            fontSize,
-            color: COLOR.WHITE
+            value:
+              PRIVACY_OPTIONS.find((p) => p.value === privacy)?.caption ?? ''
           }}
+        />
+      </Field>
+      <Field uiTransform={{ zIndex: 20 }}>
+        <FieldLabel text="DISCOVERABILITY" fontSize={fontSizeSmall} />
+        <DropdownComponent
+          uiTransform={{
+            width: '100%',
+            height: fontSize * 2.4,
+            borderRadius: fontSize / 2,
+            borderWidth: 0,
+
+            zIndex: 20
+          }}
+          options={VISIBILITY_OPTIONS}
+          value={visibility}
+          onChange={(v: CommunityVisibility) => {
+            setVisibility(v)
+          }}
+          disabled={submitting}
+        />
+        <Caption
+          uiText={{
+            value:
+              VISIBILITY_OPTIONS.find((p) => p.value === visibility)?.caption ??
+              ''
+          }}
+        />
+      </Field>
+      <Field>
+        <FieldLabel text="DESCRIPTION" required fontSize={fontSizeSmall} />
+        <Caption
+          uiText={{
+            value:
+              'Tell everyone what your Community is about! The first 80 characters of your description will be visible when browsing Communities.'
+          }}
+        />
+
+        <Input
+          uiTransform={{
+            width: '100%',
+            height: fontSize * 6,
+            borderRadius: fontSize / 2,
+            borderWidth: 0,
+            padding: { left: fontSize, right: fontSize, top: fontSize * 0.5 }
+          }}
+          multiLine={true}
+          uiBackground={{ color: COLOR.WHITE }}
+          value={description}
+          placeholder="Write here"
+          placeholderColor={COLOR.TEXT_COLOR_GREY}
+          fontSize={fontSize}
+          color={COLOR.TEXT_COLOR}
+          disabled={submitting}
+          onChange={(value) => {
+            if (value.length <= DESCRIPTION_MAX) setDescription(value)
+          }}
+        />
+        <Caption
+          uiTransform={{
+            width: '100%'
+          }}
+          uiText={{
+            value: `${description.length} / ${DESCRIPTION_MAX}`,
+            textAlign: 'top-right'
+          }}
+        />
+        {issues.description != null && (
+          <Caption
+            uiTransform={{ width: '100%', margin: { bottom: fontSize * 0.3 } }}
+            uiText={{
+              value: issues.description,
+              fontSize: fontSizeCaption,
+              color: COLOR.BUTTON_PRIMARY,
+              textAlign: 'top-left'
+            }}
+          />
+        )}
+      </Field>
+      {/* Actions row */}
+      <Row childrenGrow childrenGap={fontSize / 2}>
+        <ButtonComponent
+          variant="subtle"
+          value="<b>CANCEL</b>"
+          fontSize={fontSize}
+          disabled={submitting}
+          uiTransform={{ height: fontSize * 2.4 }}
           onMouseDown={() => {
-            if (submitting) return
             store.dispatch(closeLastPopupAction())
           }}
         />
-        <UiEntity
-          uiTransform={{
-            width: '48%',
-            height: fontSize * 2.4,
-            borderRadius: fontSize / 2,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: submitting ? getLoadingAlphaValue() : canSubmit ? 1 : 0.4
-          }}
-          uiBackground={{ color: COLOR.BUTTON_PRIMARY }}
-          uiText={{
-            value: isEdit ? '<b>SAVE CHANGES</b>' : '<b>CREATE</b>',
-            fontSize,
-            color: COLOR.WHITE
-          }}
+        <ButtonComponent
+          variant="primary"
+          value={isEdit ? '<b>SAVE CHANGES</b>' : '<b>CREATE</b>'}
+          fontSize={fontSize}
+          disabled={!canSubmit}
+          loading={submitting}
+          uiTransform={{ height: fontSize * 2.4 }}
           onMouseDown={onSubmit}
         />
       </Row>
@@ -429,15 +466,14 @@ const CommunityFormContent = ({
       )}
 
       {/* Footer */}
-      <UiEntity
+      <Caption
         uiTransform={{
           width: '100%',
-          margin: { top: fontSize }
+          margin: { top: fontSize * 2 }
         }}
         uiText={{
           value:
             "Please ensure Community content follows Decentraland's Content Policy.",
-          fontSize: fontSizeCaption,
           color: COLOR.WHITE_OPACITY_5,
           textAlign: 'middle-center'
         }}
@@ -447,7 +483,8 @@ const CommunityFormContent = ({
 }
 
 export const CreateCommunityPopup: Popup = ({ shownPopup }) => {
-  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const context = useLayoutContext()
+  const fontSize = getFontSize({ context })
   // When `data` is provided, the form opens in edit mode.
   const editing = shownPopup.data as CommunityListItem | undefined
   return (
@@ -473,5 +510,76 @@ export const CreateCommunityPopup: Popup = ({ shownPopup }) => {
         <CommunityFormContent editing={editing} />
       </UiEntity>
     </PopupBackdrop>
+  )
+}
+
+function NoClaimedNameGate({
+  fontSize,
+  title
+}: {
+  fontSize: number
+  title: number
+}): ReactElement {
+  return (
+    <Column
+      uiTransform={{
+        width: '100%',
+        height: '100%',
+        padding: 0,
+        alignItems: 'center'
+      }}
+    >
+      <UiEntity
+        uiTransform={{
+          width: '100%',
+          margin: { bottom: fontSize * 1.5 }
+        }}
+        uiText={{
+          value: '<b>Claim a DCL Name first</b>',
+          fontSize: title,
+          color: COLOR.WHITE,
+          textAlign: 'top-left'
+        }}
+      />
+      <UiEntity
+        uiTransform={{
+          width: '100%',
+          margin: { bottom: fontSize * 1.5 }
+        }}
+        uiText={{
+          value:
+            'Creating a Community requires a claimed DCL name. Get one in the Marketplace and come back to set up your Community.',
+          fontSize,
+          color: COLOR.WHITE,
+          textAlign: 'top-left'
+        }}
+      />
+      <Row uiTransform={{ width: '100%', justifyContent: 'flex-end' }}>
+        <ButtonComponent
+          variant="subtle"
+          value="<b>CLOSE</b>"
+          fontSize={fontSize}
+          uiTransform={{
+            height: fontSize * 2.4,
+            margin: { right: fontSize * 0.5 }
+          }}
+          onMouseDown={() => {
+            store.dispatch(closeLastPopupAction())
+          }}
+        />
+        <ButtonComponent
+          variant="primary"
+          value="<b>GET A NAME</b>"
+          fontSize={fontSize}
+          uiTransform={{ height: fontSize * 2.4 }}
+          onMouseDown={() => {
+            openExternalUrl({
+              url: 'https://decentraland.org/marketplace/names/claim'
+            }).catch(console.error)
+            store.dispatch(closeLastPopupAction())
+          }}
+        />
+      </Row>
+    </Column>
   )
 }

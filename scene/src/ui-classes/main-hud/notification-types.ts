@@ -101,6 +101,10 @@ export type CommunityInviteSentNotification = {
     communityName: string
     /** Target user address; informational only. */
     targetAddress: string
+    /** Resolved display name of the target user. */
+    targetName?: string
+    /** Community thumbnail URL — consumed by the generic toast renderer. */
+    image?: string
     /** Free-text description shown by the default renderer path. */
     description: string
   }

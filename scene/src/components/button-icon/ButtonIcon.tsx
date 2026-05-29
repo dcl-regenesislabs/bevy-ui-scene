@@ -10,7 +10,6 @@ import { type AtlasIcon } from '../../utils/definitions'
 import { ArrowToast } from '../arrow-toast'
 import Icon from '../icon/Icon'
 import { type UiBackgroundProps } from '@dcl/react-ecs'
-import { COLOR } from '../color-palette'
 import {
   type CONTEXT,
   getFontSize,
@@ -19,52 +18,13 @@ import {
 import { useLayoutContext } from '../../service/layout-context'
 import { getLoadingAlphaValue } from '../../service/loading-alpha-color'
 import { NotificationBadge } from '../notification-badge'
+import {
+  type ButtonVariant,
+  VARIANT_STYLES
+} from '../ui-system/button-variants'
 
-export type ButtonIconVariant =
-  | 'transparent'
-  | 'primary'
-  | 'subtle'
-  | 'destructive'
-
-type VariantStyle = {
-  bg: { base: Color4; hover: Color4; active: Color4 }
-  iconColor: { base: Color4; hover?: Color4; active?: Color4 }
-}
-
-const VARIANT_STYLES: Record<ButtonIconVariant, VariantStyle> = {
-  transparent: {
-    bg: {
-      base: COLOR.BLACK_TRANSPARENT,
-      hover: COLOR.WHITE_OPACITY_1,
-      active: COLOR.WHITE_OPACITY_2
-    },
-    iconColor: { base: COLOR.WHITE }
-  },
-  primary: {
-    bg: {
-      base: COLOR.BUTTON_PRIMARY,
-      hover: COLOR.BUTTON_PRIMARY_HOVER,
-      active: COLOR.BUTTON_PRIMARY_HOVER
-    },
-    iconColor: { base: COLOR.WHITE }
-  },
-  subtle: {
-    bg: {
-      base: COLOR.WHITE_OPACITY_1,
-      hover: COLOR.WHITE_OPACITY_2,
-      active: COLOR.WHITE_OPACITY_3
-    },
-    iconColor: { base: COLOR.WHITE }
-  },
-  destructive: {
-    bg: {
-      base: COLOR.BLACK_TRANSPARENT,
-      hover: { ...COLOR.RED, a: 0.15 },
-      active: { ...COLOR.RED, a: 0.25 }
-    },
-    iconColor: { base: COLOR.WHITE, hover: COLOR.RED, active: COLOR.RED }
-  }
-}
+/** @deprecated Use `ButtonVariant` from `'../ui-system/button-variants'`. */
+export type ButtonIconVariant = ButtonVariant
 
 function ButtonIcon(props: {
   // Events
@@ -88,7 +48,7 @@ function ButtonIcon(props: {
   hintSide?: 'left' | 'right' | 'top' | 'bottom'
   layoutContext?: CONTEXT
   // Design-system additions
-  variant?: ButtonIconVariant
+  variant?: ButtonVariant
   active?: boolean
   disabled?: boolean
   loading?: boolean
@@ -128,7 +88,7 @@ function ButtonIcon(props: {
 
   const variantBg = styles.bg[visualState]
   const variantIconColor =
-    styles.iconColor[visualState] ?? styles.iconColor.base
+    styles.contentColor[visualState] ?? styles.contentColor.base
 
   // Legacy prop overrides win over variant defaults (backwards compat).
   const bgColor = props.backgroundColor ?? variantBg

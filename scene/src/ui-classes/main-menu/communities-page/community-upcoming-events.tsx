@@ -1,6 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import type { EventFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import {
   CONTEXT,
@@ -127,10 +127,13 @@ function EventItem({
         height: fontSize * 13
       }}
       onMouseDown={() => {
+        // Merge the local optimistic `attending` state so the popup
+        // opens in sync with what the user just toggled in the list —
+        // the `event` prop is a snapshot from initial render.
         store.dispatch(
           pushPopupAction({
             type: HUD_POPUP_TYPE.COMMUNITY_EVENT_INFO,
-            data: event
+            data: { ...event, attending }
           })
         )
       }}

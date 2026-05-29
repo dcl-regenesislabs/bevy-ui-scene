@@ -50,7 +50,7 @@ import { BevyApi } from '../../../bevy-api'
 import { FriendButton } from '../../../components/friend-button'
 import { BlockUserButton } from '../../../components/block-user-button'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { fetchWearablesData } from '../../../utils/wearables-promise-utils'
@@ -88,7 +88,7 @@ import {
   inviteUserToCommunity
 } from '../../../service/community-invites-service'
 import { type CommunityListItem } from '../../../service/communities-types'
-import ButtonComponent from '../../../components/button-component'
+import ButtonComponent from '../../../components/ui-system/button-component'
 
 export type PassportPopupState = {
   loadingProfile: boolean
@@ -131,7 +131,8 @@ export function setupPassportPopup(): void {
       executeTask(async () => {
         const shownPopup = action.payload as HUDPopup
         const userId: string = shownPopup.data as string
-        state.editable = userId === getPlayer()?.userId
+        await waitFor(() => getPlayer() !== null)
+        state.editable = userId.toLowerCase() === getPlayer()?.userId
         await fetchAndStoreOwnProfileData({ userId })
         // TODO REVIEW to refactor, profileData refers to passport profileData state, which can be own or other users, can lead to confussion and to be used as a own profile data always, refactor to useState
 
@@ -936,11 +937,11 @@ function AddressRow({
           margin: { left: '-5%' }
         }}
       />
-      {CopyButton({
-        fontSize,
-        text: address,
-        elementId: 'copy-address'
-      })}
+      <CopyButton
+        fontSize={fontSize}
+        text={address}
+        elementId={`copy-address-${address}`}
+      />
     </UiEntity>
   )
 }
@@ -955,12 +956,7 @@ function NameRow({
   hasClaimedName: boolean
 }): ReactElement {
   return (
-    <UiEntity
-      uiTransform={{
-        flexDirection: 'row',
-        alignItems: 'center'
-      }}
-    >
+    <Row>
       <StatusIcon fontSize={fontSize} />
       <PlayerNameComponent
         name={name}
@@ -968,26 +964,22 @@ function NameRow({
         fontSize={fontSize}
         bold={false}
         textColor={COLOR.TEXT_COLOR_WHITE}
-        uiTransform={{
-          alignSelf: 'flex-start',
-          padding: 0,
-          margin: { left: '-4%' }
-        }}
       />
-      {CopyButton({
-        fontSize,
-        text: name,
-        elementId: 'copy-name'
-      })}
+      <CopyButton
+        fontSize={fontSize}
+        text={name}
+        elementId={`copy-name-${name}`}
+      />
       {state.editable && !state.editing && (
         <ButtonIcon
           uiTransform={{
-            padding: getContentScaleRatio() * 8,
-            margin: { left: '8%' }
+            width: fontSize * 1.5,
+            height: fontSize * 1.5,
+            position: { left: fontSize / 2 }
           }}
+          variant={'black'}
           icon={{ spriteName: 'Edit', atlasName: 'icons' }}
-          iconSize={getContentScaleRatio() * 40}
-          backgroundColor={COLOR.WHITE_OPACITY_1}
+          iconSize={fontSize * 0.8}
           onMouseDown={() => {
             store.dispatch(
               pushPopupAction({
@@ -998,7 +990,7 @@ function NameRow({
           }}
         />
       )}
-    </UiEntity>
+    </Row>
   )
 }
 

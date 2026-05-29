@@ -16,7 +16,7 @@ import {
 import { AvatarCircle } from '../../../components/avatar-circle'
 import { getPlayer } from '@dcl/sdk/src/players'
 import { getAddressColor } from '../chat-and-logs/ColorByAddress'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import { applyMiddleEllipsis } from '../../../utils/urn-utils'
 import { CopyButton } from '../../../components/copy-button'
 import { ButtonTextIcon } from '../../../components/button-text-icon'

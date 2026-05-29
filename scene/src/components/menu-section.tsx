@@ -1,6 +1,6 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type Children, type UiTransformProps } from '@dcl/sdk/react-ecs'
-import { Column } from './layout'
+import { Column } from './ui-system/layout'
 import { AlignContext, type Align } from '../service/align-context'
 
 /**

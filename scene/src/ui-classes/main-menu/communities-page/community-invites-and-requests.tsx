@@ -1,6 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import {
   CONTEXT,
   getFontSize,
@@ -291,6 +291,7 @@ function InviteCard({
       })
     )
   }
+  const thumbnailSize = fontSize * 14.75
 
   return (
     <Column
@@ -308,8 +309,8 @@ function InviteCard({
       {/* Thumbnail */}
       <UiEntity
         uiTransform={{
-          width: '100%',
-          height: fontSize * 9,
+          width: thumbnailSize,
+          height: thumbnailSize,
           borderRadius: fontSize / 2,
           margin: { bottom: fontSize * 0.5 },
           flexShrink: 0
