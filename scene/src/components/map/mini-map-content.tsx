@@ -41,10 +41,7 @@ import {
   saveMinimapStyle
 } from './mini-map-persistence'
 import { getUiController } from '../../controllers/ui.controller'
-import {
-  currentRealmProviderIsPreview,
-  currentRealmProviderIsWorld
-} from '../../service/realm-change'
+import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import ButtonComponent from '../ui-system/button-component'
 import ButtonIcon from '../button-icon/ButtonIcon'
@@ -97,8 +94,7 @@ export function MiniMapContent(): ReactElement {
 
   const userMinimapStyle = store.getState().hud.minimapStyle ?? 'satellite'
   const isWorld = currentRealmProviderIsWorld()
-  const isPreview = currentRealmProviderIsPreview()
-  const forceImposters = isWorld || isPreview
+  const forceImposters = isWorld
   const minimapStyle: MinimapStyle = forceImposters
     ? 'imposters'
     : userMinimapStyle
