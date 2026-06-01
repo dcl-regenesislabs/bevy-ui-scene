@@ -1,5 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { engine, Transform } from '@dcl/sdk/ecs'
+import { engine, type Entity, Transform } from '@dcl/sdk/ecs'
 import { Quaternion } from '@dcl/sdk/math'
 
 import { rotateUVs, truncateWithoutBreakingWords } from '../../utils/ui-utils'
@@ -50,6 +50,7 @@ import ButtonComponent from '../ui-system/button-component'
 import ButtonIcon from '../button-icon/ButtonIcon'
 import { type AtlasIcon } from '../../utils/definitions'
 import useEffect = ReactEcs.useEffect
+import useState = ReactEcs.useState
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 
 const VISIBLE_METERS = 256
@@ -142,36 +143,56 @@ export function MiniMapContent(): ReactElement {
         )
       : []
 
+  // Track the entities of each camera in state so the JSX can read them
+  // without triggering a lazy create from inside render (side effects in
+  // render are an anti-pattern and make cleanup harder to reason about).
+  // The useEffect below owns setup + teardown; the JSX just reads.
+  const [satelliteCameraEntity, setSatelliteCameraEntity] =
+    useState<Entity | null>(null)
+  const [impostersCameraEntity, setImpostersCameraEntity] =
+    useState<Entity | null>(null)
+
   useEffect(() => {
     loadCompleteMapPlaces().catch(console.error)
   }, [])
 
   useEffect(() => {
     if (minimapStyle !== 'satellite') return
-    getSatelliteCamera()
+    setSatelliteCameraEntity(getSatelliteCamera())
     return () => {
       disposeSatelliteCamera()
+      setSatelliteCameraEntity(null)
     }
   }, [minimapStyle])
 
+  // Camera reposition depends on position + yaw (the TextureCamera is
+  // rotated physically to follow the player's heading).
   useEffect(() => {
     if (minimapStyle !== 'satellite') return
     updateSatelliteCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
+  }, [minimapStyle, playerWorldX, playerWorldZ, effectiveYawDeg])
+
+  // Tile selection depends on position only — yaw doesn't change which
+  // satellite chunks fall inside the viewport (it's an axis-aligned
+  // window over world coords; the circular mask hides the corners).
+  useEffect(() => {
+    if (minimapStyle !== 'satellite') return
     updateSatelliteTiles(playerWorldX, playerWorldZ)
-  })
+  }, [minimapStyle, playerWorldX, playerWorldZ])
 
   useEffect(() => {
     if (minimapStyle !== 'imposters') return
-    getImpostersCamera()
+    setImpostersCameraEntity(getImpostersCamera())
     return () => {
       disposeImpostersCamera()
+      setImpostersCameraEntity(null)
     }
   }, [minimapStyle])
 
   useEffect(() => {
     if (minimapStyle !== 'imposters') return
     updateImpostersCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
-  })
+  }, [minimapStyle, playerWorldX, playerWorldZ, effectiveYawDeg])
 
   const places: Place[] = forceImposters
     ? []
@@ -219,22 +240,22 @@ export function MiniMapContent(): ReactElement {
           />
         )}
 
-        {minimapStyle === 'satellite' && (
+        {minimapStyle === 'satellite' && satelliteCameraEntity !== null && (
           <UiEntity
             uiTransform={mapUiTransform}
             uiBackground={{
               textureMode: 'stretch',
-              videoTexture: { videoPlayerEntity: getSatelliteCamera() }
+              videoTexture: { videoPlayerEntity: satelliteCameraEntity }
             }}
           />
         )}
 
-        {minimapStyle === 'imposters' && (
+        {minimapStyle === 'imposters' && impostersCameraEntity !== null && (
           <UiEntity
             uiTransform={mapUiTransform}
             uiBackground={{
               textureMode: 'stretch',
-              videoTexture: { videoPlayerEntity: getImpostersCamera() }
+              videoTexture: { videoPlayerEntity: impostersCameraEntity }
             }}
           />
         )}
