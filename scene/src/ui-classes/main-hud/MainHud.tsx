@@ -31,6 +31,7 @@ import {
 import { LayoutContext } from '../../service/layout-context'
 import FriendsPanel from '../../components/friends/friends-panel'
 import { FEATURES, getFeatureFlag } from '../../service/feature-flags'
+import { MapTilePreloader } from '../../components/map/map-tile-preloader'
 
 const ZERO_SIZE = {
   width: 0,
@@ -216,6 +217,7 @@ export default class MainHud {
   mainUi(): ReactEcs.JSX.Element | null {
     return (
       <LayoutContext.Provider value={CONTEXT.SIDE}>
+        <MapTilePreloader />
         <UiEntity
           uiTransform={{
             width: '100%',

@@ -332,12 +332,23 @@ function SceneCatalogContent(): ReactElement {
                       .catch(console.error)
                   } else {
                     if (!place.world && !currentRealmProviderIsWorld()) {
-                      displaceCamera(
-                        fromParcelCoordsToPosition(
-                          fromStringToCoords(place.base_position),
-                          { height: 0 }
-                        )
+                      const worldPos = fromParcelCoordsToPosition(
+                        fromStringToCoords(place.base_position),
+                        { height: 0 }
                       )
+                      if (store.getState().hud.bigMapStyle === '2d') {
+                        store.dispatch(
+                          updateHudStateAction({
+                            bigMap2DPendingCenter: {
+                              x: worldPos.x,
+                              z: worldPos.z,
+                              ts: Date.now()
+                            }
+                          })
+                        )
+                      } else {
+                        displaceCamera(worldPos)
+                      }
                     }
 
                     store.dispatch(
@@ -443,10 +454,6 @@ async function fetchList({
   const categories = store.getState().hud.mapFilterCategories
   const orderKey: SceneCatalogOrder = store.getState().hud.sceneCatalogOrder
   const placeType = store.getState().hud.placeType
-  // The scene catalog list always shows all scenes when the filter is
-  // 'poi' (POIs are a curated subset on the map but should not narrow
-  // the catalog — users searching by name expect to find any scene
-  // regardless of POI status). Map markers still respect the filter.
   const queryParameters =
     categories?.includes('all') ||
     categories?.includes('favorites') ||

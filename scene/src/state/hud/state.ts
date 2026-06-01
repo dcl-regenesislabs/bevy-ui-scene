@@ -5,7 +5,13 @@ import { Vector3 } from '@dcl/sdk/math'
 import { type SceneLoadingWindow } from '../../bevy-api/interface'
 import {
   loadMinimapStyle,
-  loadMinimapRotation
+  loadMinimapRotation,
+  loadBigMapStyle,
+  loadBigMap2DLayer
+} from '../../components/map/mini-map-persistence'
+import type {
+  BigMapStyle,
+  BigMap2DLayer
 } from '../../components/map/mini-map-persistence'
 import {
   type AchievedAchievementItem,
@@ -134,6 +140,9 @@ export type HudState = {
   friendsLoading: boolean
   minimapStyle: 'parcel' | 'satellite' | 'imposters'
   minimapRotation: 'camera' | 'north'
+  bigMapStyle: BigMapStyle
+  bigMap2DLayer: BigMap2DLayer
+  bigMap2DPendingCenter: { x: number; z: number; ts: number } | null
 }
 
 export type HudStateUpdateParams = {
@@ -180,6 +189,9 @@ export type HudStateUpdateParams = {
   friendsLoading?: boolean
   minimapStyle?: 'parcel' | 'satellite' | 'imposters'
   minimapRotation?: 'camera' | 'north'
+  bigMapStyle?: BigMapStyle
+  bigMap2DLayer?: BigMap2DLayer
+  bigMap2DPendingCenter?: { x: number; z: number; ts: number } | null
 }
 
 export const hudInitialState: HudState = {
@@ -196,7 +208,7 @@ export const hudInitialState: HudState = {
   chatInput: '',
   minimapOpen: true,
   mapModeActive: false,
-  mapFilterCategories: ['poi'],
+  mapFilterCategories: ['all'],
   placeListActiveItem: null,
   sceneList: {
     total: 0,
@@ -226,5 +238,8 @@ export const hudInitialState: HudState = {
   friends: [],
   friendsLoading: true,
   minimapStyle: loadMinimapStyle(),
-  minimapRotation: loadMinimapRotation()
+  minimapRotation: loadMinimapRotation(),
+  bigMapStyle: loadBigMapStyle(),
+  bigMap2DLayer: loadBigMap2DLayer(),
+  bigMap2DPendingCenter: null
 }
