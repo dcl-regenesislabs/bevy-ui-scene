@@ -22,7 +22,7 @@ declare const localStorage: any
 const MAP_LOCALSTORAGE_KEY = 'map'
 const LOCALSTORAGE_SEPARATOR = '_::_'
 const CACHE_TIME = 1000 * 60 * 60 * 100
-// TODO review if it makes sense to remove map cache in localStorage, maybe leave only runtime cache
+const REFRESH_DELAY_MS = 5000
 const [mapStorageDate, mapStoragePlaces] = (
   localStorage.getItem(MAP_LOCALSTORAGE_KEY)?.split(LOCALSTORAGE_SEPARATOR) ?? [
     '0',
@@ -34,11 +34,13 @@ const state: {
   places: Record<string, Place>
   totalPlaces: number
   done: boolean
+  refreshing: boolean
   categories: PlaceCategory[]
   offset: number
 } = {
   done: false,
-  places: {},
+  refreshing: false,
+  places: mapStoragePlaces ?? {},
   totalPlaces: Number.MAX_SAFE_INTEGER,
   categories: [],
   offset: 0
@@ -117,22 +119,38 @@ export const loadCompleteMapPlaces = async (): Promise<
   Record<string, Place>
 > => {
   if (!getFeatureFlag(FEATURES.DISCOVER_MAP)) return state.places
-  if (Date.now() - mapStorageDate < CACHE_TIME) {
-    console.log('mapStoragePlaces', Object.values(mapStoragePlaces).length)
-    state.places = mapStoragePlaces
+  if (state.done || state.refreshing) return state.places
+
+  const cacheFresh = Date.now() - mapStorageDate < CACHE_TIME
+  const hasCache = Object.keys(mapStoragePlaces ?? {}).length > 0
+
+  if (cacheFresh && hasCache) {
     state.done = true
     return state.places
   }
 
+  state.refreshing = true
+  ;(async () => {
+    await sleep(REFRESH_DELAY_MS)
+    await fetchAllPlacesFromApi()
+    state.done = true
+    state.refreshing = false
+  })().catch((e) => {
+    state.refreshing = false
+    console.error(e)
+  })
+
+  return state.places
+}
+
+async function fetchAllPlacesFromApi(): Promise<void> {
   const LIMIT = 100
-  if (state.done) return state.places
   const realm = await getRealm({})
   const realmBaseUrl = realm?.realmInfo?.baseUrl ?? ''
   const isZone = realmBaseUrl.includes('.zone')
   if (realm.realmInfo?.realmName.endsWith('.eth')) {
-    return state.places
+    return
   }
-  // TODO REVIEW if we should use realm /about
   const PLACES_BASE_URL = `https://places.decentraland.${
     isZone ? 'zone' : 'org'
   }`
@@ -161,8 +179,10 @@ export const loadCompleteMapPlaces = async (): Promise<
     ).data ?? DEFAULT_CATEGORIES
   state.categories = categories
   const MAX_PLACES_PER_CATEGORY = 100
+  const merged: Record<string, Place> = { ...state.places }
   for (const category of categories) {
     let placesPerCategory: Record<string, Place> = {}
+    state.offset = 0
     while (
       Object.values(placesPerCategory ?? {}).length <
       Math.min(MAX_PLACES_PER_CATEGORY, category.count)
@@ -185,14 +205,16 @@ export const loadCompleteMapPlaces = async (): Promise<
         )
       }
 
-      state.places = { ...state.places, ...placesPerCategory }
+      for (const key in placesPerCategory) {
+        merged[key] = placesPerCategory[key]
+      }
+      state.places = merged
       state.totalPlaces = Object.keys(state.places).length
 
       state.offset += response?.data?.length ?? 0
       await sleep(100)
     }
     state.offset = 0
-
     state.totalPlaces += category.count
     await sleep(300)
   }
@@ -203,10 +225,6 @@ export const loadCompleteMapPlaces = async (): Promise<
       `${Date.now()}${LOCALSTORAGE_SEPARATOR}${JSON.stringify(state.places)}`
     )
   }
-
-  state.done = true
-
-  return state.places
 }
 export function fromStringToCoords(str: string): Coords {
   const [x, y] = str.split(',').map((n) => Number(n))

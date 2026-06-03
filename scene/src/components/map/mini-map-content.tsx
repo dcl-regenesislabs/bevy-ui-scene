@@ -38,14 +38,21 @@ import {
 import {
   type MinimapRotation,
   saveMinimapRotation,
-  saveMinimapStyle
+  saveMinimapStyle,
+  saveMinimapMarkerCategories
 } from './mini-map-persistence'
+import {
+  categories as ALL_PLACE_CATEGORIES,
+  mapSymbolPerPlaceCategory
+} from './map-definitions'
 import { getUiController } from '../../controllers/ui.controller'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import ButtonComponent from '../ui-system/button-component'
 import ButtonIcon from '../button-icon/ButtonIcon'
 import { type AtlasIcon } from '../../utils/definitions'
+import Icon from '../icon/Icon'
+import { decoratePlaceRepresentation } from '../../ui-classes/main-hud/big-map/place-decoration'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
@@ -190,10 +197,12 @@ export function MiniMapContent(): ReactElement {
     updateImpostersCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
   }, [minimapStyle, playerWorldX, playerWorldZ, effectiveYawDeg])
 
+  const enabledCategories: string[] =
+    store.getState().hud.minimapMarkerCategories ?? []
   const places: Place[] = forceImposters
     ? []
     : getPlacesAroundParcel(playerParcel, 10).filter((p) =>
-        p.categories.some((c: string) => c === 'poi' || c === 'player')
+        p.categories.some((c: string) => enabledCategories.includes(c))
       )
   void getLoadedMapPlaces()
   const mapUiTransform: UiTransformProps = {
@@ -294,12 +303,15 @@ export function MiniMapContent(): ReactElement {
             mapCenter - getPoiSize() / 2
           )
             return null
+          const representation = decoratePlaceRepresentation(place)
+          if (!representation) return null
           return (
             <PoiMarker
               key={`poi-${place.id}`}
               screenX={screen.x}
               screenY={screen.y}
               title={place.title}
+              icon={representation.sprite}
             />
           )
         })}
@@ -324,15 +336,20 @@ const getPoiLabelWidth = (): number =>
 function PoiMarker({
   screenX,
   screenY,
-  title
+  title,
+  icon
 }: {
   screenX: number
   screenY: number
   title: string
+  icon: AtlasIcon
   key?: any
 }): ReactElement {
-  const labelFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
-  const poiSize = getPoiSize()
+  const baseFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const isPoi = icon.spriteName === 'PinPOI'
+  const sizeFactor = isPoi ? 4 / 3 : 1
+  const labelFontSize = baseFontSize * sizeFactor
+  const poiSize = getPoiSize() * sizeFactor
   const poiLabelWidth = getPoiLabelWidth()
   return (
     <UiEntity
@@ -345,16 +362,11 @@ function PoiMarker({
           top: screenY - poiSize / 2
         },
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        zIndex: isPoi ? 2 : 1
       }}
     >
-      <UiEntity
-        uiTransform={{ width: poiSize, height: poiSize, flexShrink: 0 }}
-        uiBackground={{
-          textureMode: 'stretch',
-          texture: { src: POI_SRC }
-        }}
-      />
+      <Icon icon={icon} iconSize={poiSize} uiTransform={{ flexShrink: 0 }} />
       <UiEntity
         uiTransform={{
           borderRadius: labelFontSize / 2,
@@ -366,7 +378,9 @@ function PoiMarker({
         }}
         uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
         uiText={{
-          value: `<b>${truncateWithoutBreakingWords(title, 20)}</b>`,
+          value: isPoi
+            ? `<b>${truncateWithoutBreakingWords(title, 20)}</b>`
+            : truncateWithoutBreakingWords(title, 20),
           textWrap: 'nowrap',
           fontSize: labelFontSize,
           textAlign: 'middle-center',
@@ -459,6 +473,15 @@ const SETTINGS_ICON_HOVER: AtlasIcon = {
 }
 const CHECK_ICON: AtlasIcon = { atlasName: 'icons', spriteName: 'Check' }
 
+const ALL_CATEGORY_NAMES = ALL_PLACE_CATEGORIES.map((c) => c.name)
+
+function getCategoryIcon(name: string): AtlasIcon {
+  return {
+    atlasName: 'map2',
+    spriteName: mapSymbolPerPlaceCategory[name] ?? 'GenericPin'
+  }
+}
+
 function MinimapSettings({
   style,
   rotation,
@@ -539,8 +562,133 @@ function MinimapSettings({
               )}
             </SubmenuSection>
           )}
+
+          <MarkersSection fontSize={fontSize} />
         </UiEntity>
       )}
+    </UiEntity>
+  )
+}
+
+function MarkersSection({ fontSize }: { fontSize: number }): ReactElement {
+  const enabled = store.getState().hud.minimapMarkerCategories ?? []
+  const isAll = enabled.length === ALL_CATEGORY_NAMES.length
+  const isOnlyPoi = enabled.length === 1 && enabled[0] === 'poi'
+  const isNone = enabled.length === 0
+
+  const apply = (next: string[]): void => {
+    saveMinimapMarkerCategories(next)
+    store.dispatch(updateHudStateAction({ minimapMarkerCategories: next }))
+  }
+  const toggle = (name: string): void => {
+    apply(
+      enabled.includes(name)
+        ? enabled.filter((c) => c !== name)
+        : [...enabled, name]
+    )
+  }
+
+  return (
+    <SubmenuSection title="Markers" fontSize={fontSize}>
+      <SubmenuOption
+        label="All"
+        selected={isAll}
+        fontSize={fontSize}
+        onMouseDown={() => {
+          apply([...ALL_CATEGORY_NAMES])
+        }}
+      />
+      <SubmenuOption
+        label="Only POI"
+        selected={isOnlyPoi}
+        fontSize={fontSize}
+        onMouseDown={() => {
+          apply(['poi'])
+        }}
+      />
+      <SubmenuOption
+        label="None"
+        selected={isNone}
+        fontSize={fontSize}
+        onMouseDown={() => {
+          apply([])
+        }}
+      />
+      <UiEntity
+        uiTransform={{
+          height: 1,
+          margin: {
+            top: fontSize / 4,
+            bottom: fontSize / 4,
+            left: fontSize,
+            right: fontSize
+          }
+        }}
+        uiBackground={{ color: COLOR.WHITE_OPACITY_5 }}
+      />
+      {ALL_PLACE_CATEGORIES.map((cat) => (
+        <MarkerCategoryOption
+          key={`marker-cat-${cat.name}`}
+          label={cat.i18n.en ?? cat.name}
+          icon={getCategoryIcon(cat.name)}
+          selected={enabled.includes(cat.name)}
+          fontSize={fontSize}
+          onMouseDown={() => {
+            toggle(cat.name)
+          }}
+        />
+      ))}
+    </SubmenuSection>
+  )
+}
+
+function MarkerCategoryOption({
+  label,
+  icon,
+  selected,
+  fontSize,
+  onMouseDown
+}: {
+  key?: any
+  label: string
+  icon: AtlasIcon
+  selected: boolean
+  fontSize: number
+  onMouseDown: () => void
+}): ReactElement {
+  return (
+    <UiEntity
+      uiTransform={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: { left: fontSize / 2, right: fontSize, top: 2, bottom: 2 },
+        height: fontSize * 2
+      }}
+      onMouseDown={onMouseDown}
+    >
+      <UiEntity
+        uiTransform={{ width: fontSize, height: fontSize, flexShrink: 0 }}
+      >
+        {selected && <Icon icon={CHECK_ICON} iconSize={fontSize} />}
+      </UiEntity>
+      <Icon
+        icon={icon}
+        iconSize={fontSize}
+        uiTransform={{ margin: { left: fontSize / 3 }, flexShrink: 0 }}
+      />
+      <UiEntity
+        uiTransform={{
+          margin: { left: fontSize / 3 },
+          justifyContent: 'center',
+          height: fontSize * 1.4
+        }}
+        uiText={{
+          value: label,
+          fontSize: fontSize * 0.85,
+          color: COLOR.WHITE,
+          textAlign: 'middle-left'
+        }}
+      />
     </UiEntity>
   )
 }
