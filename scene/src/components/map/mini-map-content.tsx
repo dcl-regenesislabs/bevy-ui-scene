@@ -289,7 +289,10 @@ export function MiniMapContent(): ReactElement {
           )
           const dxFromCenter = screen.x - mapCenter
           const dyFromCenter = screen.y - mapCenter
-          if (Math.hypot(dxFromCenter, dyFromCenter) > mapCenter - POI_SIZE / 2)
+          if (
+            Math.hypot(dxFromCenter, dyFromCenter) >
+            mapCenter - getPoiSize() / 2
+          )
             return null
           return (
             <PoiMarker
@@ -313,8 +316,10 @@ export function MiniMapContent(): ReactElement {
   )
 }
 
-const POI_SIZE = 18
-const POI_LABEL_WIDTH = 90
+const getPoiSize = (): number =>
+  getFontSize({ token: TYPOGRAPHY_TOKENS.BODY }) * 1.5
+const getPoiLabelWidth = (): number =>
+  getFontSize({ token: TYPOGRAPHY_TOKENS.BODY }) * 7.5
 
 function PoiMarker({
   screenX,
@@ -327,22 +332,24 @@ function PoiMarker({
   key?: any
 }): ReactElement {
   const labelFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const poiSize = getPoiSize()
+  const poiLabelWidth = getPoiLabelWidth()
   return (
     <UiEntity
       uiTransform={{
-        width: POI_LABEL_WIDTH,
-        height: POI_SIZE + labelFontSize * 1.4,
+        width: poiLabelWidth,
+        height: poiSize + labelFontSize * 1.4,
         positionType: 'absolute',
         position: {
-          left: screenX - POI_LABEL_WIDTH / 2,
-          top: screenY - POI_SIZE / 2
+          left: screenX - poiLabelWidth / 2,
+          top: screenY - poiSize / 2
         },
         flexDirection: 'column',
         alignItems: 'center'
       }}
     >
       <UiEntity
-        uiTransform={{ width: POI_SIZE, height: POI_SIZE, flexShrink: 0 }}
+        uiTransform={{ width: poiSize, height: poiSize, flexShrink: 0 }}
         uiBackground={{
           textureMode: 'stretch',
           texture: { src: POI_SRC }
