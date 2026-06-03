@@ -27,19 +27,22 @@ import {
 import {
   disposeSatelliteCamera,
   getSatelliteCamera,
+  setSatelliteCameraZoom,
   updateSatelliteCamera,
   updateSatelliteTiles
 } from './mini-map-satellite-camera'
 import {
   disposeImpostersCamera,
   getImpostersCamera,
+  setImpostersCameraZoom,
   updateImpostersCamera
 } from './mini-map-imposters-camera'
 import {
   type MinimapRotation,
   saveMinimapRotation,
   saveMinimapStyle,
-  saveMinimapMarkerCategories
+  saveMinimapMarkerCategories,
+  saveMinimapZoom
 } from './mini-map-persistence'
 import {
   categories as ALL_PLACE_CATEGORIES,
@@ -57,7 +60,10 @@ import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 
-const VISIBLE_METERS = 256
+const DEFAULT_VISIBLE_METERS = 256
+const MIN_VISIBLE_METERS = 64
+const MAX_VISIBLE_METERS = 768
+const ZOOM_STEP = 1.5
 
 const directionState = {
   initialized: false,
@@ -97,7 +103,9 @@ const MAP_ARROW_SRC = 'assets/images/MapArrow.png'
 export function MiniMapContent(): ReactElement {
   const mapSize = getMapSize()
   const mapCenter = mapSize / 2
-  const pxPerMeter = mapSize / VISIBLE_METERS
+  const visibleMeters =
+    store.getState().hud.minimapZoom ?? DEFAULT_VISIBLE_METERS
+  const pxPerMeter = mapSize / visibleMeters
 
   const userMinimapStyle = store.getState().hud.minimapStyle ?? 'satellite'
   const isWorld = currentRealmProviderIsWorld()
@@ -129,7 +137,7 @@ export function MiniMapContent(): ReactElement {
         playerWorldX,
         playerWorldZ,
         parcelTile,
-        VISIBLE_METERS,
+        visibleMeters,
         effectiveYawRad
       )
     : null
@@ -196,6 +204,16 @@ export function MiniMapContent(): ReactElement {
     if (minimapStyle !== 'imposters') return
     updateImpostersCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
   }, [minimapStyle, playerWorldX, playerWorldZ, effectiveYawDeg])
+
+  useEffect(() => {
+    if (minimapStyle === 'satellite') setSatelliteCameraZoom(visibleMeters)
+    if (minimapStyle === 'imposters') setImpostersCameraZoom(visibleMeters)
+  }, [
+    minimapStyle,
+    visibleMeters,
+    satelliteCameraEntity,
+    impostersCameraEntity
+  ])
 
   const enabledCategories: string[] =
     store.getState().hud.minimapMarkerCategories ?? []
@@ -319,6 +337,7 @@ export function MiniMapContent(): ReactElement {
 
       <PlayerArrow mapSize={mapSize} mapYawDeg={effectiveYawDeg} />
       <CardinalLabels mapSize={mapSize} cameraYawDeg={effectiveYawDeg} />
+      <MinimapZoomButtons visibleMeters={visibleMeters} />
       <MinimapSettings
         style={minimapStyle}
         rotation={minimapRotation}
@@ -474,6 +493,87 @@ const SETTINGS_ICON_HOVER: AtlasIcon = {
 const CHECK_ICON: AtlasIcon = { atlasName: 'icons', spriteName: 'Check' }
 
 const ALL_CATEGORY_NAMES = ALL_PLACE_CATEGORIES.map((c) => c.name)
+
+function MinimapZoomButtons({
+  visibleMeters
+}: {
+  visibleMeters: number
+}): ReactElement {
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const padding = fontSize / 4
+  const buttonSize = fontSize * 1.5
+
+  const applyZoom = (next: number): void => {
+    saveMinimapZoom(next)
+    store.dispatch(updateHudStateAction({ minimapZoom: next }))
+  }
+  const canZoomIn = visibleMeters > MIN_VISIBLE_METERS
+  const canZoomOut = visibleMeters < MAX_VISIBLE_METERS
+
+  return (
+    <UiEntity
+      uiTransform={{
+        positionType: 'absolute',
+        position: { top: -padding, left: -padding },
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}
+    >
+      <ZoomButton
+        size={buttonSize}
+        label="+"
+        disabled={!canZoomIn}
+        onMouseDown={() => {
+          if (!canZoomIn) return
+          applyZoom(Math.max(MIN_VISIBLE_METERS, visibleMeters / ZOOM_STEP))
+        }}
+      />
+      <UiEntity uiTransform={{ height: padding }} />
+      <ZoomButton
+        size={buttonSize}
+        label="−"
+        disabled={!canZoomOut}
+        onMouseDown={() => {
+          if (!canZoomOut) return
+          applyZoom(Math.min(MAX_VISIBLE_METERS, visibleMeters * ZOOM_STEP))
+        }}
+      />
+    </UiEntity>
+  )
+}
+
+function ZoomButton({
+  size,
+  label,
+  disabled,
+  onMouseDown
+}: {
+  size: number
+  label: string
+  disabled: boolean
+  onMouseDown: () => void
+}): ReactElement {
+  return (
+    <UiEntity
+      uiTransform={{
+        width: size,
+        height: size,
+        borderRadius: 9999,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: disabled ? 0.4 : 1
+      }}
+      uiBackground={{ color: COLOR.BLACK }}
+      uiText={{
+        value: `<b>${label}</b>`,
+        fontSize: size * 0.6,
+        color: COLOR.WHITE,
+        textAlign: 'middle-center'
+      }}
+      onMouseDown={onMouseDown}
+    />
+  )
+}
 
 function getCategoryIcon(name: string): AtlasIcon {
   return {

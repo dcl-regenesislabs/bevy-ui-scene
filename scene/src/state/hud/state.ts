@@ -195,6 +195,7 @@ export type HudStateUpdateParams = {
   minimapStyle?: 'parcel' | 'satellite' | 'imposters'
   minimapRotation?: 'camera' | 'north'
   minimapMarkerCategories?: string[]
+  minimapZoom?: number
   bigMapStyle?: BigMapStyle
   bigMap2DLayer?: BigMap2DLayer
   bigMap2DPendingCenter?: { x: number; z: number; ts: number } | null
@@ -248,6 +249,7 @@ export const hudInitialState: HudState = {
   minimapMarkerCategories: loadMinimapMarkerCategories(
     ALL_PLACE_CATEGORIES.map((c) => c.name)
   ),
+  minimapZoom: loadMinimapZoom(256),
   bigMapStyle: loadBigMapStyle(),
   bigMap2DLayer: loadBigMap2DLayer(),
   bigMap2DPendingCenter: null

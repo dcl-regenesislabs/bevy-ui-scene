@@ -108,6 +108,15 @@ export function updateSatelliteCamera(
   )
 }
 
+export function setSatelliteCameraZoom(meters: number): void {
+  if (cameraEntity === engine.RootEntity) return
+  const tc = TextureCamera.getMutableOrNull(cameraEntity)
+  if (!tc) return
+  if (tc.mode?.$case === 'orthographic') {
+    tc.mode.orthographic.verticalRange = meters
+  }
+}
+
 export function updateSatelliteTiles(
   playerWorldX: number,
   playerWorldZ: number
