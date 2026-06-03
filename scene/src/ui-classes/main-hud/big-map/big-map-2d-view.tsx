@@ -33,6 +33,7 @@ import { getUiController } from '../../../controllers/ui.controller'
 import { store } from '../../../state/store'
 import { updateHudStateAction } from '../../../state/hud/actions'
 import { MapBottomLeftBar } from '../../../components/map/map-bottom-left-bar'
+import { MapFooter } from './map-footer'
 import { createTween } from '../../../service/tween'
 import { currentRealmProviderIsWorld } from '../../../service/realm-change'
 import useEffect = ReactEcs.useEffect
@@ -389,6 +390,7 @@ export function BigMap2DContent(): ReactElement {
       })}
 
       <MapBottomLeftBar />
+      <MapFooter />
     </UiEntity>
   )
 }

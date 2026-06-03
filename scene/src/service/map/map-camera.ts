@@ -122,6 +122,8 @@ export const activateMapCamera = (): void => {
 
   if (store.getState().hud.bigMapStyle === '3d') {
     activate3DCameraTransition()
+  } else {
+    attachMapCameraInstant()
   }
 
   InputModifier.createOrReplace(engine.PlayerEntity, {
@@ -169,6 +171,18 @@ export const activate3DCameraTransition = (): void => {
     virtualCameraEntity: mapCamera
   })
   VirtualCamera.getMutable(mapCamera).lookAtEntity = engine.PlayerEntity
+}
+
+function attachMapCameraInstant(): void {
+  VirtualCamera.createOrReplace(mapCamera, {
+    lookAtEntity: engine.PlayerEntity,
+    defaultTransition: {
+      transitionMode: { $case: 'time', time: 0 }
+    }
+  })
+  MainCamera.createOrReplace(engine.CameraEntity, {
+    virtualCameraEntity: mapCamera
+  })
 }
 
 export const deactivate3DCameraTransition = (): void => {
