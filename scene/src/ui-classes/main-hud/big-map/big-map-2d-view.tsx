@@ -40,9 +40,8 @@ import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 
 const moduleState = {
-  lastClickTime: 0
+  wasDragged: false
 }
-const DOUBLE_CLICK_MS = 300
 
 const DEFAULT_PX_PER_PARCEL = 12
 const MIN_PX_PER_PARCEL = 4
@@ -292,46 +291,47 @@ export function BigMap2DContent(): ReactElement {
         overflow: 'hidden'
       }}
       uiBackground={{ color: COLOR.URL_POPUP_BACKGROUND }}
+      onMouseDown={() => {
+        moduleState.wasDragged = false
+      }}
       onMouseDrag={() => {
+        console.log('onMouseDrag')
         if (!dragging) setDragging(true)
+        moduleState.wasDragged = true
       }}
       onMouseDragEnd={() => {
         setDragging(false)
       }}
-      onMouseDown={() => {
-        if (dragging) return
-        const now = Date.now()
-        if (now - moduleState.lastClickTime < DOUBLE_CLICK_MS) {
-          moduleState.lastClickTime = 0
-          const pointerInfo = PrimaryPointerInfo.getOrNull(engine.RootEntity)
-          if (!pointerInfo?.screenCoordinates) return
-          const relativeX = pointerInfo.screenCoordinates.x
-          const relativeY =
-            pointerInfo.screenCoordinates.y - getMainMenuHeight()
-          const dx = relativeX - viewportWidth / 2
-          const dy = relativeY - viewportHeight / 2
-          const targetWorldX =
-            centerWorld.x + (dx / pxPerParcel) * PARCEL_METERS
-          const targetWorldZ =
-            centerWorld.z - (dy / pxPerParcel) * PARCEL_METERS
-          store.dispatch(
-            updateHudStateAction({
-              bigMap2DPendingCenter: {
-                x: targetWorldX,
-                z: targetWorldZ,
-                ts: Date.now()
-              }
-            })
-          )
-          if (!currentRealmProviderIsWorld()) {
-            const parcelX = Math.floor(targetWorldX / PARCEL_METERS)
-            const parcelY = Math.floor(targetWorldZ / PARCEL_METERS)
-            getUiController()
-              .sceneCard.showByCoords(Vector3.create(parcelX, 0, parcelY))
-              .catch(console.error)
-          }
-        } else {
-          moduleState.lastClickTime = now
+      onMouseUp={() => {
+        console.log('onMouseUp', moduleState.wasDragged)
+        if (moduleState.wasDragged) {
+          moduleState.wasDragged = false
+          return
+        }
+        const pointerInfo = PrimaryPointerInfo.getOrNull(engine.RootEntity)
+        if (!pointerInfo?.screenCoordinates) return
+        const relativeX = pointerInfo.screenCoordinates.x
+        const relativeY = pointerInfo.screenCoordinates.y - getMainMenuHeight()
+        const dx = relativeX - viewportWidth / 2
+        const dy = relativeY - viewportHeight / 2
+        const targetWorldX = centerWorld.x + (dx / pxPerParcel) * PARCEL_METERS
+        const targetWorldZ = centerWorld.z - (dy / pxPerParcel) * PARCEL_METERS
+        store.dispatch(
+          updateHudStateAction({
+            bigMap2DPendingCenter: {
+              x: targetWorldX,
+              z: targetWorldZ,
+              ts: Date.now()
+            }
+          })
+        )
+        if (!currentRealmProviderIsWorld()) {
+          const parcelX = Math.floor(targetWorldX / PARCEL_METERS)
+          const parcelY = Math.floor(targetWorldZ / PARCEL_METERS)
+          console.log(`[bigmap2d] click parcel: ${parcelX},${parcelY}`)
+          getUiController()
+            .sceneCard.showByCoords(Vector3.create(parcelX, 0, parcelY))
+            .catch(console.error)
         }
       }}
     >
@@ -467,10 +467,24 @@ function renderMarker({
             : undefined
         }
         uiTransform={{ width: symbolSize, height: symbolSize }}
-        onMouseDown={() => {
+        onMouseUp={() => {
+          if (moduleState.wasDragged) {
+            moduleState.wasDragged = false
+            return
+          }
           if (placeRepresentation.id === PLAYER_PLACE_ID) return
+          const coords = fromStringToCoords(placeRepresentation.base_position)
+          console.log(`[bigmap2d] marker click parcel: ${coords.x},${coords.y}`)
+          store.dispatch(
+            updateHudStateAction({
+              bigMap2DPendingCenter: {
+                x: coords.x * PARCEL_METERS + PARCEL_METERS / 2,
+                z: coords.y * PARCEL_METERS + PARCEL_METERS / 2,
+                ts: Date.now()
+              }
+            })
+          )
           executeTask(async () => {
-            const coords = fromStringToCoords(placeRepresentation.base_position)
             const shownByCoords =
               await getUiController().sceneCard.showByCoords(
                 Vector3.create(coords.x, 0, coords.y)
