@@ -36,6 +36,11 @@ import { MapBottomLeftBar } from '../../../components/map/map-bottom-left-bar'
 import { MapFooter } from './map-footer'
 import { createTween } from '../../../service/tween'
 import { currentRealmProviderIsWorld } from '../../../service/realm-change'
+import {
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
+import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 
@@ -246,6 +251,7 @@ export function BigMap2DContent(): ReactElement {
   const loadedMapPlaces = getLoadedMapPlaces()
   const [allPlaces, setAllPlaces] = useState<PlaceRepresentation[]>(() =>
     Object.values(loadedMapPlaces)
+      .filter((p) => p.title !== 'Empty')
       .map(decoratePlaceRepresentation)
       .filter((p): p is PlaceRepresentation => p !== null)
   )
@@ -444,6 +450,8 @@ function renderMarker({
   const showLabel =
     placeRepresentation.id === PLAYER_PLACE_ID ||
     isHomePlace(placeRepresentation)
+  const isPoi = placeRepresentation.sprite?.spriteName === 'PinPOI'
+  const labelFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
 
   return (
     <UiEntity
@@ -499,6 +507,29 @@ function renderMarker({
             textAlign: 'top-center'
           }}
           uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+        />
+      )}
+      {isPoi && (
+        <UiEntity
+          uiTransform={{
+            borderRadius: labelFontSize / 2,
+            height: labelFontSize * 2,
+            justifyContent: 'center',
+            alignItems: 'center',
+            margin: { top: labelFontSize / 2 },
+            flexShrink: 0
+          }}
+          uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+          uiText={{
+            value: `<b>${truncateWithoutBreakingWords(
+              placeRepresentation.title ?? '',
+              20
+            )}</b>`,
+            textWrap: 'nowrap',
+            fontSize: labelFontSize,
+            textAlign: 'middle-center',
+            color: COLOR.WHITE
+          }}
         />
       )}
     </UiEntity>
