@@ -386,26 +386,26 @@ function PoiMarker({
       }}
     >
       <Icon icon={icon} iconSize={poiSize} uiTransform={{ flexShrink: 0 }} />
-      <UiEntity
-        uiTransform={{
-          borderRadius: labelFontSize / 2,
-          height: labelFontSize * 2,
-          justifyContent: 'center',
-          alignItems: 'center',
-          margin: { top: labelFontSize / 2 },
-          flexShrink: 0
-        }}
-        uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
-        uiText={{
-          value: isPoi
-            ? `<b>${truncateWithoutBreakingWords(title, 20)}</b>`
-            : truncateWithoutBreakingWords(title, 20),
-          textWrap: 'nowrap',
-          fontSize: labelFontSize,
-          textAlign: 'middle-center',
-          color: COLOR.WHITE
-        }}
-      />
+      {isPoi && (
+        <UiEntity
+          uiTransform={{
+            borderRadius: labelFontSize / 2,
+            height: labelFontSize * 2,
+            justifyContent: 'center',
+            alignItems: 'center',
+            margin: { top: labelFontSize / 2 },
+            flexShrink: 0
+          }}
+          uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+          uiText={{
+            value: `<b>${truncateWithoutBreakingWords(title, 20)}</b>`,
+            textWrap: 'nowrap',
+            fontSize: labelFontSize,
+            textAlign: 'middle-center',
+            color: COLOR.WHITE
+          }}
+        />
+      )}
     </UiEntity>
   )
 }
@@ -680,13 +680,6 @@ function MarkersSection({ fontSize }: { fontSize: number }): ReactElement {
     saveMinimapMarkerCategories(next)
     store.dispatch(updateHudStateAction({ minimapMarkerCategories: next }))
   }
-  const toggle = (name: string): void => {
-    apply(
-      enabled.includes(name)
-        ? enabled.filter((c) => c !== name)
-        : [...enabled, name]
-    )
-  }
 
   return (
     <SubmenuSection title="Markers" fontSize={fontSize}>
@@ -714,30 +707,6 @@ function MarkersSection({ fontSize }: { fontSize: number }): ReactElement {
           apply([])
         }}
       />
-      <UiEntity
-        uiTransform={{
-          height: 1,
-          margin: {
-            top: fontSize / 4,
-            bottom: fontSize / 4,
-            left: fontSize,
-            right: fontSize
-          }
-        }}
-        uiBackground={{ color: COLOR.WHITE_OPACITY_5 }}
-      />
-      {ALL_PLACE_CATEGORIES.map((cat) => (
-        <MarkerCategoryOption
-          key={`marker-cat-${cat.name}`}
-          label={cat.i18n.en ?? cat.name}
-          icon={getCategoryIcon(cat.name)}
-          selected={enabled.includes(cat.name)}
-          fontSize={fontSize}
-          onMouseDown={() => {
-            toggle(cat.name)
-          }}
-        />
-      ))}
     </SubmenuSection>
   )
 }
