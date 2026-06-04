@@ -95,7 +95,7 @@ export function loadMinimapMarkerCategories(fallback: string[]): string[] {
     if (stored) {
       const parsed = JSON.parse(stored)
       if (Array.isArray(parsed) && parsed.every((c) => typeof c === 'string')) {
-        return parsed as string[]
+        return parsed
       }
     }
   } catch {}

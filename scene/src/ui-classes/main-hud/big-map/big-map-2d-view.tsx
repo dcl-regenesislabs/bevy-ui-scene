@@ -1,5 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { engine, executeTask, PrimaryPointerInfo } from '@dcl/sdk/ecs'
+import { engine, PrimaryPointerInfo } from '@dcl/sdk/ecs'
 import { Vector3 } from '@dcl/sdk/math'
 import { COLOR } from '../../../components/color-palette'
 import Icon from '../../../components/icon/Icon'
@@ -40,7 +40,8 @@ import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 
 const moduleState = {
-  wasDragged: false
+  wasDragged: false,
+  wasMouseDownOnMap: false
 }
 
 const DEFAULT_PX_PER_PARCEL = 12
@@ -293,9 +294,9 @@ export function BigMap2DContent(): ReactElement {
       uiBackground={{ color: COLOR.URL_POPUP_BACKGROUND }}
       onMouseDown={() => {
         moduleState.wasDragged = false
+        moduleState.wasMouseDownOnMap = true
       }}
       onMouseDrag={() => {
-        console.log('onMouseDrag')
         if (!dragging) setDragging(true)
         moduleState.wasDragged = true
       }}
@@ -303,7 +304,8 @@ export function BigMap2DContent(): ReactElement {
         setDragging(false)
       }}
       onMouseUp={() => {
-        console.log('onMouseUp', moduleState.wasDragged)
+        if (!moduleState.wasMouseDownOnMap) return
+        moduleState.wasMouseDownOnMap = false
         if (moduleState.wasDragged) {
           moduleState.wasDragged = false
           return
@@ -484,17 +486,9 @@ function renderMarker({
               }
             })
           )
-          executeTask(async () => {
-            const shownByCoords =
-              await getUiController().sceneCard.showByCoords(
-                Vector3.create(coords.x, 0, coords.y)
-              )
-            if (!shownByCoords) {
-              getUiController()
-                .sceneCard.showByData(placeRepresentation)
-                .catch(console.error)
-            }
-          })
+          getUiController()
+            .sceneCard.showByData(placeRepresentation)
+            .catch(console.error)
         }}
       />
       {showLabel && (
