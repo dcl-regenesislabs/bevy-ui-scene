@@ -7,8 +7,11 @@ import {
   loadMinimapStyle,
   loadMinimapRotation,
   loadBigMapStyle,
-  loadBigMap2DLayer
+  loadBigMap2DLayer,
+  loadMinimapMarkerCategories,
+  loadMinimapZoom
 } from '../../components/map/mini-map-persistence'
+import { categories as ALL_PLACE_CATEGORIES } from '../../components/map/map-definitions'
 import type {
   BigMapStyle,
   BigMap2DLayer
@@ -140,6 +143,8 @@ export type HudState = {
   friendsLoading: boolean
   minimapStyle: 'parcel' | 'satellite' | 'imposters'
   minimapRotation: 'camera' | 'north'
+  minimapMarkerCategories: string[]
+  minimapZoom: number
   bigMapStyle: BigMapStyle
   bigMap2DLayer: BigMap2DLayer
   bigMap2DPendingCenter: { x: number; z: number; ts: number } | null
@@ -189,6 +194,8 @@ export type HudStateUpdateParams = {
   friendsLoading?: boolean
   minimapStyle?: 'parcel' | 'satellite' | 'imposters'
   minimapRotation?: 'camera' | 'north'
+  minimapMarkerCategories?: string[]
+  minimapZoom?: number
   bigMapStyle?: BigMapStyle
   bigMap2DLayer?: BigMap2DLayer
   bigMap2DPendingCenter?: { x: number; z: number; ts: number } | null
@@ -239,6 +246,10 @@ export const hudInitialState: HudState = {
   friendsLoading: true,
   minimapStyle: loadMinimapStyle(),
   minimapRotation: loadMinimapRotation(),
+  minimapMarkerCategories: loadMinimapMarkerCategories(
+    ALL_PLACE_CATEGORIES.map((c) => c.name)
+  ),
+  minimapZoom: loadMinimapZoom(256),
   bigMapStyle: loadBigMapStyle(),
   bigMap2DLayer: loadBigMap2DLayer(),
   bigMap2DPendingCenter: null

@@ -39,9 +39,11 @@ import {
 import {
   ALMOST_BLACK,
   BLACK_TEXT,
+  buildEmptyParcelPlace,
   DCL_SNOW,
   EVENT_BACKGROUND_COLOR,
   GRAY_TEXT,
+  isEmptyParcelPlace,
   LOADING_PLACE,
   PANEL_BACKGROUND_COLOR,
   ROUNDED_TEXTURE_BACKGROUND,
@@ -246,7 +248,13 @@ export default class SceneInfoCard {
 
       const auxPlace = await fetchPlaceFromCoords(coords)
 
-      await this.setPlace(auxPlace)
+      if (auxPlace === undefined || auxPlace === null) {
+        await this.setPlace(
+          buildEmptyParcelPlace(Math.floor(coords.x), Math.floor(coords.z))
+        )
+      } else {
+        await this.setPlace(auxPlace)
+      }
       this.callbacks.onShow.forEach((f) => {
         f()
       })
@@ -412,6 +420,9 @@ export default class SceneInfoCard {
           }}
           uiBackground={{
             textureMode: 'stretch',
+            uvs: isEmptyParcelPlace(this.place)
+              ? [0, 0.125, 0, 0.875, 1, 0.875, 1, 0.125]
+              : [0.125, 0, 0.125, 1, 0.875, 1, 0.875, 0],
             texture: {
               src: (this.place.image ?? '').replace(
                 'https://camera-reel-service.decentraland.org/api/images/',
@@ -768,7 +779,8 @@ export default class SceneInfoCard {
           >
             <ButtonIcon
               uiTransform={{
-                width: '23%'
+                width: '23%',
+                opacity: isEmptyParcelPlace(this.place) ? 0.4 : 1
               }}
               icon={this.likeIcon}
               backgroundColor={
@@ -789,6 +801,7 @@ export default class SceneInfoCard {
               }}
               onMouseDown={() => {
                 if (this.place === LOADING_PLACE) return
+                if (isEmptyParcelPlace(this.place)) return
                 if (this.isLiked) {
                   this.setLikeStatus('null')
                 } else {
@@ -798,7 +811,8 @@ export default class SceneInfoCard {
             />
             <ButtonIcon
               uiTransform={{
-                width: '23%'
+                width: '23%',
+                opacity: isEmptyParcelPlace(this.place) ? 0.4 : 1
               }}
               icon={this.dislikeIcon}
               backgroundColor={
@@ -819,6 +833,7 @@ export default class SceneInfoCard {
               }}
               onMouseDown={() => {
                 if (this.place === LOADING_PLACE) return
+                if (isEmptyParcelPlace(this.place)) return
                 if (this.isDisliked) {
                   this.setLikeStatus('null')
                 } else {
@@ -828,7 +843,8 @@ export default class SceneInfoCard {
             />
             <ButtonIcon
               uiTransform={{
-                width: '23%'
+                width: '23%',
+                opacity: isEmptyParcelPlace(this.place) ? 0.4 : 1
               }}
               icon={this.favIcon}
               backgroundColor={
@@ -849,13 +865,15 @@ export default class SceneInfoCard {
               }}
               onMouseDown={() => {
                 if (this.place === LOADING_PLACE) return
+                if (isEmptyParcelPlace(this.place)) return
                 this.toggleFav()
               }}
             />
             <UiEntity
               uiTransform={{
                 width: '23%',
-                height: this.fontSize * 2
+                height: this.fontSize * 2,
+                opacity: isEmptyParcelPlace(this.place) ? 0.4 : 1
               }}
             >
               <ButtonIcon
@@ -877,6 +895,7 @@ export default class SceneInfoCard {
                 }}
                 onMouseDown={() => {
                   if (this.place === LOADING_PLACE) return
+                  if (isEmptyParcelPlace(this.place)) return
                   this.isShareMenuOpen = !this.isShareMenuOpen
                 }}
               />

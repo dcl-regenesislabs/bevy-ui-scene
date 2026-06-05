@@ -1,5 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { engine, executeTask, PrimaryPointerInfo } from '@dcl/sdk/ecs'
+import { engine, PrimaryPointerInfo } from '@dcl/sdk/ecs'
 import { Vector3 } from '@dcl/sdk/math'
 import { COLOR } from '../../../components/color-palette'
 import Icon from '../../../components/icon/Icon'
@@ -33,18 +33,54 @@ import { getUiController } from '../../../controllers/ui.controller'
 import { store } from '../../../state/store'
 import { updateHudStateAction } from '../../../state/hud/actions'
 import { MapBottomLeftBar } from '../../../components/map/map-bottom-left-bar'
+import { MapFooter } from './map-footer'
 import { createTween } from '../../../service/tween'
 import { currentRealmProviderIsWorld } from '../../../service/realm-change'
+import {
+  getFontSize,
+  TYPOGRAPHY_TOKENS
+} from '../../../service/fontsize-system'
+import { truncateWithoutBreakingWords } from '../../../utils/ui-utils'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 
 const moduleState = {
-  lastClickTime: 0
+  wasDragged: false,
+  wasMouseDownOnMap: false
 }
-const DOUBLE_CLICK_MS = 300
+
+export const bigMap2DViewport = {
+  centerWorldX: 0,
+  centerWorldZ: 0,
+  pxPerParcel: 12,
+  viewportWidth: 0,
+  viewportHeight: 0,
+  mainMenuHeight: 0,
+  active: false
+}
+
+export function screenToParcel2D(
+  screenX: number,
+  screenY: number
+): { x: number; y: number } | null {
+  if (!bigMap2DViewport.active) return null
+  const relativeY = screenY - bigMap2DViewport.mainMenuHeight
+  const dx = screenX - bigMap2DViewport.viewportWidth / 2
+  const dy = relativeY - bigMap2DViewport.viewportHeight / 2
+  const targetWorldX =
+    bigMap2DViewport.centerWorldX +
+    (dx / bigMap2DViewport.pxPerParcel) * PARCEL_METERS
+  const targetWorldZ =
+    bigMap2DViewport.centerWorldZ -
+    (dy / bigMap2DViewport.pxPerParcel) * PARCEL_METERS
+  return {
+    x: Math.floor(targetWorldX / PARCEL_METERS),
+    y: Math.floor(targetWorldZ / PARCEL_METERS)
+  }
+}
 
 const DEFAULT_PX_PER_PARCEL = 12
-const MIN_PX_PER_PARCEL = 4
+const MIN_PX_PER_PARCEL = 2
 const MAX_PX_PER_PARCEL = 48
 const ZOOM_FACTOR = 1.2
 
@@ -140,8 +176,8 @@ function tileFromParcel(parcelX: number, parcelY: number): Tile | null {
   )
   const info = tileInfoForChunk('satellite', cx, cy)
   if (info === null) return null
-  const centerParcelX = info.centerWorldX / PARCEL_METERS - 1
-  const centerParcelY = info.centerWorldZ / PARCEL_METERS - 1
+  const centerParcelX = info.centerWorldX / PARCEL_METERS - 0.5
+  const centerParcelY = info.centerWorldZ / PARCEL_METERS - 0.5
   return {
     cx,
     cy,
@@ -187,6 +223,20 @@ export function BigMap2DContent(): ReactElement {
   useEffect(() => {
     loadCompleteMapPlaces().catch(console.error)
   }, [])
+
+  useEffect(() => {
+    bigMap2DViewport.active = true
+    return () => {
+      bigMap2DViewport.active = false
+    }
+  }, [])
+
+  bigMap2DViewport.centerWorldX = centerWorld.x
+  bigMap2DViewport.centerWorldZ = centerWorld.z
+  bigMap2DViewport.pxPerParcel = pxPerParcel
+  bigMap2DViewport.viewportWidth = viewportWidth
+  bigMap2DViewport.viewportHeight = viewportHeight
+  bigMap2DViewport.mainMenuHeight = getMainMenuHeight()
 
   const pendingCenter = store.getState().hud.bigMap2DPendingCenter
   useEffect(() => {
@@ -243,18 +293,29 @@ export function BigMap2DContent(): ReactElement {
   }, [dragging, pxPerParcel])
 
   const loadedMapPlaces = getLoadedMapPlaces()
-  const [allPlaces, setAllPlaces] = useState<PlaceRepresentation[]>(() =>
-    Object.values(loadedMapPlaces)
-      .map(decoratePlaceRepresentation)
-      .filter((p): p is PlaceRepresentation => p !== null)
-  )
-  useEffect(() => {
-    setAllPlaces(
-      Object.values(loadedMapPlaces)
+  const mapFilterCategories = store.getState().hud.mapFilterCategories
+  const buildFilteredPlaces = (): PlaceRepresentation[] => {
+    if (mapFilterCategories[0] === 'favorites') {
+      return Object.values(loadedMapPlaces)
+        .filter((p) => p.user_favorite === true)
         .map(decoratePlaceRepresentation)
         .filter((p): p is PlaceRepresentation => p !== null)
-    )
-  }, [loadedMapPlaces])
+    }
+    const showAll = mapFilterCategories[0] === 'all'
+    return Object.values(loadedMapPlaces)
+      .map(decoratePlaceRepresentation)
+      .filter((p): p is PlaceRepresentation => p !== null)
+      .filter(
+        (p) =>
+          showAll ||
+          p.categories.some((c: string) => mapFilterCategories.includes(c))
+      )
+  }
+  const [allPlaces, setAllPlaces] =
+    useState<PlaceRepresentation[]>(buildFilteredPlaces)
+  useEffect(() => {
+    setAllPlaces(buildFilteredPlaces())
+  }, [loadedMapPlaces, mapFilterCategories])
 
   const tiles = tilesForViewport(
     centerWorld.x,
@@ -291,46 +352,48 @@ export function BigMap2DContent(): ReactElement {
         overflow: 'hidden'
       }}
       uiBackground={{ color: COLOR.URL_POPUP_BACKGROUND }}
+      onMouseDown={() => {
+        moduleState.wasDragged = false
+        moduleState.wasMouseDownOnMap = true
+      }}
       onMouseDrag={() => {
         if (!dragging) setDragging(true)
+        moduleState.wasDragged = true
       }}
       onMouseDragEnd={() => {
         setDragging(false)
       }}
-      onMouseDown={() => {
-        if (dragging) return
-        const now = Date.now()
-        if (now - moduleState.lastClickTime < DOUBLE_CLICK_MS) {
-          moduleState.lastClickTime = 0
-          const pointerInfo = PrimaryPointerInfo.getOrNull(engine.RootEntity)
-          if (!pointerInfo?.screenCoordinates) return
-          const relativeX = pointerInfo.screenCoordinates.x
-          const relativeY =
-            pointerInfo.screenCoordinates.y - getMainMenuHeight()
-          const dx = relativeX - viewportWidth / 2
-          const dy = relativeY - viewportHeight / 2
-          const targetWorldX =
-            centerWorld.x + (dx / pxPerParcel) * PARCEL_METERS
-          const targetWorldZ =
-            centerWorld.z - (dy / pxPerParcel) * PARCEL_METERS
-          store.dispatch(
-            updateHudStateAction({
-              bigMap2DPendingCenter: {
-                x: targetWorldX,
-                z: targetWorldZ,
-                ts: Date.now()
-              }
-            })
-          )
-          if (!currentRealmProviderIsWorld()) {
-            const parcelX = Math.floor(targetWorldX / PARCEL_METERS)
-            const parcelY = Math.floor(targetWorldZ / PARCEL_METERS)
-            getUiController()
-              .sceneCard.showByCoords(Vector3.create(parcelX, 0, parcelY))
-              .catch(console.error)
-          }
-        } else {
-          moduleState.lastClickTime = now
+      onMouseUp={() => {
+        if (!moduleState.wasMouseDownOnMap) return
+        moduleState.wasMouseDownOnMap = false
+        if (moduleState.wasDragged) {
+          moduleState.wasDragged = false
+          return
+        }
+        const pointerInfo = PrimaryPointerInfo.getOrNull(engine.RootEntity)
+        if (!pointerInfo?.screenCoordinates) return
+        const relativeX = pointerInfo.screenCoordinates.x
+        const relativeY = pointerInfo.screenCoordinates.y - getMainMenuHeight()
+        const dx = relativeX - viewportWidth / 2
+        const dy = relativeY - viewportHeight / 2
+        const targetWorldX = centerWorld.x + (dx / pxPerParcel) * PARCEL_METERS
+        const targetWorldZ = centerWorld.z - (dy / pxPerParcel) * PARCEL_METERS
+        store.dispatch(
+          updateHudStateAction({
+            bigMap2DPendingCenter: {
+              x: targetWorldX,
+              z: targetWorldZ,
+              ts: Date.now()
+            }
+          })
+        )
+        if (!currentRealmProviderIsWorld()) {
+          const parcelX = Math.floor(targetWorldX / PARCEL_METERS)
+          const parcelY = Math.floor(targetWorldZ / PARCEL_METERS)
+          console.log(`[bigmap2d] click parcel: ${parcelX},${parcelY}`)
+          getUiController()
+            .sceneCard.showByCoords(Vector3.create(parcelX, 0, parcelY))
+            .catch(console.error)
         }
       }}
     >
@@ -389,6 +452,7 @@ export function BigMap2DContent(): ReactElement {
       })}
 
       <MapBottomLeftBar />
+      <MapFooter />
     </UiEntity>
   )
 }
@@ -440,6 +504,8 @@ function renderMarker({
   const showLabel =
     placeRepresentation.id === PLAYER_PLACE_ID ||
     isHomePlace(placeRepresentation)
+  const isPoi = placeRepresentation.sprite?.spriteName === 'PinPOI'
+  const labelFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
 
   return (
     <UiEntity
@@ -465,20 +531,26 @@ function renderMarker({
             : undefined
         }
         uiTransform={{ width: symbolSize, height: symbolSize }}
-        onMouseDown={() => {
+        onMouseUp={() => {
+          if (moduleState.wasDragged) {
+            moduleState.wasDragged = false
+            return
+          }
           if (placeRepresentation.id === PLAYER_PLACE_ID) return
-          executeTask(async () => {
-            const coords = fromStringToCoords(placeRepresentation.base_position)
-            const shownByCoords =
-              await getUiController().sceneCard.showByCoords(
-                Vector3.create(coords.x, 0, coords.y)
-              )
-            if (!shownByCoords) {
-              getUiController()
-                .sceneCard.showByData(placeRepresentation)
-                .catch(console.error)
-            }
-          })
+          const coords = fromStringToCoords(placeRepresentation.base_position)
+          console.log(`[bigmap2d] marker click parcel: ${coords.x},${coords.y}`)
+          store.dispatch(
+            updateHudStateAction({
+              bigMap2DPendingCenter: {
+                x: coords.x * PARCEL_METERS + PARCEL_METERS / 2,
+                z: coords.y * PARCEL_METERS + PARCEL_METERS / 2,
+                ts: Date.now()
+              }
+            })
+          )
+          getUiController()
+            .sceneCard.showByData(placeRepresentation)
+            .catch(console.error)
         }}
       />
       {showLabel && (
@@ -489,6 +561,29 @@ function renderMarker({
             textAlign: 'top-center'
           }}
           uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+        />
+      )}
+      {isPoi && (
+        <UiEntity
+          uiTransform={{
+            borderRadius: labelFontSize / 2,
+            height: labelFontSize * 2,
+            justifyContent: 'center',
+            alignItems: 'center',
+            margin: { top: labelFontSize / 2 },
+            flexShrink: 0
+          }}
+          uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+          uiText={{
+            value: `<b>${truncateWithoutBreakingWords(
+              placeRepresentation.title ?? '',
+              20
+            )}</b>`,
+            textWrap: 'nowrap',
+            fontSize: labelFontSize,
+            textAlign: 'middle-center',
+            color: COLOR.WHITE
+          }}
         />
       )}
     </UiEntity>

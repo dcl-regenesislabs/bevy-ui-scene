@@ -18,6 +18,11 @@ const VALID_BIG_MAP_STYLES: BigMapStyle[] = ['2d', '3d']
 const BIG_MAP_2D_LAYER_LOCAL_KEY = 'bevy-ui-scene:big-map-2d-layer'
 const VALID_BIG_MAP_2D_LAYERS: BigMap2DLayer[] = ['parcel', 'satellite']
 
+const MINIMAP_MARKER_CATEGORIES_LOCAL_KEY =
+  'bevy-ui-scene:minimap-marker-categories'
+
+const MINIMAP_ZOOM_LOCAL_KEY = 'bevy-ui-scene:minimap-zoom'
+
 export function loadMinimapStyle(): MinimapStyle {
   try {
     const stored: string = localStorage.getItem(MINIMAP_STYLE_LOCAL_KEY)
@@ -79,5 +84,44 @@ export function loadBigMap2DLayer(): BigMap2DLayer {
 export function saveBigMap2DLayer(layer: BigMap2DLayer): void {
   try {
     localStorage.setItem(BIG_MAP_2D_LAYER_LOCAL_KEY, layer)
+  } catch {}
+}
+
+export function loadMinimapMarkerCategories(fallback: string[]): string[] {
+  try {
+    const stored: string = localStorage.getItem(
+      MINIMAP_MARKER_CATEGORIES_LOCAL_KEY
+    )
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      if (Array.isArray(parsed) && parsed.every((c) => typeof c === 'string')) {
+        return parsed
+      }
+    }
+  } catch {}
+  return fallback
+}
+
+export function saveMinimapMarkerCategories(categories: string[]): void {
+  try {
+    localStorage.setItem(
+      MINIMAP_MARKER_CATEGORIES_LOCAL_KEY,
+      JSON.stringify(categories)
+    )
+  } catch {}
+}
+
+export function loadMinimapZoom(fallback: number): number {
+  try {
+    const stored: string = localStorage.getItem(MINIMAP_ZOOM_LOCAL_KEY)
+    const parsed = Number(stored)
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  } catch {}
+  return fallback
+}
+
+export function saveMinimapZoom(meters: number): void {
+  try {
+    localStorage.setItem(MINIMAP_ZOOM_LOCAL_KEY, String(meters))
   } catch {}
 }

@@ -27,30 +27,40 @@ import {
 import {
   disposeSatelliteCamera,
   getSatelliteCamera,
+  setSatelliteCameraZoom,
   updateSatelliteCamera,
   updateSatelliteTiles
 } from './mini-map-satellite-camera'
 import {
   disposeImpostersCamera,
   getImpostersCamera,
+  setImpostersCameraZoom,
   updateImpostersCamera
 } from './mini-map-imposters-camera'
 import {
   type MinimapRotation,
   saveMinimapRotation,
-  saveMinimapStyle
+  saveMinimapStyle,
+  saveMinimapMarkerCategories,
+  saveMinimapZoom
 } from './mini-map-persistence'
+import { categories as ALL_PLACE_CATEGORIES } from './map-definitions'
 import { getUiController } from '../../controllers/ui.controller'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 import ButtonComponent from '../ui-system/button-component'
 import ButtonIcon from '../button-icon/ButtonIcon'
 import { type AtlasIcon } from '../../utils/definitions'
+import Icon from '../icon/Icon'
+import { decoratePlaceRepresentation } from '../../ui-classes/main-hud/big-map/place-decoration'
 import useEffect = ReactEcs.useEffect
 import useState = ReactEcs.useState
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 
-const VISIBLE_METERS = 256
+const DEFAULT_VISIBLE_METERS = 256
+const MIN_VISIBLE_METERS = 64
+const MAX_VISIBLE_METERS = 768
+const ZOOM_STEP = 1.5
 
 const directionState = {
   initialized: false,
@@ -84,13 +94,14 @@ function updateDirection(
   return { dirX: directionState.dirX, dirZ: directionState.dirZ }
 }
 
-const POI_SRC = 'assets/images/map/POI.png'
 const MAP_ARROW_SRC = 'assets/images/MapArrow.png'
 
 export function MiniMapContent(): ReactElement {
   const mapSize = getMapSize()
   const mapCenter = mapSize / 2
-  const pxPerMeter = mapSize / VISIBLE_METERS
+  const visibleMeters =
+    store.getState().hud.minimapZoom ?? DEFAULT_VISIBLE_METERS
+  const pxPerMeter = mapSize / visibleMeters
 
   const userMinimapStyle = store.getState().hud.minimapStyle ?? 'satellite'
   const isWorld = currentRealmProviderIsWorld()
@@ -122,7 +133,7 @@ export function MiniMapContent(): ReactElement {
         playerWorldX,
         playerWorldZ,
         parcelTile,
-        VISIBLE_METERS,
+        visibleMeters,
         effectiveYawRad
       )
     : null
@@ -190,10 +201,22 @@ export function MiniMapContent(): ReactElement {
     updateImpostersCamera(playerWorldX, playerWorldZ, effectiveYawDeg)
   }, [minimapStyle, playerWorldX, playerWorldZ, effectiveYawDeg])
 
+  useEffect(() => {
+    if (minimapStyle === 'satellite') setSatelliteCameraZoom(visibleMeters)
+    if (minimapStyle === 'imposters') setImpostersCameraZoom(visibleMeters)
+  }, [
+    minimapStyle,
+    visibleMeters,
+    satelliteCameraEntity,
+    impostersCameraEntity
+  ])
+
+  const enabledCategories: string[] =
+    store.getState().hud.minimapMarkerCategories ?? []
   const places: Place[] = forceImposters
     ? []
     : getPlacesAroundParcel(playerParcel, 10).filter((p) =>
-        p.categories.some((c: string) => c === 'poi' || c === 'player')
+        p.categories.some((c: string) => enabledCategories.includes(c))
       )
   void getLoadedMapPlaces()
   const mapUiTransform: UiTransformProps = {
@@ -289,14 +312,20 @@ export function MiniMapContent(): ReactElement {
           )
           const dxFromCenter = screen.x - mapCenter
           const dyFromCenter = screen.y - mapCenter
-          if (Math.hypot(dxFromCenter, dyFromCenter) > mapCenter - POI_SIZE / 2)
+          if (
+            Math.hypot(dxFromCenter, dyFromCenter) >
+            mapCenter - getPoiSize() / 2
+          )
             return null
+          const representation = decoratePlaceRepresentation(place)
+          if (!representation) return null
           return (
             <PoiMarker
               key={`poi-${place.id}`}
               screenX={screen.x}
               screenY={screen.y}
               title={place.title}
+              icon={representation.sprite}
             />
           )
         })}
@@ -304,6 +333,7 @@ export function MiniMapContent(): ReactElement {
 
       <PlayerArrow mapSize={mapSize} mapYawDeg={effectiveYawDeg} />
       <CardinalLabels mapSize={mapSize} cameraYawDeg={effectiveYawDeg} />
+      <MinimapZoomButtons visibleMeters={visibleMeters} />
       <MinimapSettings
         style={minimapStyle}
         rotation={minimapRotation}
@@ -313,59 +343,65 @@ export function MiniMapContent(): ReactElement {
   )
 }
 
-const POI_SIZE = 18
-const POI_LABEL_WIDTH = 90
+const getPoiSize = (): number =>
+  getFontSize({ token: TYPOGRAPHY_TOKENS.BODY }) * 1.5
+const getPoiLabelWidth = (): number =>
+  getFontSize({ token: TYPOGRAPHY_TOKENS.BODY }) * 7.5
 
 function PoiMarker({
   screenX,
   screenY,
-  title
+  title,
+  icon
 }: {
   screenX: number
   screenY: number
   title: string
+  icon: AtlasIcon
   key?: any
 }): ReactElement {
-  const labelFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const baseFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const isPoi = icon.spriteName === 'PinPOI'
+  const sizeFactor = isPoi ? 4 / 3 : 1
+  const labelFontSize = baseFontSize * sizeFactor
+  const poiSize = getPoiSize() * sizeFactor
+  const poiLabelWidth = getPoiLabelWidth()
   return (
     <UiEntity
       uiTransform={{
-        width: POI_LABEL_WIDTH,
-        height: POI_SIZE + labelFontSize * 1.4,
+        width: poiLabelWidth,
+        height: poiSize + labelFontSize * 1.4,
         positionType: 'absolute',
         position: {
-          left: screenX - POI_LABEL_WIDTH / 2,
-          top: screenY - POI_SIZE / 2
+          left: screenX - poiLabelWidth / 2,
+          top: screenY - poiSize / 2
         },
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        zIndex: isPoi ? 2 : 1
       }}
     >
-      <UiEntity
-        uiTransform={{ width: POI_SIZE, height: POI_SIZE, flexShrink: 0 }}
-        uiBackground={{
-          textureMode: 'stretch',
-          texture: { src: POI_SRC }
-        }}
-      />
-      <UiEntity
-        uiTransform={{
-          borderRadius: labelFontSize / 2,
-          height: labelFontSize * 2,
-          justifyContent: 'center',
-          alignItems: 'center',
-          margin: { top: labelFontSize / 2 },
-          flexShrink: 0
-        }}
-        uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
-        uiText={{
-          value: `<b>${truncateWithoutBreakingWords(title, 20)}</b>`,
-          textWrap: 'nowrap',
-          fontSize: labelFontSize,
-          textAlign: 'middle-center',
-          color: COLOR.WHITE
-        }}
-      />
+      <Icon icon={icon} iconSize={poiSize} uiTransform={{ flexShrink: 0 }} />
+      {isPoi && (
+        <UiEntity
+          uiTransform={{
+            borderRadius: labelFontSize / 2,
+            height: labelFontSize * 2,
+            justifyContent: 'center',
+            alignItems: 'center',
+            margin: { top: labelFontSize / 2 },
+            flexShrink: 0
+          }}
+          uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+          uiText={{
+            value: `<b>${truncateWithoutBreakingWords(title, 20)}</b>`,
+            textWrap: 'nowrap',
+            fontSize: labelFontSize,
+            textAlign: 'middle-center',
+            color: COLOR.WHITE
+          }}
+        />
+      )}
     </UiEntity>
   )
 }
@@ -452,6 +488,89 @@ const SETTINGS_ICON_HOVER: AtlasIcon = {
 }
 const CHECK_ICON: AtlasIcon = { atlasName: 'icons', spriteName: 'Check' }
 
+const ALL_CATEGORY_NAMES = ALL_PLACE_CATEGORIES.map((c) => c.name)
+
+function MinimapZoomButtons({
+  visibleMeters
+}: {
+  visibleMeters: number
+}): ReactElement {
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const padding = fontSize / 4
+  const buttonSize = fontSize * 1.5
+
+  const applyZoom = (next: number): void => {
+    saveMinimapZoom(next)
+    store.dispatch(updateHudStateAction({ minimapZoom: next }))
+  }
+  const canZoomIn = visibleMeters > MIN_VISIBLE_METERS
+  const canZoomOut = visibleMeters < MAX_VISIBLE_METERS
+
+  return (
+    <UiEntity
+      uiTransform={{
+        positionType: 'absolute',
+        position: { top: -padding, left: -padding },
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}
+    >
+      <ZoomButton
+        size={buttonSize}
+        label="+"
+        disabled={!canZoomIn}
+        onMouseDown={() => {
+          if (!canZoomIn) return
+          applyZoom(Math.max(MIN_VISIBLE_METERS, visibleMeters / ZOOM_STEP))
+        }}
+      />
+      <UiEntity uiTransform={{ height: padding }} />
+      <ZoomButton
+        size={buttonSize}
+        label="−"
+        disabled={!canZoomOut}
+        onMouseDown={() => {
+          if (!canZoomOut) return
+          applyZoom(Math.min(MAX_VISIBLE_METERS, visibleMeters * ZOOM_STEP))
+        }}
+      />
+    </UiEntity>
+  )
+}
+
+function ZoomButton({
+  size,
+  label,
+  disabled,
+  onMouseDown
+}: {
+  size: number
+  label: string
+  disabled: boolean
+  onMouseDown: () => void
+}): ReactElement {
+  return (
+    <UiEntity
+      uiTransform={{
+        width: size,
+        height: size,
+        borderRadius: 9999,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: disabled ? 0.4 : 1
+      }}
+      uiBackground={{ color: COLOR.BLACK }}
+      uiText={{
+        value: `<b>${label}</b>`,
+        fontSize: size * 0.6,
+        color: COLOR.WHITE,
+        textAlign: 'middle-center'
+      }}
+      onMouseDown={onMouseDown}
+    />
+  )
+}
+
 function MinimapSettings({
   style,
   rotation,
@@ -532,9 +651,52 @@ function MinimapSettings({
               )}
             </SubmenuSection>
           )}
+
+          <MarkersSection fontSize={fontSize} />
         </UiEntity>
       )}
     </UiEntity>
+  )
+}
+
+function MarkersSection({ fontSize }: { fontSize: number }): ReactElement {
+  const enabled = store.getState().hud.minimapMarkerCategories ?? []
+  const isAll = enabled.length === ALL_CATEGORY_NAMES.length
+  const isOnlyPoi = enabled.length === 1 && enabled[0] === 'poi'
+  const isNone = enabled.length === 0
+
+  const apply = (next: string[]): void => {
+    saveMinimapMarkerCategories(next)
+    store.dispatch(updateHudStateAction({ minimapMarkerCategories: next }))
+  }
+
+  return (
+    <SubmenuSection title="Markers" fontSize={fontSize}>
+      <SubmenuOption
+        label="All"
+        selected={isAll}
+        fontSize={fontSize}
+        onMouseDown={() => {
+          apply([...ALL_CATEGORY_NAMES])
+        }}
+      />
+      <SubmenuOption
+        label="Only POI"
+        selected={isOnlyPoi}
+        fontSize={fontSize}
+        onMouseDown={() => {
+          apply(['poi'])
+        }}
+      />
+      <SubmenuOption
+        label="None"
+        selected={isNone}
+        fontSize={fontSize}
+        onMouseDown={() => {
+          apply([])
+        }}
+      />
+    </SubmenuSection>
   )
 }
 

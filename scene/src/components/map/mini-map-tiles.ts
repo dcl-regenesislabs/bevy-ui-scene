@@ -69,8 +69,8 @@ export function tileInfoForChunk(
       SATELLITE_TILE_00_CENTER_PARCEL_Y - cy * SATELLITE_CHUNK_PARCELS
     return {
       imageMeters: SATELLITE_CHUNK_PARCELS * PARCEL_METERS,
-      centerWorldX: centerParcelX * PARCEL_METERS + PARCEL_METERS / 2,
-      centerWorldZ: centerParcelY * PARCEL_METERS + PARCEL_METERS / 2,
+      centerWorldX: centerParcelX * PARCEL_METERS + PARCEL_METERS,
+      centerWorldZ: centerParcelY * PARCEL_METERS + PARCEL_METERS,
       url: `https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/${cx}%2C${cy}.jpg`
     }
   }

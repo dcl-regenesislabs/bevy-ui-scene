@@ -50,6 +50,7 @@ function Icon(
       onMouseEnter={props.onMouseEnter}
       onMouseLeave={props.onMouseLeave}
       onMouseDown={props.onMouseDown}
+      onMouseUp={props.onMouseUp}
     />
   )
 }

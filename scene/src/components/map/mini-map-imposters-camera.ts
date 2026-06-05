@@ -66,6 +66,15 @@ export function updateImpostersCamera(
   )
 }
 
+export function setImpostersCameraZoom(meters: number): void {
+  if (cameraEntity === engine.RootEntity) return
+  const tc = TextureCamera.getMutableOrNull(cameraEntity)
+  if (!tc) return
+  if (tc.mode?.$case === 'orthographic') {
+    tc.mode.orthographic.verticalRange = meters
+  }
+}
+
 export function disposeImpostersCamera(): void {
   if (cameraEntity !== engine.RootEntity) {
     engine.removeEntityWithChildren(cameraEntity)

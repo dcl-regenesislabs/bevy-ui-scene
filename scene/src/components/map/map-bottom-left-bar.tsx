@@ -6,9 +6,7 @@ import { Column } from '../ui-system/layout'
 import {
   orbitToTop,
   displaceCamera,
-  orbitToBird,
-  activate3DCameraTransition,
-  deactivate3DCameraTransition
+  orbitToBird
 } from '../../service/map/map-camera'
 import { Vector3 } from '@dcl/sdk/math'
 import { engine, Transform } from '@dcl/sdk/ecs'
@@ -25,6 +23,7 @@ import {
 } from './mini-map-persistence'
 import { updateHudStateAction } from '../../state/hud/actions'
 import { type AtlasIcon } from '../../utils/definitions'
+import { Toggle, ToggleHandler } from '../ui-system/toggle'
 
 const getButtonTransform = (): UiTransformProps => ({
   borderRadius: getFontSize({}) / 2,
@@ -59,33 +58,18 @@ export function MapBottomLeftBar(): ReactElement {
           bottom: getViewportHeight() * 0.05,
           left: 0
         },
-        padding: { bottom: '0.5%' }
+        padding: { bottom: '0.5%' },
+        zIndex: 1000
       }}
       uiBackground={{
         color: COLOR.DARK_OPACITY_8
       }}
     >
-      <BigMapStyleButton
-        label="2D"
-        active={bigMapStyle === '2d'}
-        onClick={() => {
-          if (bigMapStyle === '2d') return
-          saveBigMapStyle('2d')
-          store.dispatch(updateHudStateAction({ bigMapStyle: '2d' }))
-          deactivate3DCameraTransition()
-        }}
+      <BigMapStyleToggleSwitch bigMapStyle={bigMapStyle} />
+      <BigMap2DLayerToggleSwitch
+        bigMap2DLayer={bigMap2DLayer}
+        disabled={!is2D}
       />
-      <BigMapStyleButton
-        label="3D"
-        active={bigMapStyle === '3d'}
-        onClick={() => {
-          if (bigMapStyle === '3d') return
-          saveBigMapStyle('3d')
-          store.dispatch(updateHudStateAction({ bigMapStyle: '3d' }))
-          activate3DCameraTransition()
-        }}
-      />
-      <BigMap2DLayerToggleRow bigMap2DLayer={bigMap2DLayer} disabled={!is2D} />
 
       <IconButton
         icon={{ spriteName: 'top-view', atlasName: 'icons' }}
@@ -154,71 +138,98 @@ export function MapBottomLeftBar(): ReactElement {
   )
 }
 
-function BigMap2DLayerToggleRow({
+function BigMapStyleToggleSwitch({
+  bigMapStyle
+}: {
+  bigMapStyle: BigMapStyle
+}): ReactElement {
+  const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
+  const is3D = bigMapStyle === '3d'
+  return (
+    <UiEntity uiTransform={{ margin: getFontSize({}) / 2 }}>
+      <Toggle
+        value={is3D}
+        fontSize={fontSize}
+        orientation={'vertical'}
+        onChange={(next) => {
+          const nextStyle: BigMapStyle = next ? '3d' : '2d'
+          if (nextStyle === bigMapStyle) return
+          saveBigMapStyle(nextStyle)
+          store.dispatch(updateHudStateAction({ bigMapStyle: nextStyle }))
+        }}
+      >
+        <UiEntity
+          uiText={{
+            value: is3D ? '<b>2D</b>' : '<b>3D</b>',
+            fontSize,
+            color: COLOR.WHITE,
+            textWrap: 'nowrap',
+            textAlign: 'middle-center'
+          }}
+        />
+        <ToggleHandler>
+          <UiEntity
+            uiText={{
+              value: is3D ? '<b>3D</b>' : '<b>2D</b>',
+              fontSize,
+              textWrap: 'nowrap',
+              color: COLOR.TEXT_COLOR,
+              textAlign: 'middle-center'
+            }}
+          />
+        </ToggleHandler>
+      </Toggle>
+    </UiEntity>
+  )
+}
+
+function BigMap2DLayerToggleSwitch({
   bigMap2DLayer,
   disabled
 }: {
   bigMap2DLayer: BigMap2DLayer
   disabled: boolean
 }): ReactElement {
-  return (
-    <Column>
-      <BigMapStyleButton
-        label="PA"
-        active={bigMap2DLayer === 'parcel'}
-        disabled={disabled}
-        onClick={() => {
-          if (bigMap2DLayer === 'parcel') return
-          saveBigMap2DLayer('parcel')
-          store.dispatch(updateHudStateAction({ bigMap2DLayer: 'parcel' }))
-        }}
-      />
-      <BigMapStyleButton
-        label="SA"
-        active={bigMap2DLayer === 'satellite'}
-        disabled={disabled}
-        onClick={() => {
-          if (bigMap2DLayer === 'satellite') return
-          saveBigMap2DLayer('satellite')
-          store.dispatch(updateHudStateAction({ bigMap2DLayer: 'satellite' }))
-        }}
-      />
-    </Column>
-  )
-}
-
-function BigMapStyleButton({
-  label,
-  active,
-  onClick,
-  disabled = false
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-  disabled?: boolean
-}): ReactElement {
-  const wrapperTransform = getButtonTransform()
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
+  const iconSize = fontSize * 1.4
+  const isSatellite = bigMap2DLayer === 'satellite'
+  const parcelIcon: AtlasIcon = { spriteName: 'Parcels', atlasName: 'icons' }
+  const satelliteIcon: AtlasIcon = {
+    spriteName: 'Satellite',
+    atlasName: 'icons'
+  }
   return (
-    <Column
-      uiTransform={{ ...wrapperTransform, opacity: disabled ? 0.4 : 1 }}
-      uiBackground={{ color: active ? COLOR.WHITE : COLOR.DARK_OPACITY_5 }}
-      onMouseDown={() => {
-        if (disabled) return
-        onClick()
+    <UiEntity
+      uiTransform={{
+        margin: getFontSize({}) / 2,
+        opacity: disabled ? 0.4 : 1
       }}
     >
-      <UiEntity
-        uiTransform={{ width: '100%', height: '100%' }}
-        uiText={{
-          value: `<b>${label}</b>`,
-          fontSize,
-          color: active ? COLOR.TEXT_COLOR : COLOR.WHITE,
-          textAlign: 'middle-center'
+      <Toggle
+        orientation={'vertical'}
+        value={isSatellite}
+        fontSize={fontSize}
+        onChange={(next) => {
+          if (disabled) return
+          const nextLayer: BigMap2DLayer = next ? 'satellite' : 'parcel'
+          if (nextLayer === bigMap2DLayer) return
+          saveBigMap2DLayer(nextLayer)
+          store.dispatch(updateHudStateAction({ bigMap2DLayer: nextLayer }))
         }}
-      />
-    </Column>
+      >
+        <Icon
+          icon={isSatellite ? parcelIcon : satelliteIcon}
+          iconSize={iconSize}
+          iconColor={COLOR.WHITE}
+        />
+        <ToggleHandler>
+          <Icon
+            icon={isSatellite ? satelliteIcon : parcelIcon}
+            iconSize={iconSize}
+          />
+        </ToggleHandler>
+      </Toggle>
+    </UiEntity>
   )
 }
 
