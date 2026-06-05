@@ -7,7 +7,7 @@ import ReactEcs, {
 import { COLOR } from '../color-palette'
 import { getFontSize } from '../../service/fontsize-system'
 import { useLayoutContext } from '../../service/layout-context'
-import { type ButtonVariant, VARIANT_STYLES } from './button-variants'
+import { type ButtonVariant } from './button-variants'
 
 export function ToggleHandler({
   children
@@ -50,7 +50,6 @@ export function Toggle({
   const trackWidth = isHorizontal ? trackMain : trackCross
   const trackHeight = isHorizontal ? trackCross : trackMain
 
-  const styles = VARIANT_STYLES[variant]
   const trackColor = COLOR.WHITE_OPACITY_2
 
   const childrenArray: ToggleChild[] = Array.isArray(children)

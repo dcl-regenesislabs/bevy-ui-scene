@@ -49,8 +49,38 @@ const moduleState = {
   wasMouseDownOnMap: false
 }
 
+export const bigMap2DViewport = {
+  centerWorldX: 0,
+  centerWorldZ: 0,
+  pxPerParcel: 12,
+  viewportWidth: 0,
+  viewportHeight: 0,
+  mainMenuHeight: 0,
+  active: false
+}
+
+export function screenToParcel2D(
+  screenX: number,
+  screenY: number
+): { x: number; y: number } | null {
+  if (!bigMap2DViewport.active) return null
+  const relativeY = screenY - bigMap2DViewport.mainMenuHeight
+  const dx = screenX - bigMap2DViewport.viewportWidth / 2
+  const dy = relativeY - bigMap2DViewport.viewportHeight / 2
+  const targetWorldX =
+    bigMap2DViewport.centerWorldX +
+    (dx / bigMap2DViewport.pxPerParcel) * PARCEL_METERS
+  const targetWorldZ =
+    bigMap2DViewport.centerWorldZ -
+    (dy / bigMap2DViewport.pxPerParcel) * PARCEL_METERS
+  return {
+    x: Math.floor(targetWorldX / PARCEL_METERS),
+    y: Math.floor(targetWorldZ / PARCEL_METERS)
+  }
+}
+
 const DEFAULT_PX_PER_PARCEL = 12
-const MIN_PX_PER_PARCEL = 4
+const MIN_PX_PER_PARCEL = 2
 const MAX_PX_PER_PARCEL = 48
 const ZOOM_FACTOR = 1.2
 
@@ -146,8 +176,8 @@ function tileFromParcel(parcelX: number, parcelY: number): Tile | null {
   )
   const info = tileInfoForChunk('satellite', cx, cy)
   if (info === null) return null
-  const centerParcelX = info.centerWorldX / PARCEL_METERS - 1
-  const centerParcelY = info.centerWorldZ / PARCEL_METERS - 1
+  const centerParcelX = info.centerWorldX / PARCEL_METERS - 0.5
+  const centerParcelY = info.centerWorldZ / PARCEL_METERS - 0.5
   return {
     cx,
     cy,
@@ -193,6 +223,20 @@ export function BigMap2DContent(): ReactElement {
   useEffect(() => {
     loadCompleteMapPlaces().catch(console.error)
   }, [])
+
+  useEffect(() => {
+    bigMap2DViewport.active = true
+    return () => {
+      bigMap2DViewport.active = false
+    }
+  }, [])
+
+  bigMap2DViewport.centerWorldX = centerWorld.x
+  bigMap2DViewport.centerWorldZ = centerWorld.z
+  bigMap2DViewport.pxPerParcel = pxPerParcel
+  bigMap2DViewport.viewportWidth = viewportWidth
+  bigMap2DViewport.viewportHeight = viewportHeight
+  bigMap2DViewport.mainMenuHeight = getMainMenuHeight()
 
   const pendingCenter = store.getState().hud.bigMap2DPendingCenter
   useEffect(() => {
@@ -249,19 +293,29 @@ export function BigMap2DContent(): ReactElement {
   }, [dragging, pxPerParcel])
 
   const loadedMapPlaces = getLoadedMapPlaces()
-  const [allPlaces, setAllPlaces] = useState<PlaceRepresentation[]>(() =>
-    Object.values(loadedMapPlaces)
-      .filter((p) => p.title !== 'Empty')
-      .map(decoratePlaceRepresentation)
-      .filter((p): p is PlaceRepresentation => p !== null)
-  )
-  useEffect(() => {
-    setAllPlaces(
-      Object.values(loadedMapPlaces)
+  const mapFilterCategories = store.getState().hud.mapFilterCategories
+  const buildFilteredPlaces = (): PlaceRepresentation[] => {
+    if (mapFilterCategories[0] === 'favorites') {
+      return Object.values(loadedMapPlaces)
+        .filter((p) => p.user_favorite === true)
         .map(decoratePlaceRepresentation)
         .filter((p): p is PlaceRepresentation => p !== null)
-    )
-  }, [loadedMapPlaces])
+    }
+    const showAll = mapFilterCategories[0] === 'all'
+    return Object.values(loadedMapPlaces)
+      .map(decoratePlaceRepresentation)
+      .filter((p): p is PlaceRepresentation => p !== null)
+      .filter(
+        (p) =>
+          showAll ||
+          p.categories.some((c: string) => mapFilterCategories.includes(c))
+      )
+  }
+  const [allPlaces, setAllPlaces] =
+    useState<PlaceRepresentation[]>(buildFilteredPlaces)
+  useEffect(() => {
+    setAllPlaces(buildFilteredPlaces())
+  }, [loadedMapPlaces, mapFilterCategories])
 
   const tiles = tilesForViewport(
     centerWorld.x,

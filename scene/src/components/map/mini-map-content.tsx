@@ -44,10 +44,7 @@ import {
   saveMinimapMarkerCategories,
   saveMinimapZoom
 } from './mini-map-persistence'
-import {
-  categories as ALL_PLACE_CATEGORIES,
-  mapSymbolPerPlaceCategory
-} from './map-definitions'
+import { categories as ALL_PLACE_CATEGORIES } from './map-definitions'
 import { getUiController } from '../../controllers/ui.controller'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
@@ -97,7 +94,6 @@ function updateDirection(
   return { dirX: directionState.dirX, dirZ: directionState.dirZ }
 }
 
-const POI_SRC = 'assets/images/map/POI.png'
 const MAP_ARROW_SRC = 'assets/images/MapArrow.png'
 
 export function MiniMapContent(): ReactElement {
@@ -575,13 +571,6 @@ function ZoomButton({
   )
 }
 
-function getCategoryIcon(name: string): AtlasIcon {
-  return {
-    atlasName: 'map2',
-    spriteName: mapSymbolPerPlaceCategory[name] ?? 'GenericPin'
-  }
-}
-
 function MinimapSettings({
   style,
   rotation,
@@ -708,57 +697,6 @@ function MarkersSection({ fontSize }: { fontSize: number }): ReactElement {
         }}
       />
     </SubmenuSection>
-  )
-}
-
-function MarkerCategoryOption({
-  label,
-  icon,
-  selected,
-  fontSize,
-  onMouseDown
-}: {
-  key?: any
-  label: string
-  icon: AtlasIcon
-  selected: boolean
-  fontSize: number
-  onMouseDown: () => void
-}): ReactElement {
-  return (
-    <UiEntity
-      uiTransform={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: { left: fontSize / 2, right: fontSize, top: 2, bottom: 2 },
-        height: fontSize * 2
-      }}
-      onMouseDown={onMouseDown}
-    >
-      <UiEntity
-        uiTransform={{ width: fontSize, height: fontSize, flexShrink: 0 }}
-      >
-        {selected && <Icon icon={CHECK_ICON} iconSize={fontSize} />}
-      </UiEntity>
-      <Icon
-        icon={icon}
-        iconSize={fontSize}
-        uiTransform={{ margin: { left: fontSize / 3 }, flexShrink: 0 }}
-      />
-      <UiEntity
-        uiTransform={{
-          margin: { left: fontSize / 3 },
-          justifyContent: 'center',
-          height: fontSize * 1.4
-        }}
-        uiText={{
-          value: label,
-          fontSize: fontSize * 0.85,
-          color: COLOR.WHITE,
-          textAlign: 'middle-left'
-        }}
-      />
-    </UiEntity>
   )
 }
 

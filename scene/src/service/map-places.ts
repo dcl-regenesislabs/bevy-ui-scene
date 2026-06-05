@@ -30,6 +30,20 @@ const [mapStorageDate, mapStoragePlaces] = (
   ]
 ).map((d: string) => JSON.parse(d))
 
+function isPlaceholderPlace(p: Place): boolean {
+  return p.title === 'Empty'
+}
+
+function filterRealPlaces(
+  places: Record<string, Place>
+): Record<string, Place> {
+  const out: Record<string, Place> = {}
+  for (const key in places) {
+    if (!isPlaceholderPlace(places[key])) out[key] = places[key]
+  }
+  return out
+}
+
 const state: {
   places: Record<string, Place>
   totalPlaces: number
@@ -40,7 +54,7 @@ const state: {
 } = {
   done: false,
   refreshing: false,
-  places: mapStoragePlaces ?? {},
+  places: filterRealPlaces(mapStoragePlaces ?? {}),
   totalPlaces: Number.MAX_SAFE_INTEGER,
   categories: [],
   offset: 0
@@ -196,13 +210,12 @@ async function fetchAllPlacesFromApi(): Promise<void> {
       category.count = response.total ?? 0
       placesPerCategory = {
         ...placesPerCategory,
-        ...(response.data ?? []).reduce(
-          (acc: Record<string, Place>, current: Place) => {
+        ...(response.data ?? [])
+          .filter((p: Place) => !isPlaceholderPlace(p))
+          .reduce((acc: Record<string, Place>, current: Place) => {
             acc[current.base_position] = current
             return acc
-          },
-          {}
-        )
+          }, {})
       }
 
       for (const key in placesPerCategory) {
