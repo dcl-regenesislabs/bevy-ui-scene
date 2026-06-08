@@ -1,5 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { engine, PrimaryPointerInfo } from '@dcl/sdk/ecs'
+import { engine, PrimaryPointerInfo, Transform } from '@dcl/sdk/ecs'
 import { Vector3 } from '@dcl/sdk/math'
 import { COLOR } from '../../../components/color-palette'
 import Icon from '../../../components/icon/Icon'
@@ -448,7 +448,11 @@ export function BigMap2DContent(): ReactElement {
         placeRepresentation: playerRepresentation,
         centerWorld,
         pxPerParcel,
-        viewportPx
+        viewportPx,
+        worldOverride: {
+          x: Transform.get(engine.PlayerEntity).position.x,
+          z: Transform.get(engine.PlayerEntity).position.z
+        }
       })}
 
       <MapBottomLeftBar />
@@ -461,26 +465,37 @@ function renderMarker({
   placeRepresentation,
   centerWorld,
   pxPerParcel,
-  viewportPx
+  viewportPx,
+  worldOverride
 }: {
   placeRepresentation: PlaceRepresentation
   centerWorld: { x: number; z: number }
   pxPerParcel: number
   viewportPx: { width: number; height: number }
+  worldOverride?: { x: number; z: number }
 }): ReactElement | null {
-  const central = placeRepresentation.base_position
-  if (!central) return null
-  const [pxParcel, pyParcel] = central.split(',').map(Number)
-  if (Number.isNaN(pxParcel) || Number.isNaN(pyParcel)) return null
-
-  const screen = worldParcelToScreen(
-    pxParcel,
-    pyParcel,
-    centerWorld.x,
-    centerWorld.z,
-    pxPerParcel,
-    viewportPx
-  )
+  let screen: { x: number; y: number }
+  if (worldOverride !== undefined) {
+    const deltaParcelsX = (worldOverride.x - centerWorld.x) / PARCEL_METERS
+    const deltaParcelsY = (worldOverride.z - centerWorld.z) / PARCEL_METERS
+    screen = {
+      x: viewportPx.width / 2 + deltaParcelsX * pxPerParcel,
+      y: viewportPx.height / 2 - deltaParcelsY * pxPerParcel
+    }
+  } else {
+    const central = placeRepresentation.base_position
+    if (!central) return null
+    const [pxParcel, pyParcel] = central.split(',').map(Number)
+    if (Number.isNaN(pxParcel) || Number.isNaN(pyParcel)) return null
+    screen = worldParcelToScreen(
+      pxParcel,
+      pyParcel,
+      centerWorld.x,
+      centerWorld.z,
+      pxPerParcel,
+      viewportPx
+    )
+  }
 
   if (
     screen.x < 0 ||
@@ -505,7 +520,9 @@ function renderMarker({
     placeRepresentation.id === PLAYER_PLACE_ID ||
     isHomePlace(placeRepresentation)
   const isPoi = placeRepresentation.sprite?.spriteName === 'PinPOI'
+  const isPlayer = placeRepresentation.id === PLAYER_PLACE_ID
   const labelFontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY })
+  const topOffset = isPlayer ? symbolSize / 2 : symbolSize
 
   return (
     <UiEntity
@@ -514,8 +531,9 @@ function renderMarker({
         positionType: 'absolute',
         position: {
           left: screen.x - symbolSize / 2,
-          top: screen.y - symbolSize
+          top: screen.y - topOffset
         },
+        width: symbolSize,
         flexDirection: 'column',
         alignItems: 'center',
         zIndex: getZIndexForPlaceSymbol(placeRepresentation)
@@ -558,7 +576,8 @@ function renderMarker({
           uiTransform={{ position: { top: 0 } }}
           uiText={{
             value: isHomePlace(placeRepresentation) ? 'Home' : 'You are here',
-            textAlign: 'top-center'
+            textAlign: 'top-center',
+            textWrap: 'nowrap'
           }}
           uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
         />
