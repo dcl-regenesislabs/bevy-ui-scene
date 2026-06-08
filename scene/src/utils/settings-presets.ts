@@ -62,7 +62,7 @@ export const SETTINGS_PRESETS: Record<SettingsPresetName, Preset> = {
     Graphics: {
       'Anti-aliasing': 1,
       'Ambient Brightness': 'default',
-      Bloom: 1,
+      Bloom: 'max',
       Fog: 1,
       'Depth of Field': 0,
       'Distant Scene Rendering': 1,
@@ -89,9 +89,9 @@ export const SETTINGS_PRESETS: Record<SettingsPresetName, Preset> = {
     Graphics: {
       'Anti-aliasing': 2,
       'Ambient Brightness': 'default',
-      Bloom: 1,
+      Bloom: 'max',
       Fog: 2,
-      'Depth of Field': 1,
+      'Depth of Field': 'max',
       'Distant Scene Rendering': 2,
       'Empty Parcel Props': 2,
       'Out-of-bounds Effect': 1,
@@ -119,10 +119,10 @@ export const SETTINGS_PRESETS: Record<SettingsPresetName, Preset> = {
       // crashes wgpu at pipeline-creation time on many GPUs (Apple
       // Silicon included). 4x is the highest universally safe setting.
       'Anti-aliasing': 4,
-      'Ambient Brightness': 'max',
-      Bloom: 2,
+      'Ambient Brightness': 50,
+      Bloom: 'max',
       Fog: 2,
-      'Depth of Field': 2,
+      'Depth of Field': 'max',
       'Distant Scene Rendering': 2,
       'Empty Parcel Props': 3,
       'Out-of-bounds Effect': 1,
