@@ -76,13 +76,13 @@ export async function fetchPhotosQuantity(placeId: string): Promise<number> {
       `https://camera-reel-service.decentraland.org/api/places/${placeId}/images`
     )
     if (!response.ok) {
-      return 20
+      return 0
     }
     const photos: PhotosResponse = (await response.json()) as PhotosResponse
     return photos.maxImages
   } catch (error) {
     console.error('Error fetching photos:', error)
-    return 20
+    return 0
   }
 }
 
