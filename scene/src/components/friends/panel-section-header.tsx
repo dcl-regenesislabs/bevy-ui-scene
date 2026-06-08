@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { noop } from '../../utils/function-utils'
 import { getFontSize } from '../../service/fontsize-system'
-import { Row } from '../layout'
+import { Row } from '../ui-system/layout'
 import { BottomBorder, TopBorder } from '../bottom-border'
 import { COLOR } from '../color-palette'
 

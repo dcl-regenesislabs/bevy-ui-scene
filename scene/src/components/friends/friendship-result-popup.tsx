@@ -2,7 +2,7 @@ import ReactEcs, { UiEntity } from '@dcl/react-ecs'
 import { type Popup } from '../popup-stack'
 import { PopupBackdrop } from '../popup-backdrop'
 import { COLOR } from '../color-palette'
-import { Column, Row } from '../layout'
+import { Column, Row } from '../ui-system/layout'
 import { AvatarCircle } from '../avatar-circle'
 import {
   CONTEXT,

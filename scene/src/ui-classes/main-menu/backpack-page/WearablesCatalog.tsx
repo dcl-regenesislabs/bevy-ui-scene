@@ -30,7 +30,6 @@ import {
   fetchWearablesData,
   fetchWearablesPage
 } from '../../../utils/wearables-promise-utils'
-import { updateAvatarPreview } from '../../../components/backpack/AvatarPreview'
 import { Color4 } from '@dcl/sdk/math'
 import { COLOR } from '../../../components/color-palette'
 import { WearableCategoryList } from '../../../components/backpack/WearableCategoryList'
@@ -121,12 +120,6 @@ export function WearablesCatalog(): ReactElement {
 }
 async function resetOutfit(): Promise<void> {
   store.dispatch(resetOutfitAction())
-
-  updateAvatarPreview(
-    store.getState().backpack.equippedWearables,
-    store.getState().backpack.outfitSetup.base,
-    store.getState().backpack.forceRender
-  )
 }
 function WearableCatalogNavBar(): ReactElement {
   const backpackState = store.getState().backpack
@@ -235,10 +228,4 @@ async function updateEquippedWearable(
       })
     )
   }
-
-  updateAvatarPreview(
-    store.getState().backpack.equippedWearables,
-    store.getState().backpack.outfitSetup.base,
-    store.getState().backpack.forceRender
-  )
 }

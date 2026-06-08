@@ -1,11 +1,11 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type PermissionDefinition } from '../../../../bevy-api/permission-definitions'
 import { getContentScaleRatio } from '../../../../service/canvas-ratio'
-import { Column, Row } from '../../../../components/layout'
+import { Column, Row } from '../../../../components/ui-system/layout'
 import { COLOR } from '../../../../components/color-palette'
 
 import { noop } from '../../../../utils/function-utils'
-import { ResponsiveContent } from '../../backpack-page/BackpackPage'
+import { ResponsiveContent } from '../../../../components/responsive-content'
 import { DropdownComponent } from '../../../../components/dropdown-component'
 import useState = ReactEcs.useState
 import { BevyApi } from '../../../../bevy-api'
@@ -247,7 +247,7 @@ export const PermissionsForm = ({
           </Column>
         </Column>
         {hoveredPermission && (
-          <Column>
+          <Column uiTransform={{ width: '40%' }}>
             <UiEntity
               uiText={{
                 value: hoveredPermissionDefinition
@@ -273,7 +273,7 @@ export const PermissionsForm = ({
           </Column>
         )}
         {!hoveredPermission && (
-          <Column>
+          <Column uiTransform={{ width: '40%' }}>
             <UiEntity
               uiText={{
                 value: 'Permissions',

@@ -26,8 +26,6 @@ import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
 import { BevyApi } from '../../bevy-api'
 import { showErrorPopup } from '../../service/error-popup-service'
-import { fetchPlaceFromApi } from '../../utils/promise-utils'
-import { getUiController } from '../../controllers/ui.controller'
 import useState = ReactEcs.useState
 import { closeLastPopupAction, pushPopupAction } from '../../state/hud/actions'
 import { store } from '../../state/store'
@@ -68,12 +66,25 @@ export function NotificationItem({
         if (notification.type.indexOf('events') === 0) {
           executeTask(async () => {
             try {
-              const eventId =
-                notification.metadata.eventId ??
-                notification.metadata.link.replace(
-                  'https://decentraland.org/jump/events?id=',
-                  ''
-                )
+              // Parse eventId properly: the metadata link can carry extra
+              // query params (e.g. `?id=<uuid>&position=-150,95`), so a
+              // naive prefix strip leaves them glued to the id and the
+              // events API rejects the malformed URL with 400.
+              const link = notification.metadata.link as string | undefined
+              let eventId: string | undefined = notification.metadata.eventId
+              if (eventId == null && link != null) {
+                const queryIdx = link.indexOf('?')
+                if (queryIdx !== -1) {
+                  const idParam = link
+                    .slice(queryIdx + 1)
+                    .split('&')
+                    .find((p) => p.startsWith('id='))
+                  if (idParam != null) {
+                    eventId = decodeURIComponent(idParam.slice(3))
+                  }
+                }
+              }
+              if (eventId == null) return
               store.dispatch(closeLastPopupAction())
               const responseEvent = await BevyApi.kernelFetch({
                 url: `https://events.decentraland.org/api/events/${eventId}`
@@ -89,16 +100,16 @@ export function NotificationItem({
                   `BevyApi.kernelFetch notification event ${eventId}`
                 )
               } else {
-                const { data } = JSON.parse(responseEvent.body)
-                const placeId = data.place_id
-
-                if (placeId) {
-                  const place = await fetchPlaceFromApi(placeId)
-
-                  getUiController()
-                    .sceneCard.showByData(place)
-                    .catch(console.error)
-                }
+                const { data: event } = JSON.parse(responseEvent.body)
+                // Open the event detail popup (with REMIND ME / JUMP IN
+                // actions) instead of the place sceneCard side panel — the
+                // notification is about an EVENT, not the underlying place.
+                store.dispatch(
+                  pushPopupAction({
+                    type: HUD_POPUP_TYPE.COMMUNITY_EVENT_INFO,
+                    data: event
+                  })
+                )
               }
             } finally {
               setLoading(false)
@@ -246,6 +257,8 @@ function getTitleFromNotification(notification: Notification): string {
       return 'Friend request received'
     case 'social_service_friendship_rejected':
       return 'Friend request rejected'
+    case 'community_invite_sent':
+      return 'Invitation sent'
     case 'item_sold':
       return 'Item sold'
     default:
@@ -474,7 +487,8 @@ function handleFriendshipNotificationClick(
       hasClaimedName: protagonist.hasClaimedName,
       profilePictureUrl: protagonist.profileImageUrl,
       createdAt: Number(notification.timestamp),
-      id: notification.metadata.requestId
+      id: notification.metadata.requestId,
+      message: notification.metadata.message
     }
     store.dispatch(
       pushPopupAction({

@@ -101,22 +101,32 @@ function verticalFovFrom(
 }
 
 type WorldToScreenOptions = {
-  /** Si true, fovRad es horizontal y se convierte a vertical internamente */
+  /** If true, fovRad is horizontal and is converted to vertical internally. */
   fovIsHorizontal?: boolean
-  /** En DCL/Unity el forward es +Z, así que por defecto false */
+  /** DCL/Unity uses +Z forward, so default false. */
   forwardIsNegZ?: boolean
+  /**
+   * When true, off-viewport and behind-camera points are clamped to the
+   * viewport rectangle: off-viewport perspective coords are clamped, and
+   * behind-camera points are projected from the camera-space xy direction
+   * onto the viewport rect (a "compass" indicator). `onScreen` and `behind`
+   * still report the underlying state. Default false — preserves the
+   * original "junk coords for behind-camera" shape, leaving callers to
+   * filter on `onScreen`.
+   */
+  boundOutOfScreen?: boolean
 }
 
 export function worldToScreenPx(
   world: Vector3,
   cameraPos: Vector3,
   cameraRot: Quaternion,
-  fovRad: number, // puede ser V u H según options.fovIsHorizontal
+  fovRad: number,
   viewportWidth: number,
   viewportHeight: number,
   options: WorldToScreenOptions = {}
-): { left: number; top: number; onScreen: boolean } {
-  const forwardIsNegZ = options.forwardIsNegZ ?? false // DCL/Unity: +Z forward
+): { left: number; top: number; onScreen: boolean; behind: boolean } {
+  const forwardIsNegZ = options.forwardIsNegZ ?? false
   const verticalFovRad = verticalFovFrom(
     fovRad,
     viewportWidth,
@@ -124,39 +134,62 @@ export function worldToScreenPx(
     !!options.fovIsHorizontal
   )
 
-  // vector relativo
   const rel = Vector3.create(
     world.x - cameraPos.x,
     world.y - cameraPos.y,
     world.z - cameraPos.z
   )
-
-  // inversa de la rotación: inv(q) = (-x,-y,-z,w)
   const inv = Quaternion.create(
     -cameraRot.x,
     -cameraRot.y,
     -cameraRot.z,
     cameraRot.w
   )
-
-  // pasamos al espacio cámara
   const cam = rotateVec3ByQuat(rel, inv)
 
   const aspect = viewportWidth / viewportHeight
   const tanHalf = Math.tan(verticalFovRad / 2)
-
+  const halfW = viewportWidth * 0.5
+  const halfH = viewportHeight * 0.5
   const depth = forwardIsNegZ ? -cam.z : cam.z
-  if (depth <= 0) return { top: -100, left: -100, onScreen: false } // detrás de la cámara
+  const behind = depth <= 1e-4
 
-  const ndcX = cam.x / (depth * tanHalf * aspect)
-  const ndcY = cam.y / (depth * tanHalf)
+  if (!behind) {
+    const ndcX = cam.x / (depth * tanHalf * aspect)
+    const ndcY = cam.y / (depth * tanHalf)
+    let left = (ndcX + 1) * 0.5 * viewportWidth
+    let top = (1 - (ndcY + 1) * 0.5) * viewportHeight
+    const onScreen =
+      left >= 0 && left <= viewportWidth && top >= 0 && top <= viewportHeight
+    if (options.boundOutOfScreen && !onScreen) {
+      left = Math.min(Math.max(left, 0), viewportWidth)
+      top = Math.min(Math.max(top, 0), viewportHeight)
+    }
+    return { left, top, onScreen, behind: false }
+  }
 
-  const left = Math.floor((ndcX + 1) * 0.5 * viewportWidth)
-  const top = Math.floor((1 - (ndcY + 1) * 0.5) * viewportHeight)
+  if (!options.boundOutOfScreen) {
+    return { left: -100, top: -100, onScreen: false, behind: true }
+  }
 
-  const onScreen =
-    left >= 0 && left <= viewportWidth && top >= 0 && top <= viewportHeight
-  return { left, top, onScreen }
+  // Compass-edge fallback: project the camera-space xy direction onto the
+  // viewport rect. cam.y is up, so flip y for the top-down viewport axis.
+  const len2 = cam.x * cam.x + cam.y * cam.y
+  if (len2 < 1e-6) {
+    return { left: halfW, top: halfH, onScreen: false, behind: true }
+  }
+  const len = Math.sqrt(len2)
+  const nx = cam.x / len
+  const ny = cam.y / len
+  const sx = nx !== 0 ? halfW / Math.abs(nx) : Number.POSITIVE_INFINITY
+  const sy = ny !== 0 ? halfH / Math.abs(ny) : Number.POSITIVE_INFINITY
+  const scale = Math.min(sx, sy)
+  return {
+    left: halfW + nx * scale,
+    top: halfH - ny * scale,
+    onScreen: false,
+    behind: true
+  }
 }
 
 /**

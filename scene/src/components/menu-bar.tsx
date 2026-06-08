@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { BottomBorder } from './bottom-border'
 import { COLOR } from './color-palette'
-import { Row } from './layout'
+import { Row } from './ui-system/layout'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../service/fontsize-system'
 
 export const MenuBar = ({

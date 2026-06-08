@@ -60,11 +60,13 @@ import {
 import { currentRealmProviderIsWorld } from '../../../service/realm-change'
 import { MapFooter } from './map-footer'
 import { getMainMenuHeight } from '../../main-menu/MainMenu'
+import { BigMap2DContent } from './big-map-2d-view'
 
 export const FOV = (45 * 1.25 * Math.PI) / 180
 
 export const PLAYER_PLACE_ID = 'player'
 export const BigMap = (): ReactElement => {
+  const bigMapStyle = store.getState().hud.bigMapStyle
   return (
     <UiEntity
       uiTransform={{
@@ -73,7 +75,7 @@ export const BigMap = (): ReactElement => {
         pointerFilter: 'block'
       }}
     >
-      <BigMapContent />
+      {bigMapStyle === '2d' ? <BigMap2DContent /> : <BigMapContent />}
     </UiEntity>
   )
 }

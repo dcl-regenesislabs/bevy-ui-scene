@@ -16,7 +16,7 @@ import useState = ReactEcs.useState
 import { getAliveAvatarPreviews } from '../../../components/backpack/AvatarPreviewElement'
 import { Color4, Quaternion, Vector3 } from '@dcl/sdk/math'
 import { COLOR } from '../../../components/color-palette'
-import { Column } from '../../../components/layout'
+import { Column } from '../../../components/ui-system/layout'
 import {
   CONTEXT,
   getFontSize,

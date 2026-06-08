@@ -119,6 +119,26 @@ export const activateMapCamera = (): void => {
       ISO_OFFSET_3
     )
   })
+
+  if (store.getState().hud.bigMapStyle === '3d') {
+    activate3DCameraTransition()
+  } else {
+    attachMapCameraInstant()
+  }
+
+  InputModifier.createOrReplace(engine.PlayerEntity, {
+    mode: InputModifier.Mode.Standard({
+      disableAll: true
+    })
+  })
+  store.dispatch(
+    updateHudStateAction({
+      mapModeActive: true
+    })
+  )
+}
+
+export const activate3DCameraTransition = (): void => {
   store.dispatch(
     updateHudStateAction({
       transitioningToMap: true
@@ -151,17 +171,24 @@ export const activateMapCamera = (): void => {
     virtualCameraEntity: mapCamera
   })
   VirtualCamera.getMutable(mapCamera).lookAtEntity = engine.PlayerEntity
+}
 
-  InputModifier.createOrReplace(engine.PlayerEntity, {
-    mode: InputModifier.Mode.Standard({
-      disableAll: true
-    })
+function attachMapCameraInstant(): void {
+  VirtualCamera.createOrReplace(mapCamera, {
+    lookAtEntity: engine.PlayerEntity,
+    defaultTransition: {
+      transitionMode: { $case: 'time', time: 0 }
+    }
   })
-  store.dispatch(
-    updateHudStateAction({
-      mapModeActive: true
-    })
-  )
+  MainCamera.createOrReplace(engine.CameraEntity, {
+    virtualCameraEntity: mapCamera
+  })
+}
+
+export const deactivate3DCameraTransition = (): void => {
+  const current = MainCamera.getOrNull(engine.CameraEntity)
+  if (current?.virtualCameraEntity !== mapCamera) return
+  MainCamera.createOrReplace(engine.CameraEntity, {})
 }
 
 export const orbitToBird = (): void => {
@@ -298,7 +325,7 @@ export const deactivateMapCamera = (): void => {
       mapModeActive: false
     })
   )
-  MainCamera.createOrReplace(engine.CameraEntity, {})
+  deactivate3DCameraTransition()
   InputModifier.createOrReplace(engine.PlayerEntity, {
     mode: InputModifier.Mode.Standard({
       disableAll: false
@@ -316,6 +343,7 @@ export const deactivateDragMapSystem = (): void => {
 }
 
 function mapCameraMouseSystem(dt: number): void {
+  if (store.getState().hud.bigMapStyle === '2d') return
   // TODO move to a different file
   const isOrbiting = inputSystem.isPressed(InputAction.IA_WALK)
   if (isOrbiting !== store.getState().hud.mapCameraIsOrbiting) {
@@ -399,6 +427,7 @@ export const cameraPositionSystem = (dt: number): void => {
 }
 
 function mapInputHandlingSystem(dt: number): void {
+  if (store.getState().hud.bigMapStyle === '2d') return
   const bigMapCameraEntity = getBigMapCameraEntity()
   const cameraTransform = Transform.get(bigMapCameraEntity)
   const moveSpeed = dt * 600

@@ -518,6 +518,55 @@ export const LOADING_PLACE: PlaceFromApi = {
   user_count: 0,
   user_visits: 0
 }
+
+export const EMPTY_PARCEL_ID_PREFIX = 'empty-parcel:'
+
+export function buildEmptyParcelPlace(
+  parcelX: number,
+  parcelY: number
+): PlaceFromApi {
+  const coords = `${parcelX},${parcelY}`
+  return {
+    id: `${EMPTY_PARCEL_ID_PREFIX}${coords}`,
+    title: `Parcel ${coords}`,
+    description: null,
+    image: `https://api.decentraland.org/v1/map.png?center=${parcelX},${parcelY}&width=512&height=512&size=10`,
+    owner: null,
+    positions: [coords],
+    base_position: coords,
+    contact_name: '',
+    contact_email: null,
+    content_rating: 'RP',
+    disabled: false,
+    disabled_at: null,
+    created_at: '',
+    updated_at: '',
+    favorites: 0,
+    likes: 0,
+    dislikes: 0,
+    categories: [],
+    like_rate: null,
+    highlighted: false,
+    highlighted_image: null,
+    world: false,
+    world_name: null,
+    deployed_at: '',
+    textsearch: '',
+    like_score: null,
+    user_favorite: false,
+    user_like: false,
+    user_dislike: false,
+    user_count: 0,
+    user_visits: 0,
+    isEmptyParcel: true
+  }
+}
+
+export function isEmptyParcelPlace(
+  place: PlaceFromApi | null | undefined
+): boolean {
+  return !!place && place.id.startsWith(EMPTY_PARCEL_ID_PREFIX)
+}
 export const TEXTURE_SLICES_05 = {
   top: 0.5,
   bottom: 0.5,

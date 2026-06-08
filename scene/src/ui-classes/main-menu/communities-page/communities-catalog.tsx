@@ -1,6 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { Column } from '../../../components/layout'
+import { Column } from '../../../components/ui-system/layout'
 import { executeTask } from '@dcl/sdk/ecs'
 import { fetchCommunities } from '../../../utils/communities-promise-utils'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'

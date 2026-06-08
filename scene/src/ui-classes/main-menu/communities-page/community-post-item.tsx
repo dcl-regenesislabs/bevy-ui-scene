@@ -1,6 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import {
   type CommunityMemberRole,
   type CommunityPost
@@ -73,7 +73,7 @@ export function CommunityPostItem({
   const onDelete = (): void => {
     showConfirmPopup({
       title: 'Delete this announcement?',
-      message: 'This action cannot be undone.',
+      message: `<b>${post.authorName}</b> <i>${post.content}</i>`,
       icon: {
         spriteName: 'Delete',
         atlasName: 'icons',

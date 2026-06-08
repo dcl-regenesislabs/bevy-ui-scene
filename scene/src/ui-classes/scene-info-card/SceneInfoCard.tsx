@@ -39,9 +39,11 @@ import {
 import {
   ALMOST_BLACK,
   BLACK_TEXT,
+  buildEmptyParcelPlace,
   DCL_SNOW,
   EVENT_BACKGROUND_COLOR,
   GRAY_TEXT,
+  isEmptyParcelPlace,
   LOADING_PLACE,
   MAIN_REALM_URL,
   PANEL_BACKGROUND_COLOR,
@@ -68,7 +70,7 @@ import { closeBigMapIfActive } from '../../service/map/map-camera'
 import { MAP_FILTER_DEFINITIONS } from '../../components/map/map-definitions'
 import { type PlaceRepresentation } from '../main-hud/big-map/big-map-view'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
-import { Row } from '../../components/layout'
+import { Row } from '../../components/ui-system/layout'
 import { COLOR } from '../../components/color-palette'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
 
@@ -247,7 +249,13 @@ export default class SceneInfoCard {
 
       const auxPlace = await fetchPlaceFromCoords(coords)
 
-      await this.setPlace(auxPlace)
+      if (auxPlace === undefined || auxPlace === null) {
+        await this.setPlace(
+          buildEmptyParcelPlace(Math.floor(coords.x), Math.floor(coords.z))
+        )
+      } else {
+        await this.setPlace(auxPlace)
+      }
       this.callbacks.onShow.forEach((f) => {
         f()
       })
@@ -413,6 +421,9 @@ export default class SceneInfoCard {
           }}
           uiBackground={{
             textureMode: 'stretch',
+            uvs: isEmptyParcelPlace(this.place)
+              ? [0, 0.125, 0, 0.875, 1, 0.875, 1, 0.125]
+              : [0.125, 0, 0.125, 1, 0.875, 1, 0.875, 0],
             texture: {
               src: (this.place.image ?? '').replace(
                 'https://camera-reel-service.decentraland.org/api/images/',
@@ -748,7 +759,7 @@ export default class SceneInfoCard {
             }
           }}
           value={'JUMP IN'}
-          backgroundColor={RUBY}
+          variant="primary"
           fontSize={this.fontSize}
           iconSize={1.5 * this.fontSize}
           icon={{
@@ -768,7 +779,8 @@ export default class SceneInfoCard {
           >
             <ButtonIcon
               uiTransform={{
-                width: '23%'
+                width: '23%',
+                opacity: isEmptyParcelPlace(this.place) ? 0.4 : 1
               }}
               icon={this.likeIcon}
               backgroundColor={
@@ -789,6 +801,7 @@ export default class SceneInfoCard {
               }}
               onMouseDown={() => {
                 if (this.place === LOADING_PLACE) return
+                if (isEmptyParcelPlace(this.place)) return
                 if (this.isLiked) {
                   this.setLikeStatus('null')
                 } else {
@@ -798,7 +811,8 @@ export default class SceneInfoCard {
             />
             <ButtonIcon
               uiTransform={{
-                width: '23%'
+                width: '23%',
+                opacity: isEmptyParcelPlace(this.place) ? 0.4 : 1
               }}
               icon={this.dislikeIcon}
               backgroundColor={
@@ -819,6 +833,7 @@ export default class SceneInfoCard {
               }}
               onMouseDown={() => {
                 if (this.place === LOADING_PLACE) return
+                if (isEmptyParcelPlace(this.place)) return
                 if (this.isDisliked) {
                   this.setLikeStatus('null')
                 } else {
@@ -828,7 +843,8 @@ export default class SceneInfoCard {
             />
             <ButtonIcon
               uiTransform={{
-                width: '23%'
+                width: '23%',
+                opacity: isEmptyParcelPlace(this.place) ? 0.4 : 1
               }}
               icon={this.favIcon}
               backgroundColor={
@@ -849,13 +865,15 @@ export default class SceneInfoCard {
               }}
               onMouseDown={() => {
                 if (this.place === LOADING_PLACE) return
+                if (isEmptyParcelPlace(this.place)) return
                 this.toggleFav()
               }}
             />
             <UiEntity
               uiTransform={{
                 width: '23%',
-                height: this.fontSize * 2
+                height: this.fontSize * 2,
+                opacity: isEmptyParcelPlace(this.place) ? 0.4 : 1
               }}
             >
               <ButtonIcon
@@ -877,6 +895,7 @@ export default class SceneInfoCard {
                 }}
                 onMouseDown={() => {
                   if (this.place === LOADING_PLACE) return
+                  if (isEmptyParcelPlace(this.place)) return
                   this.isShareMenuOpen = !this.isShareMenuOpen
                 }}
               />
@@ -1282,7 +1301,7 @@ export default class SceneInfoCard {
                 }}
                 onMouseDown={() => {}}
                 value={'JUMP IN'}
-                backgroundColor={RUBY}
+                variant="primary"
                 fontSize={BIG_TEXT}
                 iconSize={1.2 * BIG_TEXT}
                 icon={{
@@ -1311,15 +1330,10 @@ export default class SceneInfoCard {
                 value={
                   this.areInterestedButtonsLocked ? 'Loading...' : 'INTERESTED'
                 }
-                backgroundColor={
-                  this.eventInterestedEnter === index
-                    ? SELECTED_BUTTON_COLOR
-                    : DCL_SNOW
-                }
+                variant="subtle"
+                active={this.eventInterestedEnter === index}
                 fontSize={BIG_TEXT}
                 iconSize={1.2 * BIG_TEXT}
-                fontColor={BLACK_TEXT}
-                iconColor={BLACK_TEXT}
                 icon={{
                   atlasName: 'icons',
                   spriteName:

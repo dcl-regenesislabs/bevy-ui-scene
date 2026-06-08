@@ -24,7 +24,6 @@ import {
   rgbToArray,
   rgbToHsv
 } from '../../../utils/ui-utils'
-import { updateAvatarPreview } from '../../../components/backpack/AvatarPreview'
 import { CONTEXT, getFontSize } from '../../../service/fontsize-system'
 
 const state = { open: false }
@@ -81,11 +80,6 @@ export function WearableColorPicker(): ReactElement {
 
 function updateAvatar(payload: BackpackUpdateAvatarBasePayload): void {
   store.dispatch(updateAvatarBase(payload))
-  updateAvatarPreview(
-    store.getState().backpack.equippedWearables,
-    store.getState().backpack.outfitSetup.base,
-    store.getState().backpack.forceRender
-  )
 }
 
 function ColorBox({

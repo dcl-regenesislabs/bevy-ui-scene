@@ -35,12 +35,10 @@ export function getCardinalLabelPositions(
     return { x: x * c - y * s, y: x * s + y * c }
   }
 
-  const toSquareEdge = (dx: number, dy: number): Coords => {
-    const adx = Math.abs(dx)
-    const ady = Math.abs(dy)
-    const t = radius / Math.max(adx || 1e-9, ady || 1e-9)
-    return { x: cx + dx * t, y: cy + dy * t }
-  }
+  const toCircleEdge = (dx: number, dy: number): Coords => ({
+    x: cx + dx * radius,
+    y: cy + dy * radius
+  })
 
   const base = {
     N: { x: 0, y: -1 },
@@ -55,9 +53,9 @@ export function getCardinalLabelPositions(
   const Wdir = rotate(base.W.x, base.W.y, theta)
 
   return {
-    N: toSquareEdge(Ndir.x, Ndir.y),
-    E: toSquareEdge(Edir.x, Edir.y),
-    S: toSquareEdge(Sdir.x, Sdir.y),
-    W: toSquareEdge(Wdir.x, Wdir.y)
+    N: toCircleEdge(Ndir.x, Ndir.y),
+    E: toCircleEdge(Edir.x, Edir.y),
+    S: toCircleEdge(Sdir.x, Sdir.y),
+    W: toCircleEdge(Wdir.x, Wdir.y)
   }
 }

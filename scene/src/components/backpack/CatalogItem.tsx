@@ -14,7 +14,10 @@ import {
   type offchainEmoteURN,
   type URNWithoutTokenId
 } from '../../utils/definitions'
-import { DEFAULT_EMOTES } from '../../utils/backpack-constants'
+import {
+  DEFAULT_EMOTE_SPRITE_NAMES,
+  DEFAULT_EMOTES
+} from '../../utils/backpack-constants'
 import { RoundedButton } from '../rounded-button'
 import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 
@@ -208,7 +211,8 @@ function ItemImage({
       uiBackground={
         DEFAULT_EMOTES.includes(itemElement.urn as offchainEmoteURN)
           ? getBackgroundFromAtlas({
-              spriteName: itemElement.urn,
+              spriteName:
+                DEFAULT_EMOTE_SPRITE_NAMES[itemElement.urn as offchainEmoteURN],
               atlasName: 'emotes'
             })
           : {

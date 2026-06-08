@@ -5,7 +5,7 @@ import type {
 } from '../../../../bevy-api/permission-definitions'
 import type { PermissionResult } from '../permissions-map'
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { Row } from '../../../../components/layout'
+import { Row } from '../../../../components/ui-system/layout'
 import { PermissionBox } from './permission-box'
 import { BottomBorder } from '../../../../components/bottom-border'
 import { COLOR } from '../../../../components/color-palette'

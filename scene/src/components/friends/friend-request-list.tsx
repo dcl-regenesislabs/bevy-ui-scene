@@ -1,6 +1,6 @@
 import ReactEcs from '@dcl/react-ecs'
 import { getChatMaxHeight } from '../chat/chat-area'
-import { Column } from '../layout'
+import { Column } from '../ui-system/layout'
 import { PanelSectionHeader } from './panel-section-header'
 import Icon from '../icon/Icon'
 import { Input, UiEntity } from '@dcl/sdk/react-ecs'

@@ -20,7 +20,6 @@ import {
   switchForceRenderCategory,
   unequipWearableCategory
 } from '../../state/backpack/actions'
-import { updateAvatarPreview } from './AvatarPreview'
 import { catalystMetadataMap } from '../../utils/catalyst-metadata-map'
 
 type WearableCategoryButtonProps = {
@@ -171,11 +170,6 @@ function UnequipButton({
       }}
       onMouseDown={() => {
         store.dispatch(unequipWearableCategory(category))
-        updateAvatarPreview(
-          store.getState().backpack.equippedWearables,
-          store.getState().backpack.outfitSetup.base,
-          store.getState().backpack.forceRender
-        )
       }}
     >
       <Icon
@@ -213,11 +207,6 @@ function ForceRenderButton({
       }}
       onMouseDown={() => {
         store.dispatch(switchForceRenderCategory(category))
-        updateAvatarPreview(
-          store.getState().backpack.equippedWearables,
-          store.getState().backpack.outfitSetup.base,
-          store.getState().backpack.forceRender
-        )
       }}
     >
       <UiEntity

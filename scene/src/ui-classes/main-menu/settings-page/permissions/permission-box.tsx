@@ -58,6 +58,8 @@ export function PermissionBox({
   return (
     <UiEntity
       uiTransform={{
+        flexGrow: 0,
+        flexShrink: 0,
         padding: getContentScaleRatio() * 5,
         borderColor: active
           ? COLOR.ACTIVE_BACKGROUND_COLOR

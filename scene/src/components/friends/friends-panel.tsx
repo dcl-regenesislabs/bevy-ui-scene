@@ -5,10 +5,11 @@ import { getChatMaxHeight } from '../chat/chat-area'
 import { type Tab, TabComponent } from '../tab-component'
 import { store } from '../../state/store'
 import { updateHudStateAction } from '../../state/hud/actions'
-import { Column } from '../layout'
+import { Column } from '../ui-system/layout'
 import { FriendListPanel } from './friend-list-panel'
 import { FriendRequestList } from './friend-request-list'
 import { BlockedList } from './blocked-list'
+import { CloseButton } from '../close-button'
 
 const FRIENDS_TAB: Tab[] = [
   { text: '  FRIENDS ' },
@@ -36,10 +37,10 @@ export default function FriendsPanel(): ReactElement {
     >
       <TabComponent
         uiTransform={{
-          width: '97%',
+          width: '100%',
           height: fontSize * 2,
           borderRadius: { topLeft: fontSize / 2, topRight: fontSize / 2 },
-          padding: { left: fontSize / 2 },
+          padding: { left: fontSize / 2, right: fontSize / 2 },
           justifyContent: 'flex-start',
           alignItems: 'center'
         }}
@@ -66,6 +67,22 @@ export default function FriendsPanel(): ReactElement {
       {store.getState().hud.friendsActiveTabIndex === 2 ? (
         <BlockedList />
       ) : null}
+      <CloseButton
+        uiTransform={{
+          positionType: 'absolute',
+          position: { right: fontSize / 4, top: fontSize / 4 },
+          height: fontSize * 1.5,
+          width: fontSize * 1.5
+        }}
+        iconSize={fontSize}
+        onClick={() => {
+          store.dispatch(
+            updateHudStateAction({
+              friendsOpen: false
+            })
+          )
+        }}
+      />
     </Column>
   )
 }

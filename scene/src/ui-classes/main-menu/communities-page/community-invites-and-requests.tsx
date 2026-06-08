@@ -1,6 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import {
   CONTEXT,
   getFontSize,
@@ -291,6 +291,7 @@ function InviteCard({
       })
     )
   }
+  const thumbnailSize = fontSize * 14.75
 
   return (
     <Column
@@ -308,8 +309,8 @@ function InviteCard({
       {/* Thumbnail */}
       <UiEntity
         uiTransform={{
-          width: '100%',
-          height: fontSize * 9,
+          width: thumbnailSize,
+          height: thumbnailSize,
           borderRadius: fontSize / 2,
           margin: { bottom: fontSize * 0.5 },
           flexShrink: 0
@@ -376,12 +377,9 @@ function InviteCard({
       {/* Action buttons */}
       <Row uiTransform={{ width: '100%', alignItems: 'center' }}>
         <ButtonTextIcon
+          variant="subtle"
           value={`<b>${secondaryLabel}</b>`}
-          icon={{ spriteName: 'icon.png', atlasName: 'icons' }}
-          iconSize={0}
           fontSize={fontSizeSmall}
-          fontColor={COLOR.TEXT_COLOR_WHITE}
-          backgroundColor={COLOR.WHITE_OPACITY_1}
           uiTransform={{
             flexGrow: 1,
             height: fontSize * 2,
@@ -396,12 +394,9 @@ function InviteCard({
         />
         {primaryLabel.length > 0 && (
           <ButtonTextIcon
+            variant="primary"
             value={`<b>${primaryLabel}</b>`}
-            icon={{ spriteName: 'icon.png', atlasName: 'icons' }}
-            iconSize={0}
             fontSize={fontSizeSmall}
-            fontColor={COLOR.WHITE}
-            backgroundColor={COLOR.BUTTON_PRIMARY}
             uiTransform={{
               flexGrow: 1,
               height: fontSize * 2,

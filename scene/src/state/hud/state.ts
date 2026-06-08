@@ -4,6 +4,19 @@ import { type Place } from '../../service/map-places'
 import { Vector3 } from '@dcl/sdk/math'
 import { type SceneLoadingWindow } from '../../bevy-api/interface'
 import {
+  loadMinimapStyle,
+  loadMinimapRotation,
+  loadBigMapStyle,
+  loadBigMap2DLayer,
+  loadMinimapMarkerCategories,
+  loadMinimapZoom
+} from '../../components/map/mini-map-persistence'
+import { categories as ALL_PLACE_CATEGORIES } from '../../components/map/map-definitions'
+import type {
+  BigMapStyle,
+  BigMap2DLayer
+} from '../../components/map/mini-map-persistence'
+import {
   type AchievedAchievementItem,
   type NotAchievedAchievementItem
 } from '../../ui-classes/main-hud/passport/badges-types'
@@ -73,7 +86,8 @@ export enum HUD_POPUP_TYPE {
   COMMUNITY_EVENT_INFO,
   CREATE_COMMUNITY,
   CONFIRM_DELETE_COMMUNITY,
-  CONFIRM
+  CONFIRM,
+  COMMUNITY_MEMBER_MENU
 }
 
 export type HUDPopup = {
@@ -127,6 +141,13 @@ export type HudState = {
   receivedFriendRequests: FriendRequestData[]
   friends: FriendStatusData[]
   friendsLoading: boolean
+  minimapStyle: 'parcel' | 'satellite' | 'imposters'
+  minimapRotation: 'camera' | 'north'
+  minimapMarkerCategories: string[]
+  minimapZoom: number
+  bigMapStyle: BigMapStyle
+  bigMap2DLayer: BigMap2DLayer
+  bigMap2DPendingCenter: { x: number; z: number; ts: number } | null
 }
 
 export type HudStateUpdateParams = {
@@ -171,11 +192,18 @@ export type HudStateUpdateParams = {
   receivedFriendRequests?: FriendRequestData[]
   friends?: FriendStatusData[]
   friendsLoading?: boolean
+  minimapStyle?: 'parcel' | 'satellite' | 'imposters'
+  minimapRotation?: 'camera' | 'north'
+  minimapMarkerCategories?: string[]
+  minimapZoom?: number
+  bigMapStyle?: BigMapStyle
+  bigMap2DLayer?: BigMap2DLayer
+  bigMap2DPendingCenter?: { x: number; z: number; ts: number } | null
 }
 
 export const hudInitialState: HudState = {
   transitioningToMap: false,
-  chatOpen: false,
+  chatOpen: true,
   shownPopups: [],
   profileData: cloneDeep(EMPTY_PROFILE_DATA),
   names: [],
@@ -187,7 +215,7 @@ export const hudInitialState: HudState = {
   chatInput: '',
   minimapOpen: true,
   mapModeActive: false,
-  mapFilterCategories: ['poi'],
+  mapFilterCategories: ['all'],
   placeListActiveItem: null,
   sceneList: {
     total: 0,
@@ -215,5 +243,14 @@ export const hudInitialState: HudState = {
   sentFriendRequests: [],
   receivedFriendRequests: [],
   friends: [],
-  friendsLoading: true
+  friendsLoading: true,
+  minimapStyle: loadMinimapStyle(),
+  minimapRotation: loadMinimapRotation(),
+  minimapMarkerCategories: loadMinimapMarkerCategories(
+    ALL_PLACE_CATEGORIES.map((c) => c.name)
+  ),
+  minimapZoom: loadMinimapZoom(256),
+  bigMapStyle: loadBigMapStyle(),
+  bigMap2DLayer: loadBigMap2DLayer(),
+  bigMap2DPendingCenter: null
 }

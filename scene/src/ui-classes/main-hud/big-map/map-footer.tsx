@@ -7,14 +7,16 @@ import {
 import { COLOR } from '../../../components/color-palette'
 import { MapStatusBar } from './map-status-bar'
 import Icon from '../../../components/icon/Icon'
-import { Row } from '../../../components/layout'
+import { Row } from '../../../components/ui-system/layout'
 import {
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
+import { store } from '../../../state/store'
 
 export function MapFooter(): ReactElement {
   const fontSize = getFontSize({ token: TYPOGRAPHY_TOKENS.BODY_S })
+  const is3D = store.getState().hud.bigMapStyle === '3d'
   return (
     <UiEntity
       uiTransform={{
@@ -93,23 +95,25 @@ export function MapFooter(): ReactElement {
             }}
           />
         </Row>
-        <Row>
-          <Icon
-            icon={{ atlasName: 'icons', spriteName: 'UpArrow' }}
-            iconSize={fontSize}
-          />
-          <UiEntity
-            uiText={{
-              value: 'Shift + Mouse move rotates view',
-              fontSize
-            }}
-            uiTransform={{
-              alignSelf: 'flex-start',
-              justifyContent: 'center',
-              position: { top: 0 }
-            }}
-          />
-        </Row>
+        {is3D && (
+          <Row>
+            <Icon
+              icon={{ atlasName: 'icons', spriteName: 'UpArrow' }}
+              iconSize={fontSize}
+            />
+            <UiEntity
+              uiText={{
+                value: 'Ctrl + Mouse move rotates view',
+                fontSize
+              }}
+              uiTransform={{
+                alignSelf: 'flex-start',
+                justifyContent: 'center',
+                position: { top: 0 }
+              }}
+            />
+          </Row>
+        )}
       </Row>
     </UiEntity>
   )
