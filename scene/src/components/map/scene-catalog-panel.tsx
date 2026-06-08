@@ -10,7 +10,7 @@ import {
   type Place
 } from '../../service/map-places'
 import { executeTask } from '@dcl/sdk/ecs'
-import { Column, Row } from '../layout'
+import { Column, Row } from '../ui-system/layout'
 import { ListCard } from './list-card'
 import {
   getRightPanelWidth,
@@ -332,12 +332,23 @@ function SceneCatalogContent(): ReactElement {
                       .catch(console.error)
                   } else {
                     if (!place.world && !currentRealmProviderIsWorld()) {
-                      displaceCamera(
-                        fromParcelCoordsToPosition(
-                          fromStringToCoords(place.base_position),
-                          { height: 0 }
-                        )
+                      const worldPos = fromParcelCoordsToPosition(
+                        fromStringToCoords(place.base_position),
+                        { height: 0 }
                       )
+                      if (store.getState().hud.bigMapStyle === '2d') {
+                        store.dispatch(
+                          updateHudStateAction({
+                            bigMap2DPendingCenter: {
+                              x: worldPos.x,
+                              z: worldPos.z,
+                              ts: Date.now()
+                            }
+                          })
+                        )
+                      } else {
+                        displaceCamera(worldPos)
+                      }
                     }
 
                     store.dispatch(
@@ -446,7 +457,7 @@ async function fetchList({
   const queryParameters =
     categories?.includes('all') ||
     categories?.includes('favorites') ||
-    (categories?.length && categories[0] === 'poi' && placeType === 'worlds')
+    categories?.includes('poi')
       ? []
       : [
           ...categories.map((c) => ({

@@ -1,5 +1,6 @@
 import ReactEcs, { Input, type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { MainContent, ResponsiveContent } from '../backpack-page/BackpackPage'
+import { MainContent } from '../backpack-page/BackpackPage'
+import { ResponsiveContent } from '../../../components/responsive-content'
 import {
   LeftSection,
   NavBar,
@@ -7,7 +8,7 @@ import {
   RightSection
 } from '../backpack-page/BackpackNavBar'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import { executeTask } from '@dcl/sdk/ecs'
 import {
   fetchMyCommunities,

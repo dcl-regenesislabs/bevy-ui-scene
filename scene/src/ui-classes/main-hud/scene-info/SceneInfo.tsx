@@ -30,6 +30,7 @@ import { currentRealmProviderIsWorld } from '../../../service/realm-change'
 import { getFontSize } from '../../../service/fontsize-system'
 import { ThinChevronButton } from '../../../components/thin-chevron-button'
 import { ThinMenuButton } from '../../../components/thin-menu-button'
+import { COLOR } from '../../../components/color-palette'
 
 export default class SceneInfo {
   private readonly uiController: UIController
@@ -272,11 +273,20 @@ export default class SceneInfo {
             margin: {
               top: getViewportHeight() * 0.005,
               left: getViewportHeight() * 0.01
-            }
+            },
+            borderRadius:
+              getFeatureFlag(FEATURES.MINIMAP) &&
+              store.getState().hud.minimapOpen
+                ? {
+                    bottomRight: 9999,
+                    bottomLeft: 9999,
+                    topLeft: this.fontSize / 2,
+                    topRight: this.fontSize / 2
+                  }
+                : this.fontSize / 2
           }}
           uiBackground={{
-            ...ROUNDED_TEXTURE_BACKGROUND,
-            color: ALPHA_BLACK_PANEL
+            color: COLOR.DARK_OPACITY_9
           }}
         >
           {this.SceneInfoHeader()}
@@ -592,7 +602,6 @@ export default class SceneInfo {
               }}
               hintText={this.flagHint}
               showHint={this.isFlagHintVisible}
-              hintFontSize={this.fontSize}
             />
             <ButtonIcon
               uiTransform={{
@@ -611,7 +620,6 @@ export default class SceneInfo {
               }}
               hintText={'Scene is broken'}
               showHint={this.isBrokenHintVisible}
-              hintFontSize={this.fontSize}
             />
           </UiEntity>
         </UiEntity>

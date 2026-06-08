@@ -7,6 +7,7 @@ import {
   MEMBERS_BASE_URL,
   MEMBERS_TEST_BASE_URL,
   type CommunityData,
+  type CommunityInviteEntry,
   type CommunityListItem,
   type CommunityMember,
   type CommunityModerationResponse,
@@ -22,11 +23,11 @@ import {
 import { getRealm } from '~system/Runtime'
 import { LOCAL_PREVIEW_REALM_NAME } from './constants'
 import { createTtlCache } from './ttl-cache'
+import { createMediator } from './function-utils'
 import {
   type EventFromApi,
   type PlaceFromApi
 } from '../ui-classes/scene-info-card/SceneInfoCard.types'
-import { fetchPlaceFromApi } from './promise-utils'
 import { getPlayer } from '@dcl/sdk/src/players'
 
 const emptyMeta: SignedFetchMeta = {}
@@ -290,9 +291,100 @@ export async function leaveCommunity(
   await signedDelete(`${base}/${communityId}/members/${userId}`)
 }
 
+/** Drop the cached members of `communityId` so the next fetch re-hits the API. */
+export function invalidateCommunityMembersCache(communityId: string): void {
+  for (const [key] of membersCache.entries()) {
+    if (key.startsWith(`${communityId}:`)) membersCache.invalidate(key)
+  }
+}
+
+/**
+ * DELETE /communities/{id}/members/{address} — owner/moderator action.
+ * (Same endpoint as `leaveCommunity`; the backend distinguishes by caller
+ * identity vs. target address.)
+ */
+export async function kickMember(
+  communityId: string,
+  address: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedDelete(`${base}/${communityId}/members/${address}`)
+  invalidateCommunityMembersCache(communityId)
+}
+
+/** POST /communities/{id}/members/{address}/bans — owner/moderator action. */
+export async function banMember(
+  communityId: string,
+  address: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedPost(`${base}/${communityId}/members/${address}/bans`)
+  invalidateCommunityMembersCache(communityId)
+}
+
+/** DELETE /communities/{id}/members/{address}/bans — owner/moderator action. */
+export async function unbanMember(
+  communityId: string,
+  address: string
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedDelete(`${base}/${communityId}/members/${address}/bans`)
+  invalidateCommunityMembersCache(communityId)
+}
+
+/**
+ * PATCH /communities/{id}/members/{address} — change a member's role.
+ * Owner-only:
+ *   - 'moderator' to promote a member
+ *   - 'member' to demote a moderator
+ *   - 'owner' to transfer ownership (the previous owner becomes a member)
+ */
+export async function setMemberRole(
+  communityId: string,
+  address: string,
+  role: 'owner' | 'moderator' | 'member'
+): Promise<void> {
+  const base = await resolveBaseURL()
+  await signedPatch(`${base}/${communityId}/members/${address}`, { role })
+  invalidateCommunityMembersCache(communityId)
+}
+
 // --- Members ---
 
 const membersCache = createTtlCache<PaginatedResponse<CommunityMember>>()
+
+/**
+ * GET /communities/{id}/bans — owner/moderator action. Returns the
+ * banned users in member-shaped DTOs (same fields as `CommunityMember`).
+ */
+export async function fetchCommunityBans(
+  communityId: string,
+  params: GetMembersParams = {}
+): Promise<PaginatedResponse<CommunityMember>> {
+  const base = await resolveBaseURL()
+  const parts: string[] = []
+  if (params.offset != null) parts.push(`offset=${params.offset}`)
+  if (params.limit != null) parts.push(`limit=${params.limit}`)
+  const qs = parts.join('&')
+  return await signedGet(
+    `${base}/${communityId}/bans${qs.length > 0 ? `?${qs}` : ''}`
+  )
+}
+
+/**
+ * GET /communities/{id}/requests?type=invite — owner/moderator action.
+ * Returns pending invites this community has sent to other addresses.
+ */
+export async function fetchCommunityInvites(
+  communityId: string,
+  params: GetMembersParams = {}
+): Promise<PaginatedResponse<CommunityInviteEntry>> {
+  const base = await resolveBaseURL()
+  const parts: string[] = ['type=invite']
+  if (params.offset != null) parts.push(`offset=${params.offset}`)
+  if (params.limit != null) parts.push(`limit=${params.limit}`)
+  return await signedGet(`${base}/${communityId}/requests?${parts.join('&')}`)
+}
 
 export async function fetchCommunityMembers(
   communityId: string,
@@ -318,35 +410,46 @@ export async function fetchCommunityMembers(
 
 // --- Places ---
 
-const placeIdsCache = createTtlCache<string[]>()
-
-export async function fetchCommunityPlaceIds(
-  communityId: string
-): Promise<string[]> {
-  const cached = placeIdsCache.get(communityId)
-  if (cached != null) return cached
-  const base = await resolveBaseURL()
-  const response: { results: Array<{ id: string }>; total: number } =
-    await signedGet(`${base}/${communityId}/places`)
-  const ids = (response.results ?? []).map((r) => r.id)
-  placeIdsCache.set(communityId, ids)
-  return ids
-}
-
 const resolvedPlacesCache = createTtlCache<PlaceFromApi[]>()
 
+/**
+ * GET /communities/{id}/places returns the full `PlaceFromApi` objects
+ * inline — no second roundtrip needed. (The earlier implementation tossed
+ * everything but `id` and re-fetched via the global places endpoint, which
+ * fails for worlds because their ids are world-names like `chiri.dcl.eth`,
+ * not the place UUIDs that endpoint expects.)
+ */
 export async function fetchCommunityPlaces(
   communityId: string
 ): Promise<PlaceFromApi[]> {
   const cached = resolvedPlacesCache.get(communityId)
   if (cached != null) return cached
-  const placeIds = await fetchCommunityPlaceIds(communityId)
-  const resolved = await Promise.all(
-    placeIds.map(async (id) => await fetchPlaceFromApi(id).catch(() => null))
+  const base = await resolveBaseURL()
+  const response: { results: PlaceFromApi[]; total: number } = await signedGet(
+    `${base}/${communityId}/places`
   )
-  const places = resolved.filter((p): p is PlaceFromApi => p != null)
+  // The community endpoint returns every linked place id including deleted /
+  // disabled ones (the linkage is not cleaned up server-side). Unity renders
+  // those as blank cards; we drop them so only real places show.
+  const places = (response.results ?? []).filter(
+    (p) =>
+      p != null &&
+      !p.disabled &&
+      typeof p.title === 'string' &&
+      p.title.length > 0 &&
+      typeof p.image === 'string' &&
+      p.image.length > 0
+  )
   resolvedPlacesCache.set(communityId, places)
   return places
+}
+
+/** Place ids associated with a community — resolved from `fetchCommunityPlaces`. */
+export async function fetchCommunityPlaceIds(
+  communityId: string
+): Promise<string[]> {
+  const places = await fetchCommunityPlaces(communityId)
+  return places.map((p) => p.id)
 }
 
 /**
@@ -363,6 +466,25 @@ export function updateCachedCommunityPlace(
     const next = [...places]
     next[idx] = { ...places[idx], ...partial }
     resolvedPlacesCache.set(key, next)
+  }
+  placeMediator.publish(`place:${id}`, partial)
+}
+
+const placeMediator = createMediator()
+
+/**
+ * Subscribe to per-place mutations. Fires whenever
+ * `updateCachedCommunityPlace(placeId, partial)` is called for the same id.
+ * Returns an unsubscribe — call it from `useEffect` cleanup.
+ */
+export function listenPlaceChanged(
+  placeId: string,
+  fn: (partial: Partial<PlaceFromApi>) => void
+): () => void {
+  const channel = `place:${placeId}`
+  placeMediator.subscribe(channel, fn)
+  return () => {
+    placeMediator.unsubscribe(channel, fn)
   }
 }
 

@@ -4,7 +4,7 @@ import useState = ReactEcs.useState
 import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { COLOR } from '../../../components/color-palette'
-import { Column } from '../../../components/layout'
+import { Column } from '../../../components/ui-system/layout'
 import { CloseButton } from '../../../components/close-button'
 import {
   CONTEXT,
@@ -12,8 +12,6 @@ import {
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
 import { noop } from '../../../utils/function-utils'
-import { store } from '../../../state/store'
-import { closeLastPopupAction } from '../../../state/hud/actions'
 import type { EventFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import { CommunityEventActionsRow } from './community-event-actions-row'
 import {
@@ -103,10 +101,6 @@ function CommunityEventPopupContent({
             position: { top: fontSize, right: fontSize },
             positionType: 'absolute',
             zIndex: 1
-          }}
-          fontSize={fontSize}
-          onClick={() => {
-            store.dispatch(closeLastPopupAction())
           }}
         />
         {/* Hero image */}

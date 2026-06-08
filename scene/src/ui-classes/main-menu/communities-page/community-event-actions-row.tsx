@@ -1,12 +1,11 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import {
   CONTEXT,
   getFontSize,
   TYPOGRAPHY_TOKENS
 } from '../../../service/fontsize-system'
-import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
 import Icon from '../../../components/icon/Icon'
 import type { EventFromApi } from '../../scene-info-card/SceneInfoCard.types'
 import { createAttendee, removeAttendee } from '../../../utils/promise-utils'
@@ -18,6 +17,9 @@ import type { Atlas } from '../../../utils/definitions'
 import useState = ReactEcs.useState
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
+import { store } from '../../../state/store'
+import { pushPopupAction } from '../../../state/hud/actions'
+import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 
 /** Format ISO timestamp as YYYYMMDDTHHmmssZ (Google Calendar format). */
 function toCalendarDate(iso: string): string {
@@ -51,8 +53,6 @@ export function CommunityEventActionsRow({
   }
   const buttonBaseTransform: UiTransformProps = {
     borderRadius: fontSize / 2,
-    borderWidth: 1,
-    borderColor: COLOR.WHITE,
     padding: buttonPadding,
     margin: { right: fontSize * 0.5 },
     flexGrow: 0,
@@ -111,35 +111,44 @@ export function CommunityEventActionsRow({
         ...uiTransform
       }}
     >
+      {/* JUMP IN */}
+      <ButtonTextIcon
+        variant="primary"
+        value="<b>JUMP IN</b>"
+        icon={{ spriteName: 'JumpIn', atlasName: 'icons' as Atlas }}
+        fontSize={fontSizeSmall}
+        uiTransform={buttonBaseTransform}
+        onMouseDown={() => {
+          const [x, y] = event.coordinates ??
+            event.position ?? [event.x, event.y]
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.TELEPORT,
+              data: `${x},${y}`
+            })
+          )
+        }}
+      />
       {/* REMIND ME */}
       <ButtonTextIcon
+        variant={attending ? 'black' : 'subtle'}
         value={attending ? '<b>SUBSCRIBED</b>' : '<b>REMIND ME</b>'}
         icon={{
           spriteName: attending ? 'ReminderOn' : 'ReminderOff',
           atlasName: 'icons' as Atlas
         }}
-        iconColor={COLOR.WHITE}
-        fontColor={COLOR.WHITE}
         fontSize={fontSizeSmall}
-        backgroundColor={
-          attending ? COLOR.BLACK_TRANSPARENT : COLOR.BUTTON_PRIMARY
-        }
-        uiTransform={{
-          ...buttonBaseTransform,
-          opacity: toggling ? getLoadingAlphaValue() : 1
-        }}
+        loading={toggling}
+        uiTransform={buttonBaseTransform}
         onMouseDown={toggleReminder}
       />
       {/* Add to calendar */}
       <ButtonTextIcon
+        variant="black"
         value="ADD TO CALENDAR"
         icon={{ spriteName: 'EventsIcn', atlasName: 'social' }}
-        iconColor={COLOR.WHITE}
         fontSize={fontSizeSmall}
-        backgroundColor={COLOR.BLACK_TRANSPARENT}
-        uiTransform={{
-          ...buttonBaseTransform
-        }}
+        uiTransform={buttonBaseTransform}
         onMouseDown={onAddToCalendar}
       />
 
@@ -174,14 +183,12 @@ function ShareButton({
   return (
     <UiEntity uiTransform={{ flexDirection: 'column' }}>
       <ButtonTextIcon
+        variant="black"
+        active={open}
         value="SHARE"
         icon={{ spriteName: 'Share', atlasName: 'context' }}
-        iconColor={COLOR.WHITE}
         fontSize={fontSizeSmall}
-        backgroundColor={open ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT}
-        uiTransform={{
-          ...uiTransform
-        }}
+        uiTransform={uiTransform}
         onMouseDown={() => {
           setOpen(!open)
         }}

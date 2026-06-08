@@ -168,7 +168,10 @@ export default class ChatAndLogs {
       for await (const chatMessage of stream) {
         if (chatMessage.message.indexOf('␑') === 0) return
         this.pushMessage(chatMessage).catch(console.error)
-        if (!this.isOpen()) {
+        if (
+          !this.isOpen() &&
+          !state.filterMessages[getMessageType(chatMessage)]
+        ) {
           state.unreadMessages++
         }
       }
@@ -625,11 +628,7 @@ export function messageHasMentionToMe(message: string): boolean {
 
 async function pushMessage(message: ChatMessageDefinition): Promise<void> {
   console.log('pushMessage', JSON.stringify(message))
-  const messageType = isSystemMessage(message)
-    ? message.sender_address === ZERO_ADDRESS
-      ? MESSAGE_TYPE.SYSTEM
-      : MESSAGE_TYPE.SYSTEM_FEEDBACK
-    : MESSAGE_TYPE.USER
+  const messageType = getMessageType(message)
   if (state.filterMessages[messageType]) {
     return
   }
@@ -637,8 +636,6 @@ async function pushMessage(message: ChatMessageDefinition): Promise<void> {
   if (state.shownMessages.length >= BUFFER_SIZE) {
     state.shownMessages.shift()
   }
-
-  // El profileData de todos los usuarios mencionados : PROBLEM ?
 
   let playerData = requestPlayer({ userId: message.sender_address })
   let retries = 0
@@ -713,4 +710,11 @@ export function onNewMessage(
   return (): void => {
     callbacks.onNewMessage = callbacks.onNewMessage.filter((f) => f !== fn)
   }
+}
+function getMessageType(message: ChatMessageDefinition): MESSAGE_TYPE {
+  return isSystemMessage(message)
+    ? message.sender_address === ZERO_ADDRESS
+      ? MESSAGE_TYPE.SYSTEM
+      : MESSAGE_TYPE.SYSTEM_FEEDBACK
+    : MESSAGE_TYPE.USER
 }

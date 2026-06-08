@@ -26,7 +26,6 @@ import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 import { FEATURES, getFeatureFlag } from '../../service/feature-flags'
 
 const SELECTED_BUTTON_COLOR: Color4 = { ...Color4.Gray(), a: 0.3 }
-const BUTTON_TEXT_COLOR_INACTIVE = Color4.Gray()
 
 export default class MainMenu {
   public activePage: MenuPage | undefined = 'settings'
@@ -242,6 +241,8 @@ export default class MainMenu {
               {getFeatureFlag(FEATURES.COMMUNITIES) && (
                 <ButtonTextIcon
                   uiTransform={buttonTransform}
+                  variant="transparent"
+                  active={this.activePage === 'communities'}
                   onMouseEnter={() => {
                     this.communitiesEnter()
                   }}
@@ -251,26 +252,17 @@ export default class MainMenu {
                   onMouseDown={() => {
                     this.show('communities')
                   }}
-                  backgroundColor={this.communitiesBackground}
                   icon={this.communitiesIcon}
                   value={'<b>COMMUNITIES</b>'}
                   fontSize={BUTTON_ICON_FONT_SIZE}
                   iconSize={ICON_SIZE}
-                  iconColor={
-                    this.activePage === 'communities'
-                      ? undefined
-                      : BUTTON_TEXT_COLOR_INACTIVE
-                  }
-                  fontColor={
-                    this.activePage === 'communities'
-                      ? undefined
-                      : BUTTON_TEXT_COLOR_INACTIVE
-                  }
                 />
               )}
 
               <ButtonTextIcon
                 uiTransform={buttonTransform}
+                variant="transparent"
+                active={this.activePage === 'map'}
                 onMouseEnter={() => {
                   this.mapEnter()
                 }}
@@ -280,25 +272,16 @@ export default class MainMenu {
                 onMouseDown={() => {
                   this.show('map')
                 }}
-                backgroundColor={this.mapBackground}
                 icon={this.mapIcon}
                 value={'<b>MAP</b> [M]'}
                 fontSize={BUTTON_ICON_FONT_SIZE}
                 iconSize={ICON_SIZE}
-                iconColor={
-                  this.activePage === 'map'
-                    ? undefined
-                    : BUTTON_TEXT_COLOR_INACTIVE
-                }
-                fontColor={
-                  this.activePage === 'map'
-                    ? undefined
-                    : BUTTON_TEXT_COLOR_INACTIVE
-                }
               />
 
               <ButtonTextIcon
                 uiTransform={buttonTransform}
+                variant="transparent"
+                active={this.activePage === 'backpack'}
                 onMouseEnter={() => {
                   this.backpackEnter()
                 }}
@@ -308,25 +291,16 @@ export default class MainMenu {
                 onMouseDown={() => {
                   this.show('backpack')
                 }}
-                backgroundColor={this.backpackBackground}
                 icon={this.backpackIcon}
                 value={'<b>BACKPACK</b>'}
                 fontSize={BUTTON_ICON_FONT_SIZE}
                 iconSize={ICON_SIZE}
-                iconColor={
-                  this.activePage === 'backpack'
-                    ? undefined
-                    : BUTTON_TEXT_COLOR_INACTIVE
-                }
-                fontColor={
-                  this.activePage === 'backpack'
-                    ? undefined
-                    : BUTTON_TEXT_COLOR_INACTIVE
-                }
               />
 
               <ButtonTextIcon
                 uiTransform={buttonTransform}
+                variant="transparent"
+                active={this.activePage === 'settings'}
                 onMouseEnter={() => {
                   this.settingsEnter()
                 }}
@@ -336,21 +310,10 @@ export default class MainMenu {
                 onMouseDown={() => {
                   this.show('settings')
                 }}
-                backgroundColor={this.settingsBackground}
                 icon={this.settingsIcon}
                 value={'<b>SETTINGS</b>'}
                 fontSize={BUTTON_ICON_FONT_SIZE}
                 iconSize={ICON_SIZE}
-                iconColor={
-                  this.activePage === 'settings'
-                    ? undefined
-                    : BUTTON_TEXT_COLOR_INACTIVE
-                }
-                fontColor={
-                  this.activePage === 'settings'
-                    ? undefined
-                    : BUTTON_TEXT_COLOR_INACTIVE
-                }
               />
             </UiEntity>
           </UiEntity>

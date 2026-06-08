@@ -1,7 +1,7 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type Color4 } from '@dcl/sdk/math'
 import { COLOR } from './color-palette'
-import { Row } from './layout'
+import { Row } from './ui-system/layout'
 import Icon from './icon/Icon'
 import { getAddressColor } from '../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getNameWithHashPostfix } from '../service/chat/chat-utils'
@@ -59,11 +59,9 @@ export function PlayerNameComponent({
       />
       {hasClaimedName ? (
         <Icon
-          uiTransform={{
-            position: { left: -size / 4 }
-          }}
           icon={{ spriteName: 'Verified', atlasName: 'icons' }}
           iconSize={size}
+          uiTransform={{ position: { left: -size / 4 } }}
         />
       ) : null}
     </Row>

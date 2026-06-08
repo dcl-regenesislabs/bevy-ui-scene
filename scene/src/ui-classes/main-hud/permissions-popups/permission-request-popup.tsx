@@ -17,7 +17,7 @@ import {
   type PermissionLevel,
   type PermissionRequest
 } from '../../../bevy-api/permission-definitions'
-import { Row } from '../../../components/layout'
+import { Row } from '../../../components/ui-system/layout'
 import { ButtonTextIcon } from '../../../components/button-text-icon'
 import { RadioButton } from '../../../components/radio-button'
 import useState = ReactEcs.useState
@@ -142,7 +142,7 @@ function PermissionRequestContent({
           uiTransform={{
             width: '30%'
           }}
-          backgroundColor={COLOR.BUTTON_PRIMARY}
+          variant="primary"
           fontSize={fontSize}
           value={'Allow'}
           onMouseDown={() => {
@@ -169,7 +169,7 @@ function PermissionRequestContent({
             width: '30%',
             margin: { left: '5%', right: '5%' }
           }}
-          backgroundColor={COLOR.BUTTON_PRIMARY}
+          variant="primary"
           fontSize={fontSize}
           value={'Deny'}
           onMouseDown={() => {

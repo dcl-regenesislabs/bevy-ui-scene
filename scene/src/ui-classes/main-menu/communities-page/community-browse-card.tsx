@@ -1,6 +1,6 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { COLOR } from '../../../components/color-palette'
-import { Column } from '../../../components/layout'
+import { Column } from '../../../components/ui-system/layout'
 import {
   type CommunityListItem,
   type CommunityMemberRole,
@@ -127,7 +127,6 @@ export function CommunityBrowseCard({
       executeTask(async () => {
         try {
           await joinCommunity(community.id)
-          community.role = 'member'
           notifyCommunitiesChanged()
         } catch (error) {
           setRole(previous)

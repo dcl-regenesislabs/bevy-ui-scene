@@ -7,6 +7,7 @@ import { engine, PrimaryPointerInfo, Transform } from '@dcl/sdk/ecs'
 import { getBigMapCameraEntity } from '../../../service/map/map-camera'
 import { type Vector2, type Vector3 } from '@dcl/sdk/math'
 import { screenToGround } from '../../../service/perspective-to-screen'
+import { bigMap2DViewport, screenToParcel2D } from './big-map-2d-view'
 import {
   getViewportHeight,
   getViewportWidth
@@ -31,18 +32,29 @@ export function MapStatusBar({
   useEffect(() => {
     try {
       const pointerInfo = PrimaryPointerInfo.get(engine.RootEntity)
-      const mapCameraTransform = Transform.get(getBigMapCameraEntity())
-      const targetPosition: Vector3 = screenToGround(
-        (pointerInfo.screenCoordinates as Vector2).x, // TODO REVIEW + getRightPanelWidth() / 2, to move camera more centered
-        (pointerInfo.screenCoordinates as Vector2).y,
-        getViewportWidth(),
-        getViewportHeight(),
-        mapCameraTransform.position,
-        mapCameraTransform.rotation,
-        FOV
-      ) as Vector3
-
-      const { x, y } = getVector3Parcel(targetPosition)
+      const screenCoords = pointerInfo.screenCoordinates as Vector2
+      let x: number
+      let y: number
+      if (bigMap2DViewport.active) {
+        const parcel = screenToParcel2D(screenCoords.x, screenCoords.y)
+        if (!parcel) return
+        x = parcel.x
+        y = parcel.y
+      } else {
+        const mapCameraTransform = Transform.get(getBigMapCameraEntity())
+        const targetPosition: Vector3 = screenToGround(
+          screenCoords.x,
+          screenCoords.y,
+          getViewportWidth(),
+          getViewportHeight(),
+          mapCameraTransform.position,
+          mapCameraTransform.rotation,
+          FOV
+        ) as Vector3
+        const parcel = getVector3Parcel(targetPosition)
+        x = parcel.x
+        y = parcel.y
+      }
       const place = getPlacesAroundParcel({ x, y }, 0)
       const parcelName = place[0]?.title ?? ''
       const worldStr = currentRealmProviderIsWorld()

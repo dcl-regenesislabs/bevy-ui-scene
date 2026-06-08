@@ -85,6 +85,28 @@ export type FriendshipRequestNotification = {
     sender: UserProfile
     receiver: UserProfile
     requestId: string
+    message?: string
+  }
+} & BaseNotification
+
+/**
+ * Toast shown to the inviter after `BevyApi.social` (or the communities
+ * REST API) confirms an invite went through. Purely client-side — there
+ * is no matching backend notification feed entry.
+ */
+export type CommunityInviteSentNotification = {
+  type: 'community_invite_sent'
+  metadata: {
+    communityId: string
+    communityName: string
+    /** Target user address; informational only. */
+    targetAddress: string
+    /** Resolved display name of the target user. */
+    targetName?: string
+    /** Community thumbnail URL — consumed by the generic toast renderer. */
+    image?: string
+    /** Free-text description shown by the default renderer path. */
+    description: string
   }
 } & BaseNotification
 
@@ -276,6 +298,7 @@ export type Notification =
   | RewardAssignmentNotification
   | RewardInProgressNotification
   | FriendshipRejectedNotification
+  | CommunityInviteSentNotification
 
 export type FriendshipRejectedNotification = {
   type: 'social_service_friendship_rejected'

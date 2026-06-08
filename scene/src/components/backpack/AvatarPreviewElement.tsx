@@ -189,10 +189,6 @@ export function AvatarPreviewElement({
                   }
                 : {})
             }}
-            onMouseDown={() => {
-              if (!allowRotation) return
-              showMouseCursor(ROTATE_ICON)
-            }}
             onMouseDragLocked={() => {
               if (!allowRotation) return
               if (!avatarEntity) return
@@ -216,14 +212,14 @@ export function AvatarPreviewElement({
                 qY
               )
             }}
+            onMouseDragEnd={() => {
+              hideMouseCursor()
+            }}
             onMouseEnter={() => {
               setListeningZoom(true)
             }}
             onMouseLeave={() => {
               setListeningZoom(false)
-            }}
-            onMouseUp={() => {
-              hideMouseCursor()
             }}
           >
             <UiEntity

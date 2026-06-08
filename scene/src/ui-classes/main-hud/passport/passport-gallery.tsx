@@ -1,5 +1,5 @@
 import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
-import { Column, Row } from '../../../components/layout'
+import { Column, Row } from '../../../components/ui-system/layout'
 import { PassportSection } from './passport-section'
 import { store } from '../../../state/store'
 import { COLOR } from '../../../components/color-palette'
