@@ -15,6 +15,8 @@ import { closeLastPopupAction } from '../../state/hud/actions'
 import { getAddressColor } from '../../ui-classes/main-hud/chat-and-logs/ColorByAddress'
 import { getPlayer } from '@dcl/sdk/src/players'
 
+const AUTO_DISMISS_MS = 5000
+
 export type FriendshipResultVariant =
   | 'sent'
   | 'accepted'
@@ -46,6 +48,19 @@ function getResultMessage(
 
 export const FriendshipResultPopup: Popup = ({ shownPopup }) => {
   const data = shownPopup.data as FriendshipResultData
+
+  ReactEcs.useEffect(() => {
+    const id = setTimeout(() => {
+      const popups = store.getState().hud.shownPopups
+      if (popups[popups.length - 1] === shownPopup) {
+        store.dispatch(closeLastPopupAction())
+      }
+    }, AUTO_DISMISS_MS)
+    return () => {
+      clearTimeout(id)
+    }
+  }, [])
+
   const fontSizeTitle = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.POPUP_TITLE

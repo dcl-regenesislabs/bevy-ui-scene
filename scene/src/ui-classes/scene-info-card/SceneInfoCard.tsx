@@ -127,18 +127,24 @@ export default class SceneInfoCard {
     if (this.place === undefined) return
 
     this.photosQuantityInPlace = 0
-    fetchPhotosQuantity(this.place.id)
-      .then((result) => {
-        this.photosQuantityInPlace = result
-      })
-      .catch(console.error)
+    const isEmpty = isEmptyParcelPlace(this.place)
 
-    let eventsArray: EventFromApi[]
-    try {
-      eventsArray = await fetchEvents(this.place.positions)
-    } catch (error) {
-      console.error('Error fetching events:', error)
-      eventsArray = []
+    if (!isEmpty) {
+      fetchPhotosQuantity(this.place.id)
+        .then((result) => {
+          this.photosQuantityInPlace = result
+        })
+        .catch(console.error)
+    }
+
+    let eventsArray: EventFromApi[] = []
+    if (!isEmpty) {
+      try {
+        eventsArray = await fetchEvents(this.place.positions)
+      } catch (error) {
+        console.error('Error fetching events:', error)
+        eventsArray = []
+      }
     }
 
     const interestedEvents = eventsArray.filter((event) => event.attending)
@@ -550,7 +556,7 @@ export default class SceneInfoCard {
         >
           <UiEntity
             uiTransform={{
-              width: '33%',
+              width: isEmptyParcelPlace(this.place) ? '100%' : '33%',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center'
@@ -575,63 +581,71 @@ export default class SceneInfoCard {
             />
           </UiEntity>
 
-          <UiEntity
-            uiTransform={{
-              width: '33%',
-              margin: 0,
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            onMouseDown={() => {
-              this.setTab('photos')
-            }}
-          >
-            <Label
-              value={'PHOTOS (' + this.photosQuantityInPlace + ')'}
-              color={BLACK_TEXT}
-              fontSize={this.fontSize}
-              textWrap={'nowrap'}
-            />
+          {!isEmptyParcelPlace(this.place) && (
             <UiEntity
-              uiTransform={{ width: '100%', height: 4 }}
-              uiBackground={{
-                color:
-                  this.selectedTab === 'photos' ? RUBY : PANEL_BACKGROUND_COLOR
+              uiTransform={{
+                width: '33%',
+                margin: 0,
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
-            />
-          </UiEntity>
+              onMouseDown={() => {
+                this.setTab('photos')
+              }}
+            >
+              <Label
+                value={'PHOTOS (' + this.photosQuantityInPlace + ')'}
+                color={BLACK_TEXT}
+                fontSize={this.fontSize}
+                textWrap={'nowrap'}
+              />
+              <UiEntity
+                uiTransform={{ width: '100%', height: 4 }}
+                uiBackground={{
+                  color:
+                    this.selectedTab === 'photos'
+                      ? RUBY
+                      : PANEL_BACKGROUND_COLOR
+                }}
+              />
+            </UiEntity>
+          )}
 
-          <UiEntity
-            uiTransform={{
-              width: '33%',
-              margin: 0,
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            onMouseDown={() => {
-              this.setTab('events')
-            }}
-          >
-            <Label
-              value={
-                'EVENTS (' +
-                Object.values(store.getState().scene?.explorerEvents ?? {})
-                  .length +
-                ')'
-              }
-              color={BLACK_TEXT}
-              fontSize={this.fontSize}
-            />
+          {!isEmptyParcelPlace(this.place) && (
             <UiEntity
-              uiTransform={{ width: '100%', height: 4 }}
-              uiBackground={{
-                color:
-                  this.selectedTab === 'events' ? RUBY : PANEL_BACKGROUND_COLOR
+              uiTransform={{
+                width: '33%',
+                margin: 0,
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
-            />
-          </UiEntity>
+              onMouseDown={() => {
+                this.setTab('events')
+              }}
+            >
+              <Label
+                value={
+                  'EVENTS (' +
+                  Object.values(store.getState().scene?.explorerEvents ?? {})
+                    .length +
+                  ')'
+                }
+                color={BLACK_TEXT}
+                fontSize={this.fontSize}
+              />
+              <UiEntity
+                uiTransform={{ width: '100%', height: 4 }}
+                uiBackground={{
+                  color:
+                    this.selectedTab === 'events'
+                      ? RUBY
+                      : PANEL_BACKGROUND_COLOR
+                }}
+              />
+            </UiEntity>
+          )}
         </UiEntity>
         <UiEntity
           uiTransform={{
