@@ -213,7 +213,8 @@ function CommunityEventPopupContent({
           <Column
             uiTransform={{
               width: '100%',
-              height: fontSize * 32
+              height: fontSize * 32,
+              overflow: 'scroll'
             }}
           >
             <Label
