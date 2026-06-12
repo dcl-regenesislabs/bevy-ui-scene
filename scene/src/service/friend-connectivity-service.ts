@@ -104,6 +104,50 @@ export function markSelfInitiatedFriendshipAction(
   selfInitiatedFriendshipActions.add(selfInitiatedKey(type, address))
 }
 
+/**
+ * Bumped whenever a friendship-affecting action completes locally
+ * (e.g. rejecting a request from the profile menu). Components that
+ * cache friendship state on mount (FriendButton) use it as an effect
+ * dependency to refetch, so sibling widgets in the same popup stay in
+ * sync without prop drilling.
+ */
+let friendshipStateVersion = 0
+
+export function getFriendshipStateVersion(): number {
+  return friendshipStateVersion
+}
+
+export function notifyFriendshipStateChanged(): void {
+  friendshipStateVersion++
+}
+
+/**
+ * Confirmation toast after the LOCAL user blocks / unblocks someone —
+ * shown once the RPC resolved, so it never confirms an action that
+ * actually failed. Client-side only (no backend feed entry).
+ */
+export function pushBlockStatusToast(
+  action: 'blocked' | 'unblocked',
+  address: string,
+  name: string
+): void {
+  pushNotificationToast({
+    id: `user-${action}-${address}-${Date.now()}`,
+    type: action === 'blocked' ? 'user_blocked' : 'user_unblocked',
+    address,
+    metadata: {
+      targetAddress: address,
+      targetName: name,
+      description:
+        action === 'blocked'
+          ? `<b>${name}</b> has been blocked.`
+          : `<b>${name}</b> has been unblocked.`
+    },
+    timestamp: String(Date.now()),
+    read: false
+  })
+}
+
 function consumeSelfInitiatedFriendshipAction(
   type: string,
   address: string
@@ -299,6 +343,11 @@ export function initFriendConnectivityService(): void {
     } else if (event.type === 'delete' || event.type === 'block') {
       removeFriend(event.address)
     }
+    // Every remote friendship event invalidates cached per-user state, so
+    // mounted widgets (FriendButton / RejectFriendRequestButton in an open
+    // profile or passport) refetch and flip live — e.g. "Add Friend"
+    // becomes "Accept Friend" when a request arrives mid-popup.
+    notifyFriendshipStateChanged()
     handleFriendshipResultEvent(event)
   })
 

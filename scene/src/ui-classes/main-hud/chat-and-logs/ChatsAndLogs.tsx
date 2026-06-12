@@ -302,8 +302,9 @@ function ChatContent({
   }, [])
 
   useEffect(() => {
+    let nextOpacity = opacity
     if ((focused && opacity !== 1) || state.hoveringChat) {
-      setOpacity(1)
+      nextOpacity = 1
     } else if (!focused) {
       const timeSinceLastMessage =
         Date.now() -
@@ -325,11 +326,12 @@ function ChatContent({
       if (timeSinceLastMessage > 5000) {
         const fadeProgress = Math.min(1, (timeSinceLastMessage - 5000) / 45000)
         const _opacity = 1 - 0.8 * fadeProgress * 50
-        setOpacity(Math.max(0.2, _opacity))
+        nextOpacity = Math.max(0.2, _opacity)
       } else {
-        setOpacity(1)
+        nextOpacity = 1
       }
     }
+    if (nextOpacity !== opacity) setOpacity(nextOpacity)
   })
 
   if (!canvasInfo) return null

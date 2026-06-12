@@ -5,6 +5,8 @@ import { type ChatMessageDefinition } from '../components/chat/chat-message/Chat
 import { type ProfileExtra } from '../utils/passport-promise-utils'
 import type {
   BlockedUserData,
+  BlockingStatusData,
+  BlockUpdateData,
   FriendData,
   FriendStatusData,
   FriendConnectivityEvent,
@@ -267,6 +269,10 @@ export type SocialApi = {
   blockUser: (address: string) => Promise<void>
   unblockUser: (address: string) => Promise<void>
   getBlockedUsers: () => Promise<BlockedUserData[]>
+  /** Both directions of blocking for the local user, addresses only. */
+  getBlockingStatus: () => Promise<BlockingStatusData>
+  /** Emits when another user blocks / unblocks the local user. */
+  getBlockUpdateStream: () => Promise<AsyncGenerator<BlockUpdateData>>
 }
 
 // system api module

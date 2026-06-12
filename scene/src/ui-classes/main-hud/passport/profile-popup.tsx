@@ -23,6 +23,7 @@ import { ButtonTextIcon } from '../../../components/button-text-icon'
 import { BottomBorder } from '../../../components/bottom-border'
 import { FriendButton } from '../../../components/friend-button'
 import { BlockUserButton } from '../../../components/block-user-button'
+import { RejectFriendRequestButton } from '../../../components/reject-friend-request-button'
 import { MenuSection } from '../../../components/menu-section'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { showConfirmPopup } from '../../../components/confirm-popup'
@@ -177,7 +178,14 @@ function ProfileContent({
           ) : null}
           {player.userId !== getPlayer()?.userId &&
           getFeatureFlag(FEATURES.FRIENDS) ? (
-            <BlockUserButton player={player} />
+            <RejectFriendRequestButton
+              player={player}
+              onPressed={closeDialog}
+            />
+          ) : null}
+          {player.userId !== getPlayer()?.userId &&
+          getFeatureFlag(FEATURES.FRIENDS) ? (
+            <BlockUserButton player={player} onPressed={closeDialog} />
           ) : null}
           {player.userId !== getPlayer()?.userId ? (
             <ReportUserButton player={player} />
@@ -271,7 +279,7 @@ function ProfileHeader({
           </Row>,
           ...(getFeatureFlag(FEATURES.FRIENDS) &&
           player.userId !== getPlayer()?.userId
-            ? [<FriendButton player={player} />]
+            ? [<FriendButton player={player} onPressed={closeDialog} />]
             : [])
         ]
       : [])

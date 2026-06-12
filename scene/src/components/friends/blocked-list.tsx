@@ -7,7 +7,7 @@ import { CONTEXT, getFontSize } from '../../service/fontsize-system'
 import { Column } from '../ui-system/layout'
 import { BlockedListItem } from './blocked-list-item'
 import { EmptyBlocked } from './empty-blocked'
-import { listenFriendshipEvent } from '../../service/friend-connectivity-service'
+import { getFriendshipStateVersion } from '../../service/friend-connectivity-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -17,25 +17,19 @@ export function BlockedList(): ReactElement {
   const [hoveredIndex, setHoveredIndex] = useState<number>(-1)
   const fontSize = getFontSize({ context: CONTEXT.SIDE })
 
+  // Refetches on every friendship-state change. That covers both our own
+  // block/unblock actions (which bump the version after their RPC — the
+  // server does NOT echo own actions back over the stream) and remote
+  // friendship events (the connectivity service bumps on every one).
+  const friendshipVersion = getFriendshipStateVersion()
+
   useEffect(() => {
     executeTask(async () => {
       const users = await BevyApi.social.getBlockedUsers()
       setBlockedUsers(users)
       setLoaded(true)
     })
-
-    const unsubscribe = listenFriendshipEvent((event) => {
-      // `block` adds; `delete` may be an unblock. Refresh in both cases.
-      if (event.type === 'block' || event.type === 'delete') {
-        executeTask(async () => {
-          const users = await BevyApi.social.getBlockedUsers()
-          setBlockedUsers(users)
-        })
-      }
-    })
-
-    return unsubscribe
-  }, [])
+  }, [friendshipVersion])
 
   if (!loaded) {
     return (

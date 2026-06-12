@@ -259,6 +259,10 @@ function getTitleFromNotification(notification: Notification): string {
       return 'Friend request rejected'
     case 'community_invite_sent':
       return 'Invitation sent'
+    case 'user_blocked':
+      return 'User blocked'
+    case 'user_unblocked':
+      return 'User unblocked'
     case 'item_sold':
       return 'Item sold'
     default:
@@ -301,6 +305,13 @@ function getColorForNotificationType(notification: Notification): Color4 {
     return COLOR.NOTIFICATION_FRIEND
   }
 
+  if (
+    notification.type === 'user_blocked' ||
+    notification.type === 'user_unblocked'
+  ) {
+    return COLOR.NOTIFICATION_FRIEND
+  }
+
   if (isEventNotification(notification)) {
     return COLOR.NOTIFICATION_EVENT
   }
@@ -323,6 +334,12 @@ function getIconForNotificationType(notification: Notification): AtlasIcon {
   if (isFriendshipNotification(notification as FriendshipNotification)) {
     return {
       spriteName: 'Members',
+      atlasName: 'icons'
+    }
+  }
+  if (type === 'user_blocked' || type === 'user_unblocked') {
+    return {
+      spriteName: 'BlockUser',
       atlasName: 'icons'
     }
   }
@@ -382,6 +399,22 @@ function NotificationThumbnailContent({
         notification={notification as FriendshipNotification}
       />
     )
+  if (
+    notification.type === 'user_blocked' ||
+    notification.type === 'user_unblocked'
+  ) {
+    return (
+      <UiEntity uiTransform={{ width: '100%', height: '100%' }}>
+        <AvatarCircle
+          userId={notification.metadata.targetAddress}
+          circleColor={getAddressColor(notification.metadata.targetAddress)}
+          uiTransform={{ width: '100%', height: '100%' }}
+          isGuest={false}
+        />
+        <NotificationIcon notification={notification} />
+      </UiEntity>
+    )
+  }
   return <GenericNotificationThumbnail notification={notification} />
 }
 
@@ -481,21 +514,33 @@ function handleFriendshipNotificationClick(
   const protagonist = getFriendshipNotificationProtagonist(notification)
 
   if (notification.type === 'social_service_friendship_request') {
-    const requestData: FriendRequestData = {
-      address: protagonist.address,
-      name: protagonist.name,
-      hasClaimedName: protagonist.hasClaimedName,
-      profilePictureUrl: protagonist.profileImageUrl,
-      createdAt: Number(notification.timestamp),
-      id: notification.metadata.requestId,
-      message: notification.metadata.message
-    }
-    store.dispatch(
-      pushPopupAction({
-        type: HUD_POPUP_TYPE.FRIEND_REQUEST_RECEIVED,
-        data: requestData
-      })
-    )
+    executeTask(async () => {
+      // The request may already be resolved (accepted/rejected from the
+      // friends panel, a profile, or another session). Accepting twice
+      // fails, so only open the accept popup while the request is still
+      // pending — otherwise the click just dismisses the notification.
+      const pending = await BevyApi.social.getReceivedFriendRequests()
+      const stillPending = pending.some(
+        (r) => r.address.toLowerCase() === protagonist.address.toLowerCase()
+      )
+      if (!stillPending) return
+
+      const requestData: FriendRequestData = {
+        address: protagonist.address,
+        name: protagonist.name,
+        hasClaimedName: protagonist.hasClaimedName,
+        profilePictureUrl: protagonist.profileImageUrl,
+        createdAt: Number(notification.timestamp),
+        id: notification.metadata.requestId,
+        message: notification.metadata.message
+      }
+      store.dispatch(
+        pushPopupAction({
+          type: HUD_POPUP_TYPE.FRIEND_REQUEST_RECEIVED,
+          data: requestData
+        })
+      )
+    })
   } else {
     const variant =
       notification.type === 'social_service_friendship_accepted'
