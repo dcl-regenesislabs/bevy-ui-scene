@@ -183,6 +183,24 @@ function removeFriend(address: string): void {
 }
 
 /**
+ * Force a friend's status to online (no-op if they're not in the list).
+ * Used after a remote accept: the connectivity snapshot predates the new
+ * friendship, so `getOnlineFriends()` returns the new friend as offline
+ * even though they're clearly online (they just acted). A later real
+ * OFFLINE transition will correct this if they go away.
+ */
+function markFriendOnline(address: string): void {
+  const target = normalizeAddress(address)
+  const prev = store.getState().hud.friends
+  const updated = prev.map((f) =>
+    normalizeAddress(f.address) === target
+      ? { ...f, status: 'online' as const }
+      : f
+  )
+  store.dispatch(updateHudStateAction({ friends: updated }))
+}
+
+/**
  * Wait for the bevy-side social client to finish its initial sync. Without
  * this, an early `getOnlineFriends()` call returns an empty list and the
  * scene never re-fetches — offline friends in particular would be missing
@@ -334,12 +352,21 @@ export function initFriendConnectivityService(): void {
   // Keep the friends list in sync with friendship events + show result popups.
   listenFriendshipEvent((event) => {
     if (event.type === 'accept') {
-      refreshFriends().catch((error) => {
-        showErrorPopup(
-          error instanceof Error ? error : new Error(String(error)),
-          'friend-connectivity:refreshOnAccept'
-        )
-      })
+      // A stream `accept` is always REMOTE (the server doesn't echo our
+      // own actions) — i.e. the other party just accepted my request, so
+      // they're online right now. Refresh the list, then optimistically
+      // mark them online since the connectivity snapshot predates the
+      // friendship and would otherwise show them offline.
+      refreshFriends()
+        .then(() => {
+          markFriendOnline(event.address)
+        })
+        .catch((error) => {
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            'friend-connectivity:refreshOnAccept'
+          )
+        })
     } else if (event.type === 'delete' || event.type === 'block') {
       removeFriend(event.address)
     }
