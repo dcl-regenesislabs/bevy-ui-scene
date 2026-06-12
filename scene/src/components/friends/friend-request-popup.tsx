@@ -30,7 +30,10 @@ import ButtonComponent from '../ui-system/button-component'
 import { showConfirmPopup } from '../confirm-popup'
 
 import { removeFriendRequest } from './friend-request-list'
-import { markSelfInitiatedFriendshipAction } from '../../service/friend-connectivity-service'
+import {
+  markSelfInitiatedFriendshipAction,
+  notifyFriendshipStateChanged
+} from '../../service/friend-connectivity-service'
 
 export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
   const request = shownPopup.data as FriendRequestData
@@ -47,6 +50,9 @@ export const FriendRequestReceivedPopup: Popup = ({ shownPopup }) => {
             markSelfInitiatedFriendshipAction('accept', request.address)
             await BevyApi.social.acceptFriendRequest(request.address)
             removeFriendRequest(request.address)
+            // Our own accept isn't echoed by the server stream — bump so
+            // the friends panel refetches and the new friend appears.
+            notifyFriendshipStateChanged()
             store.dispatch(closeLastPopupAction())
             store.dispatch(
               pushPopupAction({

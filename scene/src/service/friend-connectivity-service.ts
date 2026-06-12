@@ -220,7 +220,7 @@ async function waitForSocialReady(timeoutMs = 10_000): Promise<boolean> {
   return false
 }
 
-async function refreshFriends(): Promise<void> {
+export async function refreshFriends(): Promise<void> {
   const friends = await BevyApi.social.getOnlineFriends()
   store.dispatch(updateHudStateAction({ friends, friendsLoading: false }))
 }
