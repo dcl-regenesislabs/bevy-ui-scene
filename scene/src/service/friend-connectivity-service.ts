@@ -419,4 +419,31 @@ export function initFriendConnectivityService(): void {
       )
     }
   })
+
+  // Block updates: someone blocked / unblocked the local user. We don't
+  // surface a toast (privacy — the blocker isn't announced), but we bump
+  // the friendship-state version so any mounted FriendButton re-derives
+  // its block pre-check live. `getBlockUpdateStream` may be absent on
+  // older explorer builds (proxy resolves to a logging no-op that never
+  // yields), in which case this loop simply never iterates.
+  executeTask(async () => {
+    try {
+      const stream = await BevyApi.social.getBlockUpdateStream()
+      if (
+        stream == null ||
+        typeof stream[Symbol.asyncIterator] !== 'function'
+      ) {
+        return
+      }
+      for await (const event of stream) {
+        console.log('[social] block update', event)
+        notifyFriendshipStateChanged()
+      }
+    } catch (error) {
+      showErrorPopup(
+        error instanceof Error ? error : new Error(String(error)),
+        'friend-connectivity:blockUpdateStream'
+      )
+    }
+  })
 }

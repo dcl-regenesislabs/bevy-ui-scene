@@ -157,6 +157,10 @@ export function FriendButton({
     })
   }, [friendshipVersion])
 
+  // Re-derives on every friendship-state change. The block-update stream
+  // (wired in friend-connectivity-service) bumps the version when someone
+  // blocks/unblocks the local user, so an open profile flips live; our own
+  // block/unblock actions bump it too.
   useEffect(() => {
     if (!getFeatureFlag(FEATURES.FRIENDS)) return
     if (userId === undefined) return
@@ -173,9 +177,12 @@ export function FriendButton({
         status.blockedByUsers.some((a) => a.toLowerCase() === target)
       ) {
         setBlockState('blockedMe')
+      } else {
+        // No block in either direction — reset (covers live unblock).
+        setBlockState('none')
       }
     })
-  }, [])
+  }, [friendshipVersion])
 
   if (userId === undefined) return null
 
