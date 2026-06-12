@@ -222,7 +222,24 @@ async function waitForSocialReady(timeoutMs = 10_000): Promise<boolean> {
 
 export async function refreshFriends(): Promise<void> {
   const friends = await BevyApi.social.getOnlineFriends()
-  store.dispatch(updateHudStateAction({ friends, friendsLoading: false }))
+  store.dispatch(
+    updateHudStateAction({
+      friends: hydrateStatusFromNearbyAvatars(friends),
+      friendsLoading: false
+    })
+  )
+}
+
+function hydrateStatusFromNearbyAvatars(
+  friends: FriendStatusData[]
+): FriendStatusData[] {
+  return friends.map((f) => {
+    if (f.status !== 'offline') return f
+    const nearby = getPlayer({ userId: f.address })
+    return nearby != null && nearby.userId.length > 0
+      ? { ...f, status: 'online' as const }
+      : f
+  })
 }
 
 function handleFriendshipResultEvent(event: FriendshipEventUpdate): void {
