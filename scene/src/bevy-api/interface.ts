@@ -269,10 +269,18 @@ export type SocialApi = {
   blockUser: (address: string) => Promise<void>
   unblockUser: (address: string) => Promise<void>
   getBlockedUsers: () => Promise<BlockedUserData[]>
-  /** Both directions of blocking for the local user, addresses only. */
-  getBlockingStatus: () => Promise<BlockingStatusData>
-  /** Emits when another user blocks / unblocks the local user. */
-  getBlockUpdateStream: () => Promise<AsyncGenerator<BlockUpdateData>>
+  /**
+   * Both directions of blocking for the local user, addresses only.
+   * Optional: older bevy-explorer builds don't expose it (the BevyApi
+   * proxy resolves the missing method to a logging no-op), so callers
+   * must guard for `undefined`.
+   */
+  getBlockingStatus?: () => Promise<BlockingStatusData>
+  /**
+   * Emits when another user blocks / unblocks the local user.
+   * Optional for the same reason as `getBlockingStatus` — guard before use.
+   */
+  getBlockUpdateStream?: () => Promise<AsyncGenerator<BlockUpdateData>>
 }
 
 // system api module

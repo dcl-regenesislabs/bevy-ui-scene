@@ -230,6 +230,23 @@ export async function refreshFriends(): Promise<void> {
   )
 }
 
+/**
+ * Comms cross-reference (the only pure-scene presence signal). The
+ * connectivity stream reports presence via a subscribe-time snapshot +
+ * transitions, so a friend who became your friend AFTER the snapshot and
+ * hasn't transitioned since shows OFFLINE even when they're online — the
+ * classic "I just accepted their request and they're stuck offline" case.
+ *
+ * But if their avatar is currently near you, they are DEFINITELY online
+ * (comms is rendering them), regardless of what the snapshot says. So we
+ * upgrade any offline friend whose avatar `getPlayer` can see to online.
+ * No false positives: a visible avatar is a live peer.
+ *
+ * Limitation: only covers friends physically near you (same as the Godot
+ * client). A friend online in another parcel/realm still shows offline
+ * until their next real transition — closing that fully needs a
+ * server-side synthetic connectivity event on accept.
+ */
 function hydrateStatusFromNearbyAvatars(
   friends: FriendStatusData[]
 ): FriendStatusData[] {
@@ -440,12 +457,12 @@ export function initFriendConnectivityService(): void {
   // Block updates: someone blocked / unblocked the local user. We don't
   // surface a toast (privacy — the blocker isn't announced), but we bump
   // the friendship-state version so any mounted FriendButton re-derives
-  // its block pre-check live. `getBlockUpdateStream` may be absent on
-  // older explorer builds (proxy resolves to a logging no-op that never
-  // yields), in which case this loop simply never iterates.
+  // its block pre-check live. `getBlockUpdateStream` is optional on
+  // SocialApi — absent (`undefined`) on older explorer builds — so we
+  // guard the optional call and bail when it's not available.
   executeTask(async () => {
     try {
-      const stream = await BevyApi.social.getBlockUpdateStream()
+      const stream = await BevyApi.social.getBlockUpdateStream?.()
       if (
         stream == null ||
         typeof stream[Symbol.asyncIterator] !== 'function'

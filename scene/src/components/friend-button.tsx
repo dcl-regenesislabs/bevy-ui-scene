@@ -165,10 +165,10 @@ export function FriendButton({
     if (!getFeatureFlag(FEATURES.FRIENDS)) return
     if (userId === undefined) return
     executeTask(async () => {
-      // Older explorer builds don't implement getBlockingStatus — the
-      // BevyApi proxy resolves missing methods to undefined. Skip the
-      // pre-check there; the send flow still surfaces the backend error.
-      const status = await BevyApi.social.getBlockingStatus()
+      // Older explorer builds don't implement getBlockingStatus (it's
+      // optional on SocialApi → `undefined` here). Skip the pre-check
+      // there; the send flow still surfaces the backend error.
+      const status = await BevyApi.social.getBlockingStatus?.()
       if (status == null || !Array.isArray(status.blockedUsers)) return
       const target = userId.toLowerCase()
       if (status.blockedUsers.some((a) => a.toLowerCase() === target)) {
