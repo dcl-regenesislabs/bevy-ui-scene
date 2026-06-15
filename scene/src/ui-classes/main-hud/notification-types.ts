@@ -110,6 +110,19 @@ export type CommunityInviteSentNotification = {
   }
 } & BaseNotification
 
+/**
+ * Confirmation toast after the LOCAL user blocks / unblocks someone.
+ * Purely client-side — the backend feed has no entry for own actions.
+ */
+export type UserBlockStatusNotification = {
+  type: 'user_blocked' | 'user_unblocked'
+  metadata: {
+    targetAddress: string
+    targetName: string
+    description: string
+  }
+} & BaseNotification
+
 export type WearablesDropNotification = {
   type: 'wearables_drop'
   metadata: {
@@ -299,6 +312,7 @@ export type Notification =
   | RewardInProgressNotification
   | FriendshipRejectedNotification
   | CommunityInviteSentNotification
+  | UserBlockStatusNotification
 
 export type FriendshipRejectedNotification = {
   type: 'social_service_friendship_rejected'

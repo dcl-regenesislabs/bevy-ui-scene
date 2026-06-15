@@ -11,6 +11,10 @@ import { ButtonTextIcon } from '../../../components/button-text-icon'
 import { CopyButton } from '../../../components/copy-button'
 import { PlayerNameComponent } from '../../../components/player-name-component'
 import { showConfirmPopup } from '../../../components/confirm-popup'
+import {
+  notifyFriendshipStateChanged,
+  pushBlockStatusToast
+} from '../../../service/friend-connectivity-service'
 import { store } from '../../../state/store'
 import {
   closeLastPopupAction,
@@ -479,6 +483,8 @@ function BlockUserButton({
           confirmLabel: 'BLOCK',
           onConfirm: async () => {
             await BevyApi.social.blockUser(member.memberAddress)
+            pushBlockStatusToast('blocked', member.memberAddress, member.name)
+            notifyFriendshipStateChanged()
           }
         })
       }}

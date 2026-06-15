@@ -1,6 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
+import { getPlayer } from '@dcl/sdk/players'
 import { ButtonComponent } from './ui-system/button-component'
 import { getFontSize } from '../service/fontsize-system'
 import { useLayoutContext } from '../service/layout-context'
@@ -16,7 +17,12 @@ import { HUD_POPUP_TYPE } from '../state/hud/state'
 import { showConfirmPopup } from './confirm-popup'
 import { COLOR } from './color-palette'
 import { FEATURES, getFeatureFlag } from '../service/feature-flags'
-import { markSelfInitiatedFriendshipAction } from '../service/friend-connectivity-service'
+import {
+  getFriendshipStateVersion,
+  markSelfInitiatedFriendshipAction,
+  notifyFriendshipStateChanged,
+  pushBlockStatusToast
+} from '../service/friend-connectivity-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -44,7 +50,8 @@ export function FriendButton({
   hasIncomingRequest: hasIncomingRequestProp,
   hasOutgoingRequest: hasOutgoingRequestProp,
   fontSize: fontSizeProp,
-  uiTransform
+  uiTransform,
+  onPressed
 }: {
   player?: GetPlayerDataRes
   userId?: string
@@ -53,6 +60,13 @@ export function FriendButton({
   hasOutgoingRequest?: boolean
   fontSize?: number
   uiTransform?: UiTransformProps
+  /**
+   * Fires when any action state of the button is pressed (accept,
+   * cancel, unfriend, unblock — "Add Friend" already closes the host
+   * popup itself). Hosts that should close on any action (profile
+   * menu) pass their close function here.
+   */
+  onPressed?: () => void
 }): ReactElement | null {
   const layoutContext = useLayoutContext()
   const fontSize = fontSizeProp ?? getFontSize({ context: layoutContext })
@@ -80,6 +94,12 @@ export function FriendButton({
     useState<boolean>(false)
   const [hasOutgoingRequestInternal, setHasOutgoingRequestInternal] =
     useState<boolean>(false)
+  // 'blockedByMe' → offer "Unblock to Add Friend" (the user can undo their
+  // own decision). 'blockedMe' → disabled generic button (don't disclose
+  // who blocked whom; the backend rejects the request anyway).
+  const [blockState, setBlockState] = useState<
+    'none' | 'blockedByMe' | 'blockedMe'
+  >('none')
   const [hovered, setHovered] = useState<boolean>(false)
   const isFriend = isFriendProp ?? isFriendInternal
   const hasIncomingRequest =
@@ -95,6 +115,12 @@ export function FriendButton({
     })
   }, [])
 
+  // Re-runs the friendship-state fetches whenever a sibling widget
+  // (e.g. RejectFriendRequestButton in the same popup) completes a
+  // friendship action — so "Accept Friend" flips to "Add Friend" right
+  // after a reject without remounting the popup.
+  const friendshipVersion = getFriendshipStateVersion()
+
   useEffect(() => {
     if (isFriendProp !== undefined) return
     if (!getFeatureFlag(FEATURES.FRIENDS)) return
@@ -105,7 +131,7 @@ export function FriendButton({
         friends.some((f) => f.address.toLowerCase() === userId.toLowerCase())
       )
     })
-  }, [])
+  }, [friendshipVersion])
 
   useEffect(() => {
     if (hasIncomingRequestProp !== undefined) return
@@ -117,7 +143,7 @@ export function FriendButton({
         requests.some((r) => r.address.toLowerCase() === userId.toLowerCase())
       )
     })
-  }, [])
+  }, [friendshipVersion])
 
   useEffect(() => {
     if (hasOutgoingRequestProp !== undefined) return
@@ -129,9 +155,50 @@ export function FriendButton({
         requests.some((r) => r.address.toLowerCase() === userId.toLowerCase())
       )
     })
-  }, [])
+  }, [friendshipVersion])
+
+  // Re-derives on every friendship-state change. The block-update stream
+  // (wired in friend-connectivity-service) bumps the version when someone
+  // blocks/unblocks the local user, so an open profile flips live; our own
+  // block/unblock actions bump it too.
+  useEffect(() => {
+    if (!getFeatureFlag(FEATURES.FRIENDS)) return
+    if (userId === undefined) return
+    executeTask(async () => {
+      // Older explorer builds don't implement getBlockingStatus — the
+      // BevyApi proxy resolves missing methods to undefined. Skip the
+      // pre-check there; the send flow still surfaces the backend error.
+      const status = await BevyApi.social.getBlockingStatus()
+      if (status == null || !Array.isArray(status.blockedUsers)) return
+      const target = userId.toLowerCase()
+      if (status.blockedUsers.some((a) => a.toLowerCase() === target)) {
+        setBlockState('blockedByMe')
+      } else if (
+        status.blockedByUsers.some((a) => a.toLowerCase() === target)
+      ) {
+        setBlockState('blockedMe')
+      } else {
+        // No block in either direction — reset (covers live unblock).
+        setBlockState('none')
+      }
+    })
+  }, [friendshipVersion])
 
   if (userId === undefined) return null
+
+  // Guests cannot send / receive friend requests, so the button has no
+  // meaningful state to expose.
+  //   - opener is guest    → friendship actions require a wallet identity.
+  //   - target is guest    → guest userIds are ephemeral, you can't be
+  //                          friends with a session that won't exist next
+  //                          login.
+  // `getPlayer({ userId })` returns null for users not in the scene, so
+  // the target check is best-effort: we hide when we can prove guest,
+  // otherwise fall through.
+  if (getPlayer()?.isGuest === true) return null
+  if (playerProp?.isGuest === true || getPlayer({ userId })?.isGuest === true) {
+    return null
+  }
 
   // Loading placeholder while we resolve the player's name asynchronously.
   if (resolved === null) {
@@ -142,6 +209,58 @@ export function FriendButton({
         fontSize={fontSize}
         icon={{ atlasName: 'icons', spriteName: 'FriendIcon' }}
         loading={true}
+        uiTransform={uiTransform}
+        onMouseDown={() => {}}
+      />
+    )
+  }
+
+  // Blocking pre-checks (see blockState above). Friendship state is
+  // irrelevant while a block exists in either direction — the backend
+  // rejects every friendship action with BlockedUserError.
+  if (blockState === 'blockedByMe') {
+    return (
+      <ButtonComponent
+        variant="black"
+        destructiveHover={true}
+        value="<b>Unblock to Add Friend</b>"
+        fontSize={fontSize}
+        icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
+        uiTransform={uiTransform}
+        onMouseDown={() => {
+          onPressed?.()
+          showConfirmPopup({
+            title: `Are you sure you want to unblock\n<b>${resolved.name}</b>?`,
+            message:
+              'If you unblock someone, you will see their avatar in-world, and you will be able to send friend requests and messages to each other in public or private chats.',
+            icon: {
+              spriteName: 'BlockUser',
+              atlasName: 'icons',
+              backgroundColor: COLOR.RED
+            },
+            confirmLabel: 'UNBLOCK',
+            onConfirm: async () => {
+              await BevyApi.social.unblockUser(resolved.userId)
+              setBlockState('none')
+              pushBlockStatusToast('unblocked', resolved.userId, resolved.name)
+              notifyFriendshipStateChanged()
+            }
+          })
+        }}
+      />
+    )
+  }
+
+  if (blockState === 'blockedMe') {
+    // Deliberately generic: doesn't reveal that the target blocked the
+    // local user, only that the action is unavailable.
+    return (
+      <ButtonComponent
+        variant="black"
+        disabled={true}
+        value="<b>Can't Add This User</b>"
+        fontSize={fontSize}
+        icon={{ atlasName: 'context', spriteName: 'Add' }}
         uiTransform={uiTransform}
         onMouseDown={() => {}}
       />
@@ -167,6 +286,7 @@ export function FriendButton({
           setHovered(false)
         }}
         onMouseDown={() => {
+          onPressed?.()
           showConfirmPopup({
             title: `Are you sure you want to unfriend <b>${resolved.name}</b>?`,
             icon: {
@@ -179,6 +299,7 @@ export function FriendButton({
             address: resolved.userId,
             onConfirm: async () => {
               await BevyApi.social.deleteFriend(resolved.userId)
+              notifyFriendshipStateChanged()
             }
           })
         }}
@@ -195,6 +316,7 @@ export function FriendButton({
         icon={{ atlasName: 'icons', spriteName: 'Check' }}
         uiTransform={uiTransform}
         onMouseDown={() => {
+          onPressed?.()
           executeTask(async () => {
             markSelfInitiatedFriendshipAction('accept', resolved.userId)
             await BevyApi.social.acceptFriendRequest(resolved.userId)
@@ -203,6 +325,7 @@ export function FriendButton({
             // a remount or external refetch.
             setIsFriendInternal(true)
             setHasIncomingRequestInternal(false)
+            notifyFriendshipStateChanged()
           })
         }}
       />
@@ -228,6 +351,7 @@ export function FriendButton({
           setHovered(false)
         }}
         onMouseDown={() => {
+          onPressed?.()
           showConfirmPopup({
             title: `Cancel friend request to <b>${resolved.name}</b>?`,
             icon: {
@@ -244,6 +368,7 @@ export function FriendButton({
               await BevyApi.social.cancelFriendRequest(resolved.userId)
               // Optimistic flip back to "Add Friend".
               setHasOutgoingRequestInternal(false)
+              notifyFriendshipStateChanged()
             }
           })
         }}

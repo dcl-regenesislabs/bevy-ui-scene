@@ -27,9 +27,7 @@ import { CommunityMemberMenuPopup } from '../ui-classes/main-menu/communities-pa
 import { ConfirmPopup } from './confirm-popup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
-export type Popup = (
-  params: PopupParameters
-) => ReactElement | null | ReactElement[]
+export type Popup = (params: PopupParameters) => ReactElement | null
 
 /**
  * Global busy flag — set by whichever popup is currently in the middle of
@@ -81,13 +79,21 @@ export function PopupStack(): ReactElement | null {
     <UiEntity
       uiTransform={{ zIndex: MAX_ZINDEX - 1, width: '100%', height: '100%' }}
     >
-      {shownPopups.map(
-        (shownPopup: HUDPopup, index) =>
-          popupComponents[shownPopup.type]({
-            shownPopup,
-            key: `${shownPopup.type}-${index}`
-          }) as ReactElement
-      )}
+      {shownPopups.map((shownPopup: HUDPopup, index) => {
+        // Render as a JSX element — NOT a direct function call — so each
+        // popup gets its own fiber with an isolated hook list. Calling the
+        // component as a plain function registers its hooks on PopupStack's
+        // fiber; when the stack composition changes (e.g. send-request
+        // closes and friendship-result opens in the same frame) the hook
+        // order shifts and React throws inside areHookInputsEqual.
+        const PopupComponent = popupComponents[shownPopup.type]
+        return (
+          <PopupComponent
+            key={`${shownPopup.type}-${index}`}
+            shownPopup={shownPopup}
+          />
+        )
+      })}
     </UiEntity>
   )
 }

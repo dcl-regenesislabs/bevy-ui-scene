@@ -104,6 +104,50 @@ export function markSelfInitiatedFriendshipAction(
   selfInitiatedFriendshipActions.add(selfInitiatedKey(type, address))
 }
 
+/**
+ * Bumped whenever a friendship-affecting action completes locally
+ * (e.g. rejecting a request from the profile menu). Components that
+ * cache friendship state on mount (FriendButton) use it as an effect
+ * dependency to refetch, so sibling widgets in the same popup stay in
+ * sync without prop drilling.
+ */
+let friendshipStateVersion = 0
+
+export function getFriendshipStateVersion(): number {
+  return friendshipStateVersion
+}
+
+export function notifyFriendshipStateChanged(): void {
+  friendshipStateVersion++
+}
+
+/**
+ * Confirmation toast after the LOCAL user blocks / unblocks someone —
+ * shown once the RPC resolved, so it never confirms an action that
+ * actually failed. Client-side only (no backend feed entry).
+ */
+export function pushBlockStatusToast(
+  action: 'blocked' | 'unblocked',
+  address: string,
+  name: string
+): void {
+  pushNotificationToast({
+    id: `user-${action}-${address}-${Date.now()}`,
+    type: action === 'blocked' ? 'user_blocked' : 'user_unblocked',
+    address,
+    metadata: {
+      targetAddress: address,
+      targetName: name,
+      description:
+        action === 'blocked'
+          ? `<b>${name}</b> has been blocked.`
+          : `<b>${name}</b> has been unblocked.`
+    },
+    timestamp: String(Date.now()),
+    read: false
+  })
+}
+
 function consumeSelfInitiatedFriendshipAction(
   type: string,
   address: string
@@ -139,6 +183,24 @@ function removeFriend(address: string): void {
 }
 
 /**
+ * Force a friend's status to online (no-op if they're not in the list).
+ * Used after a remote accept: the connectivity snapshot predates the new
+ * friendship, so `getOnlineFriends()` returns the new friend as offline
+ * even though they're clearly online (they just acted). A later real
+ * OFFLINE transition will correct this if they go away.
+ */
+function markFriendOnline(address: string): void {
+  const target = normalizeAddress(address)
+  const prev = store.getState().hud.friends
+  const updated = prev.map((f) =>
+    normalizeAddress(f.address) === target
+      ? { ...f, status: 'online' as const }
+      : f
+  )
+  store.dispatch(updateHudStateAction({ friends: updated }))
+}
+
+/**
  * Wait for the bevy-side social client to finish its initial sync. Without
  * this, an early `getOnlineFriends()` call returns an empty list and the
  * scene never re-fetches — offline friends in particular would be missing
@@ -158,9 +220,26 @@ async function waitForSocialReady(timeoutMs = 10_000): Promise<boolean> {
   return false
 }
 
-async function refreshFriends(): Promise<void> {
+export async function refreshFriends(): Promise<void> {
   const friends = await BevyApi.social.getOnlineFriends()
-  store.dispatch(updateHudStateAction({ friends, friendsLoading: false }))
+  store.dispatch(
+    updateHudStateAction({
+      friends: hydrateStatusFromNearbyAvatars(friends),
+      friendsLoading: false
+    })
+  )
+}
+
+function hydrateStatusFromNearbyAvatars(
+  friends: FriendStatusData[]
+): FriendStatusData[] {
+  return friends.map((f) => {
+    if (f.status !== 'offline') return f
+    const nearby = getPlayer({ userId: f.address })
+    return nearby != null && nearby.userId.length > 0
+      ? { ...f, status: 'online' as const }
+      : f
+  })
 }
 
 function handleFriendshipResultEvent(event: FriendshipEventUpdate): void {
@@ -290,15 +369,29 @@ export function initFriendConnectivityService(): void {
   // Keep the friends list in sync with friendship events + show result popups.
   listenFriendshipEvent((event) => {
     if (event.type === 'accept') {
-      refreshFriends().catch((error) => {
-        showErrorPopup(
-          error instanceof Error ? error : new Error(String(error)),
-          'friend-connectivity:refreshOnAccept'
-        )
-      })
+      // A stream `accept` is always REMOTE (the server doesn't echo our
+      // own actions) — i.e. the other party just accepted my request, so
+      // they're online right now. Refresh the list, then optimistically
+      // mark them online since the connectivity snapshot predates the
+      // friendship and would otherwise show them offline.
+      refreshFriends()
+        .then(() => {
+          markFriendOnline(event.address)
+        })
+        .catch((error) => {
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            'friend-connectivity:refreshOnAccept'
+          )
+        })
     } else if (event.type === 'delete' || event.type === 'block') {
       removeFriend(event.address)
     }
+    // Every remote friendship event invalidates cached per-user state, so
+    // mounted widgets (FriendButton / RejectFriendRequestButton in an open
+    // profile or passport) refetch and flip live — e.g. "Add Friend"
+    // becomes "Accept Friend" when a request arrives mid-popup.
+    notifyFriendshipStateChanged()
     handleFriendshipResultEvent(event)
   })
 
@@ -340,6 +433,33 @@ export function initFriendConnectivityService(): void {
       showErrorPopup(
         error instanceof Error ? error : new Error(String(error)),
         'friend-connectivity:friendshipStream'
+      )
+    }
+  })
+
+  // Block updates: someone blocked / unblocked the local user. We don't
+  // surface a toast (privacy — the blocker isn't announced), but we bump
+  // the friendship-state version so any mounted FriendButton re-derives
+  // its block pre-check live. `getBlockUpdateStream` may be absent on
+  // older explorer builds (proxy resolves to a logging no-op that never
+  // yields), in which case this loop simply never iterates.
+  executeTask(async () => {
+    try {
+      const stream = await BevyApi.social.getBlockUpdateStream()
+      if (
+        stream == null ||
+        typeof stream[Symbol.asyncIterator] !== 'function'
+      ) {
+        return
+      }
+      for await (const event of stream) {
+        console.log('[social] block update', event)
+        notifyFriendshipStateChanged()
+      }
+    } catch (error) {
+      showErrorPopup(
+        error instanceof Error ? error : new Error(String(error)),
+        'friend-connectivity:blockUpdateStream'
       )
     }
   })

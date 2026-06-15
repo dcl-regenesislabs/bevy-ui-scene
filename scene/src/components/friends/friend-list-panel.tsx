@@ -1,7 +1,13 @@
 import { getFontSize } from '../../service/fontsize-system'
 import ReactEcs from '@dcl/react-ecs'
+import { executeTask } from '@dcl/sdk/ecs'
 import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 import { type FriendStatusData } from '../../service/social-service-type'
+import {
+  getFriendshipStateVersion,
+  refreshFriends
+} from '../../service/friend-connectivity-service'
 import { Column } from '../ui-system/layout'
 import Icon from '../icon/Icon'
 import { getChatMaxHeight } from '../chat/chat-area'
@@ -23,6 +29,18 @@ export function FriendListPanel(): ReactEcs.JSX.Element {
   const [filterText, setFilterText] = useState<string>('')
 
   const { friends, friendsLoading } = store.getState().hud
+
+  // Refetch on mount and whenever friendship state changes locally. The
+  // service keeps hud.friends fresh from the connectivity stream, but our
+  // OWN accept/unfriend actions aren't echoed by the server stream, so
+  // without this the list would miss a just-accepted friend (or keep a
+  // just-removed one) until app restart.
+  const friendshipVersion = getFriendshipStateVersion()
+  useEffect(() => {
+    executeTask(async () => {
+      await refreshFriends()
+    })
+  }, [friendshipVersion])
 
   const byName = (a: FriendStatusData, b: FriendStatusData): number =>
     a.name.localeCompare(b.name)

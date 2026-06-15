@@ -1,6 +1,7 @@
 import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { executeTask } from '@dcl/sdk/ecs'
+import { getPlayer } from '@dcl/sdk/players'
 import {
   ButtonComponent,
   type ButtonVariant
@@ -16,6 +17,10 @@ import {
 import { BevyApi } from '../bevy-api'
 import { showConfirmPopup } from './confirm-popup'
 import { FEATURES, getFeatureFlag } from '../service/feature-flags'
+import {
+  notifyFriendshipStateChanged,
+  pushBlockStatusToast
+} from '../service/friend-connectivity-service'
 
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
@@ -41,7 +46,8 @@ export function BlockUserButton({
   isBlocked: isBlockedProp,
   fontSize: fontSizeProp,
   variant = 'subtle',
-  uiTransform
+  uiTransform,
+  onPressed
 }: {
   player?: GetPlayerDataRes
   userId?: string
@@ -54,6 +60,12 @@ export function BlockUserButton({
    */
   variant?: ButtonVariant
   uiTransform?: UiTransformProps
+  /**
+   * Fires when the button is pressed, before the confirm popup opens.
+   * Hosts that should close on any action (profile menu) pass their
+   * close function here.
+   */
+  onPressed?: () => void
 }): ReactElement | null {
   const layoutContext = useLayoutContext()
   const fontSize = fontSizeProp ?? getFontSize({ context: layoutContext })
@@ -102,6 +114,11 @@ export function BlockUserButton({
 
   if (userId === undefined) return null
 
+  // Guests have no persistent identity, so blocking has no effect: their
+  // address resets next session. Hide the button entirely when the local
+  // user is a guest.
+  if (getPlayer()?.isGuest === true) return null
+
   // Loading placeholder while we resolve the player's name asynchronously.
   if (resolved === null) {
     return (
@@ -134,6 +151,7 @@ export function BlockUserButton({
           setHovered(false)
         }}
         onMouseDown={() => {
+          onPressed?.()
           showConfirmPopup({
             title: `Are you sure you want to unblock\n<b>${resolved.name}</b>?`,
             message:
@@ -146,6 +164,8 @@ export function BlockUserButton({
             confirmLabel: 'UNBLOCK',
             onConfirm: async () => {
               await BevyApi.social.unblockUser(resolved.userId)
+              pushBlockStatusToast('unblocked', resolved.userId, resolved.name)
+              notifyFriendshipStateChanged()
             }
           })
         }}
@@ -163,6 +183,7 @@ export function BlockUserButton({
       icon={{ atlasName: 'icons', spriteName: 'BlockUser' }}
       uiTransform={uiTransform}
       onMouseDown={() => {
+        onPressed?.()
         showConfirmPopup({
           title: `Are you sure you want to block\n<b>${resolved.name}</b>?`,
           message:
@@ -175,6 +196,8 @@ export function BlockUserButton({
           confirmLabel: 'BLOCK',
           onConfirm: async () => {
             await BevyApi.social.blockUser(resolved.userId)
+            pushBlockStatusToast('blocked', resolved.userId, resolved.name)
+            notifyFriendshipStateChanged()
           }
         })
       }}

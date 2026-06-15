@@ -31,6 +31,25 @@ export type BlockedUserData = {
   nameColor?: NameColor
 }
 
+/**
+ * Returned by getBlockingStatus(). Mirrors Rust `BlockingStatusData`
+ * (serde camelCase). Addresses only, both directions of blocking.
+ */
+export type BlockingStatusData = {
+  blockedUsers: string[]
+  blockedByUsers: string[]
+}
+
+/**
+ * Yielded by getBlockUpdateStream(). Mirrors Rust `BlockUpdateData`
+ * (serde camelCase). Emitted when another user blocks / unblocks the
+ * local user.
+ */
+export type BlockUpdateData = {
+  address: string
+  isBlocked: boolean
+}
+
 /** Returned by getOnlineFriends(). Mirrors Rust `FriendStatusData` (serde camelCase). */
 export type FriendStatusData = {
   address: string

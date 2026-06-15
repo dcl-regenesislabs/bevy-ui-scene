@@ -49,6 +49,7 @@ import { getPlayer } from '@dcl/sdk/players'
 import { BevyApi } from '../../../bevy-api'
 import { FriendButton } from '../../../components/friend-button'
 import { BlockUserButton } from '../../../components/block-user-button'
+import { RejectFriendRequestButton } from '../../../components/reject-friend-request-button'
 import { UserAvatarPreviewElement } from '../../../components/backpack/UserAvatarPreviewElement'
 import { Column, Row } from '../../../components/ui-system/layout'
 import useState = ReactEcs.useState
@@ -372,6 +373,10 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
                           )}
                         </UiEntity>
                       ) : null}
+                      <RejectFriendRequestButton
+                        userId={userId}
+                        variant="black"
+                      />
                       <BlockUserButton
                         userId={userId}
                         isBlocked={isBlocked}

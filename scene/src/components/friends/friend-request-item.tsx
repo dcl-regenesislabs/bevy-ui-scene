@@ -16,7 +16,10 @@ import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 import { showConfirmPopup } from '../confirm-popup'
-import { markSelfInitiatedFriendshipAction } from '../../service/friend-connectivity-service'
+import {
+  markSelfInitiatedFriendshipAction,
+  notifyFriendshipStateChanged
+} from '../../service/friend-connectivity-service'
 
 const MONTH_NAMES = [
   'JAN',
@@ -248,6 +251,9 @@ export function FriendRequestItemReceived({
               markSelfInitiatedFriendshipAction('accept', friendRequest.address)
               await BevyApi.social.acceptFriendRequest(friendRequest.address)
               onAction?.(friendRequest.address)
+              // Our own accept isn't echoed by the server stream — bump so
+              // the friends panel refetches and the new friend appears.
+              notifyFriendshipStateChanged()
               store.dispatch(
                 pushPopupAction({
                   type: HUD_POPUP_TYPE.FRIENDSHIP_RESULT,

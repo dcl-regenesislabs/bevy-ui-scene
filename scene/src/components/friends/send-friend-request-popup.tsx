@@ -21,6 +21,7 @@ import { BevyApi } from '../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import ButtonComponent from '../ui-system/button-component'
 import { fetchAndStoreFriendRequests } from './friend-request-list'
+import { showErrorPopup } from '../../service/error-popup-service'
 import { getNameWithHashPostfix } from '../../service/chat/chat-utils'
 import useState = ReactEcs.useState
 
@@ -187,6 +188,9 @@ export const SendFriendRequestPopup: Popup = ({ shownPopup }) => {
                 } catch (error) {
                   setSubmitting(false)
                   setLastPopupSubmitting(false)
+                  // Surface backend rejections (e.g. blocked relationship,
+                  // moderation) — otherwise the popup just resets silently.
+                  showErrorPopup(error, 'sendFriendRequest')
                   throw error
                 }
               })

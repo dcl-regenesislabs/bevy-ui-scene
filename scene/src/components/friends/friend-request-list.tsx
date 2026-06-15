@@ -18,7 +18,10 @@ import { BevyApi } from '../../bevy-api'
 import { LoadingPlaceholder } from '../loading-placeholder'
 import { store } from '../../state/store'
 import { updateHudStateAction } from '../../state/hud/actions'
-import { listenFriendshipEvent } from '../../service/friend-connectivity-service'
+import {
+  getFriendshipStateVersion,
+  listenFriendshipEvent
+} from '../../service/friend-connectivity-service'
 
 const byDateDesc = (a: FriendRequestData, b: FriendRequestData): number =>
   b.createdAt - a.createdAt
@@ -70,12 +73,25 @@ export function FriendRequestList(): ReactEcs.JSX.Element {
   const sentRequests = store.getState().hud.sentFriendRequests ?? []
   const receivedRequests = store.getState().hud.receivedFriendRequests ?? []
 
+  // Refetches on every friendship-state change. Covers our own actions
+  // (cancel/accept/reject from a profile or passport bump the version
+  // after their RPC — the server does NOT echo own actions back over the
+  // stream) as well as remote events (the connectivity service bumps on
+  // every one).
+  const friendshipVersion = getFriendshipStateVersion()
+
   useEffect(() => {
     executeTask(async () => {
       await fetchAndStoreFriendRequests()
       setLoading(false)
     })
+  }, [friendshipVersion])
 
+  useEffect(() => {
+    // Keep the instant in-memory patch for remote events — the
+    // version-driven refetch above also covers them, but this avoids the
+    // RPC round-trip lag for the common "request arrives while panel is
+    // open" case.
     const unsubscribe = listenFriendshipEvent((event) => {
       if (event.type === 'request') {
         addReceivedFriendRequest({
