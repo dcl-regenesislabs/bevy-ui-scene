@@ -181,6 +181,8 @@ export type BindingsConfig = {
 }
 export type SceneLoadingWindow = {
   visible: boolean
+  // Optional: older engines don't emit this. Absent is treated as connected.
+  realmConnected?: boolean
   title: string
   pendingAssets: number | null
 }

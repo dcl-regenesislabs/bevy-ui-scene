@@ -233,6 +233,7 @@ export const hudInitialState: HudState = {
   micEnabled: false,
   loadingScene: {
     visible: false,
+    realmConnected: true,
     title: '',
     pendingAssets: null
   },
