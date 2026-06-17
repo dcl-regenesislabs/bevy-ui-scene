@@ -54,6 +54,7 @@ export function CommunityViewHeader({
 
   const [role, setRole] = useState<CommunityMemberRole>(community.role)
   const [requestId, setRequestId] = useState<string | null>(null)
+  const [inviteId, setInviteId] = useState<string | null>(null)
   const [acting, setActing] = useState<boolean>(false)
   const [hovering, setHovering] = useState<boolean>(false)
   const [ownerMenuOpen, setOwnerMenuOpen] = useState<boolean>(false)
@@ -96,6 +97,68 @@ export function CommunityViewHeader({
       }
     })
   }, [])
+
+  // On mount, detect a pending INVITE to this community (any privacy) so the
+  // CTA offers Accept/Reject instead of Join / Request to Join.
+  useEffect(() => {
+    if (isMember) return
+    executeTask(async () => {
+      try {
+        const invites = await fetchUserInviteRequests('invite')
+        const match = invites.find((r) => r.communityId === community.id)
+        if (match != null) setInviteId(match.id)
+      } catch (error) {
+        console.error('[communities] failed to load my invites', error)
+      }
+    })
+  }, [])
+
+  const onAcceptInvite = (): void => {
+    if (acting || inviteId == null) return
+    const previousRole = role
+    const previousInvite = inviteId
+    setRole('member')
+    setInviteId(null)
+    setActing(true)
+    executeTask(async () => {
+      try {
+        await manageInviteRequest(community.id, previousInvite, 'accepted')
+        invalidateUserInviteRequestsCache()
+        notifyCommunitiesChanged()
+      } catch (error) {
+        setRole(previousRole)
+        setInviteId(previousInvite)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'acceptCommunityInvite'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
+
+  const onRejectInvite = (): void => {
+    if (acting || inviteId == null) return
+    const previousInvite = inviteId
+    setInviteId(null)
+    setActing(true)
+    executeTask(async () => {
+      try {
+        await manageInviteRequest(community.id, previousInvite, 'rejected')
+        invalidateUserInviteRequestsCache()
+        notifyCommunitiesChanged()
+      } catch (error) {
+        setInviteId(previousInvite)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'rejectCommunityInvite'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
 
   const onJoin = (): void => {
     if (acting) return
@@ -399,6 +462,45 @@ export function CommunityViewHeader({
               }}
               onMouseDown={onLeave}
             />
+          ) : inviteId != null ? (
+            <Row uiTransform={{ width: 'auto', alignItems: 'center' }}>
+              <ButtonTextIcon
+                variant="primary"
+                value="<b>ACCEPT INVITATION</b>"
+                icon={{ spriteName: 'Check', atlasName: 'icons' }}
+                fontSize={fontSizeSmall}
+                loading={acting}
+                uiTransform={{
+                  borderRadius: fontSize / 2,
+                  padding: {
+                    left: fontSize * 0.6,
+                    right: fontSize * 0.8,
+                    top: fontSize * 0.3,
+                    bottom: fontSize * 0.3
+                  },
+                  margin: { right: fontSize * 0.4 }
+                }}
+                onMouseDown={onAcceptInvite}
+              />
+              <ButtonTextIcon
+                variant="subtle"
+                destructiveHover={true}
+                value="<b>REJECT INVITATION</b>"
+                icon={{ spriteName: 'CloseIcon', atlasName: 'icons' }}
+                fontSize={fontSizeSmall}
+                loading={acting}
+                uiTransform={{
+                  borderRadius: fontSize / 2,
+                  padding: {
+                    left: fontSize * 0.6,
+                    right: fontSize * 0.8,
+                    top: fontSize * 0.3,
+                    bottom: fontSize * 0.3
+                  }
+                }}
+                onMouseDown={onRejectInvite}
+              />
+            </Row>
           ) : community.privacy === 'private' ? (
             <ButtonTextIcon
               variant={requested ? 'subtle' : 'primary'}

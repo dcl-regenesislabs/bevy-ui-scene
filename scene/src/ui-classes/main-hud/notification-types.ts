@@ -111,6 +111,21 @@ export type CommunityInviteSentNotification = {
 } & BaseNotification
 
 /**
+ * Backend notification (notifications feed, type `community_invite_received`)
+ * shown to the INVITEE when someone invites them to a community. Metadata
+ * mirrors `@dcl/schemas` `CommunityInviteReceivedEvent`.
+ */
+export type CommunityInviteReceivedNotification = {
+  type: 'community_invite_received'
+  metadata: {
+    communityId: string
+    communityName: string
+    memberAddress?: string
+    thumbnailUrl?: string
+  }
+} & BaseNotification
+
+/**
  * Confirmation toast after the LOCAL user blocks / unblocks someone.
  * Purely client-side — the backend feed has no entry for own actions.
  */
@@ -312,6 +327,7 @@ export type Notification =
   | RewardInProgressNotification
   | FriendshipRejectedNotification
   | CommunityInviteSentNotification
+  | CommunityInviteReceivedNotification
   | UserBlockStatusNotification
 
 export type FriendshipRejectedNotification = {
@@ -367,7 +383,8 @@ export const RENDER_NOTIFICATION_TYPES: Array<Notification['type']> = [
   'events_ended',
   'item_sold',
   'reward_assignment',
-  'reward_in_progress'
+  'reward_in_progress',
+  'community_invite_received'
   /* 'social_service_friendship_request',
   'social_service_friendship_accepted'
    'dao_proposal_published',

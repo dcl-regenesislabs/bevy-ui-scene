@@ -78,7 +78,7 @@ function TeleportContent({
         const catalystBaseURl =
           realm.realmInfo?.baseUrl ?? CATALYST_BASE_URL_FALLBACK
 
-        const MAIN_REALM = 'https://realm-provider.decentraland.org/main'
+        const MAIN_REALM = 'https://realm-provider-ea.decentraland.org/main'
         const effectiveTargetRealm = targetRealm ?? MAIN_REALM
         const currentRealm =
           realm.realmInfo?.realmName ?? realm.realmInfo?.baseUrl ?? ''

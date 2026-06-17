@@ -25,6 +25,13 @@ const FRIEND_REQUEST_DISMISS_MS = 20000
 const AUTO_DISMISS_POLL_MS = 500
 const FETCH_POLL_MS = 5000
 
+// Lower bound for the toast poll. Captured ONCE at init (not re-derived
+// from Date.now() each tick) and advanced only as notifications are seen,
+// so feed notifications created between polls (e.g. community invites)
+// aren't skipped. Dedupe by id guards against re-toasting on re-fetch.
+let lastSeenTimestamp = 0
+const shownToastIds = new Set<string>()
+
 function getDismissBudget(notification: Notification): number {
   if (notification.type === 'social_service_friendship_request') {
     return FRIEND_REQUEST_DISMISS_MS
@@ -71,17 +78,23 @@ export function initRealTimeNotifications(): void {
     }
   })
 
+  lastSeenTimestamp = Date.now()
   executeTask(async (): Promise<never> => {
     while (true) {
       await sleep(FETCH_POLL_MS)
-      const lastNotification: Notification | undefined =
-        state.toasts[state.toasts.length - 1]
-      const [nextNotification] = await fetchNotifications({
-        limit: 1,
-        from: Number(lastNotification?.timestamp ?? Date.now()) + 1
+      const fresh = await fetchNotifications({
+        limit: 20,
+        from: lastSeenTimestamp + 1
       })
-      if (nextNotification !== undefined) {
-        pushNotificationToast(nextNotification)
+      for (const notification of fresh) {
+        const ts = Number(notification.timestamp)
+        if (Number.isFinite(ts) && ts > lastSeenTimestamp) {
+          lastSeenTimestamp = ts
+        }
+        if (!shownToastIds.has(notification.id)) {
+          shownToastIds.add(notification.id)
+          pushNotificationToast(notification)
+        }
       }
     }
   })

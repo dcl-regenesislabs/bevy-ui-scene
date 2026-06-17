@@ -120,6 +120,27 @@ export function NotificationItem({
             notification as FriendshipNotification
           )
           setLoading(false)
+        } else if (notification.type === 'community_invite_received') {
+          const communityId = notification.metadata.communityId
+          if (communityId != null) {
+            // Close the menu / dismiss the toast AND open the community popup
+            // immediately. The popup itself fetches the full community and
+            // shows a loading placeholder meanwhile (needsFetch), so the
+            // click feels instant.
+            store.dispatch(closeLastPopupAction())
+            store.dispatch(
+              pushPopupAction({
+                type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+                data: {
+                  id: communityId,
+                  name: notification.metadata.communityName ?? '',
+                  thumbnailUrl: notification.metadata.thumbnailUrl ?? '',
+                  needsFetch: true
+                }
+              })
+            )
+          }
+          setLoading(false)
         } else if (notification.metadata.link) {
           store.dispatch(closeLastPopupAction())
           store.dispatch(
@@ -259,6 +280,8 @@ function getTitleFromNotification(notification: Notification): string {
       return 'Friend request rejected'
     case 'community_invite_sent':
       return 'Invitation sent'
+    case 'community_invite_received':
+      return 'Community invite'
     case 'user_blocked':
       return 'User blocked'
     case 'user_unblocked':
@@ -283,6 +306,11 @@ function getDescriptionFromNotification(notification: Notification): string {
     } else if (notification.type === 'social_service_friendship_rejected') {
       return `<color=${hexColor}>${protagonist.name}</color> rejected your friend request.`
     }
+  }
+
+  if (notification.type === 'community_invite_received') {
+    const name = notification.metadata.communityName ?? 'a community'
+    return `You've been invited to join <b>${name}</b>.`
   }
 
   if (notification.metadata?.nftName || notification.metadata?.tokenName) {
@@ -340,6 +368,15 @@ function getIconForNotificationType(notification: Notification): AtlasIcon {
   if (type === 'user_blocked' || type === 'user_unblocked') {
     return {
       spriteName: 'BlockUser',
+      atlasName: 'icons'
+    }
+  }
+  if (
+    type === 'community_invite_sent' ||
+    type === 'community_invite_received'
+  ) {
+    return {
+      spriteName: 'Community',
       atlasName: 'icons'
     }
   }
@@ -423,6 +460,10 @@ function GenericNotificationThumbnail({
 }: {
   notification: Notification
 }): ReactElement {
+  // `community_invite_received` carries the community art in `thumbnailUrl`
+  // (per @dcl/schemas), not `image` like other feed notifications.
+  const imageSrc =
+    notification.metadata.image ?? notification.metadata.thumbnailUrl
   return (
     <UiEntity
       uiTransform={{
@@ -431,11 +472,11 @@ function GenericNotificationThumbnail({
         height: '83%'
       }}
       uiBackground={
-        notification.metadata.image
+        imageSrc
           ? {
               textureMode: 'stretch',
               texture: {
-                src: notification.metadata.image
+                src: imageSrc
               }
             }
           : {

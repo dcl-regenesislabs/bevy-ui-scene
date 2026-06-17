@@ -17,27 +17,55 @@ import { CommunityUpcomingEvents } from './community-upcoming-events'
 import { CommunityViewHeader } from './community-view-header'
 import { PopupBigWindow } from '../../../components/popup-big-window'
 import { type Tab, TabComponent } from '../../../components/tab-component'
+import { LoadingPlaceholder } from '../../../components/loading-placeholder'
+import { fetchCommunity } from '../../../utils/communities-promise-utils'
+import { executeTask } from '@dcl/sdk/ecs'
 import useState = ReactEcs.useState
 import { COLOR } from 'src/components/color-palette'
 import useEffect = ReactEcs.useEffect
 
 export const CommunityViewPopup: Popup = ({ shownPopup }) => {
-  const community = shownPopup.data as CommunityListItem
-  if (community == null) return null
-  return <CommunityViewContent community={community} />
+  const initial = shownPopup.data as
+    | (CommunityListItem & { needsFetch?: boolean })
+    | null
+  if (initial == null) return null
+  return <CommunityViewContent initial={initial} />
 }
 
 function CommunityViewContent({
-  community
+  initial
 }: {
-  community: CommunityListItem
+  initial: CommunityListItem & { needsFetch?: boolean }
 }): ReactElement {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
   const fontSizeSmall = getFontSize({
     context: CONTEXT.DIALOG,
     token: TYPOGRAPHY_TOKENS.LABEL
   })
+  // When opened from a notification we only have id/name/thumbnail, so the
+  // popup opens instantly with a loader and fetches the full community here.
+  const [community, setCommunity] = useState<CommunityListItem | null>(
+    initial.needsFetch === true ? null : initial
+  )
   const [activeTabIndex, setActiveTabIndex] = useState<number>(2)
+
+  useEffect(() => {
+    if (initial.needsFetch !== true) return
+    executeTask(async () => {
+      try {
+        const data = await fetchCommunity(initial.id)
+        const enriched = data as Partial<CommunityListItem>
+        setCommunity({
+          ...data,
+          ownerName: enriched.ownerName ?? '',
+          friends: enriched.friends ?? []
+        })
+      } catch {
+        // Never hang on the loader — fall back to whatever we were given.
+        setCommunity(initial)
+      }
+    })
+  }, [])
 
   const COMMUNITY_TABS: Tab[] = [
     { text: '  ANNOUNCEMENTS  ' },
@@ -46,9 +74,26 @@ function CommunityViewContent({
     { text: '  PHOTOS  ' }
   ]
 
-  useEffect(() => {
-    console.log('community view', community)
-  }, [])
+  if (community == null) {
+    return (
+      <PopupBackdrop>
+        <ResponsiveContent>
+          <PopupBigWindow>
+            <Column
+              uiTransform={{
+                width: '100%',
+                height: '100%',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              <LoadingPlaceholder />
+            </Column>
+          </PopupBigWindow>
+        </ResponsiveContent>
+      </PopupBackdrop>
+    )
+  }
 
   return (
     <PopupBackdrop>
