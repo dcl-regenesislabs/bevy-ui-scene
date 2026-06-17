@@ -99,11 +99,14 @@ export function CommunityViewHeader({
   }, [])
 
   // On mount, detect a pending INVITE to this community (any privacy) so the
-  // CTA offers Accept/Reject instead of Join / Request to Join.
+  // CTA offers Accept/Reject instead of Join / Request to Join. Invalidate
+  // first: the 60s cache can hold an already-resolved invite, and acting on a
+  // stale request id returns HTTP 404.
   useEffect(() => {
     if (isMember) return
     executeTask(async () => {
       try {
+        invalidateUserInviteRequestsCache()
         const invites = await fetchUserInviteRequests('invite')
         const match = invites.find((r) => r.communityId === community.id)
         if (match != null) setInviteId(match.id)
@@ -113,21 +116,35 @@ export function CommunityViewHeader({
     })
   }, [])
 
+  // Resolve the CURRENT invite request id for this community (fresh, bypassing
+  // the cache). The display-time `inviteId` can be stale (the cache holds
+  // resolved invites for up to 60s), so accept/reject must re-resolve before
+  // PATCHing — otherwise the backend 404s on a non-existent request id.
+  const resolveInviteId = async (): Promise<string | null> => {
+    invalidateUserInviteRequestsCache()
+    const invites = await fetchUserInviteRequests('invite')
+    return invites.find((r) => r.communityId === community.id)?.id ?? null
+  }
+
   const onAcceptInvite = (): void => {
-    if (acting || inviteId == null) return
+    if (acting) return
     const previousRole = role
-    const previousInvite = inviteId
-    setRole('member')
-    setInviteId(null)
     setActing(true)
     executeTask(async () => {
       try {
-        await manageInviteRequest(community.id, previousInvite, 'accepted')
+        const id = await resolveInviteId()
+        if (id == null) {
+          // Invite no longer exists — clear the CTA.
+          setInviteId(null)
+          return
+        }
+        setRole('member')
+        await manageInviteRequest(community.id, id, 'accepted')
+        setInviteId(null)
         invalidateUserInviteRequestsCache()
         notifyCommunitiesChanged()
       } catch (error) {
         setRole(previousRole)
-        setInviteId(previousInvite)
         showErrorPopup(
           error instanceof Error ? error : new Error(String(error)),
           'acceptCommunityInvite'
@@ -139,17 +156,20 @@ export function CommunityViewHeader({
   }
 
   const onRejectInvite = (): void => {
-    if (acting || inviteId == null) return
-    const previousInvite = inviteId
-    setInviteId(null)
+    if (acting) return
     setActing(true)
     executeTask(async () => {
       try {
-        await manageInviteRequest(community.id, previousInvite, 'rejected')
+        const id = await resolveInviteId()
+        if (id == null) {
+          setInviteId(null)
+          return
+        }
+        await manageInviteRequest(community.id, id, 'rejected')
+        setInviteId(null)
         invalidateUserInviteRequestsCache()
         notifyCommunitiesChanged()
       } catch (error) {
-        setInviteId(previousInvite)
         showErrorPopup(
           error instanceof Error ? error : new Error(String(error)),
           'rejectCommunityInvite'
@@ -483,7 +503,7 @@ export function CommunityViewHeader({
                 onMouseDown={onAcceptInvite}
               />
               <ButtonTextIcon
-                variant="subtle"
+                variant="black"
                 destructiveHover={true}
                 value="<b>REJECT INVITATION</b>"
                 icon={{ spriteName: 'CloseIcon', atlasName: 'icons' }}

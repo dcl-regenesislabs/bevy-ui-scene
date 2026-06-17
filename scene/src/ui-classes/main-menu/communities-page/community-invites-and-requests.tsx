@@ -9,8 +9,10 @@ import {
 import { executeTask } from '@dcl/sdk/ecs'
 import {
   fetchUserInviteRequests,
+  invalidateUserInviteRequestsCache,
   manageInviteRequest
 } from '../../../utils/communities-promise-utils'
+import { listenCommunitiesChanged } from '../../../service/communities-events'
 import {
   getCommunityThumbnailUrl,
   type CommunityListItem,
@@ -48,19 +50,29 @@ export function CommunityInvitesAndRequests({
   const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
-    executeTask(async () => {
-      try {
-        const [inv, req] = await Promise.all([
-          fetchUserInviteRequests('invite'),
-          fetchUserInviteRequests('request_to_join')
-        ])
-        setInvites(inv)
-        setRequests(req)
-      } catch (error) {
-        console.error('[communities] failed to load invites/requests', error)
-      }
-      setLoading(false)
-    })
+    const refetch = (): void => {
+      executeTask(async () => {
+        try {
+          // Bypass the 60s cache so an invite resolved elsewhere (e.g.
+          // accepted/rejected from the community popup) drops off the list.
+          invalidateUserInviteRequestsCache()
+          const [inv, req] = await Promise.all([
+            fetchUserInviteRequests('invite'),
+            fetchUserInviteRequests('request_to_join')
+          ])
+          setInvites(inv)
+          setRequests(req)
+        } catch (error) {
+          console.error('[communities] failed to load invites/requests', error)
+        }
+        setLoading(false)
+      })
+    }
+    refetch()
+    // Refresh when an invite/request changes anywhere (popup accept/reject,
+    // join/leave, …) so the list + the "Invites (N)" count stay in sync.
+    const unsubscribe = listenCommunitiesChanged(refetch)
+    return unsubscribe
   }, [])
 
   const removeFromList = (
