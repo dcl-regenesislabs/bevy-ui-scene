@@ -62,13 +62,16 @@ export function CommunityPostItem({
   const [isLiked, setIsLiked] = useState<boolean>(post.isLikedByUser)
   const [likesCount, setLikesCount] = useState<number>(post.likesCount)
   const [liking, setLiking] = useState<boolean>(false)
-  // Delete is allowed for owners/moderators of the community, and for the
-  // post's author on their own posts. Mirrors unity-explorer behavior plus
-  // the explicit owner+moderator gate the user asked for.
+  // Show the delete button only where the backend actually allows it, so we
+  // never surface a button that 401s. Backend rule
+  // (social-service-ea validatePermissionToDeletePost):
+  //   - owner     → can delete ANY post
+  //   - moderator → can delete ONLY their own posts
+  //   - member    → cannot delete (no delete_posts permission)
   const myAddress = (getPlayer()?.userId ?? '').toLowerCase()
   const isAuthor = post.authorAddress.toLowerCase() === myAddress
   const canDelete =
-    viewerRole === 'owner' || viewerRole === 'moderator' || isAuthor
+    viewerRole === 'owner' || (viewerRole === 'moderator' && isAuthor)
 
   const onDelete = (): void => {
     showConfirmPopup({
