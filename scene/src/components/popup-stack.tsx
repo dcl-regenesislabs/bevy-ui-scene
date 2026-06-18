@@ -25,6 +25,7 @@ import { CreateCommunityPopup } from '../ui-classes/main-menu/communities-page/c
 import { ConfirmDeleteCommunityPopup } from '../ui-classes/main-menu/communities-page/confirm-delete-community-popup'
 import { CommunityMemberMenuPopup } from '../ui-classes/main-menu/communities-page/community-member-menu-popup'
 import { ConfirmPopup } from './confirm-popup'
+import { AlertPopup } from './alert-popup'
 
 export type PopupParameters = { shownPopup: HUDPopup; key?: string }
 export type Popup = (params: PopupParameters) => ReactElement | null
@@ -69,7 +70,8 @@ const popupComponents: Record<number, Popup> = {
   [HUD_POPUP_TYPE.CONFIRM_DELETE_COMMUNITY as number]:
     ConfirmDeleteCommunityPopup,
   [HUD_POPUP_TYPE.CONFIRM as number]: ConfirmPopup,
-  [HUD_POPUP_TYPE.COMMUNITY_MEMBER_MENU as number]: CommunityMemberMenuPopup
+  [HUD_POPUP_TYPE.COMMUNITY_MEMBER_MENU as number]: CommunityMemberMenuPopup,
+  [HUD_POPUP_TYPE.ALERT as number]: AlertPopup
 }
 
 export function PopupStack(): ReactElement | null {

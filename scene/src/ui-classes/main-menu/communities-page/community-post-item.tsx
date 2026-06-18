@@ -19,6 +19,7 @@ import {
   unlikeCommunityPost
 } from '../../../utils/communities-promise-utils'
 import { showErrorPopup } from '../../../service/error-popup-service'
+import { maybeShowCommunityRestrictionAlert } from '../../../service/community-restriction-alert'
 import { noop } from '../../../utils/function-utils'
 import { showConfirmPopup } from '../../../components/confirm-popup'
 import useState = ReactEcs.useState
@@ -112,10 +113,12 @@ export function CommunityPostItem({
         // Revert optimistic update.
         setIsLiked(!nextIsLiked)
         setLikesCount(likesCount)
-        showErrorPopup(
-          error instanceof Error ? error : new Error(String(error)),
-          `${nextIsLiked ? 'like' : 'unlike'}CommunityPost`
-        )
+        if (!maybeShowCommunityRestrictionAlert(error)) {
+          showErrorPopup(
+            error instanceof Error ? error : new Error(String(error)),
+            `${nextIsLiked ? 'like' : 'unlike'}CommunityPost`
+          )
+        }
       } finally {
         setLiking(false)
       }
