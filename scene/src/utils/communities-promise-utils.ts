@@ -696,6 +696,23 @@ export async function fetchUserInviteRequests(
 }
 
 /**
+ * GET /members/{targetAddress}/invites
+ * Returns the communities the current user can invite `targetAddress` into:
+ * communities the caller owns/moderates where the target is NOT already a
+ * member. Filtering is done server-side, so it correctly excludes private
+ * communities the target already belongs to.
+ */
+export async function fetchInvitableCommunitiesForUser(
+  targetAddress: string
+): Promise<Array<{ id: string; name: string }>> {
+  const membersBase = await resolveMembersBaseURL()
+  const result: Array<{ id: string; name: string }> = await signedGet(
+    `${membersBase}/${targetAddress.toLowerCase()}/invites`
+  )
+  return result ?? []
+}
+
+/**
  * PATCH /communities/{communityId}/requests/{requestId}
  * Used to accept/reject an invite, or cancel a request I sent.
  */

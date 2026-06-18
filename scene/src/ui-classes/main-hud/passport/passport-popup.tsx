@@ -86,9 +86,9 @@ import { PopupBigWindow } from '../../../components/popup-big-window'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import {
   fetchInvitableCommunities,
-  inviteUserToCommunity
+  inviteUserToCommunity,
+  type InvitableCommunity
 } from '../../../service/community-invites-service'
-import { type CommunityListItem } from '../../../service/communities-types'
 import ButtonComponent from '../../../components/ui-system/button-component'
 
 export type PassportPopupState = {
@@ -184,7 +184,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
   const [moreMenuOpen, setMoreMenuOpen] = useState<boolean>(false)
   const [inviteSubmenuOpen, setInviteSubmenuOpen] = useState<boolean>(false)
   const [invitableCommunities, setInvitableCommunities] = useState<
-    CommunityListItem[]
+    InvitableCommunity[]
   >([])
   const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
@@ -220,11 +220,11 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
     const me = getPlayer()?.userId?.toLowerCase()
     if (me === userId) return
     executeTask(async () => {
-      setInvitableCommunities(await fetchInvitableCommunities())
+      setInvitableCommunities(await fetchInvitableCommunities(userId))
     })
   }, [])
 
-  const handleInviteToCommunity = (community: CommunityListItem): void => {
+  const handleInviteToCommunity = (community: InvitableCommunity): void => {
     setInviteSubmenuOpen(false)
     setMoreMenuOpen(false)
     executeTask(async () => {
