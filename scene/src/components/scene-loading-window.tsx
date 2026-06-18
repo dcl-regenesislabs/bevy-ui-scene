@@ -12,11 +12,7 @@ import { getRealm } from '~system/Runtime'
 import { executeTask } from '@dcl/sdk/ecs'
 import { Color4 } from '@dcl/sdk/math'
 import { ButtonText } from './button-text'
-import {
-  ALMOST_BLACK,
-  CLICKED_PRIMARY_COLOR,
-  RUBY
-} from '../utils/constants'
+import { ALMOST_BLACK, CLICKED_PRIMARY_COLOR, RUBY } from '../utils/constants'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
