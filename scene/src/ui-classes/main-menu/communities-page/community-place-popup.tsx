@@ -26,6 +26,7 @@ import {
   listenPlaceChanged,
   updateCachedCommunityPlace
 } from '../../../utils/communities-promise-utils'
+import { MAIN_REALM_URL } from '../../../utils/constants'
 import { BevyApi } from '../../../bevy-api'
 import { executeTask } from '@dcl/sdk/ecs'
 import { AvatarCircle } from '../../../components/avatar-circle'
@@ -221,7 +222,7 @@ function CommunityPlacePopupContent({
     if (coord == null) return
     const parcel = Vector2.create(coord.x, coord.y)
     BevyApi.setHomeScene({
-      realm: 'http://realm-provider-ea.decentraland.org/main',
+      realm: MAIN_REALM_URL,
       parcel
     })
     setIsHome(true)
@@ -236,7 +237,7 @@ function CommunityPlacePopupContent({
           await changeRealm({ realm: place.world_name })
         } else if (currentRealmProviderIsWorld()) {
           await changeRealm({
-            realm: 'https://realm-provider.decentraland.org/main'
+            realm: MAIN_REALM_URL
           })
         }
         await teleportTo({

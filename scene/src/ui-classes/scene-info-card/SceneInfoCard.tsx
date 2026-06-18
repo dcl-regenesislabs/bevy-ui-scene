@@ -45,6 +45,7 @@ import {
   GRAY_TEXT,
   isEmptyParcelPlace,
   LOADING_PLACE,
+  MAIN_REALM_URL,
   PANEL_BACKGROUND_COLOR,
   ROUNDED_TEXTURE_BACKGROUND,
   RUBY,
@@ -761,9 +762,8 @@ export default class SceneInfoCard {
                     realm: this.place.world_name
                   })
                 } else if (currentRealmProviderIsWorld()) {
-                  // TODO REVIEW if that URL is ok
                   await changeRealm({
-                    realm: 'https://realm-provider.decentraland.org/main'
+                    realm: MAIN_REALM_URL
                   })
                 }
                 await teleportTo({
