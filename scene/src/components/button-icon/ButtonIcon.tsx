@@ -150,6 +150,7 @@ function ButtonIcon(props: {
       {/* Notification badge — renders nothing if count <= 0 */}
       <NotificationBadge
         count={props.notifications ?? 0}
+        maxCount={9}
         context={layoutContext}
       />
       {showHint && props.hintText !== undefined && (

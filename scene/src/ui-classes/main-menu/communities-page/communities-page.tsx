@@ -8,6 +8,7 @@ import {
   RightSection
 } from '../backpack-page/BackpackNavBar'
 import { COLOR } from '../../../components/color-palette'
+import { NotificationBadge } from '../../../components/notification-badge'
 import { Column, Row } from '../../../components/ui-system/layout'
 import { executeTask } from '@dcl/sdk/ecs'
 import {
@@ -232,22 +233,13 @@ function CommunitiesContent(): ReactElement {
               }}
             />
             <UiEntity uiTransform={{ flexGrow: 1 }} />
-            {pendingInvitesCount > 0 && (
-              <UiEntity
-                uiTransform={{
-                  borderRadius: 99,
-                  height: fontSize,
-                  width: fontSize
-                }}
-                uiBackground={{
-                  color: COLOR.LINK_COLOR
-                }}
-                uiText={{
-                  value: `${pendingInvitesCount}`,
-                  fontSize: fontSizeCaption
-                }}
-              />
-            )}
+            <NotificationBadge
+              count={pendingInvitesCount}
+              color={COLOR.LINK_COLOR}
+              maxCount={9}
+              inline
+              context={CONTEXT.DIALOG}
+            />
 
             <Icon
               icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}
