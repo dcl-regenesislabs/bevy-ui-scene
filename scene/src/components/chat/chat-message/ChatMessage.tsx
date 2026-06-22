@@ -156,16 +156,6 @@ function ChatMessage(props: {
           }
         }}
         isGuest={props.message.isGuest}
-        onMouseDown={() => {
-          store.dispatch(
-            pushPopupAction({
-              type: HUD_POPUP_TYPE.PROFILE_MENU,
-              data: {
-                player: props.message.player
-              }
-            })
-          )
-        }}
       />
       <UiEntity
         uiTransform={{

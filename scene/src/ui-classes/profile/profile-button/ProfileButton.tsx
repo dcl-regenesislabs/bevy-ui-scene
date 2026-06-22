@@ -1,8 +1,9 @@
-import ReactEcs, { UiEntity, type UiTransformProps } from '@dcl/sdk/react-ecs'
+import ReactEcs, { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { FLEX_BASIS_AUTO } from '../../../utils/ui-utils'
 import { type ReactElement } from '@dcl/react-ecs'
 import { Row } from '../../../components/ui-system/layout'
 import { AvatarCircle } from '../../../components/avatar-circle'
+import { PlayerNameComponent } from '../../../components/player-name-component'
 import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import { getPlayer } from '@dcl/sdk/players'
 import { getMainMenuHeight } from '../../main-menu/MainMenu'
@@ -59,20 +60,14 @@ export function ProfileButton({
           borderWidth: avatarSize * 0.05
         }}
         isGuest={player.isGuest}
-        onMouseDown={() => {
-          showProfilePopup()
-        }}
       />
-      <UiEntity
-        uiTransform={{
-          margin: { left: '1%' }
-        }}
-        uiText={{
-          color: getAddressColor(player.userId),
-          value: `<b> ${player.name}  </b>`,
-          fontSize: getFontSize({}),
-          textWrap: 'nowrap'
-        }}
+      <PlayerNameComponent
+        name={player.name}
+        address={player.userId}
+        hasClaimedName={!player.name.includes('#')}
+        fontSize={getFontSize({})}
+        isGuest={player.isGuest}
+        uiTransform={{ margin: { left: '1%' } }}
       />
     </Row>
   )

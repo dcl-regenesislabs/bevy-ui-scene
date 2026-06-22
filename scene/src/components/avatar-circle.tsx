@@ -10,14 +10,16 @@ import { engine, UiCanvasInformation } from '@dcl/sdk/ecs'
 import { type Color4 } from '@dcl/sdk/math'
 import { ONE_ADDRESS, ZERO_ADDRESS } from '../utils/constants'
 import { type ReactElement } from '@dcl/react-ecs'
-import { noop } from '../utils/function-utils'
+import { openProfileMenu } from '../service/profile-menu-service'
 
 export function AvatarCircle({
   userId,
   circleColor,
   uiTransform,
   isGuest,
-  onMouseDown = noop,
+  onMouseDown,
+  name,
+  hasClaimedName,
   imageSrc,
   key
 }: {
@@ -25,13 +27,24 @@ export function AvatarCircle({
   circleColor: Color4
   uiTransform: UiTransformProps
   isGuest: boolean
+  /** Overrides the default click (which opens the user's profile menu). */
   onMouseDown?: () => void
+  /** Optional display data forwarded to the profile menu (skips re-resolving). */
+  name?: string
+  hasClaimedName?: boolean
   imageSrc?: string
   key?: Key
 }): ReactElement | null {
   const canvasInfo = UiCanvasInformation.getOrNull(engine.RootEntity)
   if (canvasInfo === null) return null
   const addressColor = circleColor
+  // Default: clicking the avatar opens that user's profile menu (no-op for
+  // guests / non-user avatars). Callers can override with their own onMouseDown.
+  const handleClick =
+    onMouseDown ??
+    (() => {
+      openProfileMenu({ userId, name, hasClaimedName, isGuest })
+    })
   return (
     <UiEntity
       uiTransform={{
@@ -52,7 +65,7 @@ export function AvatarCircle({
       uiBackground={{
         color: { ...addressColor, a: 0.3 }
       }}
-      onMouseDown={onMouseDown}
+      onMouseDown={handleClick}
     >
       <UiEntity
         uiTransform={{

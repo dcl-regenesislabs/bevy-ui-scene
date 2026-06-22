@@ -10,9 +10,7 @@ import {
 import { Column, Row } from '../ui-system/layout'
 import { COLOR } from '../color-palette'
 import { AvatarCircle } from '../avatar-circle'
-import { pushPopupAction } from '../../state/hud/actions'
-import { HUD_POPUP_TYPE } from '../../state/hud/state'
-import { store } from '../../state/store'
+import { openProfileMenu } from '../../service/profile-menu-service'
 import { PlayerNameComponent } from '../player-name-component'
 
 export function BlockedListItem({
@@ -45,12 +43,12 @@ export function BlockedListItem({
       onMouseLeave={onMouseLeave}
       onMouseEnter={onMouseEnter}
       onMouseDown={() => {
-        store.dispatch(
-          pushPopupAction({
-            type: HUD_POPUP_TYPE.PASSPORT,
-            data: user.address.toLowerCase()
-          })
-        )
+        openProfileMenu({
+          userId: user.address,
+          name: user.name,
+          hasClaimedName: user.hasClaimedName,
+          isGuest: false
+        })
       }}
       uiBackground={{
         color: hovered ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT

@@ -31,6 +31,7 @@ import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import Icon from '../../../components/icon/Icon'
 import { ThinMenuButton } from '../../../components/thin-menu-button'
 import { FriendButton } from '../../../components/friend-button'
+import { openProfileMenu } from '../../../service/profile-menu-service'
 import { type GetPlayerDataRes } from '../../../utils/definitions'
 import { getPlayer } from '@dcl/sdk/players'
 import { store } from '../../../state/store'
@@ -90,16 +91,9 @@ function CommunityMemberItem({
     (getPlayer()?.userId ?? '').toLowerCase() ===
     member.memberAddress.toLowerCase()
 
-  const openPassport = (): void => {
-    store.dispatch(
-      pushPopupAction({
-        type: HUD_POPUP_TYPE.PASSPORT,
-        data: member.memberAddress.toLowerCase()
-      })
-    )
-  }
-
-  const openProfileMenu = (): void => {
+  // Moderation menu (kick / ban / promote / view profile) — opened from the
+  // row's 3-dot button.
+  const openCommunityMemberMenu = (): void => {
     store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.COMMUNITY_MEMBER_MENU,
@@ -121,7 +115,14 @@ function CommunityMemberItem({
       uiBackground={{
         color: COLOR.DARK_OPACITY_5
       }}
-      onMouseDown={openPassport}
+      onMouseDown={() => {
+        openProfileMenu({
+          userId: member.memberAddress,
+          name: member.name,
+          hasClaimedName: member.hasClaimedName,
+          isGuest: false
+        })
+      }}
     >
       {/* Avatar */}
       <AvatarCircle
@@ -192,7 +193,7 @@ function CommunityMemberItem({
             margin: { left: fontSize / 2 },
             height: fontSize * 2
           }}
-          onMouseDown={openProfileMenu}
+          onMouseDown={openCommunityMemberMenu}
           backgroundColor={COLOR.WHITE_OPACITY_1}
         />
       ) : null}

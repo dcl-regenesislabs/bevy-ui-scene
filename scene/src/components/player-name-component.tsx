@@ -8,6 +8,7 @@ import { getNameWithHashPostfix } from '../service/chat/chat-utils'
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { getFontSize } from '../service/fontsize-system'
 import { type NameColor } from '../service/social-service-type'
+import { openProfileMenu } from '../service/profile-menu-service'
 
 export function PlayerNameComponent({
   name,
@@ -17,6 +18,7 @@ export function PlayerNameComponent({
   textColor,
   fontSize,
   bold = true,
+  isGuest = false,
   onMouseDown,
   uiTransform
 }: {
@@ -27,10 +29,22 @@ export function PlayerNameComponent({
   textColor?: Color4
   fontSize?: number
   bold?: boolean
+  /** Guests have no persistent profile, so the default click is suppressed. */
+  isGuest?: boolean
+  /** Overrides the default click (which opens the user's profile menu). */
   onMouseDown?: () => void
   uiTransform?: UiTransformProps
 }): ReactElement {
   const size = fontSize ?? getFontSize({})
+  // Default: clicking the name opens that user's profile menu. Needs an
+  // address to resolve the user; callers can override with their own handler.
+  const handleClick =
+    onMouseDown ??
+    (address.length > 0
+      ? () => {
+          openProfileMenu({ userId: address, name, hasClaimedName, isGuest })
+        }
+      : undefined)
   const resolvedColor: Color4 =
     textColor ??
     (hasClaimedName
@@ -46,7 +60,7 @@ export function PlayerNameComponent({
   return (
     <Row
       uiTransform={{ alignItems: 'center', width: 'auto', ...uiTransform }}
-      onMouseDown={onMouseDown}
+      onMouseDown={handleClick}
     >
       <UiEntity
         uiText={{
