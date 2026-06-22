@@ -11,10 +11,8 @@ import { COLOR } from '../../../components/color-palette'
 import { NotificationBadge } from '../../../components/notification-badge'
 import { Column, Row } from '../../../components/ui-system/layout'
 import { executeTask } from '@dcl/sdk/ecs'
-import {
-  fetchMyCommunities,
-  fetchUserInviteRequests
-} from '../../../utils/communities-promise-utils'
+import { fetchMyCommunities } from '../../../utils/communities-promise-utils'
+import { refreshCommunityRequestsCount } from '../../../service/community-requests-count-service'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import {
   type CommunityListItem,
@@ -60,20 +58,17 @@ function CommunitiesContent(): ReactElement {
   const [view, setView] = useState<'catalog' | 'invites' | 'my-communities'>(
     'catalog'
   )
-  const [pendingInvitesCount, setPendingInvitesCount] = useState<number>(0)
 
   const onSearchChange = debounce((text: string) => {
     setDebouncedSearch(text)
   }, 600)
 
+  // Badge count is the shared `hud.pendingCommunityRequests` (invites + requests
+  // sent + requests received), owned by community-requests-count-service so the
+  // HUD icon and this sidebar entry stay in sync.
   const refreshPendingInvites = (): void => {
-    executeTask(async () => {
-      try {
-        const invites = await fetchUserInviteRequests('invite')
-        setPendingInvitesCount(invites.length)
-      } catch (error) {
-        console.error('[communities] failed to load pending invites', error)
-      }
+    refreshCommunityRequestsCount().catch((error) => {
+      console.error('[communities] failed to load pending invites', error)
     })
   }
 
@@ -234,7 +229,7 @@ function CommunitiesContent(): ReactElement {
             />
             <UiEntity uiTransform={{ flexGrow: 1 }} />
             <NotificationBadge
-              count={pendingInvitesCount}
+              count={store.getState().hud.pendingCommunityRequests}
               color={COLOR.LINK_COLOR}
               maxCount={9}
               inline

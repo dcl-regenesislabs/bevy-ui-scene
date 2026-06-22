@@ -368,6 +368,7 @@ export default class MainHud {
               }
               variant="transparent"
               icon={CommunitiesIcon}
+              notifications={store.getState().hud.pendingCommunityRequests}
               hintText="Communities"
               onMouseDown={() => {
                 this.uiController.menu?.show('communities')

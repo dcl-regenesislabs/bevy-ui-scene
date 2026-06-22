@@ -8,6 +8,7 @@ import {
 } from '../../../service/fontsize-system'
 import { executeTask } from '@dcl/sdk/ecs'
 import {
+  fetchReceivedJoinRequests,
   fetchUserInviteRequests,
   invalidateUserInviteRequestsCache,
   manageInviteRequest
@@ -15,9 +16,13 @@ import {
 import { listenCommunitiesChanged } from '../../../service/communities-events'
 import {
   getCommunityThumbnailUrl,
+  type CommunityJoinRequestReceived,
   type CommunityListItem,
   type UserInviteRequest
 } from '../../../service/communities-types'
+import { AvatarCircle } from '../../../components/avatar-circle'
+import { PlayerNameComponent } from '../../../components/player-name-component'
+import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import { store } from '../../../state/store'
 import { pushPopupAction } from '../../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../../state/hud/state'
@@ -47,6 +52,7 @@ export function CommunityInvitesAndRequests({
 
   const [invites, setInvites] = useState<UserInviteRequest[]>([])
   const [requests, setRequests] = useState<UserInviteRequest[]>([])
+  const [received, setReceived] = useState<CommunityJoinRequestReceived[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
@@ -56,12 +62,14 @@ export function CommunityInvitesAndRequests({
           // Bypass the 60s cache so an invite resolved elsewhere (e.g.
           // accepted/rejected from the community popup) drops off the list.
           invalidateUserInviteRequestsCache()
-          const [inv, req] = await Promise.all([
+          const [inv, req, recv] = await Promise.all([
             fetchUserInviteRequests('invite'),
-            fetchUserInviteRequests('request_to_join')
+            fetchUserInviteRequests('request_to_join'),
+            fetchReceivedJoinRequests()
           ])
           setInvites(inv)
           setRequests(req)
+          setReceived(recv)
         } catch (error) {
           console.error('[communities] failed to load invites/requests', error)
         }
@@ -70,19 +78,21 @@ export function CommunityInvitesAndRequests({
     }
     refetch()
     // Refresh when an invite/request changes anywhere (popup accept/reject,
-    // join/leave, …) so the list + the "Invites (N)" count stay in sync.
+    // join/leave, …) so the list + the section counts stay in sync.
     const unsubscribe = listenCommunitiesChanged(refetch)
     return unsubscribe
   }, [])
 
   const removeFromList = (
-    list: 'invites' | 'requests',
+    list: 'invites' | 'requests' | 'received',
     requestId: string
   ): void => {
     if (list === 'invites') {
       setInvites(invites.filter((i) => i.id !== requestId))
-    } else {
+    } else if (list === 'requests') {
       setRequests(requests.filter((r) => r.id !== requestId))
+    } else {
+      setReceived(received.filter((r) => r.id !== requestId))
     }
   }
 
@@ -244,6 +254,269 @@ export function CommunityInvitesAndRequests({
           ))}
         </Row>
       )}
+
+      {/* Requests received section — join-requests to communities I manage */}
+      <UiEntity
+        uiTransform={{
+          width: '100%',
+          margin: { top: fontSize, bottom: fontSize * 0.5 }
+        }}
+        uiText={{
+          value: `<b>Requests Received (${received.length})</b>`,
+          fontSize,
+          color: COLOR.TEXT_COLOR_WHITE,
+          textAlign: 'top-left'
+        }}
+      />
+      {loading ? (
+        <CardRowSkeleton fontSize={fontSize} />
+      ) : received.length === 0 ? (
+        <EmptySection fontSize={fontSize} label="No Requests" />
+      ) : (
+        groupReceivedByCommunity(received).map((group) => (
+          <ReceivedCommunityGroup
+            key={group.communityId}
+            group={group}
+            onAccept={(req) => {
+              executeTask(async () => {
+                try {
+                  await manageInviteRequest(req.communityId, req.id, 'accepted')
+                  removeFromList('received', req.id)
+                  // Refresh the sidebar badge (shared callback with invites).
+                  onInviteAccepted?.()
+                } catch (error) {
+                  showErrorPopup(
+                    error instanceof Error ? error : new Error(String(error)),
+                    'acceptJoinRequest'
+                  )
+                }
+              })
+            }}
+            onReject={(req) => {
+              executeTask(async () => {
+                try {
+                  await manageInviteRequest(req.communityId, req.id, 'rejected')
+                  removeFromList('received', req.id)
+                  onInviteRejected?.()
+                } catch (error) {
+                  showErrorPopup(
+                    error instanceof Error ? error : new Error(String(error)),
+                    'rejectJoinRequest'
+                  )
+                }
+              })
+            }}
+          />
+        ))
+      )}
+    </Column>
+  )
+}
+
+type ReceivedGroup = {
+  communityId: string
+  communityName: string
+  items: CommunityJoinRequestReceived[]
+}
+
+/** Group the flat received list by community, preserving first-seen order. */
+function groupReceivedByCommunity(
+  list: CommunityJoinRequestReceived[]
+): ReceivedGroup[] {
+  const map = new Map<string, ReceivedGroup>()
+  for (const r of list) {
+    const group = map.get(r.communityId)
+    if (group != null) {
+      group.items.push(r)
+    } else {
+      map.set(r.communityId, {
+        communityId: r.communityId,
+        communityName: r.communityName,
+        items: [r]
+      })
+    }
+  }
+  return Array.from(map.values())
+}
+
+/** One community + its pending join-requests: header + a card per requester. */
+function ReceivedCommunityGroup({
+  group,
+  onAccept,
+  onReject
+}: {
+  group: ReceivedGroup
+  onAccept: (req: CommunityJoinRequestReceived) => void
+  onReject: (req: CommunityJoinRequestReceived) => void
+  key: string
+}): ReactElement {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeSmall = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.CAPTION
+  })
+  const thumbSize = fontSize * 2.5
+  const count = group.items.length
+
+  return (
+    <Column uiTransform={{ width: '100%', margin: { bottom: fontSize } }}>
+      {/* Community header */}
+      <Row
+        uiTransform={{
+          width: '100%',
+          alignItems: 'center',
+          margin: { bottom: fontSize * 0.5 }
+        }}
+      >
+        <UiEntity
+          uiTransform={{
+            width: thumbSize,
+            height: thumbSize,
+            borderRadius: fontSize / 2,
+            margin: { right: fontSize * 0.5 },
+            flexShrink: 0
+          }}
+          uiBackground={{
+            textureMode: 'stretch',
+            texture: { src: getCommunityThumbnailUrl(group.communityId) }
+          }}
+        />
+        <Column>
+          <UiEntity
+            uiText={{
+              value: `<b>${truncateWithoutBreakingWords(
+                group.communityName ?? '',
+                24
+              )}</b>`,
+              fontSize,
+              color: COLOR.TEXT_COLOR_WHITE,
+              textAlign: 'middle-left'
+            }}
+          />
+          <UiEntity
+            uiText={{
+              value: `${count} Request${count === 1 ? '' : 's'} Received`,
+              fontSize: fontSizeSmall,
+              color: COLOR.TEXT_COLOR_LIGHT_GREY,
+              textAlign: 'middle-left',
+              textWrap: 'nowrap'
+            }}
+          />
+        </Column>
+      </Row>
+
+      {/* Requester cards */}
+      <Row uiTransform={{ width: '100%', flexWrap: 'wrap' }}>
+        {group.items.map((req) => (
+          <RequesterCard
+            key={req.id}
+            item={req}
+            onAccept={() => {
+              onAccept(req)
+            }}
+            onReject={() => {
+              onReject(req)
+            }}
+          />
+        ))}
+      </Row>
+    </Column>
+  )
+}
+
+/** A single requester: avatar + name + REJECT/ACCEPT. */
+function RequesterCard({
+  item,
+  onAccept,
+  onReject
+}: {
+  item: CommunityJoinRequestReceived
+  onAccept: () => void
+  onReject: () => void
+  key: string
+}): ReactElement {
+  const fontSize = getFontSize({ context: CONTEXT.DIALOG })
+  const fontSizeSmall = getFontSize({
+    context: CONTEXT.DIALOG,
+    token: TYPOGRAPHY_TOKENS.CAPTION
+  })
+  const [acting, setActing] = useState<boolean>(false)
+
+  const run = (fn: () => void): void => {
+    if (acting) return
+    setActing(true)
+    fn()
+  }
+
+  const avatarSize = fontSize * 4
+
+  return (
+    <Column
+      uiTransform={{
+        width: fontSize * 16,
+        margin: { right: fontSize * 0.6, bottom: fontSize * 0.6 },
+        borderRadius: fontSize / 2,
+        padding: fontSize * 0.6,
+        alignItems: 'center',
+        flexShrink: 0,
+        opacity: acting ? getLoadingAlphaValue() : 1
+      }}
+      uiBackground={{ color: COLOR.DARK_OPACITY_5 }}
+    >
+      <AvatarCircle
+        userId={item.memberAddress}
+        imageSrc={item.profilePictureUrl}
+        circleColor={getAddressColor(item.memberAddress.toLowerCase())}
+        uiTransform={{
+          width: avatarSize,
+          height: avatarSize,
+          margin: { bottom: fontSize * 0.4 },
+          flexShrink: 0
+        }}
+        isGuest={false}
+      />
+      <PlayerNameComponent
+        name={item.name}
+        address={item.memberAddress}
+        hasClaimedName={item.hasClaimedName}
+        fontSize={fontSize}
+        uiTransform={{ margin: { bottom: fontSize * 0.5 } }}
+      />
+
+      {/* Action buttons */}
+      <Row uiTransform={{ width: '100%', alignItems: 'center' }}>
+        <ButtonTextIcon
+          variant="subtle"
+          value="<b>REJECT</b>"
+          fontSize={fontSizeSmall}
+          uiTransform={{
+            flexGrow: 1,
+            height: fontSize * 2,
+            margin: { right: fontSize * 0.3 },
+            padding: { left: fontSize * 0.6, right: fontSize * 0.6 },
+            justifyContent: 'center',
+            borderRadius: fontSize / 2
+          }}
+          onMouseDown={() => {
+            run(onReject)
+          }}
+        />
+        <ButtonTextIcon
+          variant="primary"
+          value="<b>ACCEPT</b>"
+          fontSize={fontSizeSmall}
+          uiTransform={{
+            flexGrow: 1,
+            height: fontSize * 2,
+            padding: { left: fontSize * 0.6, right: fontSize * 0.6 },
+            justifyContent: 'center',
+            borderRadius: fontSize / 2
+          }}
+          onMouseDown={() => {
+            run(onAccept)
+          }}
+        />
+      </Row>
     </Column>
   )
 }

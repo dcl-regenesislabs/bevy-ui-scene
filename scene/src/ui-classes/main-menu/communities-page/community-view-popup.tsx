@@ -1,4 +1,4 @@
-import ReactEcs, { type ReactElement } from '@dcl/react-ecs'
+import ReactEcs, { type ReactElement, UiEntity } from '@dcl/react-ecs'
 import { type Popup } from '../../../components/popup-stack'
 import { PopupBackdrop } from '../../../components/popup-backdrop'
 import { ResponsiveContent } from '../../../components/responsive-content'
@@ -74,6 +74,18 @@ function CommunityViewContent({
     { text: '  PHOTOS  ' }
   ]
 
+  // Content (members/announcements/…) is only reachable for public communities
+  // or for members of a private one — mirrors unity's `IsAccessAllowed` and the
+  // backend, which 401s a private community's member list for non-members. When
+  // gated we show only the header (with its Accept/Request CTA).
+  const isMember =
+    community != null &&
+    (community.role === 'owner' ||
+      community.role === 'moderator' ||
+      community.role === 'member')
+  const isAccessAllowed =
+    community != null && (community.privacy === 'public' || isMember)
+
   if (community == null) {
     return (
       <PopupBackdrop>
@@ -99,67 +111,96 @@ function CommunityViewContent({
     <PopupBackdrop>
       <ResponsiveContent>
         <PopupBigWindow>
-          <Column uiTransform={{ width: '70%' }}>
+          <Column uiTransform={{ width: isAccessAllowed ? '70%' : '100%' }}>
             <CommunityViewHeader community={community} />
-            <TabComponent
-              uiTransform={{
-                width: '90%',
-                padding: {
-                  left: fontSize * 2,
-                  right: fontSize * 2,
-                  top: fontSize
-                },
-                flexShrink: 0
-              }}
-              fontSize={fontSizeSmall}
-              tabs={COMMUNITY_TABS.map((t, i) => ({
-                ...t,
-                active: activeTabIndex === i
-              }))}
-              onClickTab={setActiveTabIndex}
-            />
+            {isAccessAllowed && (
+              <TabComponent
+                uiTransform={{
+                  width: '90%',
+                  padding: {
+                    left: fontSize * 2,
+                    right: fontSize * 2,
+                    top: fontSize
+                  },
+                  flexShrink: 0
+                }}
+                fontSize={fontSizeSmall}
+                tabs={COMMUNITY_TABS.map((t, i) => ({
+                  ...t,
+                  active: activeTabIndex === i
+                }))}
+                onClickTab={setActiveTabIndex}
+              />
+            )}
             {/* Content */}
+            {isAccessAllowed && (
+              <Column
+                uiTransform={{
+                  width: '100%',
+                  flexGrow: 1,
+                  padding: {
+                    left: fontSize * 2,
+                    right: fontSize * 2,
+                    top: fontSize
+                  },
+                  overflow: 'scroll',
+                  scrollVisible: 'vertical'
+                }}
+              >
+                {activeTabIndex === 0 && (
+                  <CommunityAnnouncements
+                    communityId={community.id}
+                    viewerRole={community.role}
+                  />
+                )}
+                {activeTabIndex === 1 && (
+                  <CommunityMembers
+                    communityId={community.id}
+                    viewerRole={community.role}
+                  />
+                )}
+                {activeTabIndex === 2 && (
+                  <CommunityPlaces communityId={community.id} />
+                )}
+                {activeTabIndex === 3 && (
+                  <CommunityPhotos communityId={community.id} />
+                )}
+              </Column>
+            )}
+            {/* Access-gated: private community, not a member yet. */}
+            {!isAccessAllowed && (
+              <Column
+                uiTransform={{
+                  width: '100%',
+                  flexGrow: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: fontSize * 2
+                }}
+              >
+                <UiEntity
+                  uiText={{
+                    value:
+                      'This is a private community.\nJoin it to see its members, announcements and places.',
+                    fontSize,
+                    color: COLOR.TEXT_COLOR_GREY,
+                    textAlign: 'middle-center',
+                    textWrap: 'wrap'
+                  }}
+                />
+              </Column>
+            )}
+          </Column>
+          {isAccessAllowed && (
             <Column
-              uiTransform={{
-                width: '100%',
-                flexGrow: 1,
-                padding: {
-                  left: fontSize * 2,
-                  right: fontSize * 2,
-                  top: fontSize
-                },
-                overflow: 'scroll',
-                scrollVisible: 'vertical'
+              uiTransform={{ width: '30%' }}
+              uiBackground={{
+                color: COLOR.DARK_OPACITY_5
               }}
             >
-              {activeTabIndex === 0 && (
-                <CommunityAnnouncements
-                  communityId={community.id}
-                  viewerRole={community.role}
-                />
-              )}
-              {activeTabIndex === 1 && (
-                <CommunityMembers
-                  communityId={community.id}
-                  viewerRole={community.role}
-                />
-              )}
-              {activeTabIndex === 2 && (
-                <CommunityPlaces communityId={community.id} />
-              )}
-              {activeTabIndex === 3 && (
-                <CommunityPhotos communityId={community.id} />
-              )}
+              <CommunityUpcomingEvents communityId={community.id} />
             </Column>
-          </Column>
-          <Column
-            uiTransform={{ width: '30%' }}
-            uiBackground={{
-              color: COLOR.DARK_OPACITY_5
-            }}
-          >
-            <CommunityUpcomingEvents communityId={community.id} />
-          </Column>
+          )}
         </PopupBigWindow>
       </ResponsiveContent>
     </PopupBackdrop>
