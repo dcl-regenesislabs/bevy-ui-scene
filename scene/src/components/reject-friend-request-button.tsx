@@ -17,9 +17,10 @@ import { BevyApi } from '../bevy-api'
 import { showConfirmPopup } from './confirm-popup'
 import { FEATURES, getFeatureFlag } from '../service/feature-flags'
 import {
-  getFriendshipStateVersion,
+  getRelationshipStatus,
+  isRelationshipReady,
   markSelfInitiatedFriendshipAction,
-  notifyFriendshipStateChanged
+  withOptimisticStatus
 } from '../service/friend-connectivity-service'
 
 import useState = ReactEcs.useState
@@ -71,7 +72,6 @@ export function RejectFriendRequestButton({
   const [resolved, setResolved] = useState<ResolvedPlayerData | null>(
     () => seededFromPlayer
   )
-  const [hasIncomingRequest, setHasIncomingRequest] = useState<boolean>(false)
 
   useEffect(() => {
     if (seededFromPlayer !== null) return
@@ -81,24 +81,13 @@ export function RejectFriendRequestButton({
     })
   }, [])
 
-  // Re-checks on every friendship-state change (remote request arriving,
-  // accept from the sibling FriendButton, …) so the item appears or
-  // disappears live while the popup stays open.
-  const friendshipVersion = getFriendshipStateVersion()
-
-  useEffect(() => {
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    if (userId === undefined) return
-    executeTask(async () => {
-      const requests = await BevyApi.social.getReceivedFriendRequests()
-      setHasIncomingRequest(
-        requests.some((r) => r.address.toLowerCase() === userId.toLowerCase())
-      )
-    })
-  }, [friendshipVersion])
-
   if (userId === undefined) return null
-  if (!hasIncomingRequest || resolved === null) return null
+  if (!getFeatureFlag(FEATURES.FRIENDS) || !isRelationshipReady()) return null
+  // Only while there's a pending incoming request — read from the single
+  // source of truth, so it appears/disappears live as the state changes.
+  if (resolved === null || getRelationshipStatus(userId) !== 'incoming') {
+    return null
+  }
 
   return (
     <ButtonComponent
@@ -123,13 +112,12 @@ export function RejectFriendRequestButton({
           address: resolved.userId,
           onConfirm: async () => {
             markSelfInitiatedFriendshipAction('reject', resolved.userId)
-            await BevyApi.social.rejectFriendRequest(resolved.userId)
-            // Optimistic: the request is gone, so the item disappears.
-            setHasIncomingRequest(false)
-            // Tell sibling widgets (FriendButton "Accept Friend") to
-            // refetch — only after the RPC resolved, so their refetch
-            // observes the post-reject state.
-            notifyFriendshipStateChanged()
+            // Optimistically clear the request from the store (the item and
+            // any sibling "Accept Friend" disappear this frame), then refetch
+            // authoritative state.
+            await withOptimisticStatus(resolved.userId, 'none', async () => {
+              await BevyApi.social.rejectFriendRequest(resolved.userId)
+            })
           }
         })
       }}

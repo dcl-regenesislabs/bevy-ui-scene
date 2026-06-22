@@ -18,8 +18,10 @@ import { BevyApi } from '../bevy-api'
 import { showConfirmPopup } from './confirm-popup'
 import { FEATURES, getFeatureFlag } from '../service/feature-flags'
 import {
-  notifyFriendshipStateChanged,
-  pushBlockStatusToast
+  getRelationshipStatus,
+  isRelationshipReady,
+  pushBlockStatusToast,
+  withOptimisticStatus
 } from '../service/friend-connectivity-service'
 
 import useState = ReactEcs.useState
@@ -43,7 +45,6 @@ import useEffect = ReactEcs.useEffect
 export function BlockUserButton({
   player: playerProp,
   userId: userIdProp,
-  isBlocked: isBlockedProp,
   fontSize: fontSizeProp,
   variant = 'subtle',
   uiTransform,
@@ -51,7 +52,6 @@ export function BlockUserButton({
 }: {
   player?: GetPlayerDataRes
   userId?: string
-  isBlocked?: boolean
   fontSize?: number
   /**
    * Variant used by the non-CTA states (BLOCKED idle / loading). The
@@ -88,27 +88,13 @@ export function BlockUserButton({
   const [resolved, setResolved] = useState<ResolvedPlayerData | null>(
     () => seededFromPlayer
   )
-  const [isBlockedInternal, setIsBlockedInternal] = useState<boolean>(false)
   const [hovered, setHovered] = useState<boolean>(false)
-  const isBlocked = isBlockedProp ?? isBlockedInternal
 
   useEffect(() => {
     if (seededFromPlayer !== null) return
     if (userId === undefined) return
     executeTask(async () => {
       setResolved(await resolvePlayerData(userId))
-    })
-  }, [])
-
-  useEffect(() => {
-    if (isBlockedProp !== undefined) return
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    if (userId === undefined) return
-    executeTask(async () => {
-      const blocked = await BevyApi.social.getBlockedUsers()
-      setIsBlockedInternal(
-        blocked.some((b) => b.address.toLowerCase() === userId.toLowerCase())
-      )
     })
   }, [])
 
@@ -119,8 +105,15 @@ export function BlockUserButton({
   // user is a guest.
   if (getPlayer()?.isGuest === true) return null
 
-  // Loading placeholder while we resolve the player's name asynchronously.
-  if (resolved === null) {
+  const friendsEnabled = getFeatureFlag(FEATURES.FRIENDS)
+  // Block state comes from the single source of truth.
+  const isBlocked =
+    friendsEnabled && isRelationshipReady()
+      ? getRelationshipStatus(userId) === 'blockedByMe'
+      : false
+
+  // Loading placeholder while we resolve the name or seed the relationship state.
+  if (resolved === null || (friendsEnabled && !isRelationshipReady())) {
     return (
       <ButtonComponent
         variant={variant}
@@ -163,9 +156,10 @@ export function BlockUserButton({
             },
             confirmLabel: 'UNBLOCK',
             onConfirm: async () => {
-              await BevyApi.social.unblockUser(resolved.userId)
+              await withOptimisticStatus(resolved.userId, 'none', async () => {
+                await BevyApi.social.unblockUser(resolved.userId)
+              })
               pushBlockStatusToast('unblocked', resolved.userId, resolved.name)
-              notifyFriendshipStateChanged()
             }
           })
         }}
@@ -195,9 +189,14 @@ export function BlockUserButton({
           },
           confirmLabel: 'BLOCK',
           onConfirm: async () => {
-            await BevyApi.social.blockUser(resolved.userId)
+            await withOptimisticStatus(
+              resolved.userId,
+              'blockedByMe',
+              async () => {
+                await BevyApi.social.blockUser(resolved.userId)
+              }
+            )
             pushBlockStatusToast('blocked', resolved.userId, resolved.name)
-            notifyFriendshipStateChanged()
           }
         })
       }}

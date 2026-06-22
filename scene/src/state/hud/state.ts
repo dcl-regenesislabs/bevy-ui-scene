@@ -142,6 +142,12 @@ export type HudState = {
   receivedFriendRequests: FriendRequestData[]
   friends: FriendStatusData[]
   friendsLoading: boolean
+  /** Addresses I have blocked. */
+  blockedUsers: string[]
+  /** Addresses that have blocked me (empty on builds without getBlockingStatus). */
+  blockedByUsers: string[]
+  /** True once the relationship snapshot (friends/requests/blocks) is seeded. */
+  relationshipReady: boolean
   minimapStyle: 'parcel' | 'satellite' | 'imposters'
   minimapRotation: 'camera' | 'north'
   minimapMarkerCategories: string[]
@@ -193,6 +199,9 @@ export type HudStateUpdateParams = {
   receivedFriendRequests?: FriendRequestData[]
   friends?: FriendStatusData[]
   friendsLoading?: boolean
+  blockedUsers?: string[]
+  blockedByUsers?: string[]
+  relationshipReady?: boolean
   minimapStyle?: 'parcel' | 'satellite' | 'imposters'
   minimapRotation?: 'camera' | 'north'
   minimapMarkerCategories?: string[]
@@ -246,6 +255,9 @@ export const hudInitialState: HudState = {
   receivedFriendRequests: [],
   friends: [],
   friendsLoading: true,
+  blockedUsers: [],
+  blockedByUsers: [],
+  relationshipReady: false,
   minimapStyle: loadMinimapStyle(),
   minimapRotation: loadMinimapRotation(),
   minimapMarkerCategories: loadMinimapMarkerCategories(

@@ -18,10 +18,11 @@ import { showConfirmPopup } from './confirm-popup'
 import { COLOR } from './color-palette'
 import { FEATURES, getFeatureFlag } from '../service/feature-flags'
 import {
-  getFriendshipStateVersion,
+  getRelationshipStatus,
+  isRelationshipReady,
   markSelfInitiatedFriendshipAction,
-  notifyFriendshipStateChanged,
-  pushBlockStatusToast
+  pushBlockStatusToast,
+  withOptimisticStatus
 } from '../service/friend-connectivity-service'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
@@ -29,12 +30,16 @@ import useEffect = ReactEcs.useEffect
 /**
  * Friend / Add Friend toggle button.
  *
- * Pass either `player` (preferred) or `userId`. The display name is
- * resolved via `resolvePlayerData` (sync `getPlayer` first, falls back
- * to the catalyst lambda for users not in the scene). `isFriend` and
- * `hasIncomingRequest` are resolved on mount unless the props are given.
+ * Pass either `player` (preferred) or `userId`. The display name is resolved
+ * via `resolvePlayerData` (sync `getPlayer` first, falls back to the catalyst
+ * lambda). The **friendship state is read from the single source of truth**
+ * (`getRelationshipStatus`, backed by `friend-connectivity-service`), so the
+ * button needs no per-instance fetches and every button on screen reflects any
+ * change on the next frame.
  *
  * Visual variant is fixed per state — no prop to override:
+ *   - my block        → `black` ("Unblock to Add Friend").
+ *   - blocked by them  → disabled `black` ("Can't Add This User").
  *   - friend, idle  → `black` ("Friend" + FriendIcon).
  *   - friend, hover → `black` + red border ("Remove Friend" + Unfriends).
  *   - incoming request pending → `primary` CTA ("Accept Friend").
@@ -46,25 +51,19 @@ import useEffect = ReactEcs.useEffect
 export function FriendButton({
   player: playerProp,
   userId: userIdProp,
-  isFriend: isFriendProp,
-  hasIncomingRequest: hasIncomingRequestProp,
-  hasOutgoingRequest: hasOutgoingRequestProp,
   fontSize: fontSizeProp,
   uiTransform,
   onPressed
 }: {
   player?: GetPlayerDataRes
   userId?: string
-  isFriend?: boolean
-  hasIncomingRequest?: boolean
-  hasOutgoingRequest?: boolean
   fontSize?: number
   uiTransform?: UiTransformProps
   /**
-   * Fires when any action state of the button is pressed (accept,
-   * cancel, unfriend, unblock — "Add Friend" already closes the host
-   * popup itself). Hosts that should close on any action (profile
-   * menu) pass their close function here.
+   * Fires when any action state of the button is pressed (accept, cancel,
+   * unfriend, unblock — "Add Friend" already closes the host popup itself).
+   * Hosts that should close on any action (profile menu) pass their close
+   * function here.
    */
   onPressed?: () => void
 }): ReactElement | null {
@@ -73,9 +72,9 @@ export function FriendButton({
 
   const userId = playerProp?.userId ?? userIdProp
 
-  // If `playerProp` is given, derive the resolved data synchronously and
-  // skip the async fetch + loading state entirely. Otherwise we start
-  // with `null` and let the useEffect below fetch it.
+  // If `playerProp` is given, derive the resolved data synchronously and skip
+  // the async fetch + loading state entirely. Otherwise we start with `null`
+  // and let the useEffect below fetch it.
   const seededFromPlayer: ResolvedPlayerData | null =
     playerProp != null
       ? {
@@ -89,23 +88,7 @@ export function FriendButton({
   const [resolved, setResolved] = useState<ResolvedPlayerData | null>(
     () => seededFromPlayer
   )
-  const [isFriendInternal, setIsFriendInternal] = useState<boolean>(false)
-  const [hasIncomingRequestInternal, setHasIncomingRequestInternal] =
-    useState<boolean>(false)
-  const [hasOutgoingRequestInternal, setHasOutgoingRequestInternal] =
-    useState<boolean>(false)
-  // 'blockedByMe' → offer "Unblock to Add Friend" (the user can undo their
-  // own decision). 'blockedMe' → disabled generic button (don't disclose
-  // who blocked whom; the backend rejects the request anyway).
-  const [blockState, setBlockState] = useState<
-    'none' | 'blockedByMe' | 'blockedMe'
-  >('none')
   const [hovered, setHovered] = useState<boolean>(false)
-  const isFriend = isFriendProp ?? isFriendInternal
-  const hasIncomingRequest =
-    hasIncomingRequestProp ?? hasIncomingRequestInternal
-  const hasOutgoingRequest =
-    hasOutgoingRequestProp ?? hasOutgoingRequestInternal
 
   useEffect(() => {
     if (seededFromPlayer !== null) return
@@ -115,93 +98,20 @@ export function FriendButton({
     })
   }, [])
 
-  // Re-runs the friendship-state fetches whenever a sibling widget
-  // (e.g. RejectFriendRequestButton in the same popup) completes a
-  // friendship action — so "Accept Friend" flips to "Add Friend" right
-  // after a reject without remounting the popup.
-  const friendshipVersion = getFriendshipStateVersion()
-
-  useEffect(() => {
-    if (isFriendProp !== undefined) return
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    if (userId === undefined) return
-    executeTask(async () => {
-      const friends = await BevyApi.social.getFriends()
-      setIsFriendInternal(
-        friends.some((f) => f.address.toLowerCase() === userId.toLowerCase())
-      )
-    })
-  }, [friendshipVersion])
-
-  useEffect(() => {
-    if (hasIncomingRequestProp !== undefined) return
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    if (userId === undefined) return
-    executeTask(async () => {
-      const requests = await BevyApi.social.getReceivedFriendRequests()
-      setHasIncomingRequestInternal(
-        requests.some((r) => r.address.toLowerCase() === userId.toLowerCase())
-      )
-    })
-  }, [friendshipVersion])
-
-  useEffect(() => {
-    if (hasOutgoingRequestProp !== undefined) return
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    if (userId === undefined) return
-    executeTask(async () => {
-      const requests = await BevyApi.social.getSentFriendRequests()
-      setHasOutgoingRequestInternal(
-        requests.some((r) => r.address.toLowerCase() === userId.toLowerCase())
-      )
-    })
-  }, [friendshipVersion])
-
-  // Re-derives on every friendship-state change. The block-update stream
-  // (wired in friend-connectivity-service) bumps the version when someone
-  // blocks/unblocks the local user, so an open profile flips live; our own
-  // block/unblock actions bump it too.
-  useEffect(() => {
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    if (userId === undefined) return
-    executeTask(async () => {
-      // Older explorer builds don't implement getBlockingStatus (it's
-      // optional on SocialApi → `undefined` here). Skip the pre-check
-      // there; the send flow still surfaces the backend error.
-      const status = await BevyApi.social.getBlockingStatus?.()
-      if (status == null || !Array.isArray(status.blockedUsers)) return
-      const target = userId.toLowerCase()
-      if (status.blockedUsers.some((a) => a.toLowerCase() === target)) {
-        setBlockState('blockedByMe')
-      } else if (
-        status.blockedByUsers.some((a) => a.toLowerCase() === target)
-      ) {
-        setBlockState('blockedMe')
-      } else {
-        // No block in either direction — reset (covers live unblock).
-        setBlockState('none')
-      }
-    })
-  }, [friendshipVersion])
-
   if (userId === undefined) return null
 
   // Guests cannot send / receive friend requests, so the button has no
   // meaningful state to expose.
-  //   - opener is guest    → friendship actions require a wallet identity.
-  //   - target is guest    → guest userIds are ephemeral, you can't be
-  //                          friends with a session that won't exist next
-  //                          login.
-  // `getPlayer({ userId })` returns null for users not in the scene, so
-  // the target check is best-effort: we hide when we can prove guest,
-  // otherwise fall through.
   if (getPlayer()?.isGuest === true) return null
   if (playerProp?.isGuest === true || getPlayer({ userId })?.isGuest === true) {
     return null
   }
 
-  // Loading placeholder while we resolve the player's name asynchronously.
-  if (resolved === null) {
+  const friendsEnabled = getFeatureFlag(FEATURES.FRIENDS)
+
+  // Loading placeholder while we resolve the player's name, or while the
+  // relationship snapshot hasn't been seeded yet (avoids a wrong-state flash).
+  if (resolved === null || (friendsEnabled && !isRelationshipReady())) {
     return (
       <ButtonComponent
         variant="black"
@@ -215,10 +125,11 @@ export function FriendButton({
     )
   }
 
-  // Blocking pre-checks (see blockState above). Friendship state is
-  // irrelevant while a block exists in either direction — the backend
-  // rejects every friendship action with BlockedUserError.
-  if (blockState === 'blockedByMe') {
+  const status = friendsEnabled ? getRelationshipStatus(userId) : 'none'
+
+  // Blocking pre-checks. Friendship state is irrelevant while a block exists in
+  // either direction — the backend rejects every friendship action.
+  if (status === 'blockedByMe') {
     return (
       <ButtonComponent
         variant="black"
@@ -240,10 +151,10 @@ export function FriendButton({
             },
             confirmLabel: 'UNBLOCK',
             onConfirm: async () => {
-              await BevyApi.social.unblockUser(resolved.userId)
-              setBlockState('none')
+              await withOptimisticStatus(resolved.userId, 'none', async () => {
+                await BevyApi.social.unblockUser(resolved.userId)
+              })
               pushBlockStatusToast('unblocked', resolved.userId, resolved.name)
-              notifyFriendshipStateChanged()
             }
           })
         }}
@@ -251,9 +162,9 @@ export function FriendButton({
     )
   }
 
-  if (blockState === 'blockedMe') {
-    // Deliberately generic: doesn't reveal that the target blocked the
-    // local user, only that the action is unavailable.
+  if (status === 'blockedMe') {
+    // Deliberately generic: doesn't reveal that the target blocked the local
+    // user, only that the action is unavailable.
     return (
       <ButtonComponent
         variant="black"
@@ -267,7 +178,7 @@ export function FriendButton({
     )
   }
 
-  if (isFriend) {
+  if (status === 'friend') {
     return (
       <ButtonComponent
         variant="black"
@@ -298,8 +209,9 @@ export function FriendButton({
             category: 'friendship',
             address: resolved.userId,
             onConfirm: async () => {
-              await BevyApi.social.deleteFriend(resolved.userId)
-              notifyFriendshipStateChanged()
+              await withOptimisticStatus(resolved.userId, 'none', async () => {
+                await BevyApi.social.deleteFriend(resolved.userId)
+              })
             }
           })
         }}
@@ -307,7 +219,7 @@ export function FriendButton({
     )
   }
 
-  if (hasIncomingRequest) {
+  if (status === 'incoming') {
     return (
       <ButtonComponent
         variant="primary"
@@ -317,22 +229,18 @@ export function FriendButton({
         uiTransform={uiTransform}
         onMouseDown={() => {
           onPressed?.()
+          markSelfInitiatedFriendshipAction('accept', resolved.userId)
           executeTask(async () => {
-            markSelfInitiatedFriendshipAction('accept', resolved.userId)
-            await BevyApi.social.acceptFriendRequest(resolved.userId)
-            // Optimistically update local state so the button flips to
-            // the "Friend" branch on the next render without waiting for
-            // a remount or external refetch.
-            setIsFriendInternal(true)
-            setHasIncomingRequestInternal(false)
-            notifyFriendshipStateChanged()
+            await withOptimisticStatus(resolved.userId, 'friend', async () => {
+              await BevyApi.social.acceptFriendRequest(resolved.userId)
+            })
           })
         }}
       />
     )
   }
 
-  if (hasOutgoingRequest) {
+  if (status === 'outgoing') {
     return (
       <ButtonComponent
         variant="black"
@@ -365,10 +273,9 @@ export function FriendButton({
             address: resolved.userId,
             onConfirm: async () => {
               markSelfInitiatedFriendshipAction('cancel', resolved.userId)
-              await BevyApi.social.cancelFriendRequest(resolved.userId)
-              // Optimistic flip back to "Add Friend".
-              setHasOutgoingRequestInternal(false)
-              notifyFriendshipStateChanged()
+              await withOptimisticStatus(resolved.userId, 'none', async () => {
+                await BevyApi.social.cancelFriendRequest(resolved.userId)
+              })
             }
           })
         }}
@@ -384,11 +291,8 @@ export function FriendButton({
       icon={{ atlasName: 'context', spriteName: 'Add' }}
       uiTransform={uiTransform}
       onMouseDown={() => {
-        // Close the parent popup (passport / profile-popup) that hosted
-        // this button. The SEND_FRIEND_REQUEST popup is a self-contained
-        // flow — once the user is in it, the underlying popup is just
-        // visual noise and would still be there after the request is sent
-        // showing a stale "Add Friend" button.
+        // Close the parent popup (passport / profile-popup) that hosted this
+        // button. The SEND_FRIEND_REQUEST popup is a self-contained flow.
         store.dispatch(closeLastPopupAction())
         store.dispatch(
           pushPopupAction({

@@ -4,8 +4,7 @@ import { Column, Row } from '../../../components/ui-system/layout'
 import {
   type CommunityInviteEntry,
   type CommunityMember,
-  type CommunityMemberRole,
-  CommunityFriendshipStatus
+  type CommunityMemberRole
 } from '../../../service/communities-types'
 import {
   CONTEXT,
@@ -87,9 +86,6 @@ function CommunityMemberItem({
   const badge = roleBadgeLabel(member.role)
   const avatarSize = fontSize * 2.5
 
-  // `friendshipStatus` is read-only from the API payload — `FriendButton`
-  // owns its own internal state for optimistic updates.
-  const friendshipStatus = member.friendshipStatus
   const isSelf =
     (getPlayer()?.userId ?? '').toLowerCase() ===
     member.memberAddress.toLowerCase()
@@ -174,25 +170,15 @@ function CommunityMemberItem({
       {/* Spacer */}
       <UiEntity uiTransform={{ flexGrow: 1 }} />
 
-      {/* Friend button — owns the full friend-state lifecycle (add /
-          accept / cancel-request / unfriend). Fully seeded from data the
-          community list already loaded (name + friendshipStatus), so the
-          button renders the right state immediately and skips ALL of its
-          internal fetches: `resolvePlayerData`, `getFriends`,
-          `getReceivedFriendRequests`, `getSentFriendRequests`. Hidden on
-          my own row. The cast is safe: FriendButton only reads
-          `userId`, `name`, `isGuest` off the player payload. */}
+      {/* Friend button — owns the full friend-state lifecycle (add / accept /
+          cancel-request / unfriend). Friendship state comes from the single
+          source of truth (the relationship store), so it stays correct and
+          live regardless of the (snapshot) community payload. `player` is
+          passed only to skip the name resolution. Hidden on my own row. */}
       {!isSelf ? (
         <FriendButton
           player={memberAsPlayerStub(member)}
           fontSize={fontSizeSmall}
-          isFriend={friendshipStatus === CommunityFriendshipStatus.FRIEND}
-          hasIncomingRequest={
-            friendshipStatus === CommunityFriendshipStatus.REQUEST_RECEIVED
-          }
-          hasOutgoingRequest={
-            friendshipStatus === CommunityFriendshipStatus.REQUEST_SENT
-          }
         />
       ) : null}
 

@@ -46,7 +46,6 @@ import { ButtonIcon } from '../../../components/button-icon'
 import { TopBorder } from '../../../components/bottom-border'
 import { CopyButton } from '../../../components/copy-button'
 import { getPlayer } from '@dcl/sdk/players'
-import { BevyApi } from '../../../bevy-api'
 import { FriendButton } from '../../../components/friend-button'
 import { BlockUserButton } from '../../../components/block-user-button'
 import { RejectFriendRequestButton } from '../../../components/reject-friend-request-button'
@@ -81,6 +80,10 @@ import { PassportGallery } from './passport-gallery'
 import { Badge3dPreviewElement } from './badge-3d-preview'
 import { BadgesPreview } from './badges-preview'
 import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
+import {
+  getRelationshipStatus,
+  isRelationshipReady
+} from '../../../service/friend-connectivity-service'
 import { PlayerNameComponent } from '../../../components/player-name-component'
 import { PopupBigWindow } from '../../../components/popup-big-window'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
@@ -179,40 +182,21 @@ export function setupPassportPopup(): void {
 
 export const PassportPopup: Popup = ({ shownPopup }) => {
   const fontSize = getFontSize({ context: CONTEXT.DIALOG })
-  const [isFriend, setIsFriend] = useState<boolean>(true)
-  const [isBlocked, setIsBlocked] = useState<boolean>(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState<boolean>(false)
   const [inviteSubmenuOpen, setInviteSubmenuOpen] = useState<boolean>(false)
   const [invitableCommunities, setInvitableCommunities] = useState<
     InvitableCommunity[]
   >([])
-  const [checkVersion, setCheckVersion] = useState<number>(0)
   const userId = (shownPopup.data as string).toLowerCase()
 
-  // Re-check friendship only when passport is the top popup
-  const popups = store.getState().hud.shownPopups
-  const topPopup = popups[popups.length - 1]
-  useEffect(() => {
-    if (topPopup?.type === HUD_POPUP_TYPE.PASSPORT) {
-      setCheckVersion((v) => v + 1)
-    }
-  }, [popups.length])
-
-  useEffect(() => {
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    executeTask(async () => {
-      const friends = await BevyApi.social.getFriends()
-      setIsFriend(friends.some((f) => f.address.toLowerCase() === userId))
-    })
-  }, [checkVersion])
-
-  useEffect(() => {
-    if (!getFeatureFlag(FEATURES.FRIENDS)) return
-    executeTask(async () => {
-      const blocked = await BevyApi.social.getBlockedUsers()
-      setIsBlocked(blocked.some((b) => b.address.toLowerCase() === userId))
-    })
-  }, [checkVersion])
+  // Friendship / block state from the single source of truth (live; no fetch).
+  // `isBlocked` here means "I blocked them" — it governs the friend-button hide.
+  const relationshipStatus =
+    getFeatureFlag(FEATURES.FRIENDS) && isRelationshipReady()
+      ? getRelationshipStatus(userId)
+      : 'none'
+  const isFriend = relationshipStatus === 'friend'
+  const isBlocked = relationshipStatus === 'blockedByMe'
 
   // Communities I can invite this user to. Skip the fetch for my own
   // passport — there's no "invite myself" flow.
@@ -297,9 +281,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
               }}
             >
               {/* Friend button: hide when the user is blocked. */}
-              {!isBlocked ? (
-                <FriendButton userId={userId} isFriend={isFriend} />
-              ) : null}
+              {!isBlocked ? <FriendButton userId={userId} /> : null}
               {/* "More actions" menu — currently hosts BlockUser /
                   UnblockUser. Hidden when the user is a friend AND not
                   blocked (no destructive action makes sense). */}
@@ -377,11 +359,7 @@ export const PassportPopup: Popup = ({ shownPopup }) => {
                         userId={userId}
                         variant="black"
                       />
-                      <BlockUserButton
-                        userId={userId}
-                        isBlocked={isBlocked}
-                        variant="black"
-                      />
+                      <BlockUserButton userId={userId} variant="black" />
                     </UiEntity>
                   )}
                 </UiEntity>
