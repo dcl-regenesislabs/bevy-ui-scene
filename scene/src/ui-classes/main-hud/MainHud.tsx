@@ -23,6 +23,7 @@ import { type PBUiCanvasInformation } from '@dcl/ecs/dist/components/generated/p
 import { BevyApi } from '../../bevy-api'
 import { sleep } from '../../utils/dcl-utils'
 import { listenSystemAction } from '../../service/system-actions-emitter'
+import { isAnyDropdownOpen } from '../../service/dropdown-open-registry'
 import {
   CONTEXT,
   getFontSize,
@@ -149,12 +150,14 @@ export default class MainHud {
       this.uiController.menu?.show('map')
     })
 
-    // ESC priority: 1) close the top popup, peeling off one per press
-    // (same semantics as a backdrop click; skipped while any popup is
+    // ESC priority: 0) an open dropdown owns ESC and closes itself via its
+    // own listener, so bail here, 1) close the top popup, peeling off one per
+    // press (same semantics as a backdrop click; skipped while any popup is
     // mid-submit), 2) close the friends or chat sidecar panel if open,
     // 3) otherwise close the main menu if open.
     listenSystemAction('Cancel', (pressed: boolean) => {
       if (!pressed) return
+      if (isAnyDropdownOpen()) return
       const hud = store.getState().hud
       const popups = store.getState().hud.shownPopups
 

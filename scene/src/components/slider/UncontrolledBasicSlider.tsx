@@ -6,7 +6,7 @@ import ReactEcs, {
 import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { noop } from '../../utils/function-utils'
 import { Color4 } from '@dcl/sdk/math'
-import { BasicSlider } from './BasicSlider'
+import { BasicSlider } from './slider-component'
 import ButtonIcon from '../button-icon/ButtonIcon'
 import useState = ReactEcs.useState
 import { roundToStep } from './slider-utils'

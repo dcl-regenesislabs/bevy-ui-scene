@@ -17,6 +17,7 @@ import { useGrowContext } from '../../service/grow-context'
 import { getLoadingAlphaValue } from '../../service/loading-alpha-color'
 import { COLOR } from '../color-palette'
 import { type ButtonVariant, VARIANT_STYLES } from './button-variants'
+import { wrapDropdownHandlerWorkaround } from '../../service/dropdown-open-registry'
 
 export type { ButtonVariant }
 
@@ -161,7 +162,13 @@ function ButtonComponent(props: {
         ...props.uiTransform
       }}
       uiBackground={{ color: bgColor }}
-      onMouseDown={isInteractive ? props.onMouseDown : undefined}
+      onMouseDown={
+        isInteractive
+          ? () => {
+              wrapDropdownHandlerWorkaround(null, props.onMouseDown)
+            }
+          : undefined
+      }
       onMouseEnter={() => {
         if (!isInteractive) return
         setHovered(true)
