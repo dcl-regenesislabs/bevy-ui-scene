@@ -28,7 +28,10 @@ import { getPlayer } from '@dcl/sdk/players'
 import { executeTask } from '@dcl/sdk/ecs'
 import { showErrorPopup } from '../../../service/error-popup-service'
 import { getLoadingAlphaValue } from '../../../service/loading-alpha-color'
-import { notifyCommunitiesChanged } from '../../../service/communities-events'
+import {
+  addOptimisticJoinedCommunity,
+  notifyCommunitiesChanged
+} from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -127,7 +130,7 @@ export function CommunityBrowseCard({
       executeTask(async () => {
         try {
           await joinCommunity(community.id)
-          notifyCommunitiesChanged()
+          addOptimisticJoinedCommunity({ ...community, role: 'member' })
         } catch (error) {
           setRole(previous)
           showErrorPopup(

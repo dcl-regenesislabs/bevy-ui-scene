@@ -34,7 +34,10 @@ import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { cancelBrowseLoad, CommunitiesCatalog } from './communities-catalog'
 import { CommunityInvitesAndRequests } from './community-invites-and-requests'
 import { CommunityMyCommunities } from './community-my-communities'
-import { listenCommunitiesChanged } from '../../../service/communities-events'
+import {
+  listenCommunitiesChanged,
+  mergeOptimisticJoinedCommunities
+} from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { BottomBorder } from '../../../components/bottom-border'
@@ -76,7 +79,9 @@ function CommunitiesContent(): ReactElement {
     executeTask(async () => {
       try {
         const result = await fetchMyCommunities()
-        setMyCommunities(result.results)
+        // Merge any just-joined community so it shows even before the backend
+        // read-replica reflects the membership.
+        setMyCommunities(mergeOptimisticJoinedCommunities(result.results))
       } catch (error) {
         console.error('[communities] failed to refresh my communities', error)
       }
@@ -87,7 +92,7 @@ function CommunitiesContent(): ReactElement {
     executeTask(async () => {
       try {
         const result = await fetchMyCommunities()
-        setMyCommunities(result.results)
+        setMyCommunities(mergeOptimisticJoinedCommunities(result.results))
       } catch (error) {
         console.error('[communities] failed to load my communities', error)
       }

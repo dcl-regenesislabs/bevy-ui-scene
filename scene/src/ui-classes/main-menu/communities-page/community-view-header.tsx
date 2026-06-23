@@ -30,7 +30,11 @@ import {
   sendInviteOrRequestToJoin
 } from '../../../utils/communities-promise-utils'
 import { showErrorPopup } from '../../../service/error-popup-service'
-import { notifyCommunitiesChanged } from '../../../service/communities-events'
+import {
+  addOptimisticJoinedCommunity,
+  notifyCommunitiesChanged,
+  removeOptimisticJoinedCommunity
+} from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -142,7 +146,9 @@ export function CommunityViewHeader({
         await manageInviteRequest(community.id, id, 'accepted')
         setInviteId(null)
         invalidateUserInviteRequestsCache()
-        notifyCommunitiesChanged()
+        // Optimistically surface the just-joined community in "My Communities"
+        // (also fires notifyCommunitiesChanged under the hood).
+        addOptimisticJoinedCommunity({ ...community, role: 'member' })
       } catch (error) {
         setRole(previousRole)
         showErrorPopup(
@@ -188,7 +194,7 @@ export function CommunityViewHeader({
     executeTask(async () => {
       try {
         await joinCommunity(community.id)
-        notifyCommunitiesChanged()
+        addOptimisticJoinedCommunity({ ...community, role: 'member' })
       } catch (error) {
         setRole(previous)
         showErrorPopup(
@@ -214,6 +220,8 @@ export function CommunityViewHeader({
         await leaveCommunity(community.id, myAddress)
         // See note in onJoin: never mutate `community.role` here — same row
         // may be the frozen `shownPopup.data` payload.
+        // Drop any optimistic just-joined entry so leaving doesn't resurrect it.
+        removeOptimisticJoinedCommunity(community.id)
         notifyCommunitiesChanged()
       } catch (error) {
         setRole(previous)

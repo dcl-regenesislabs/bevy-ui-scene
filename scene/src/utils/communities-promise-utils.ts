@@ -770,6 +770,10 @@ export async function manageInviteRequest(
   await signedPatch(`${base}/${communityId}/requests/${requestId}`, {
     intention
   })
+  // The user's invite/request lists just changed — drop the 60s cache so badges
+  // and the panel reflect it immediately and never re-PATCH a stale (deleted)
+  // request id, which 404s ("Community request not found").
+  invalidateUserInviteRequestsCache()
 }
 
 /**

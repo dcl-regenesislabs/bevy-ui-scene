@@ -13,7 +13,10 @@ import {
   invalidateUserInviteRequestsCache,
   manageInviteRequest
 } from '../../../utils/communities-promise-utils'
-import { listenCommunitiesChanged } from '../../../service/communities-events'
+import {
+  addOptimisticJoinedCommunity,
+  listenCommunitiesChanged
+} from '../../../service/communities-events'
 import {
   getCommunityThumbnailUrl,
   type CommunityJoinRequestReceived,
@@ -171,6 +174,24 @@ export function CommunityInvitesAndRequests({
                       'accepted'
                     )
                     removeFromList('invites', id)
+                    // Show the just-joined community in "My Communities" right
+                    // away, before the backend read-replica reflects it.
+                    addOptimisticJoinedCommunity({
+                      id: invite.communityId,
+                      name: invite.name,
+                      description: invite.description,
+                      thumbnailUrl:
+                        invite.thumbnailUrl ??
+                        getCommunityThumbnailUrl(invite.communityId),
+                      ownerAddress: invite.ownerAddress,
+                      ownerName: invite.ownerName,
+                      privacy: invite.privacy,
+                      visibility: 'all',
+                      role: 'member',
+                      membersCount: invite.membersCount,
+                      active: invite.active,
+                      friends: invite.friends ?? []
+                    })
                     onInviteAccepted?.()
                   } catch (error) {
                     showErrorPopup(
