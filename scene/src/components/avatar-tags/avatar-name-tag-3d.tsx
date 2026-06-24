@@ -119,6 +119,7 @@ function createTag(player: GetPlayerDataRes): undefined | Entity {
 
   Material.setPbrMaterial(tagWrapperEntity, {
     transparencyMode: MaterialTransparencyMode.MTM_ALPHA_BLEND,
+    castShadows: false,
     texture: {
       tex: {
         $case: 'uiTexture',
