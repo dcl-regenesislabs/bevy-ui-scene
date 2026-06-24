@@ -12,6 +12,11 @@ import type {
   FriendStatusData,
   FriendshipEventUpdate
 } from './social-service-type'
+import {
+  selectRelationshipStatus,
+  type RelationshipSnapshot,
+  type RelationshipStatus
+} from './relationship-status'
 import { showErrorPopup } from './error-popup-service'
 import { resolvePlayerData } from '../utils/passport-promise-utils'
 import { type FriendshipResultVariant } from '../components/friends/friendship-result-popup'
@@ -121,6 +126,85 @@ export function notifyFriendshipStateChanged(): void {
   friendshipStateVersion++
 }
 
+// --- Relationship source of truth -----------------------------------------
+//
+// The full "what is my relationship with X" picture lives in the hud store
+// (friends / received+sent requests / blocked, both directions). These helpers
+// expose it as a cheap, address-keyed snapshot so any number of
+// FriendButton-style widgets can read their state IN RENDER (O(1) Set lookups)
+// without per-button fetches. The Set snapshot is rebuilt only when
+// `friendshipStateVersion` changes, so reading it every frame stays cheap.
+
+let cachedSnapshot: RelationshipSnapshot | null = null
+let cachedSnapshotVersion = -1
+
+// Short-lived optimistic overrides so a self action (accept / cancel / unfriend
+// / block / unblock) flips the button THIS frame, before the authoritative
+// refetch lands. Cleared once the store catches up (see `withOptimisticStatus`).
+const optimisticStatus = new Map<string, RelationshipStatus>()
+
+function toAddressSet(
+  list: Array<{ address: string }> | string[]
+): Set<string> {
+  const set = new Set<string>()
+  for (const item of list) {
+    set.add((typeof item === 'string' ? item : item.address).toLowerCase())
+  }
+  return set
+}
+
+export function getRelationshipSnapshot(): RelationshipSnapshot {
+  if (
+    cachedSnapshot === null ||
+    cachedSnapshotVersion !== friendshipStateVersion
+  ) {
+    const hud = store.getState().hud
+    cachedSnapshot = {
+      friends: toAddressSet(hud.friends),
+      incoming: toAddressSet(hud.receivedFriendRequests),
+      outgoing: toAddressSet(hud.sentFriendRequests),
+      blockedByMe: toAddressSet(hud.blockedUsers),
+      blockedMe: toAddressSet(hud.blockedByUsers)
+    }
+    cachedSnapshotVersion = friendshipStateVersion
+  }
+  return cachedSnapshot
+}
+
+/** O(1) relationship status for `address`, honoring any optimistic override. */
+export function getRelationshipStatus(address: string): RelationshipStatus {
+  const override = optimisticStatus.get(address.toLowerCase())
+  if (override !== undefined) return override
+  return selectRelationshipStatus(address, getRelationshipSnapshot())
+}
+
+/** True once the relationship snapshot has been seeded at least once. */
+export function isRelationshipReady(): boolean {
+  return store.getState().hud.relationshipReady
+}
+
+/**
+ * Run a self-initiated friendship mutation with an instant optimistic flip:
+ * set the override, run the RPC, then refetch authoritative state and clear the
+ * override. Reconciles with the (deduped) stream echo via
+ * `markSelfInitiatedFriendshipAction`, which callers still invoke.
+ */
+export async function withOptimisticStatus(
+  address: string,
+  optimistic: RelationshipStatus,
+  rpc: () => Promise<void>
+): Promise<void> {
+  optimisticStatus.set(address.toLowerCase(), optimistic)
+  notifyFriendshipStateChanged()
+  try {
+    await rpc()
+    await Promise.all([refreshFriends(), refreshRelationships()])
+  } finally {
+    optimisticStatus.delete(address.toLowerCase())
+    notifyFriendshipStateChanged()
+  }
+}
+
 /**
  * Confirmation toast after the LOCAL user blocks / unblocks someone —
  * shown once the RPC resolved, so it never confirms an action that
@@ -189,6 +273,27 @@ function removeFriend(address: string): void {
  * even though they're clearly online (they just acted). A later real
  * OFFLINE transition will correct this if they go away.
  */
+/**
+ * Apply a "someone blocked/unblocked ME" event (the block-update stream) to the
+ * `blockedByUsers` slice. Our own block/unblock actions don't echo here — those
+ * update `blockedUsers` optimistically + via `refreshRelationships`.
+ */
+function applyBlockedByUpdate(address: string, isBlocked: boolean): void {
+  const target = normalizeAddress(address)
+  const prev = store.getState().hud.blockedByUsers
+  const has = prev.some((a) => normalizeAddress(a) === target)
+  let updated = prev
+  if (isBlocked && !has) {
+    updated = [...prev, address]
+  } else if (!isBlocked && has) {
+    updated = prev.filter((a) => normalizeAddress(a) !== target)
+  }
+  if (updated !== prev) {
+    store.dispatch(updateHudStateAction({ blockedByUsers: updated }))
+  }
+  notifyFriendshipStateChanged()
+}
+
 function markFriendOnline(address: string): void {
   const target = normalizeAddress(address)
   const prev = store.getState().hud.friends
@@ -228,6 +333,49 @@ export async function refreshFriends(): Promise<void> {
       friendsLoading: false
     })
   )
+}
+
+/**
+ * Authoritative refetch of the relationship slices the snapshot reads:
+ * pending requests (both directions) and the block sets. This is the single
+ * place that owns those slices, so a member row gets correct friendship state
+ * even when the friends panel was never opened. Bumps the version after
+ * writing so `getRelationshipSnapshot`'s cache rebuilds.
+ *
+ * `getBlockingStatus` is optional on older builds — fall back to
+ * `getBlockedUsers` (my-blocked direction only) and leave `blockedByUsers` empty.
+ */
+export async function refreshRelationships(): Promise<void> {
+  const [received, sent] = await Promise.all([
+    BevyApi.social.getReceivedFriendRequests(),
+    BevyApi.social.getSentFriendRequests()
+  ])
+
+  let blockedUsers = store.getState().hud.blockedUsers
+  let blockedByUsers = store.getState().hud.blockedByUsers
+  try {
+    const status = await BevyApi.social.getBlockingStatus?.()
+    if (status != null && Array.isArray(status.blockedUsers)) {
+      blockedUsers = status.blockedUsers
+      blockedByUsers = status.blockedByUsers
+    } else {
+      const blocked = await BevyApi.social.getBlockedUsers()
+      blockedUsers = blocked.map((b) => b.address)
+    }
+  } catch {
+    // keep previous block sets on failure
+  }
+
+  store.dispatch(
+    updateHudStateAction({
+      receivedFriendRequests: received,
+      sentFriendRequests: sent,
+      blockedUsers,
+      blockedByUsers,
+      relationshipReady: true
+    })
+  )
+  notifyFriendshipStateChanged()
 }
 
 /**
@@ -409,13 +557,21 @@ export function initFriendConnectivityService(): void {
     // profile or passport) refetch and flip live — e.g. "Add Friend"
     // becomes "Accept Friend" when a request arrives mid-popup.
     notifyFriendshipStateChanged()
+    // Keep the request/block slices (the snapshot's source) authoritative even
+    // when the friends panel is closed — so member rows etc. reflect the change.
+    refreshRelationships().catch((error) => {
+      showErrorPopup(
+        error instanceof Error ? error : new Error(String(error)),
+        'friend-connectivity:refreshOnEvent'
+      )
+    })
     handleFriendshipResultEvent(event)
   })
 
   executeTask(async () => {
     try {
       await waitForSocialReady()
-      await refreshFriends()
+      await Promise.all([refreshFriends(), refreshRelationships()])
     } catch (error) {
       showErrorPopup(
         error instanceof Error ? error : new Error(String(error)),
@@ -471,7 +627,7 @@ export function initFriendConnectivityService(): void {
       }
       for await (const event of stream) {
         console.log('[social] block update', event)
-        notifyFriendshipStateChanged()
+        applyBlockedByUpdate(event.address, event.isBlocked)
       }
     } catch (error) {
       showErrorPopup(

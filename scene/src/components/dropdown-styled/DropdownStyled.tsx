@@ -13,7 +13,6 @@ import { isTruthy, noop } from '../../utils/function-utils'
 import { getContentScaleRatio } from '../../service/canvas-ratio'
 import { type InputOption } from '../../utils/definitions'
 import { CONTEXT, getFontSize } from '../../service/fontsize-system'
-// TODO REVIEW if makes worth: find a way to close list when clicking outside, maybe onMouseEnter/Leave state + onMouseDown
 
 function DropdownStyled(props: {
   isOpen: boolean
@@ -170,73 +169,53 @@ function DropdownStyled(props: {
                   key={option.value}
                   uiTransform={{
                     width: '100%',
-                    height: 'auto',
-                    flexDirection: 'column'
+                    height: fontSize * 2,
+                    margin: { top: index > 0 ? fontSize * 0.1 : 0 },
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                  uiBackground={{
+                    color:
+                      index === props.entered
+                        ? COLOR.DROPDOWN_ITEM_HOVER
+                        : ALMOST_WHITE
+                  }}
+                  onMouseDown={() => {
+                    props.onOptionMouseDown(index, props.title)
+                  }}
+                  onMouseEnter={() => {
+                    props.onOptionMouseEnter(index)
+                  }}
+                  onMouseLeave={() => {
+                    props.onOptionMouseLeave(index)
                   }}
                 >
                   <UiEntity
                     uiTransform={{
-                      width: '100%',
-                      height: '100%',
-                      display: index > 0 ? 'flex' : 'none'
+                      width: 'auto',
+                      height: '100%'
+                    }}
+                    uiText={{
+                      value: option.label,
+                      fontSize,
+                      color: ALMOST_BLACK,
+                      textAlign: 'middle-left'
                     }}
                   />
+
                   <UiEntity
                     uiTransform={{
-                      width: '100%',
-                      height: '100%',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
+                      display: props.value === index ? 'flex' : 'none',
+                      width: fontSize,
+                      height: fontSize,
+                      margin: { right: fontSize * 0.3 }
                     }}
                     uiBackground={{
-                      color:
-                        index === props.entered
-                          ? COLOR.DROPDOWN_ITEM_HOVER
-                          : ALMOST_WHITE
-                    }}
-                    onMouseDown={() => {
-                      props.onOptionMouseDown(index, props.title)
-                    }}
-                    onMouseEnter={() => {
-                      props.onOptionMouseEnter(index)
-                    }}
-                    onMouseLeave={() => {
-                      props.onOptionMouseLeave(index)
-                    }}
-                  >
-                    <UiEntity
-                      uiTransform={{
-                        width: 'auto',
-                        height: '100%'
-                      }}
-                      uiText={{
-                        value: option.label,
-                        fontSize,
-                        color: ALMOST_BLACK,
-                        textAlign: 'middle-left'
-                      }}
-                    />
-
-                    <UiEntity
-                      uiTransform={{
-                        display: props.value === index ? 'flex' : 'none',
-                        width: fontSize,
-                        height: fontSize,
-                        margin: { right: fontSize * 0.3 }
-                      }}
-                      uiBackground={{
-                        ...getBackgroundFromAtlas({
-                          atlasName: 'icons',
-                          spriteName: 'Check'
-                        }),
-                        color: ORANGE
-                      }}
-                    />
-                  </UiEntity>
-                  <UiEntity
-                    uiTransform={{
-                      width: '100%',
-                      height: fontSize * 0.1
+                      ...getBackgroundFromAtlas({
+                        atlasName: 'icons',
+                        spriteName: 'Check'
+                      }),
+                      color: ORANGE
                     }}
                   />
                 </UiEntity>

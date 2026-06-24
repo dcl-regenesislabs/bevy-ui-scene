@@ -87,7 +87,9 @@ export enum HUD_POPUP_TYPE {
   CREATE_COMMUNITY,
   CONFIRM_DELETE_COMMUNITY,
   CONFIRM,
-  COMMUNITY_MEMBER_MENU
+  COMMUNITY_MEMBER_MENU,
+  ALERT,
+  COMMUNITY_JOIN_REQUEST
 }
 
 export type HUDPopup = {
@@ -141,6 +143,14 @@ export type HudState = {
   receivedFriendRequests: FriendRequestData[]
   friends: FriendStatusData[]
   friendsLoading: boolean
+  /** Addresses I have blocked. */
+  blockedUsers: string[]
+  /** Addresses that have blocked me (empty on builds without getBlockingStatus). */
+  blockedByUsers: string[]
+  /** True once the relationship snapshot (friends/requests/blocks) is seeded. */
+  relationshipReady: boolean
+  /** Pending community invites + requests sent + requests received (HUD badge). */
+  pendingCommunityRequests: number
   minimapStyle: 'parcel' | 'satellite' | 'imposters'
   minimapRotation: 'camera' | 'north'
   minimapMarkerCategories: string[]
@@ -192,6 +202,10 @@ export type HudStateUpdateParams = {
   receivedFriendRequests?: FriendRequestData[]
   friends?: FriendStatusData[]
   friendsLoading?: boolean
+  blockedUsers?: string[]
+  blockedByUsers?: string[]
+  relationshipReady?: boolean
+  pendingCommunityRequests?: number
   minimapStyle?: 'parcel' | 'satellite' | 'imposters'
   minimapRotation?: 'camera' | 'north'
   minimapMarkerCategories?: string[]
@@ -245,6 +259,10 @@ export const hudInitialState: HudState = {
   receivedFriendRequests: [],
   friends: [],
   friendsLoading: true,
+  blockedUsers: [],
+  blockedByUsers: [],
+  relationshipReady: false,
+  pendingCommunityRequests: 0,
   minimapStyle: loadMinimapStyle(),
   minimapRotation: loadMinimapRotation(),
   minimapMarkerCategories: loadMinimapMarkerCategories(

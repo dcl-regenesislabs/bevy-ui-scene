@@ -224,7 +224,7 @@ export default class SceneInfo {
   }
 
   async setHome(realm?: string, position?: Vector3 | undefined): Promise<void> {
-    const newRealm = realm ?? 'http://realm-provider-ea.decentraland.org/main'
+    const newRealm = realm ?? 'https://realm-provider-ea.decentraland.org/main'
     const newParcel =
       Vector2.create(position?.x, position?.z) ?? Vector2.create(0, 0)
     this.home = { realm: newRealm, parcel: newParcel }

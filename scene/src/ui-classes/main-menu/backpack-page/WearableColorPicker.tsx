@@ -12,7 +12,7 @@ import {
 } from '../../../service/categories'
 import { Label, type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { noop } from '../../../utils/function-utils'
-import { BasicSlider } from '../../../components/slider/BasicSlider'
+import { BasicSlider } from '../../../components/slider/slider-component'
 import {
   type BackpackUpdateAvatarBasePayload,
   updateAvatarBase

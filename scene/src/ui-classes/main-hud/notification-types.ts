@@ -1,5 +1,17 @@
 import { type RarityName } from '../../utils/item-definitions'
 
+/**
+ * Notification feed `type` string constants — reference these instead of
+ * comparing against magic string literals. (Currently the community ones;
+ * extend as other types need referencing in code.)
+ */
+export const NOTIFICATION_TYPE = {
+  COMMUNITY_INVITE_SENT: 'community_invite_sent',
+  COMMUNITY_INVITE_RECEIVED: 'community_invite_received',
+  COMMUNITY_REQUEST_TO_JOIN_RECEIVED: 'community_request_to_join_received',
+  COMMUNITY_REQUEST_TO_JOIN_ACCEPTED: 'community_request_to_join_accepted'
+} as const
+
 export type BaseNotification = {
   id: string
   type: string
@@ -95,7 +107,7 @@ export type FriendshipRequestNotification = {
  * is no matching backend notification feed entry.
  */
 export type CommunityInviteSentNotification = {
-  type: 'community_invite_sent'
+  type: typeof NOTIFICATION_TYPE.COMMUNITY_INVITE_SENT
   metadata: {
     communityId: string
     communityName: string
@@ -107,6 +119,54 @@ export type CommunityInviteSentNotification = {
     image?: string
     /** Free-text description shown by the default renderer path. */
     description: string
+  }
+} & BaseNotification
+
+/**
+ * Backend notification (notifications feed, type `community_invite_received`)
+ * shown to the INVITEE when someone invites them to a community. Metadata
+ * mirrors `@dcl/schemas` `CommunityInviteReceivedEvent`.
+ */
+export type CommunityInviteReceivedNotification = {
+  type: typeof NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED
+  metadata: {
+    communityId: string
+    communityName: string
+    memberAddress?: string
+    thumbnailUrl?: string
+  }
+} & BaseNotification
+
+/**
+ * Backend notification (notifications feed, type
+ * `community_request_to_join_received`) shown to the community's OWNERS &
+ * MODERATORS when someone requests to join a private community. Metadata
+ * mirrors `@dcl/schemas` `CommunityRequestToJoinReceivedEvent`.
+ */
+export type CommunityRequestToJoinReceivedNotification = {
+  type: typeof NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED
+  metadata: {
+    communityId: string
+    communityName: string
+    memberAddress: string
+    memberName?: string
+    thumbnailUrl?: string
+  }
+} & BaseNotification
+
+/**
+ * Backend notification (notifications feed, type
+ * `community_request_to_join_accepted`) shown to the REQUESTER once an owner /
+ * moderator approves their request to join a private community. Metadata
+ * mirrors `@dcl/schemas` `CommunityRequestToJoinAcceptedEvent`.
+ */
+export type CommunityRequestToJoinAcceptedNotification = {
+  type: typeof NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED
+  metadata: {
+    communityId: string
+    communityName: string
+    memberAddress?: string
+    thumbnailUrl?: string
   }
 } & BaseNotification
 
@@ -312,6 +372,9 @@ export type Notification =
   | RewardInProgressNotification
   | FriendshipRejectedNotification
   | CommunityInviteSentNotification
+  | CommunityInviteReceivedNotification
+  | CommunityRequestToJoinReceivedNotification
+  | CommunityRequestToJoinAcceptedNotification
   | UserBlockStatusNotification
 
 export type FriendshipRejectedNotification = {
@@ -367,7 +430,10 @@ export const RENDER_NOTIFICATION_TYPES: Array<Notification['type']> = [
   'events_ended',
   'item_sold',
   'reward_assignment',
-  'reward_in_progress'
+  'reward_in_progress',
+  NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED,
+  NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED,
+  NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED
   /* 'social_service_friendship_request',
   'social_service_friendship_accepted'
    'dao_proposal_published',

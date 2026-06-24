@@ -761,9 +761,8 @@ export default class SceneInfoCard {
                     realm: this.place.world_name
                   })
                 } else if (currentRealmProviderIsWorld()) {
-                  // TODO REVIEW if that URL is ok
                   await changeRealm({
-                    realm: 'https://realm-provider.decentraland.org/main'
+                    realm: 'https://realm-provider-ea.decentraland.org/main'
                   })
                 }
                 await teleportTo({

@@ -8,12 +8,11 @@ import {
   RightSection
 } from '../backpack-page/BackpackNavBar'
 import { COLOR } from '../../../components/color-palette'
+import { NotificationBadge } from '../../../components/notification-badge'
 import { Column, Row } from '../../../components/ui-system/layout'
 import { executeTask } from '@dcl/sdk/ecs'
-import {
-  fetchMyCommunities,
-  fetchUserInviteRequests
-} from '../../../utils/communities-promise-utils'
+import { fetchMyCommunities } from '../../../utils/communities-promise-utils'
+import { refreshCommunityRequestsCount } from '../../../service/community-requests-count-service'
 import { LoadingPlaceholder } from '../../../components/loading-placeholder'
 import {
   type CommunityListItem,
@@ -35,7 +34,10 @@ import { HUD_POPUP_TYPE } from '../../../state/hud/state'
 import { cancelBrowseLoad, CommunitiesCatalog } from './communities-catalog'
 import { CommunityInvitesAndRequests } from './community-invites-and-requests'
 import { CommunityMyCommunities } from './community-my-communities'
-import { listenCommunitiesChanged } from '../../../service/communities-events'
+import {
+  listenCommunitiesChanged,
+  mergeOptimisticJoinedCommunities
+} from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 import { BottomBorder } from '../../../components/bottom-border'
@@ -59,20 +61,17 @@ function CommunitiesContent(): ReactElement {
   const [view, setView] = useState<'catalog' | 'invites' | 'my-communities'>(
     'catalog'
   )
-  const [pendingInvitesCount, setPendingInvitesCount] = useState<number>(0)
 
   const onSearchChange = debounce((text: string) => {
     setDebouncedSearch(text)
   }, 600)
 
+  // Badge count is the shared `hud.pendingCommunityRequests` (invites + requests
+  // sent + requests received), owned by community-requests-count-service so the
+  // HUD icon and this sidebar entry stay in sync.
   const refreshPendingInvites = (): void => {
-    executeTask(async () => {
-      try {
-        const invites = await fetchUserInviteRequests('invite')
-        setPendingInvitesCount(invites.length)
-      } catch (error) {
-        console.error('[communities] failed to load pending invites', error)
-      }
+    refreshCommunityRequestsCount().catch((error) => {
+      console.error('[communities] failed to load pending invites', error)
     })
   }
 
@@ -80,7 +79,9 @@ function CommunitiesContent(): ReactElement {
     executeTask(async () => {
       try {
         const result = await fetchMyCommunities()
-        setMyCommunities(result.results)
+        // Merge any just-joined community so it shows even before the backend
+        // read-replica reflects the membership.
+        setMyCommunities(mergeOptimisticJoinedCommunities(result.results))
       } catch (error) {
         console.error('[communities] failed to refresh my communities', error)
       }
@@ -91,7 +92,7 @@ function CommunitiesContent(): ReactElement {
     executeTask(async () => {
       try {
         const result = await fetchMyCommunities()
-        setMyCommunities(result.results)
+        setMyCommunities(mergeOptimisticJoinedCommunities(result.results))
       } catch (error) {
         console.error('[communities] failed to load my communities', error)
       }
@@ -232,22 +233,13 @@ function CommunitiesContent(): ReactElement {
               }}
             />
             <UiEntity uiTransform={{ flexGrow: 1 }} />
-            {pendingInvitesCount > 0 && (
-              <UiEntity
-                uiTransform={{
-                  borderRadius: 99,
-                  height: fontSize,
-                  width: fontSize
-                }}
-                uiBackground={{
-                  color: COLOR.LINK_COLOR
-                }}
-                uiText={{
-                  value: `${pendingInvitesCount}`,
-                  fontSize: fontSizeCaption
-                }}
-              />
-            )}
+            <NotificationBadge
+              count={store.getState().hud.pendingCommunityRequests}
+              color={COLOR.LINK_COLOR}
+              maxCount={9}
+              inline
+              context={CONTEXT.DIALOG}
+            />
 
             <Icon
               icon={{ spriteName: 'RightArrow', atlasName: 'icons' }}

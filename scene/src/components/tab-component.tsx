@@ -9,6 +9,7 @@ import { type UiTransformProps } from '@dcl/sdk/react-ecs'
 import { noop } from '../utils/function-utils'
 import { CONTEXT, getFontSize } from '../service/fontsize-system'
 import { Column, Row } from './ui-system/layout'
+import { wrapDropdownHandlerWorkaround } from '../service/dropdown-open-registry'
 
 export type Tab = {
   text: string
@@ -44,7 +45,9 @@ export function TabComponent({
               fontSize
             }}
             onMouseDown={() => {
-              onClickTab(index)
+              wrapDropdownHandlerWorkaround(null, () => {
+                onClickTab(index)
+              })
             }}
           >
             {active && <BottomBorder color={COLOR.LINK_COLOR} />}

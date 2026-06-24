@@ -9,6 +9,7 @@ import { AvatarCircle } from '../avatar-circle'
 import { ButtonIcon } from '../button-icon'
 import { pushPopupAction } from '../../state/hud/actions'
 import { HUD_POPUP_TYPE } from '../../state/hud/state'
+import { openProfileMenu } from '../../service/profile-menu-service'
 import { store } from '../../state/store'
 import { executeTask } from '@dcl/sdk/ecs'
 import { fetchFriendLocation } from '../../service/friend-location'
@@ -47,12 +48,12 @@ export function FriendListItem({
       onMouseLeave={onMouseLeave}
       onMouseEnter={onMouseEnter}
       onMouseDown={() => {
-        store.dispatch(
-          pushPopupAction({
-            type: HUD_POPUP_TYPE.PASSPORT,
-            data: friend.address.toLowerCase()
-          })
-        )
+        openProfileMenu({
+          userId: friend.address,
+          name: friend.name,
+          hasClaimedName: friend.hasClaimedName,
+          isGuest: false
+        })
       }}
       uiBackground={{
         color: hovered ? COLOR.WHITE_OPACITY_1 : COLOR.BLACK_TRANSPARENT

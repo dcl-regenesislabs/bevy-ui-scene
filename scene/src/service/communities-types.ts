@@ -122,6 +122,15 @@ export type CommunityInviteEntry = {
   createdAt?: string
 }
 
+/**
+ * A pending join-request to a community I own/moderate (an entry of
+ * GET /communities/{id}/requests?type=request_to_join), with the community's
+ * display name attached so the "Requests Received" inbox can show context.
+ */
+export type CommunityJoinRequestReceived = CommunityInviteEntry & {
+  communityName: string
+}
+
 /** Entry returned by GET /members/{address}/requests?type=… */
 export type UserInviteRequest = {
   id: string

@@ -30,7 +30,11 @@ import {
   sendInviteOrRequestToJoin
 } from '../../../utils/communities-promise-utils'
 import { showErrorPopup } from '../../../service/error-popup-service'
-import { notifyCommunitiesChanged } from '../../../service/communities-events'
+import {
+  addOptimisticJoinedCommunity,
+  notifyCommunitiesChanged,
+  removeOptimisticJoinedCommunity
+} from '../../../service/communities-events'
 import useState = ReactEcs.useState
 import useEffect = ReactEcs.useEffect
 
@@ -54,6 +58,7 @@ export function CommunityViewHeader({
 
   const [role, setRole] = useState<CommunityMemberRole>(community.role)
   const [requestId, setRequestId] = useState<string | null>(null)
+  const [inviteId, setInviteId] = useState<string | null>(null)
   const [acting, setActing] = useState<boolean>(false)
   const [hovering, setHovering] = useState<boolean>(false)
   const [ownerMenuOpen, setOwnerMenuOpen] = useState<boolean>(false)
@@ -97,6 +102,90 @@ export function CommunityViewHeader({
     })
   }, [])
 
+  // On mount, detect a pending INVITE to this community (any privacy) so the
+  // CTA offers Accept/Reject instead of Join / Request to Join. Invalidate
+  // first: the 60s cache can hold an already-resolved invite, and acting on a
+  // stale request id returns HTTP 404.
+  useEffect(() => {
+    if (isMember) return
+    executeTask(async () => {
+      try {
+        invalidateUserInviteRequestsCache()
+        const invites = await fetchUserInviteRequests('invite')
+        const match = invites.find((r) => r.communityId === community.id)
+        if (match != null) setInviteId(match.id)
+      } catch (error) {
+        console.error('[communities] failed to load my invites', error)
+      }
+    })
+  }, [])
+
+  // Resolve the CURRENT invite request id for this community (fresh, bypassing
+  // the cache). The display-time `inviteId` can be stale (the cache holds
+  // resolved invites for up to 60s), so accept/reject must re-resolve before
+  // PATCHing — otherwise the backend 404s on a non-existent request id.
+  const resolveInviteId = async (): Promise<string | null> => {
+    invalidateUserInviteRequestsCache()
+    const invites = await fetchUserInviteRequests('invite')
+    return invites.find((r) => r.communityId === community.id)?.id ?? null
+  }
+
+  const onAcceptInvite = (): void => {
+    if (acting) return
+    const previousRole = role
+    setActing(true)
+    executeTask(async () => {
+      try {
+        const id = await resolveInviteId()
+        if (id == null) {
+          // Invite no longer exists — clear the CTA.
+          setInviteId(null)
+          return
+        }
+        setRole('member')
+        await manageInviteRequest(community.id, id, 'accepted')
+        setInviteId(null)
+        invalidateUserInviteRequestsCache()
+        // Optimistically surface the just-joined community in "My Communities"
+        // (also fires notifyCommunitiesChanged under the hood).
+        addOptimisticJoinedCommunity({ ...community, role: 'member' })
+      } catch (error) {
+        setRole(previousRole)
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'acceptCommunityInvite'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
+
+  const onRejectInvite = (): void => {
+    if (acting) return
+    setActing(true)
+    executeTask(async () => {
+      try {
+        const id = await resolveInviteId()
+        if (id == null) {
+          setInviteId(null)
+          return
+        }
+        await manageInviteRequest(community.id, id, 'rejected')
+        setInviteId(null)
+        invalidateUserInviteRequestsCache()
+        notifyCommunitiesChanged()
+      } catch (error) {
+        showErrorPopup(
+          error instanceof Error ? error : new Error(String(error)),
+          'rejectCommunityInvite'
+        )
+      } finally {
+        setActing(false)
+      }
+    })
+  }
+
   const onJoin = (): void => {
     if (acting) return
     const previous = role
@@ -105,7 +194,7 @@ export function CommunityViewHeader({
     executeTask(async () => {
       try {
         await joinCommunity(community.id)
-        notifyCommunitiesChanged()
+        addOptimisticJoinedCommunity({ ...community, role: 'member' })
       } catch (error) {
         setRole(previous)
         showErrorPopup(
@@ -131,6 +220,8 @@ export function CommunityViewHeader({
         await leaveCommunity(community.id, myAddress)
         // See note in onJoin: never mutate `community.role` here — same row
         // may be the frozen `shownPopup.data` payload.
+        // Drop any optimistic just-joined entry so leaving doesn't resurrect it.
+        removeOptimisticJoinedCommunity(community.id)
         notifyCommunitiesChanged()
       } catch (error) {
         setRole(previous)
@@ -399,6 +490,45 @@ export function CommunityViewHeader({
               }}
               onMouseDown={onLeave}
             />
+          ) : inviteId != null ? (
+            <Row uiTransform={{ width: 'auto', alignItems: 'center' }}>
+              <ButtonTextIcon
+                variant="primary"
+                value="<b>ACCEPT INVITATION</b>"
+                icon={{ spriteName: 'Check', atlasName: 'icons' }}
+                fontSize={fontSizeSmall}
+                loading={acting}
+                uiTransform={{
+                  borderRadius: fontSize / 2,
+                  padding: {
+                    left: fontSize * 0.6,
+                    right: fontSize * 0.8,
+                    top: fontSize * 0.3,
+                    bottom: fontSize * 0.3
+                  },
+                  margin: { right: fontSize * 0.4 }
+                }}
+                onMouseDown={onAcceptInvite}
+              />
+              <ButtonTextIcon
+                variant="black"
+                destructiveHover={true}
+                value="<b>REJECT INVITATION</b>"
+                icon={{ spriteName: 'CloseIcon', atlasName: 'icons' }}
+                fontSize={fontSizeSmall}
+                loading={acting}
+                uiTransform={{
+                  borderRadius: fontSize / 2,
+                  padding: {
+                    left: fontSize * 0.6,
+                    right: fontSize * 0.8,
+                    top: fontSize * 0.3,
+                    bottom: fontSize * 0.3
+                  }
+                }}
+                onMouseDown={onRejectInvite}
+              />
+            </Row>
           ) : community.privacy === 'private' ? (
             <ButtonTextIcon
               variant={requested ? 'subtle' : 'primary'}

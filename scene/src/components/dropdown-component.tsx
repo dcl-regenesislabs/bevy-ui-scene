@@ -6,7 +6,16 @@ import { noop } from '../utils/function-utils'
 import { timers } from '@dcl-sdk/utils'
 import { type InputOption } from '../utils/definitions'
 import useState = ReactEcs.useState
+import useEffect = ReactEcs.useEffect
 import { CONTEXT, getFontSize } from '../service/fontsize-system'
+import { listenSystemAction } from '../service/system-actions-emitter'
+import {
+  createDropdownId,
+  isDropdownOpen,
+  closeOpenDropdown,
+  wrapDropdownHandlerWorkaround,
+  subscribeDropdown
+} from '../service/dropdown-open-registry'
 
 export type DropdownComponentProps = {
   uiTransform?: UiTransformProps
@@ -37,8 +46,33 @@ export function DropdownComponent({
   disabled = false,
   listMaxHeight
 }: DropdownComponentProps): ReactElement {
-  const [open, setOpen] = useState(false)
   const [entered, setEntered] = useState<number | null>(null)
+  const [id] = useState(() => createDropdownId())
+  // Open state lives in the service (single source of truth). We mirror it into
+  // local state via a subscription, so this component re-renders only when its
+  // own open state changes.
+  const [open, setOpen] = useState(() => isDropdownOpen(id))
+
+  useEffect(() => {
+    const sync = (): void => {
+      setOpen(isDropdownOpen(id))
+    }
+    sync() // catch any change between initial render and subscribing
+    return subscribeDropdown(sync)
+  }, [id])
+
+  // While open, close on ESC ('Cancel'). The global ESC handler (MainHud) yields
+  // precedence to an open dropdown instead of closing the menu behind it.
+  useEffect(() => {
+    if (!open) return
+    const unlisten = listenSystemAction('Cancel', (pressed: boolean) => {
+      if (pressed) closeOpenDropdown()
+    })
+    return () => {
+      setEntered(null)
+      unlisten()
+    }
+  }, [open])
 
   return (
     <DropdownStyled
@@ -46,13 +80,11 @@ export function DropdownComponent({
       uiTransform={uiTransform}
       isOpen={open}
       onMouseDown={() => {
-        if (!disabled) {
-          setOpen(!open)
-        }
+        if (!disabled) wrapDropdownHandlerWorkaround(id, noop)
       }}
       onOptionMouseDown={(index) => {
         onChange(options[index].value)
-        setOpen(false)
+        closeOpenDropdown()
       }}
       onOptionMouseEnter={(index) => {
         setEntered(index)

@@ -27,6 +27,7 @@ import {
   NotificationToastStack
 } from '../ui-classes/main-hud/notification-toast-stack'
 import { initFriendConnectivityService } from '../service/friend-connectivity-service'
+import { initCommunityRequestsCount } from '../service/community-requests-count-service'
 import { updateHudStateAction } from '../state/hud/actions'
 import { listenPermissionRequests } from '../ui-classes/main-hud/permissions-popups/permissions-popup-service'
 import { getRealm } from '~system/Runtime'
@@ -138,6 +139,9 @@ export class UIController {
         if (getFeatureFlag(FEATURES.FRIENDS)) {
           initFriendshipEventToasts()
           initFriendConnectivityService()
+        }
+        if (getFeatureFlag(FEATURES.COMMUNITIES)) {
+          initCommunityRequestsCount()
         }
       })().catch(console.error)
     })

@@ -5,6 +5,7 @@ import {
   isItemNotification,
   isRewardNotification,
   type Notification,
+  NOTIFICATION_TYPE,
   type UserProfile
 } from './notification-types'
 import type { FriendRequestData } from '../../service/social-service-type'
@@ -118,6 +119,51 @@ export function NotificationItem({
         } else if (isFriendshipNotification(notification)) {
           handleFriendshipNotificationClick(
             notification as FriendshipNotification
+          )
+          setLoading(false)
+        } else if (
+          notification.type === NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED ||
+          notification.type ===
+            NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED
+        ) {
+          const communityId = notification.metadata.communityId
+          if (communityId != null) {
+            // Close the menu / dismiss the toast AND open the community popup
+            // immediately. The popup itself fetches the full community and
+            // shows a loading placeholder meanwhile (needsFetch), so the
+            // click feels instant.
+            store.dispatch(closeLastPopupAction())
+            store.dispatch(
+              pushPopupAction({
+                type: HUD_POPUP_TYPE.COMMUNITY_VIEW,
+                data: {
+                  id: communityId,
+                  name: notification.metadata.communityName ?? '',
+                  thumbnailUrl: notification.metadata.thumbnailUrl ?? '',
+                  needsFetch: true
+                }
+              })
+            )
+          }
+          setLoading(false)
+        } else if (
+          notification.type ===
+          NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED
+        ) {
+          // Close the menu / dismiss the toast and open a small popup with the
+          // requester + Accept/Reject (the owner/mod approves from there).
+          store.dispatch(closeLastPopupAction())
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.COMMUNITY_JOIN_REQUEST,
+              data: {
+                communityId: notification.metadata.communityId,
+                communityName: notification.metadata.communityName ?? '',
+                memberAddress: notification.metadata.memberAddress,
+                memberName: notification.metadata.memberName,
+                thumbnailUrl: notification.metadata.thumbnailUrl
+              }
+            })
           )
           setLoading(false)
         } else if (notification.metadata.link) {
@@ -257,8 +303,14 @@ function getTitleFromNotification(notification: Notification): string {
       return 'Friend request received'
     case 'social_service_friendship_rejected':
       return 'Friend request rejected'
-    case 'community_invite_sent':
+    case NOTIFICATION_TYPE.COMMUNITY_INVITE_SENT:
       return 'Invitation sent'
+    case NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED:
+      return 'Community invite'
+    case NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED:
+      return 'Join request'
+    case NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED:
+      return 'Request accepted'
     case 'user_blocked':
       return 'User blocked'
     case 'user_unblocked':
@@ -283,6 +335,26 @@ function getDescriptionFromNotification(notification: Notification): string {
     } else if (notification.type === 'social_service_friendship_rejected') {
       return `<color=${hexColor}>${protagonist.name}</color> rejected your friend request.`
     }
+  }
+
+  if (notification.type === NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED) {
+    const name = notification.metadata.communityName ?? 'a community'
+    return `You've been invited to join <b>${name}</b>.`
+  }
+
+  if (
+    notification.type === NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED
+  ) {
+    const who = notification.metadata.memberName ?? 'Someone'
+    const name = notification.metadata.communityName ?? 'your community'
+    return `<b>${who}</b> wants to join <b>${name}</b>.`
+  }
+
+  if (
+    notification.type === NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED
+  ) {
+    const name = notification.metadata.communityName ?? 'the community'
+    return `You're now a member of <b>${name}</b>.`
   }
 
   if (notification.metadata?.nftName || notification.metadata?.tokenName) {
@@ -340,6 +412,17 @@ function getIconForNotificationType(notification: Notification): AtlasIcon {
   if (type === 'user_blocked' || type === 'user_unblocked') {
     return {
       spriteName: 'BlockUser',
+      atlasName: 'icons'
+    }
+  }
+  if (
+    type === NOTIFICATION_TYPE.COMMUNITY_INVITE_SENT ||
+    type === NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED ||
+    type === NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED ||
+    type === NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED
+  ) {
+    return {
+      spriteName: 'Community',
       atlasName: 'icons'
     }
   }
@@ -423,6 +506,10 @@ function GenericNotificationThumbnail({
 }: {
   notification: Notification
 }): ReactElement {
+  // `community_invite_received` carries the community art in `thumbnailUrl`
+  // (per @dcl/schemas), not `image` like other feed notifications.
+  const imageSrc =
+    notification.metadata.image ?? notification.metadata.thumbnailUrl
   return (
     <UiEntity
       uiTransform={{
@@ -431,11 +518,11 @@ function GenericNotificationThumbnail({
         height: '83%'
       }}
       uiBackground={
-        notification.metadata.image
+        imageSrc
           ? {
               textureMode: 'stretch',
               texture: {
-                src: notification.metadata.image
+                src: imageSrc
               }
             }
           : {

@@ -54,9 +54,9 @@ import { FEATURES, getFeatureFlag } from '../../../service/feature-flags'
 import { PlayerNameComponent } from '../../../components/player-name-component'
 import {
   fetchInvitableCommunities,
-  inviteUserToCommunity
+  inviteUserToCommunity,
+  type InvitableCommunity
 } from '../../../service/community-invites-service'
-import { type CommunityListItem } from '../../../service/communities-types'
 
 export function setupProfilePopups(): void {
   const avatarTracker = createOrGetAvatarsTracker()
@@ -217,6 +217,7 @@ function ProfileHeader({
   })
   return [
     <AvatarCircle
+      key={'profile-avatar-' + player.userId}
       userId={player.userId}
       circleColor={nameColor}
       uiTransform={{
@@ -227,6 +228,7 @@ function ProfileHeader({
       isGuest={player.isGuest}
     />,
     <Row
+      key={'profile-name-row-' + player.userId}
       uiTransform={{
         justifyContent: 'center',
         alignItems: 'center',
@@ -412,19 +414,19 @@ function InviteToCommunityButton({
 }: {
   player: GetPlayerDataRes
 }): ReactElement | null {
-  const [communities, setCommunities] = useState<CommunityListItem[]>([])
+  const [communities, setCommunities] = useState<InvitableCommunity[]>([])
   const [submenuOpen, setSubmenuOpen] = useState<boolean>(false)
   const fontSize = getFontSize({ context: CONTEXT.SIDE })
 
   useEffect(() => {
     executeTask(async () => {
-      setCommunities(await fetchInvitableCommunities())
+      setCommunities(await fetchInvitableCommunities(player.userId))
     })
   }, [])
 
   if (communities.length === 0) return null
 
-  const onPick = (c: CommunityListItem): void => {
+  const onPick = (c: InvitableCommunity): void => {
     setSubmenuOpen(false)
     executeTask(async () => {
       await inviteUserToCommunity(c, player.userId)

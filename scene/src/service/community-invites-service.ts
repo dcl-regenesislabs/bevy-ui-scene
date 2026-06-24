@@ -1,5 +1,5 @@
 import {
-  fetchMyCommunities,
+  fetchInvitableCommunitiesForUser,
   sendInviteOrRequestToJoin
 } from '../utils/communities-promise-utils'
 import {
@@ -9,24 +9,26 @@ import {
 import { pushNotificationToast } from '../ui-classes/main-hud/notification-toast-stack'
 import { resolvePlayerData } from '../utils/passport-promise-utils'
 
+/** Minimal community shape needed to render and send an invite. */
+export type InvitableCommunity = Pick<CommunityListItem, 'id' | 'name'>
+
 /**
- * Returns the communities the current user can invite OTHER users into —
- * those where their role is `owner` or `moderator`. Backed by the same
- * `fetchMyCommunities` REST call used by the My Communities tab.
+ * Returns the communities the current user can invite `targetAddress` into:
+ * communities the caller owns/moderates where the target is NOT already a
+ * member. Backed by `GET /members/{targetAddress}/invites`, which filters
+ * server-side (so private communities the target already belongs to are
+ * excluded too).
  *
  * Surfaces errors via `console.error` and returns `[]` on failure;
- * callsites typically render the "Invite to Community" UI conditionally on
- * `length > 0` so a transient error simply hides the entry until next
+ * callsites render the "Invite to Community" UI conditionally on
+ * `length > 0`, so a transient error simply hides the entry until the next
  * passport open.
  */
-export async function fetchInvitableCommunities(): Promise<
-  CommunityListItem[]
-> {
+export async function fetchInvitableCommunities(
+  targetAddress: string
+): Promise<InvitableCommunity[]> {
   try {
-    const { results } = await fetchMyCommunities(0, 50)
-    return (results ?? []).filter(
-      (c) => c.role === 'owner' || c.role === 'moderator'
-    )
+    return await fetchInvitableCommunitiesForUser(targetAddress)
   } catch (error) {
     console.error('[community-invites] fetch failed', error)
     return []
@@ -40,7 +42,7 @@ export async function fetchInvitableCommunities(): Promise<
  * — invites are low-stakes and the user can retry from the same UI).
  */
 export async function inviteUserToCommunity(
-  community: CommunityListItem,
+  community: InvitableCommunity,
   targetAddress: string
 ): Promise<void> {
   try {

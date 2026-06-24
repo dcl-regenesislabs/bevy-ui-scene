@@ -8,6 +8,7 @@ import {
   MEMBERS_TEST_BASE_URL,
   type CommunityData,
   type CommunityInviteEntry,
+  type CommunityJoinRequestReceived,
   type CommunityListItem,
   type CommunityMember,
   type CommunityModerationResponse,
@@ -386,6 +387,50 @@ export async function fetchCommunityInvites(
   return await signedGet(`${base}/${communityId}/requests?${parts.join('&')}`)
 }
 
+/**
+ * GET /communities/{id}/requests?type=request_to_join — owner/moderator action.
+ * Returns pending join-requests other users have sent to this community.
+ */
+export async function fetchCommunityJoinRequests(
+  communityId: string,
+  params: GetMembersParams = {}
+): Promise<PaginatedResponse<CommunityInviteEntry>> {
+  const base = await resolveBaseURL()
+  const parts: string[] = ['type=request_to_join']
+  if (params.offset != null) parts.push(`offset=${params.offset}`)
+  if (params.limit != null) parts.push(`limit=${params.limit}`)
+  return await signedGet(`${base}/${communityId}/requests?${parts.join('&')}`)
+}
+
+/**
+ * Aggregated pending join-requests across every community the current user
+ * owns/moderates — the "Requests Received" inbox. There's no server-side
+ * aggregate endpoint, so this fans out one request per managed community.
+ * Failures on a single community are skipped (best-effort).
+ */
+export async function fetchReceivedJoinRequests(): Promise<
+  CommunityJoinRequestReceived[]
+> {
+  const { results } = await fetchMyCommunities(0, 50)
+  const managed = (results ?? []).filter(
+    (c) => c.role === 'owner' || c.role === 'moderator'
+  )
+  const perCommunity = await Promise.all(
+    managed.map(async (c) => {
+      try {
+        const res = await fetchCommunityJoinRequests(c.id, { limit: 50 })
+        return (res.results ?? []).map((r) => ({
+          ...r,
+          communityName: c.name
+        }))
+      } catch {
+        return [] as CommunityJoinRequestReceived[]
+      }
+    })
+  )
+  return perCommunity.flat()
+}
+
 export async function fetchCommunityMembers(
   communityId: string,
   params: GetMembersParams = {}
@@ -696,6 +741,23 @@ export async function fetchUserInviteRequests(
 }
 
 /**
+ * GET /members/{targetAddress}/invites
+ * Returns the communities the current user can invite `targetAddress` into:
+ * communities the caller owns/moderates where the target is NOT already a
+ * member. Filtering is done server-side, so it correctly excludes private
+ * communities the target already belongs to.
+ */
+export async function fetchInvitableCommunitiesForUser(
+  targetAddress: string
+): Promise<Array<{ id: string; name: string }>> {
+  const membersBase = await resolveMembersBaseURL()
+  const result: Array<{ id: string; name: string }> = await signedGet(
+    `${membersBase}/${targetAddress.toLowerCase()}/invites`
+  )
+  return result ?? []
+}
+
+/**
  * PATCH /communities/{communityId}/requests/{requestId}
  * Used to accept/reject an invite, or cancel a request I sent.
  */
@@ -708,6 +770,10 @@ export async function manageInviteRequest(
   await signedPatch(`${base}/${communityId}/requests/${requestId}`, {
     intention
   })
+  // The user's invite/request lists just changed — drop the 60s cache so badges
+  // and the panel reflect it immediately and never re-PATCH a stale (deleted)
+  // request id, which 404s ("Community request not found").
+  invalidateUserInviteRequestsCache()
 }
 
 /**

@@ -4,8 +4,7 @@ import { Column, Row } from '../../../components/ui-system/layout'
 import {
   type CommunityInviteEntry,
   type CommunityMember,
-  type CommunityMemberRole,
-  CommunityFriendshipStatus
+  type CommunityMemberRole
 } from '../../../service/communities-types'
 import {
   CONTEXT,
@@ -18,6 +17,7 @@ import {
   fetchCommunityBans,
   fetchCommunityInvites,
   fetchCommunityMembers,
+  invalidateCommunityMembersCache,
   manageInviteRequest,
   unbanMember
 } from '../../../utils/communities-promise-utils'
@@ -32,6 +32,7 @@ import { getAddressColor } from '../../main-hud/chat-and-logs/ColorByAddress'
 import Icon from '../../../components/icon/Icon'
 import { ThinMenuButton } from '../../../components/thin-menu-button'
 import { FriendButton } from '../../../components/friend-button'
+import { openProfileMenu } from '../../../service/profile-menu-service'
 import { type GetPlayerDataRes } from '../../../utils/definitions'
 import { getPlayer } from '@dcl/sdk/players'
 import { store } from '../../../state/store'
@@ -87,23 +88,13 @@ function CommunityMemberItem({
   const badge = roleBadgeLabel(member.role)
   const avatarSize = fontSize * 2.5
 
-  // `friendshipStatus` is read-only from the API payload — `FriendButton`
-  // owns its own internal state for optimistic updates.
-  const friendshipStatus = member.friendshipStatus
   const isSelf =
     (getPlayer()?.userId ?? '').toLowerCase() ===
     member.memberAddress.toLowerCase()
 
-  const openPassport = (): void => {
-    store.dispatch(
-      pushPopupAction({
-        type: HUD_POPUP_TYPE.PASSPORT,
-        data: member.memberAddress.toLowerCase()
-      })
-    )
-  }
-
-  const openProfileMenu = (): void => {
+  // Moderation menu (kick / ban / promote / view profile) — opened from the
+  // row's 3-dot button.
+  const openCommunityMemberMenu = (): void => {
     store.dispatch(
       pushPopupAction({
         type: HUD_POPUP_TYPE.COMMUNITY_MEMBER_MENU,
@@ -125,7 +116,14 @@ function CommunityMemberItem({
       uiBackground={{
         color: COLOR.DARK_OPACITY_5
       }}
-      onMouseDown={openPassport}
+      onMouseDown={() => {
+        openProfileMenu({
+          userId: member.memberAddress,
+          name: member.name,
+          hasClaimedName: member.hasClaimedName,
+          isGuest: false
+        })
+      }}
     >
       {/* Avatar */}
       <AvatarCircle
@@ -174,25 +172,15 @@ function CommunityMemberItem({
       {/* Spacer */}
       <UiEntity uiTransform={{ flexGrow: 1 }} />
 
-      {/* Friend button — owns the full friend-state lifecycle (add /
-          accept / cancel-request / unfriend). Fully seeded from data the
-          community list already loaded (name + friendshipStatus), so the
-          button renders the right state immediately and skips ALL of its
-          internal fetches: `resolvePlayerData`, `getFriends`,
-          `getReceivedFriendRequests`, `getSentFriendRequests`. Hidden on
-          my own row. The cast is safe: FriendButton only reads
-          `userId`, `name`, `isGuest` off the player payload. */}
+      {/* Friend button — owns the full friend-state lifecycle (add / accept /
+          cancel-request / unfriend). Friendship state comes from the single
+          source of truth (the relationship store), so it stays correct and
+          live regardless of the (snapshot) community payload. `player` is
+          passed only to skip the name resolution. Hidden on my own row. */}
       {!isSelf ? (
         <FriendButton
           player={memberAsPlayerStub(member)}
           fontSize={fontSizeSmall}
-          isFriend={friendshipStatus === CommunityFriendshipStatus.FRIEND}
-          hasIncomingRequest={
-            friendshipStatus === CommunityFriendshipStatus.REQUEST_RECEIVED
-          }
-          hasOutgoingRequest={
-            friendshipStatus === CommunityFriendshipStatus.REQUEST_SENT
-          }
         />
       ) : null}
 
@@ -206,7 +194,7 @@ function CommunityMemberItem({
             margin: { left: fontSize / 2 },
             height: fontSize * 2
           }}
-          onMouseDown={openProfileMenu}
+          onMouseDown={openCommunityMemberMenu}
           backgroundColor={COLOR.WHITE_OPACITY_1}
         />
       ) : null}
@@ -277,6 +265,39 @@ export function CommunityMembers({
   )
 }
 
+const MEMBERS_PAGE_SIZE = 50
+
+// TODO: this eager-loads ALL member pages in the background (batches of
+// MEMBERS_PAGE_SIZE) instead of true scroll-triggered lazy loading — React-ECS
+// has no reliable scroll-position event to drive on-demand paging. Mirrors the
+// pattern in passport-gallery / communities-catalog. Revisit if the SDK exposes
+// scroll offset.
+async function fetchAllCommunityMembers(
+  communityId: string,
+  cancelled: { current: boolean },
+  onBatch: (members: CommunityMember[], hasMore: boolean) => void
+): Promise<void> {
+  let offset = 0
+  let hasMore = true
+  while (hasMore && !cancelled.current) {
+    try {
+      const result = await fetchCommunityMembers(communityId, {
+        limit: MEMBERS_PAGE_SIZE,
+        offset
+      })
+      if (cancelled.current) return
+      const batch = result.results ?? []
+      hasMore = batch.length === MEMBERS_PAGE_SIZE
+      offset += batch.length
+      onBatch(batch, hasMore)
+    } catch (error) {
+      console.error('[communities] failed to load members page', error)
+      hasMore = false
+      onBatch([], false)
+    }
+  }
+}
+
 function MembersList({
   communityId,
   viewerRole
@@ -288,29 +309,49 @@ function MembersList({
   const scale = getContentScaleRatio()
   const [members, setMembers] = useState<CommunityMember[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-
-  const refetch = (): void => {
-    executeTask(async () => {
-      try {
-        const result = await fetchCommunityMembers(communityId, { limit: 50 })
-        // Sort: claimed-name members first; preserve original order otherwise.
-        const sorted = [...(result.results ?? [])].sort((a, b) => {
-          if (a.hasClaimedName === b.hasClaimedName) return 0
-          return a.hasClaimedName ? -1 : 1
-        })
-        setMembers(sorted)
-      } catch (error) {
-        console.error('[communities] failed to load members', error)
-      }
-      setLoading(false)
-    })
-  }
+  const [loadingMore, setLoadingMore] = useState<boolean>(false)
 
   useEffect(() => {
-    refetch()
-    // Re-fetch on any community-changed event (kick / ban / role change).
-    const unsubscribe = listenCommunitiesChanged(refetch)
-    return unsubscribe
+    let token = { current: false }
+    const reload = (): void => {
+      token.current = true // cancel any in-flight load
+      token = { current: false }
+      const myToken = token
+      // Drop cached pages so a kick/ban/join reload shows fresh data.
+      invalidateCommunityMembersCache(communityId)
+      setMembers([])
+      setLoading(true)
+      setLoadingMore(false)
+      executeTask(async () => {
+        let isFirst = true
+        await fetchAllCommunityMembers(
+          communityId,
+          myToken,
+          (batch, hasMore) => {
+            if (myToken.current) return
+            // Sort each page: claimed-name members first (keeps the existing
+            // nicety without re-sorting/jumping the whole list as pages arrive).
+            const sorted = [...batch].sort((a, b) => {
+              if (a.hasClaimedName === b.hasClaimedName) return 0
+              return a.hasClaimedName ? -1 : 1
+            })
+            setMembers((prev) => [...prev, ...sorted])
+            if (isFirst) {
+              setLoading(false)
+              isFirst = false
+            }
+            setLoadingMore(hasMore)
+          }
+        )
+      })
+    }
+    reload()
+    // Reload on any community-changed event (kick / ban / role change / join).
+    const unsubscribe = listenCommunitiesChanged(reload)
+    return () => {
+      token.current = true
+      unsubscribe()
+    }
   }, [])
 
   if (loading) {
@@ -375,14 +416,7 @@ function MembersList({
   const rows = chunk(members, 2)
 
   return (
-    <Column
-      uiTransform={{
-        width: '100%',
-        borderWidth: 5,
-        borderColor: COLOR.RED,
-        borderRadius: 1
-      }}
-    >
+    <Column uiTransform={{ width: '100%' }}>
       {rows.map((pair, rowIndex) => (
         <Row key={rowIndex} uiTransform={{ width: '100%' }}>
           {pair.map((member) => (
@@ -395,6 +429,24 @@ function MembersList({
           ))}
         </Row>
       ))}
+      {/* Background paging indicator while the remaining pages load. */}
+      {loadingMore && (
+        <Row
+          uiTransform={{
+            width: '100%',
+            justifyContent: 'center',
+            padding: fontSize * 0.5
+          }}
+        >
+          <LoadingPlaceholder
+            uiTransform={{
+              width: '40%',
+              height: scale * 40,
+              borderRadius: fontSize / 2
+            }}
+          />
+        </Row>
+      )}
     </Column>
   )
 }
