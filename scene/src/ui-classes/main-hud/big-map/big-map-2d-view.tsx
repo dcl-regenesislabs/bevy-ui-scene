@@ -82,7 +82,14 @@ export function screenToParcel2D(
 const DEFAULT_PX_PER_PARCEL = 12
 const MIN_PX_PER_PARCEL = 2
 const MAX_PX_PER_PARCEL = 48
-const ZOOM_FACTOR = 1.2
+const ZOOM_SPEED_PER_SEC = 3
+const ZOOM_SUSTAIN = 0.12
+const zoomState = {
+  display: DEFAULT_PX_PER_PARCEL,
+  dir: 0,
+  held: false,
+  hold: 0
+}
 
 const PARCEL_TILE_PARCELS = 48
 const PARCEL_TILE_PX_PER_PARCEL = 16
@@ -226,6 +233,10 @@ export function BigMap2DContent(): ReactElement {
 
   useEffect(() => {
     bigMap2DViewport.active = true
+    zoomState.display = DEFAULT_PX_PER_PARCEL
+    zoomState.dir = 0
+    zoomState.held = false
+    zoomState.hold = 0
     return () => {
       bigMap2DViewport.active = false
     }
@@ -260,17 +271,38 @@ export function BigMap2DContent(): ReactElement {
   }, [pendingCenter?.ts])
 
   useEffect(() => {
+    const onZoom = (dir: number, pressed: boolean): void => {
+      if (pressed) {
+        zoomState.dir = dir
+        zoomState.held = true
+        zoomState.hold = ZOOM_SUSTAIN
+      } else if (zoomState.dir === dir) {
+        zoomState.held = false
+        zoomState.hold = ZOOM_SUSTAIN
+      }
+    }
     const unsubIn = listenSystemAction('CameraZoomIn', (pressed: boolean) => {
-      if (!pressed) return
-      setPxPerParcel((prev) => Math.min(MAX_PX_PER_PARCEL, prev * ZOOM_FACTOR))
+      onZoom(1, pressed)
     })
     const unsubOut = listenSystemAction('CameraZoomOut', (pressed: boolean) => {
-      if (!pressed) return
-      setPxPerParcel((prev) => Math.max(MIN_PX_PER_PARCEL, prev / ZOOM_FACTOR))
+      onZoom(-1, pressed)
     })
+    const zoomTick = (dt: number): void => {
+      if (!zoomState.held && zoomState.hold <= 0) return
+      if (!zoomState.held) zoomState.hold = Math.max(0, zoomState.hold - dt)
+      const next =
+        zoomState.display * Math.pow(ZOOM_SPEED_PER_SEC, dt * zoomState.dir)
+      zoomState.display = Math.min(
+        MAX_PX_PER_PARCEL,
+        Math.max(MIN_PX_PER_PARCEL, next)
+      )
+      setPxPerParcel(zoomState.display)
+    }
+    engine.addSystem(zoomTick)
     return () => {
       unsubIn()
       unsubOut()
+      engine.removeSystem(zoomTick)
     }
   }, [])
 
