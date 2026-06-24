@@ -217,6 +217,7 @@ function ProfileHeader({
   })
   return [
     <AvatarCircle
+      key={'profile-avatar-' + player.userId}
       userId={player.userId}
       circleColor={nameColor}
       uiTransform={{
@@ -227,6 +228,7 @@ function ProfileHeader({
       isGuest={player.isGuest}
     />,
     <Row
+      key={'profile-name-row-' + player.userId}
       uiTransform={{
         justifyContent: 'center',
         alignItems: 'center',

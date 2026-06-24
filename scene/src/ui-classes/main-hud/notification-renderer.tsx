@@ -5,6 +5,7 @@ import {
   isItemNotification,
   isRewardNotification,
   type Notification,
+  NOTIFICATION_TYPE,
   type UserProfile
 } from './notification-types'
 import type { FriendRequestData } from '../../service/social-service-type'
@@ -120,7 +121,11 @@ export function NotificationItem({
             notification as FriendshipNotification
           )
           setLoading(false)
-        } else if (notification.type === 'community_invite_received') {
+        } else if (
+          notification.type === NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED ||
+          notification.type ===
+            NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED
+        ) {
           const communityId = notification.metadata.communityId
           if (communityId != null) {
             // Close the menu / dismiss the toast AND open the community popup
@@ -140,6 +145,26 @@ export function NotificationItem({
               })
             )
           }
+          setLoading(false)
+        } else if (
+          notification.type ===
+          NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED
+        ) {
+          // Close the menu / dismiss the toast and open a small popup with the
+          // requester + Accept/Reject (the owner/mod approves from there).
+          store.dispatch(closeLastPopupAction())
+          store.dispatch(
+            pushPopupAction({
+              type: HUD_POPUP_TYPE.COMMUNITY_JOIN_REQUEST,
+              data: {
+                communityId: notification.metadata.communityId,
+                communityName: notification.metadata.communityName ?? '',
+                memberAddress: notification.metadata.memberAddress,
+                memberName: notification.metadata.memberName,
+                thumbnailUrl: notification.metadata.thumbnailUrl
+              }
+            })
+          )
           setLoading(false)
         } else if (notification.metadata.link) {
           store.dispatch(closeLastPopupAction())
@@ -278,10 +303,14 @@ function getTitleFromNotification(notification: Notification): string {
       return 'Friend request received'
     case 'social_service_friendship_rejected':
       return 'Friend request rejected'
-    case 'community_invite_sent':
+    case NOTIFICATION_TYPE.COMMUNITY_INVITE_SENT:
       return 'Invitation sent'
-    case 'community_invite_received':
+    case NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED:
       return 'Community invite'
+    case NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED:
+      return 'Join request'
+    case NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED:
+      return 'Request accepted'
     case 'user_blocked':
       return 'User blocked'
     case 'user_unblocked':
@@ -308,9 +337,24 @@ function getDescriptionFromNotification(notification: Notification): string {
     }
   }
 
-  if (notification.type === 'community_invite_received') {
+  if (notification.type === NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED) {
     const name = notification.metadata.communityName ?? 'a community'
     return `You've been invited to join <b>${name}</b>.`
+  }
+
+  if (
+    notification.type === NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED
+  ) {
+    const who = notification.metadata.memberName ?? 'Someone'
+    const name = notification.metadata.communityName ?? 'your community'
+    return `<b>${who}</b> wants to join <b>${name}</b>.`
+  }
+
+  if (
+    notification.type === NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED
+  ) {
+    const name = notification.metadata.communityName ?? 'the community'
+    return `You're now a member of <b>${name}</b>.`
   }
 
   if (notification.metadata?.nftName || notification.metadata?.tokenName) {
@@ -372,8 +416,10 @@ function getIconForNotificationType(notification: Notification): AtlasIcon {
     }
   }
   if (
-    type === 'community_invite_sent' ||
-    type === 'community_invite_received'
+    type === NOTIFICATION_TYPE.COMMUNITY_INVITE_SENT ||
+    type === NOTIFICATION_TYPE.COMMUNITY_INVITE_RECEIVED ||
+    type === NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_RECEIVED ||
+    type === NOTIFICATION_TYPE.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED
   ) {
     return {
       spriteName: 'Community',
