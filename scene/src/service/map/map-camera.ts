@@ -32,6 +32,9 @@ type MapCameraState = {
   orbitYaw: number
   orbitPitch: number
   zoomLastTime: number
+  zoomDir: number
+  zoomHeld: boolean
+  zoomHold: number
 }
 
 const OFFSET_MAP_CAMERA = 300
@@ -53,7 +56,10 @@ const state: MapCameraState = {
   targetCameraDistance: Vector3.length(ISO_OFFSET_3),
   orbitYaw: Math.atan2(ISO_OFFSET_3.z, ISO_OFFSET_3.x),
   orbitPitch: Math.asin(ISO_OFFSET_3.y / Vector3.length(ISO_OFFSET_3)),
-  zoomLastTime: 0
+  zoomLastTime: 0,
+  zoomDir: 0,
+  zoomHeld: false,
+  zoomHold: 0
 }
 
 let mapCamera: Entity
@@ -68,46 +74,56 @@ export const closeBigMapIfActive = (): void => {
 }
 const TRANSITION_MS = 2000
 const ZOOM_DELAY_HANDLER = 200
-function zoomInHandler(): void {
-  state.zoomLastTime = Date.now()
-  const zoomFactor = 0.8
-  const minDistance = 200
-  const newDistance = state.targetCameraDistance * zoomFactor
-  if (newDistance > minDistance) {
-    state.targetCameraDistance = newDistance
-  }
-  executeTask(async () => {
-    await sleep(ZOOM_DELAY_HANDLER + 50)
-    if (Date.now() - state.zoomLastTime > ZOOM_DELAY_HANDLER) {
-      state.zoomLastTime = 0
-    }
-  })
-}
+const ZOOM_SPEED_PER_SEC = 3
+const ZOOM_SUSTAIN = 0.12
+const MIN_CAMERA_DISTANCE = 200
+const MAX_CAMERA_DISTANCE = 3000
 
-function zoomOutHandler(): void {
-  state.zoomLastTime = Date.now()
-  const zoomFactor = 1.25
-  const maxDistance = 3000
-  const newDistance = state.targetCameraDistance * zoomFactor
-  if (newDistance < maxDistance) {
-    state.targetCameraDistance = newDistance
+function onZoom(dir: number, pressed: boolean): void {
+  if (pressed) {
+    state.zoomDir = dir
+    state.zoomHeld = true
+    state.zoomHold = ZOOM_SUSTAIN
+  } else if (state.zoomDir === dir) {
+    state.zoomHeld = false
+    state.zoomHold = ZOOM_SUSTAIN
   }
-  executeTask(async () => {
-    await sleep(ZOOM_DELAY_HANDLER + 50)
-    if (Date.now() - state.zoomLastTime > ZOOM_DELAY_HANDLER) {
-      state.zoomLastTime = 0
-    }
-  })
 }
-export const isMapDoingZoom: () => boolean = () => !!state.zoomLastTime
+function onZoomIn(pressed: boolean): void {
+  onZoom(1, pressed)
+}
+function onZoomOut(pressed: boolean): void {
+  onZoom(-1, pressed)
+}
+function mapZoomSystem(dt: number): void {
+  if (store.getState().hud.bigMapStyle === '2d') return
+  if (!state.zoomHeld && state.zoomHold <= 0) return
+  if (!state.zoomHeld) state.zoomHold = Math.max(0, state.zoomHold - dt)
+  state.zoomLastTime = Date.now()
+
+  const next =
+    state.targetCameraDistance *
+    Math.pow(ZOOM_SPEED_PER_SEC, -dt * state.zoomDir)
+  state.targetCameraDistance = Math.min(
+    MAX_CAMERA_DISTANCE,
+    Math.max(MIN_CAMERA_DISTANCE, next)
+  )
+}
+export const isMapDoingZoom: () => boolean = () =>
+  Date.now() - state.zoomLastTime < ZOOM_DELAY_HANDLER
 export const activateMapCamera = (): void => {
   mapCamera = mapCamera ?? engine.addEntity()
 
   engine.addSystem(mapInputHandlingSystem)
   engine.addSystem(cameraPositionSystem, 1_000_001)
   engine.addSystem(mapCameraMouseSystem, 1_000_001)
-  listenSystemAction('CameraZoomIn', zoomInHandler)
-  listenSystemAction('CameraZoomOut', zoomOutHandler)
+  engine.addSystem(mapZoomSystem)
+  state.zoomDir = 0
+  state.zoomHeld = false
+  state.zoomHold = 0
+  state.zoomLastTime = 0
+  listenSystemAction('CameraZoomIn', onZoomIn)
+  listenSystemAction('CameraZoomOut', onZoomOut)
 
   state.targetPosition = Vector3.clone(
     Transform.get(engine.PlayerEntity).position
@@ -319,6 +335,7 @@ export const deactivateMapCamera = (): void => {
   engine.removeSystem(mapInputHandlingSystem)
   engine.removeSystem(cameraPositionSystem)
   engine.removeSystem(mapCameraMouseSystem)
+  engine.removeSystem(mapZoomSystem)
 
   store.dispatch(
     updateHudStateAction({
@@ -333,8 +350,8 @@ export const deactivateMapCamera = (): void => {
   })
   deactivateDragMapSystem()
   getUiController().sceneCard.hide()
-  unlistenSystemAction('CameraZoomIn', zoomInHandler)
-  unlistenSystemAction('CameraZoomOut', zoomOutHandler)
+  unlistenSystemAction('CameraZoomIn', onZoomIn)
+  unlistenSystemAction('CameraZoomOut', onZoomOut)
 }
 
 export const activateDragMapSystem = (): boolean => (state.dragActive = true)

@@ -16,7 +16,10 @@ export function listenSystemAction(
   }
 }
 
-export function unlistenSystemAction(action: string, fn: () => void): void {
+export function unlistenSystemAction(
+  action: string,
+  fn: (...args: any[]) => void
+): void {
   systemActionsEmitter.unsubscribe(action, fn)
 }
 

@@ -51,7 +51,9 @@ export function MapFooter(): ReactElement {
           />
           <UiEntity
             uiText={{
-              value: 'Double click displaces to target',
+              value: is3D
+                ? 'Double click displaces to target'
+                : 'Click displaces to target',
               fontSize
             }}
             uiTransform={{
@@ -68,7 +70,9 @@ export function MapFooter(): ReactElement {
           />
           <UiEntity
             uiText={{
-              value: 'Drag to displace map (or WASD)',
+              value: is3D
+                ? 'Drag to displace map (or WASD)'
+                : 'Drag to displace map',
               fontSize
             }}
             uiTransform={{

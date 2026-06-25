@@ -45,6 +45,7 @@ import {
   saveMinimapZoom
 } from './mini-map-persistence'
 import { categories as ALL_PLACE_CATEGORIES } from './map-definitions'
+import { createTween } from '../../service/tween'
 import { getUiController } from '../../controllers/ui.controller'
 import { currentRealmProviderIsWorld } from '../../service/realm-change'
 import { getFontSize, TYPOGRAPHY_TOKENS } from '../../service/fontsize-system'
@@ -490,6 +491,47 @@ const CHECK_ICON: AtlasIcon = { atlasName: 'icons', spriteName: 'Check' }
 
 const ALL_CATEGORY_NAMES = ALL_PLACE_CATEGORIES.map((c) => c.name)
 
+const MINIMAP_ZOOM_TIME = 0.2
+let minimapZoomTarget = 0
+let minimapZoomTween: { cancel: () => void } | null = null
+
+function stepMinimapZoom(factor: number): void {
+  if (minimapZoomTarget === 0) {
+    minimapZoomTarget =
+      store.getState().hud.minimapZoom ?? DEFAULT_VISIBLE_METERS
+  }
+  const next = Math.min(
+    MAX_VISIBLE_METERS,
+    Math.max(MIN_VISIBLE_METERS, minimapZoomTarget * factor)
+  )
+  if (next === minimapZoomTarget) return
+  minimapZoomTarget = next
+
+  const start = store.getState().hud.minimapZoom ?? DEFAULT_VISIBLE_METERS
+  if (minimapZoomTween) minimapZoomTween.cancel()
+  const logStart = Math.log(start)
+  const logEnd = Math.log(next)
+  // Interpolate in log space so the perceived zoom speed stays uniform.
+  const tween = createTween({
+    startValue: 0,
+    endValue: 1,
+    time: MINIMAP_ZOOM_TIME
+  })
+  tween.onUpdate((_value: number, t: number) => {
+    store.dispatch(
+      updateHudStateAction({
+        minimapZoom: Math.exp(logStart + (logEnd - logStart) * t)
+      })
+    )
+  })
+  tween.onComplete(() => {
+    store.dispatch(updateHudStateAction({ minimapZoom: next }))
+    saveMinimapZoom(next)
+    minimapZoomTween = null
+  })
+  minimapZoomTween = tween
+}
+
 function MinimapZoomButtons({
   visibleMeters
 }: {
@@ -499,10 +541,6 @@ function MinimapZoomButtons({
   const padding = fontSize / 4
   const buttonSize = fontSize * 1.5
 
-  const applyZoom = (next: number): void => {
-    saveMinimapZoom(next)
-    store.dispatch(updateHudStateAction({ minimapZoom: next }))
-  }
   const canZoomIn = visibleMeters > MIN_VISIBLE_METERS
   const canZoomOut = visibleMeters < MAX_VISIBLE_METERS
 
@@ -521,7 +559,7 @@ function MinimapZoomButtons({
         disabled={!canZoomIn}
         onMouseDown={() => {
           if (!canZoomIn) return
-          applyZoom(Math.max(MIN_VISIBLE_METERS, visibleMeters / ZOOM_STEP))
+          stepMinimapZoom(1 / ZOOM_STEP)
         }}
       />
       <UiEntity uiTransform={{ height: padding }} />
@@ -531,7 +569,7 @@ function MinimapZoomButtons({
         disabled={!canZoomOut}
         onMouseDown={() => {
           if (!canZoomOut) return
-          applyZoom(Math.min(MAX_VISIBLE_METERS, visibleMeters * ZOOM_STEP))
+          stepMinimapZoom(ZOOM_STEP)
         }}
       />
     </UiEntity>
