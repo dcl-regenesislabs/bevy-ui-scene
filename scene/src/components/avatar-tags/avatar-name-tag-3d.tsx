@@ -136,7 +136,8 @@ function createTag(player: GetPlayerDataRes): undefined | Entity {
       }
     },
     emissiveColor: COLOR.WHITE,
-    emissiveIntensity: 0.2
+    emissiveIntensity: 0.2,
+    castShadows: false
   })
 
   return tagWrapperEntity
